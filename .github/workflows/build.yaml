@@ -1,0 +1,150 @@
+name: Build & Release
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  agent:
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v1
+        with:
+          submodules: true
+      - name: setup-graalvm-ce
+        uses: rinx/setup-graalvm-ce@v0.0.3
+        with:
+          graalvm-version: "20.1.0"
+          java-version: "java11"
+          native-image: "true"
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: '13'
+      - name: Cache ivy2
+        uses: actions/cache@v1
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
+          restore-keys: |
+            ${{ runner.os }}-ivy2-
+            ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
+
+      - name: Cache SBT
+        uses: actions/cache@v1
+        with:
+          path: ~/.sbt
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-
+            ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}
+            ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
+
+      - name: scala build
+        run: |
+          sbt -Dsbt.coursier.home=~/.sbt/coursier/ '; project agent; graalvm-native-image:packageBin' -J-Xms3G -J-Xmx6G
+      - name: docker login
+        run: docker login -u janstenpickle -p '${{secrets.DOCKERHUB}}'
+      - name: docker build
+        run: |
+          export VERSION=`sbt --error 'print version' | tail -n 1 |  sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+
+          pushd modules/agent/src/main/docker
+          sh build.sh
+
+          docker tag janstenpickle/trace4cats-agent:$GITHUB_RUN_NUMBER janstenpickle/trace4cats-agent:latest
+          docker tag janstenpickle/trace4cats-agent:$GITHUB_RUN_NUMBER janstenpickle/trace4cats-agent:$VERSION
+
+          docker push janstenpickle/trace4cats-agent:latest
+          docker push janstenpickle/trace4cats-agent:$VERSION
+          popd
+
+  collector:
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v1
+        with:
+          submodules: true
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: '13'
+      - name: Cache ivy2
+        uses: actions/cache@v1
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
+          restore-keys: |
+            ${{ runner.os }}-ivy2-
+            ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
+
+      - name: Cache SBT
+        uses: actions/cache@v1
+        with:
+          path: ~/.sbt
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-
+            ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}
+            ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
+
+      - name: scala build
+        run: |
+          sbt -Dsbt.coursier.home=~/.sbt/coursier/ '; project collector; docker:publishLocal' -J-Xms3G -J-Xmx6G
+      - name: docker login
+        run: docker login -u janstenpickle -p '${{secrets.DOCKERHUB}}'
+      - name: docker build
+        run: |
+          export VERSION=`sbt --error 'print version' | tail -n 1 |  sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+
+          docker tag janstenpickle/trace4cats-collector:latest janstenpickle/trace4cats-collector:$GITHUB_RUN_NUMBER
+          docker tag janstenpickle/trace4cats-collector:latest janstenpickle/trace4cats-collector:$VERSION
+
+          docker push janstenpickle/trace4cats-collector:$GITHUB_RUN_NUMBER
+          docker push janstenpickle/trace4cats-collector:$VERSION
+          docker push janstenpickle/trace4cats-collector:latest
+
+  libraries:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        scala-version:
+          - "2.12.11"
+          - "2.13.3"
+    steps:
+      - name: checkout
+        uses: actions/checkout@v1
+        with:
+          submodules: true
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: '13'
+      - name: Cache ivy2
+        uses: actions/cache@v1
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
+          restore-keys: |
+            ${{ runner.os }}-ivy2-
+            ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
+
+      - name: Cache SBT
+        uses: actions/cache@v1
+        with:
+          path: ~/.sbt
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-
+            ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}
+            ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
+
+      - name: scala build
+        run: |
+          sbt -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.pass=${{ secrets.BINTRAY_PASS }} -Dsbt.coursier.home=~/.sbt/coursier/ ++${{ matrix.scala-version }} '; scalafmt::test; test:scalafmt::test; compile; test; releaseEarly' -J-Xms3G -J-Xmx6G
