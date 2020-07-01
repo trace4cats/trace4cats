@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.model
 
 import cats.implicits._
-import cats.{Defer, MonadError, Show}
+import cats.{Defer, Eq, MonadError, Show}
 
 case class SpanContext(
   traceId: TraceId,
@@ -40,4 +40,6 @@ object SpanContext {
 
     show"[ trace-id: ${c.traceId}, span-id: ${c.spanId}$parent$state, sampled: ${c.traceFlags.sampled}, remote: ${c.isRemote} ]"
   }
+
+  implicit val eq: Eq[SpanContext] = cats.derived.semi.eq[SpanContext]
 }

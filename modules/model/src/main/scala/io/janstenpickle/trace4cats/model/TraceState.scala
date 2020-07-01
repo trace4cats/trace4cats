@@ -1,7 +1,8 @@
 package io.janstenpickle.trace4cats.model
 
-import cats.Show
+import cats.{Eq, Show}
 import cats.instances.map._
+import cats.instances.string._
 import cats.syntax.contravariant._
 import io.janstenpickle.trace4cats.model.TraceState.{Key, Value}
 
@@ -19,6 +20,7 @@ object TraceState {
       if (regex.findFirstMatchIn(k).isDefined) Some(new Key(k)) else None
 
     implicit val show: Show[Key] = Show.show(_.k)
+    implicit val eq: Eq[Key] = Eq.by(_.k)
   }
 
   case class Value private (v: String) extends AnyVal {
@@ -30,7 +32,9 @@ object TraceState {
       if (v.length > 256 && regex.findFirstMatchIn(v).isDefined) None else Some(new Value(v))
 
     implicit val show: Show[Value] = Show.show(_.v)
+    implicit val eq: Eq[Value] = Eq.by(_.v)
   }
 
   implicit val show: Show[TraceState] = Show[Map[Key, Value]].contramap(_.values)
+  implicit val eq: Eq[TraceState] = Eq.by(_.values)
 }

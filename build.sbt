@@ -20,25 +20,20 @@ lazy val commonSettings = Seq(
   addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.11.0").cross(CrossVersion.patch)),
   libraryDependencies ++= Seq(Dependencies.cats, Dependencies.collectionCompat),
   bintrayRepository := "trace4cats",
-  releaseEarlyWith := BintrayPublisher
+  releaseEarlyWith := BintrayPublisher,
+  crossScalaVersions := Seq(Dependencies.Versions.scala213, Dependencies.Versions.scala212)
 )
 
 lazy val noPublishSettings = commonSettings ++ Seq(
-  crossScalaVersions := Seq(Dependencies.Versions.scala213),
   publish := {},
   publishLocal := {},
   publishArtifact := false,
   publishTo := None
 )
 
-lazy val publishSettings = commonSettings ++ Seq(
-  publishMavenStyle := true,
-  pomIncludeRepository := { _ =>
-    false
-  },
-  crossScalaVersions := Seq(Dependencies.Versions.scala213, Dependencies.Versions.scala212),
-  publishArtifact in Test := false
-)
+lazy val publishSettings = commonSettings ++ Seq(publishMavenStyle := true, pomIncludeRepository := { _ =>
+  false
+}, publishArtifact in Test := false)
 
 lazy val root = (project in file("."))
   .settings(noPublishSettings)
@@ -54,6 +49,7 @@ lazy val root = (project in file("."))
     `opentelemetry-completer`,
     `avro-completer`,
     `avro-server`,
+    `avro-test`,
     natchez
   )
 
@@ -62,15 +58,31 @@ lazy val model =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-model",
-      libraryDependencies ++= Seq(Dependencies.enumeratum, Dependencies.commonsCodec)
+      libraryDependencies ++= Seq(
+        Dependencies.enumeratum,
+        Dependencies.enumeratumCats,
+        Dependencies.commonsCodec,
+        Dependencies.kittens
+      )
     )
+
+lazy val test = (project in file("modules/test"))
+  .settings(noPublishSettings)
+  .settings(name := "trace4cats-test", libraryDependencies ++= Dependencies.test)
+  .dependsOn(model)
+
+lazy val `avro-test` = (project in file("modules/avro-test"))
+  .settings(noPublishSettings)
+  .settings(name := "trace4cats-avro-test", libraryDependencies ++= Dependencies.test.map(_ % Test))
+  .dependsOn(model)
+  .dependsOn(`avro-completer`, `avro-server`, test % "test->compile")
 
 lazy val kernel =
   (project in file("modules/kernel"))
     .settings(publishSettings)
     .settings(
       name := "trace4cats-kernel",
-      libraryDependencies ++= Dependencies.test,
+      libraryDependencies ++= Dependencies.test.map(_     % Test),
       libraryDependencies ++= Seq(Dependencies.catsEffect % Test)
     )
     .dependsOn(model)

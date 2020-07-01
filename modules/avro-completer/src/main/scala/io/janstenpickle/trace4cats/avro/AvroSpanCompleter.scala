@@ -22,21 +22,33 @@ import scala.concurrent.duration._
 object AvroSpanCompleter {
 
   private def encode[F[_]: Sync](schema: Schema)(batch: Batch): F[Array[Byte]] =
-    Sync[F].fromEither(AvroInstances.batchCodec.encode(batch).leftMap(_.throwable)).flatMap { record =>
-      Sync[F]
-        .delay {
-          val writer = new GenericDatumWriter[Any](schema)
-          val out = new ByteArrayOutputStream
+    Sync[F]
+      .fromEither(AvroInstances.batchCodec.encode(batch).leftMap(_.throwable))
+      .flatMap { record =>
+        Resource
+          .make(
+            Sync[F]
+              .delay {
+                val writer = new GenericDatumWriter[Any](schema)
+                val out = new ByteArrayOutputStream
 
-          val encoder = EncoderFactory.get.binaryEncoder(out, null)
+                val encoder = EncoderFactory.get.binaryEncoder(out, null)
 
-          writer.write(record, encoder)
-          encoder.flush()
-          val ba = out.toByteArray
-          out.close()
-          ba
-        }
-    }
+                (writer, out, encoder)
+              }
+          ) {
+            case (_, out, _) =>
+              Sync[F].delay(out.close())
+          }
+          .use {
+            case (writer, out, encoder) =>
+              Sync[F].delay {
+                writer.write(record, encoder)
+                encoder.flush()
+                out.toByteArray
+              }
+          }
+      }
 
   def udp[F[_]: Concurrent: ContextShift: Timer](
     blocker: Blocker,

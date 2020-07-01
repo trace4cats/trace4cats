@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.model
 
-import cats.Show
+import cats.{Eq, Show}
 import cats.implicits._
 
 case class CompletedSpan(
@@ -25,4 +25,6 @@ object CompletedSpan {
           |  status: ${span.status}
           |}""".stripMargin
   }
+
+  implicit val eq: Eq[CompletedSpan] = cats.derived.semi.eq[CompletedSpan]
 }

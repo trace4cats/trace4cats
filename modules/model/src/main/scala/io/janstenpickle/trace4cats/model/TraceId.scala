@@ -2,7 +2,9 @@ package io.janstenpickle.trace4cats.model
 
 import java.util.concurrent.ThreadLocalRandom
 
-import cats.{ApplicativeError, Defer, Show}
+import cats.instances.string._
+import cats.syntax.show._
+import cats.{ApplicativeError, Defer, Eq, Show}
 import org.apache.commons.codec.binary.Hex
 
 import scala.util.Try
@@ -24,4 +26,6 @@ object TraceId {
 
   implicit val show: Show[TraceId] =
     Show.show(tid => Hex.encodeHexString(tid.value))
+
+  implicit val eq: Eq[TraceId] = Eq.by(_.show)
 }

@@ -13,6 +13,7 @@ import io.janstenpickle.trace4cats.model.Batch
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.io.DecoderFactory
+import cats.syntax.applicativeError._
 
 object AvroServer {
 
@@ -23,7 +24,7 @@ object AvroServer {
           val newLastBytes = (lastBytes._2, hd)
           val newState = hd :: state
           if (newLastBytes == (0xC4.byteValue -> 0x02.byteValue))
-            Pull.output1(Chunk.apply(newState.drop(2).reverse: _*)) >> go((0, 0), List.empty, tl)
+            Pull.output1(Chunk(newState.drop(2).reverse: _*)) >> go((0, 0), List.empty, tl)
           else
             go(newLastBytes, newState, tl)
 
@@ -33,7 +34,7 @@ object AvroServer {
     go((0, 0), List.empty, bytes).stream
   }
 
-  private def decode[F[_]: Sync](schema: Schema)(bytes: Chunk[Byte]): F[Batch] =
+  private def decode[F[_]: Sync](schema: Schema)(bytes: Chunk[Byte]): F[Option[Batch]] =
     Sync[F]
       .delay {
         val reader = new GenericDatumReader[Any](schema)
@@ -42,9 +43,10 @@ object AvroServer {
 
         record
       }
-      .flatMap { record =>
-        Sync[F].fromEither(AvroInstances.batchCodec.decode(record, schema).leftMap(_.throwable))
+      .flatMap[Option[Batch]] { record =>
+        Sync[F].fromEither(AvroInstances.batchCodec.decode(record, schema).bimap(_.throwable, Some(_)))
       }
+      .handleError(_ => Option.empty[Batch])
 
   def tcp[F[_]: Concurrent: ContextShift](
     blocker: Blocker,
@@ -60,7 +62,7 @@ object AvroServer {
         .server(address)
         .map { serverResource =>
           Stream.resource(serverResource).flatMap { server =>
-            server.reads(8192).through(buffer[F]).evalMap(decode[F](avroSchema)).through(sink)
+            server.reads(8192).through(buffer[F]).evalMap(decode[F](avroSchema)).unNone.through(sink)
           }
         }
         .parJoin(100)
@@ -75,5 +77,5 @@ object AvroServer {
       address <- Resource.liftF(Sync[F].delay(new InetSocketAddress(port)))
       socketGroup <- UDPSocketGroup[F](blocker)
       socket <- socketGroup.open(address)
-    } yield socket.reads().map(_.bytes).evalMap(decode[F](avroSchema)).through(sink)
+    } yield socket.reads().map(_.bytes).evalMap(decode[F](avroSchema)).unNone.through(sink)
 }

@@ -1,6 +1,8 @@
 package io.janstenpickle.trace4cats.model
 
-import cats.Show
+import cats.{Eq, Show}
+import cats.instances.string._
+import cats.instances.double._
 
 sealed trait TraceValue extends Product with Serializable {
   def value: Any
@@ -20,5 +22,10 @@ object TraceValue {
   implicit def intToTraceValue(value: Int): TraceValue = DoubleValue(value.toDouble)
 
   implicit val show: Show[TraceValue] = Show(_.toString)
-
+  implicit val eq: Eq[TraceValue] = Eq.instance {
+    case (StringValue(x), StringValue(y)) => Eq[String].eqv(x, y)
+    case (BooleanValue(x), BooleanValue(y)) => x == y
+    case (DoubleValue(x), DoubleValue(y)) => Eq[Double].eqv(x, y)
+    case (_, _) => false
+  }
 }

@@ -13,6 +13,7 @@ object Dependencies {
     val googleCloudTrace = "1.1.0"
     val grpcOkHttp = "1.30.2"
     val jaeger = "1.2.0"
+    val kittens = "2.1.0"
     val log4cats = "1.1.1"
     val logback = "1.2.3"
     val natchez = "0.0.11"
@@ -34,6 +35,7 @@ object Dependencies {
   lazy val commonsCodec = "commons-codec"              % "commons-codec"                   % Versions.commonsCodec
   lazy val collectionCompat = "org.scala-lang.modules" %% "scala-collection-compat"        % Versions.collectionCompat
   lazy val enumeratum = "com.beachape"                 %% "enumeratum"                     % Versions.enumeratum
+  lazy val enumeratumCats = "com.beachape"             %% "enumeratum-cats"                % Versions.enumeratum
   lazy val declineEffect = "com.monovore"              %% "decline-effect"                 % Versions.decline
   lazy val googleCredentials = "com.google.auth"       % "google-auth-library-credentials" % Versions.googleCredentials
   lazy val googleCloudTrace = "com.google.cloud"       % "google-cloud-trace"              % Versions.googleCloudTrace
@@ -41,6 +43,7 @@ object Dependencies {
   lazy val fs2Io = "co.fs2"                            %% "fs2-io"                         % Versions.fs2
   lazy val grpcOkHttp = "io.grpc"                      % "grpc-okhttp"                     % Versions.grpcOkHttp
   lazy val jaegerThrift = "io.jaegertracing"           % "jaeger-thrift"                   % Versions.jaeger
+  lazy val kittens = "org.typelevel"                   %% "kittens"                        % Versions.kittens
   lazy val log4cats = "io.chrisdavenport"              %% "log4cats-slf4j"                 % Versions.log4cats
   lazy val logback = "ch.qos.logback"                  % "logback-classic"                 % Versions.logback
   lazy val natchez = "org.tpolecat"                    %% "natchez-core"                   % Versions.natchez
@@ -50,11 +53,11 @@ object Dependencies {
   lazy val vulcanEnumeratum = "com.github.fd4s"        %% "vulcan-enumeratum"              % Versions.vulcan
 
   lazy val catsLaws = "org.typelevel"                         %% "cats-laws"                 % Versions.cats
-  lazy val disciplineScalatest = "org.typelevel"              %% "discipline-scalatest"      % Versions.disciplineScalatest % Test
-  lazy val disciplineCore = "org.typelevel"                   %% "discipline-core"           % Versions.discipline % Test
-  lazy val scalacheck = "org.scalacheck"                      %% "scalacheck"                % Versions.scalaCheck % Test
-  lazy val scalacheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % Versions.scalaCheckShapeless % Test
-  lazy val scalaTest = "org.scalatest"                        %% "scalatest"                 % Versions.scalaTest % Test
+  lazy val disciplineScalatest = "org.typelevel"              %% "discipline-scalatest"      % Versions.disciplineScalatest
+  lazy val disciplineCore = "org.typelevel"                   %% "discipline-core"           % Versions.discipline
+  lazy val scalacheck = "org.scalacheck"                      %% "scalacheck"                % Versions.scalaCheck
+  lazy val scalacheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % Versions.scalaCheckShapeless
+  lazy val scalaTest = "org.scalatest"                        %% "scalatest"                 % Versions.scalaTest
 
   lazy val test = Seq(catsLaws, disciplineScalatest, disciplineCore, scalacheck, scalacheckShapeless, scalaTest)
 }
