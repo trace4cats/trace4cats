@@ -3,16 +3,13 @@ package io.janstenpickle.trace4cats
 import cats.implicits._
 import io.janstenpickle.trace4cats.model._
 
-trait ToHeaders[F[_]] {
+trait ToHeaders {
   def toContext(headers: Map[String, String]): Option[SpanContext]
   def fromContext(context: SpanContext): Map[String, String]
 }
 
 object ToHeaders {
-
-  def apply[F[_]](implicit toHeaders: ToHeaders[F]): ToHeaders[F] = toHeaders
-
-  implicit def http[F[_]]: ToHeaders[F] = new ToHeaders[F] {
+  val w3c: ToHeaders = new ToHeaders {
     final val parentHeader = "traceparent"
     final val stateHeader = "tracestate"
 

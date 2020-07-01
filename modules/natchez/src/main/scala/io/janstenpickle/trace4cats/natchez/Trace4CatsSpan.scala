@@ -9,9 +9,10 @@ import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.TraceValue._
 import io.janstenpickle.trace4cats.model.{SpanKind, SpanStatus}
 
-final case class Trace4CatsSpan[F[_]: Sync: Clock: ToHeaders](
+final case class Trace4CatsSpan[F[_]: Sync: Clock](
   span: io.janstenpickle.trace4cats.Span[F],
-  completer: SpanCompleter[F]
+  completer: SpanCompleter[F],
+  toHeaders: ToHeaders
 ) extends Span[F] {
   override def put(fields: (String, V)*): F[Unit] =
     span.putAll(fields.map {
@@ -20,17 +21,22 @@ final case class Trace4CatsSpan[F[_]: Sync: Clock: ToHeaders](
       case (k, V.BooleanValue(v)) => k -> BooleanValue(v)
     }: _*)
 
-  override def kernel: F[Kernel] = Applicative[F].pure(Kernel(ToHeaders[F].fromContext(span.context)))
+  override def kernel: F[Kernel] = Applicative[F].pure(Kernel(toHeaders.fromContext(span.context)))
 
   override def span(name: String): Resource[F, Span[F]] =
     Trace4CatsSpan
-      .resource(io.janstenpickle.trace4cats.Span.child(name, span.context, SpanKind.Internal, completer), completer)
+      .resource(
+        io.janstenpickle.trace4cats.Span.child(name, span.context, SpanKind.Internal, completer),
+        completer,
+        toHeaders
+      )
 }
 
 object Trace4CatsSpan {
-  def resource[F[_]: Sync: Clock: ToHeaders](
+  def resource[F[_]: Sync: Clock](
     span: F[io.janstenpickle.trace4cats.Span[F]],
-    completer: SpanCompleter[F]
+    completer: SpanCompleter[F],
+    toHeaders: ToHeaders
   ): Resource[F, Span[F]] =
     Resource
       .makeCase(span) {
@@ -39,5 +45,5 @@ object Trace4CatsSpan {
         case (span, ExitCase.Error(th)) =>
           span.putAll("error" -> true, "error.message" -> th.getMessage) >> span.end(SpanStatus.Internal)
       }
-      .map(Trace4CatsSpan(_, completer))
+      .map(Trace4CatsSpan(_, completer, toHeaders))
 }

@@ -90,8 +90,12 @@ lazy val kernel =
 lazy val core =
   (project in file("modules/core"))
     .settings(publishSettings)
-    .settings(name := "trace4cats-core", libraryDependencies ++= Seq(Dependencies.catsEffect))
-    .dependsOn(model, kernel)
+    .settings(
+      name := "trace4cats-core",
+      libraryDependencies ++= Dependencies.test.map(_ % Test),
+      libraryDependencies ++= Seq(Dependencies.catsEffect)
+    )
+    .dependsOn(model, kernel, test % "test->compile")
 
 lazy val avro =
   (project in file("modules/avro"))
