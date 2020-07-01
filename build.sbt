@@ -50,6 +50,7 @@ lazy val root = (project in file("."))
     avro,
     `log-completer`,
     `jaeger-thrift-completer`,
+    `stackdriver-completer`,
     `opentelemetry-completer`,
     `avro-completer`,
     `avro-server`,
@@ -114,6 +115,21 @@ lazy val `opentelemetry-completer` =
     .settings(
       name := "trace4cats-opentelemetry-completer",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.openTelemetryExporter)
+    )
+    .dependsOn(model, kernel)
+
+lazy val `stackdriver-completer` =
+  (project in file("modules/stackdriver-completer"))
+    .settings(publishSettings)
+    .settings(commonSettings)
+    .settings(
+      name := "trace4cats-stackdriver-completer",
+      libraryDependencies ++= Seq(
+        Dependencies.catsEffect,
+        Dependencies.fs2,
+        Dependencies.googleCredentials,
+        Dependencies.googleCloudTrace
+      )
     )
     .dependsOn(model, kernel)
 
@@ -202,6 +218,7 @@ lazy val collector = (project in file("modules/collector"))
     `avro-server`,
     `jaeger-thrift-completer`,
     `log-completer`,
-    `opentelemetry-completer`
+    `opentelemetry-completer`,
+    `stackdriver-completer`
   )
   .enablePlugins(UniversalPlugin, JavaAppPackaging, DockerPlugin)

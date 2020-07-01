@@ -9,6 +9,8 @@ object Dependencies {
     val decline = "1.2.0"
     val enumeratum = "1.6.1"
     val fs2 = "2.4.2"
+    val googleCredentials = "0.21.0"
+    val googleCloudTrace = "1.1.0"
     val grpcOkHttp = "1.30.2"
     val jaeger = "1.2.0"
     val log4cats = "1.1.1"
@@ -27,23 +29,25 @@ object Dependencies {
 
   }
 
-  lazy val cats = "org.typelevel"                      %% "cats-core"                   % Versions.cats
-  lazy val catsEffect = "org.typelevel"                %% "cats-effect"                 % Versions.catsEffect
-  lazy val commonsCodec = "commons-codec"              % "commons-codec"                % Versions.commonsCodec
-  lazy val collectionCompat = "org.scala-lang.modules" %% "scala-collection-compat"     % Versions.collectionCompat
-  lazy val enumeratum = "com.beachape"                 %% "enumeratum"                  % Versions.enumeratum
-  lazy val declineEffect = "com.monovore"              %% "decline-effect"              % Versions.decline
-  lazy val fs2 = "co.fs2"                              %% "fs2-core"                    % Versions.fs2
-  lazy val fs2Io = "co.fs2"                            %% "fs2-io"                      % Versions.fs2
-  lazy val grpcOkHttp = "io.grpc"                      % "grpc-okhttp"                  % Versions.grpcOkHttp
-  lazy val jaegerThrift = "io.jaegertracing"           % "jaeger-thrift"                % Versions.jaeger
-  lazy val log4cats = "io.chrisdavenport"              %% "log4cats-slf4j"              % Versions.log4cats
-  lazy val logback = "ch.qos.logback"                  % "logback-classic"              % Versions.logback
-  lazy val natchez = "org.tpolecat"                    %% "natchez-core"                % Versions.natchez
-  lazy val openTelemetryExporter = "io.opentelemetry"  % "opentelemetry-exporters-otlp" % Versions.openTelemetry
-  lazy val vulcan = "com.github.fd4s"                  %% "vulcan"                      % Versions.vulcan
-  lazy val vulcanGeneric = "com.github.fd4s"           %% "vulcan-generic"              % Versions.vulcan
-  lazy val vulcanEnumeratum = "com.github.fd4s"        %% "vulcan-enumeratum"           % Versions.vulcan
+  lazy val cats = "org.typelevel"                      %% "cats-core"                      % Versions.cats
+  lazy val catsEffect = "org.typelevel"                %% "cats-effect"                    % Versions.catsEffect
+  lazy val commonsCodec = "commons-codec"              % "commons-codec"                   % Versions.commonsCodec
+  lazy val collectionCompat = "org.scala-lang.modules" %% "scala-collection-compat"        % Versions.collectionCompat
+  lazy val enumeratum = "com.beachape"                 %% "enumeratum"                     % Versions.enumeratum
+  lazy val declineEffect = "com.monovore"              %% "decline-effect"                 % Versions.decline
+  lazy val googleCredentials = "com.google.auth"       % "google-auth-library-credentials" % Versions.googleCredentials
+  lazy val googleCloudTrace = "com.google.cloud"       % "google-cloud-trace"              % Versions.googleCloudTrace
+  lazy val fs2 = "co.fs2"                              %% "fs2-core"                       % Versions.fs2
+  lazy val fs2Io = "co.fs2"                            %% "fs2-io"                         % Versions.fs2
+  lazy val grpcOkHttp = "io.grpc"                      % "grpc-okhttp"                     % Versions.grpcOkHttp
+  lazy val jaegerThrift = "io.jaegertracing"           % "jaeger-thrift"                   % Versions.jaeger
+  lazy val log4cats = "io.chrisdavenport"              %% "log4cats-slf4j"                 % Versions.log4cats
+  lazy val logback = "ch.qos.logback"                  % "logback-classic"                 % Versions.logback
+  lazy val natchez = "org.tpolecat"                    %% "natchez-core"                   % Versions.natchez
+  lazy val openTelemetryExporter = "io.opentelemetry"  % "opentelemetry-exporters-otlp"    % Versions.openTelemetry
+  lazy val vulcan = "com.github.fd4s"                  %% "vulcan"                         % Versions.vulcan
+  lazy val vulcanGeneric = "com.github.fd4s"           %% "vulcan-generic"                 % Versions.vulcan
+  lazy val vulcanEnumeratum = "com.github.fd4s"        %% "vulcan-enumeratum"              % Versions.vulcan
 
   lazy val catsLaws = "org.typelevel"                         %% "cats-laws"                 % Versions.cats
   lazy val disciplineScalatest = "org.typelevel"              %% "discipline-scalatest"      % Versions.disciplineScalatest % Test

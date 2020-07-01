@@ -13,6 +13,7 @@ import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.log.LogCompleter
 import io.janstenpickle.trace4cats.model.TraceProcess
 import io.janstenpickle.trace4cats.opentelemetry.OpenTelemetrySpanCompleter
+import io.janstenpickle.trace4cats.stackdriver.StackdriverCompleter
 
 object Collector
     extends CommandIOApp(name = "trace4cats-collector", header = "Trace 4 Cats Collector", version = "0.1.0") {
@@ -55,6 +56,9 @@ object Collector
   val otPortOpt: Opts[Int] =
     Opts.option[Int]("opentelemetry-host", "OpenTelelmetry protobufs port").orNone.map(_.getOrElse(55678))
 
+  val stackdriverProjectOpt: Opts[Option[String]] =
+    Opts.option[String]("stackdriver-project-id", "Google Project ID for use with Stackdriver").orNone
+
   final private val traceProcess = TraceProcess("trace4cats-collector")
 
   override def main: Opts[IO[ExitCode]] =
@@ -67,7 +71,8 @@ object Collector
       jaegerUdpPortOpt,
       logOpt,
       otHostOpt,
-      otPortOpt
+      otPortOpt,
+      stackdriverProjectOpt
     ).mapN(run)
 
   def run(
@@ -79,7 +84,8 @@ object Collector
     jaegerUdpPort: Int,
     log: Boolean,
     otHost: Option[String],
-    otPort: Int
+    otPort: Int,
+    stackdriverProject: Option[String]
   ): IO[ExitCode] =
     (for {
       blocker <- Blocker[IO]
@@ -104,7 +110,13 @@ object Collector
         OpenTelemetrySpanCompleter[IO](blocker, traceProcess, host = host, port = otPort)
       }
 
-      sink = Sink[IO](List(collectorCompleter, jaegerCompleter, logCompleter, otCompleter).flatten: _*)
+      stackdriverCompleter <- stackdriverProject.traverse { projectId =>
+        StackdriverCompleter[IO](blocker, traceProcess, projectId = projectId)
+      }
+
+      sink = Sink[IO](
+        List(collectorCompleter, jaegerCompleter, logCompleter, otCompleter, stackdriverCompleter).flatten: _*
+      )
 
       tcp <- AvroServer.tcp[IO](blocker, sink, port)
       udp <- AvroServer.udp[IO](blocker, sink, port)
