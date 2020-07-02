@@ -30,7 +30,19 @@ The following interfaces allow different backends to be plugged in and may adjus
 are sampled.
 
 #### `SpanCompleter`
-Used when a span or batch of spans are finished. Multiple implementations may be combined using
+Used when a spans is finished. Multiple implementations may be combined using
+the provided `Monoid` instance.
+
+The following implementations are provided out of the box:
+
+- [Jaeger] agent via Thrift over UDP
+- [OpenTelemetry] collector via Protobufs over GRPC
+- Log using [Log4Cats]
+- Trace4Cats Avro over TCP or UDP
+- [Stackdriver Trace] over HTTP or GRPC
+
+#### `SpanExporter`
+Used when a batch of spans are finished. Multiple implementations may be combined using
 the provided `Monoid` instance.
 
 The following implementations are provided out of the box:
@@ -73,7 +85,7 @@ docker run -it janstenpickle/trace4cats-agent:<version or latest>
 
 ### Collector
 
-A standalone server designed to forward spans via various `SpanCompleter` implementations. Currently
+A standalone server designed to forward spans via various `SpanExporter` implementations. Currently
 the collector supports the following forwarders:
 
 - [Jaeger] via Thrift over UDP
@@ -95,10 +107,13 @@ To use Trace4Cats within your application add the dependencies listed below as n
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % <version>
 "io.janstenpickle" %% "trace4cats-natchez" % <version>
-"io.janstenpickle" %% "trace4cats-avro-completer" % <version>
-"io.janstenpickle" %% "trace4cats-jaeger-thrift-completer" % <version>
-"io.janstenpickle" %% "log-completer" % <version>
-"io.janstenpickle" %% "opentelemetry-completer" % <version>
+"io.janstenpickle" %% "trace4cats-avro-exporter" % <version>
+"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % <version>
+"io.janstenpickle" %% "log-exporter" % <version>
+"io.janstenpickle" %% "opentelemetry-exporter" % <version>
+"io.janstenpickle" %% "stackdriver-grpc-exporter" % <version>
+"io.janstenpickle" %% "stackdriver-http-exporter" % <version>
+
 ```
 
 The example below shows how to create a [Natchez] trace `entryPoint` using Trace4Cats. Spans will
