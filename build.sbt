@@ -43,15 +43,15 @@ lazy val root = (project in file("."))
     core,
     kernel,
     avro,
-    `avro-completer`,
+    `avro-exporter`,
     `avro-server`,
     `avro-test`,
     `completer-common`,
-    `log-completer`,
-    `jaeger-thrift-completer`,
-    `opentelemetry-completer`,
-    `stackdriver-grpc-completer`,
-    `stackdriver-http-completer`,
+    `log-exporter`,
+    `jaeger-thrift-exporter`,
+    `opentelemetry-exporter`,
+    `stackdriver-grpc-exporter`,
+    `stackdriver-http-exporter`,
     natchez
   )
 
@@ -77,7 +77,7 @@ lazy val `avro-test` = (project in file("modules/avro-test"))
   .settings(noPublishSettings)
   .settings(name := "trace4cats-avro-test", libraryDependencies ++= Dependencies.test.map(_ % Test))
   .dependsOn(model)
-  .dependsOn(`avro-completer`, `avro-server`, test % "test->compile")
+  .dependsOn(`avro-exporter`, `avro-server`, test % "test->compile")
 
 lazy val kernel =
   (project in file("modules/kernel"))
@@ -108,30 +108,30 @@ lazy val avro =
     )
     .dependsOn(model)
 
-lazy val `log-completer` =
-  (project in file("modules/log-completer"))
+lazy val `log-exporter` =
+  (project in file("modules/log-exporter"))
     .settings(publishSettings)
     .settings(
-      name := "trace4cats-log-completer",
+      name := "trace4cats-log-exporter",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.log4cats)
     )
     .dependsOn(model, kernel)
 
-lazy val `jaeger-thrift-completer` =
-  (project in file("modules/jaeger-thrift-completer"))
+lazy val `jaeger-thrift-exporter` =
+  (project in file("modules/jaeger-thrift-exporter"))
     .settings(publishSettings)
     .settings(
-      name := "trace4cats-jaeger-thrift-completer",
+      name := "trace4cats-jaeger-thrift-exporter",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.jaegerThrift)
     )
     .dependsOn(model, kernel, `completer-common`)
 
-lazy val `opentelemetry-completer` =
-  (project in file("modules/opentelemetry-completer"))
+lazy val `opentelemetry-exporter` =
+  (project in file("modules/opentelemetry-exporter"))
     .settings(publishSettings)
     .settings(commonSettings)
     .settings(
-      name := "trace4cats-opentelemetry-completer",
+      name := "trace4cats-opentelemetry-exporter",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.openTelemetryExporter)
     )
     .dependsOn(model, kernel, `completer-common`)
@@ -141,11 +141,11 @@ lazy val `stackdriver-common` =
     .settings(publishSettings)
     .settings(name := "trace4cats-stackdriver-common")
 
-lazy val `stackdriver-grpc-completer` =
-  (project in file("modules/stackdriver-grpc-completer"))
+lazy val `stackdriver-grpc-exporter` =
+  (project in file("modules/stackdriver-grpc-exporter"))
     .settings(publishSettings)
     .settings(
-      name := "trace4cats-stackdriver-grpc-completer",
+      name := "trace4cats-stackdriver-grpc-exporter",
       libraryDependencies ++= Seq(
         Dependencies.catsEffect,
         Dependencies.fs2,
@@ -155,11 +155,11 @@ lazy val `stackdriver-grpc-completer` =
     )
     .dependsOn(model, kernel, `completer-common`, `stackdriver-common`)
 
-lazy val `stackdriver-http-completer` =
-  (project in file("modules/stackdriver-http-completer"))
+lazy val `stackdriver-http-exporter` =
+  (project in file("modules/stackdriver-http-exporter"))
     .settings(publishSettings)
     .settings(
-      name := "trace4cats-stackdriver-http-completer",
+      name := "trace4cats-stackdriver-http-exporter",
       libraryDependencies ++= Seq(
         Dependencies.catsEffect,
         Dependencies.circeGeneric,
@@ -185,11 +185,11 @@ lazy val `completer-common` =
     )
     .dependsOn(model, kernel)
 
-lazy val `avro-completer` =
-  (project in file("modules/avro-completer"))
+lazy val `avro-exporter` =
+  (project in file("modules/avro-exporter"))
     .settings(publishSettings)
     .settings(
-      name := "trace4cats-avro-completer",
+      name := "trace4cats-avro-exporter",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.fs2Io)
     )
     .dependsOn(model, kernel, avro, `completer-common`)
@@ -241,7 +241,7 @@ lazy val agent = (project in file("modules/agent"))
     ),
     libraryDependencies ++= Seq(Dependencies.declineEffect, Dependencies.log4cats, Dependencies.logback)
   )
-  .dependsOn(model, `avro-completer`, `avro-server`)
+  .dependsOn(model, `avro-exporter`, `avro-server`)
   .enablePlugins(GraalVMNativeImagePlugin)
 
 lazy val collector = (project in file("modules/collector"))
@@ -267,12 +267,12 @@ lazy val collector = (project in file("modules/collector"))
   )
   .dependsOn(
     model,
-    `avro-completer`,
+    `avro-exporter`,
     `avro-server`,
-    `jaeger-thrift-completer`,
-    `log-completer`,
-    `opentelemetry-completer`,
-    `stackdriver-grpc-completer`,
-    `stackdriver-http-completer`
+    `jaeger-thrift-exporter`,
+    `log-exporter`,
+    `opentelemetry-exporter`,
+    `stackdriver-grpc-exporter`,
+    `stackdriver-http-exporter`
   )
   .enablePlugins(UniversalPlugin, JavaAppPackaging, DockerPlugin)
