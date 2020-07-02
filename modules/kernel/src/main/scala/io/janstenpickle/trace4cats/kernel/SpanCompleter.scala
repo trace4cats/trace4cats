@@ -2,11 +2,10 @@ package io.janstenpickle.trace4cats.kernel
 
 import cats.kernel.Monoid
 import cats.{Applicative, Apply, Parallel}
-import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan}
+import io.janstenpickle.trace4cats.model.CompletedSpan
 
 trait SpanCompleter[F[_]] {
   def complete(span: CompletedSpan): F[Unit]
-  def completeBatch(batch: Batch): F[Unit]
 }
 
 object SpanCompleter extends LowPrioritySpanCompleterInstances {
@@ -16,9 +15,6 @@ object SpanCompleter extends LowPrioritySpanCompleterInstances {
         new SpanCompleter[F] {
           override def complete(span: CompletedSpan): F[Unit] =
             Parallel.parMap2(x.complete(span), y.complete(span))((_, _) => ())
-
-          override def completeBatch(batch: Batch): F[Unit] =
-            Parallel.parMap2(x.completeBatch(batch), y.completeBatch(batch))((_, _) => ())
         }
 
       override def empty: SpanCompleter[F] = SpanCompleter.empty[F]
@@ -32,9 +28,6 @@ trait LowPrioritySpanCompleterInstances {
         new SpanCompleter[F] {
           override def complete(span: CompletedSpan): F[Unit] =
             Apply[F].map2(x.complete(span), y.complete(span))((_, _) => ())
-
-          override def completeBatch(batch: Batch): F[Unit] =
-            Apply[F].map2(x.completeBatch(batch), y.completeBatch(batch))((_, _) => ())
         }
 
       override def empty: SpanCompleter[F] = SpanCompleter.empty[F]
@@ -42,6 +35,5 @@ trait LowPrioritySpanCompleterInstances {
 
   def empty[F[_]: Applicative]: SpanCompleter[F] = new SpanCompleter[F] {
     override def complete(span: CompletedSpan): F[Unit] = Applicative[F].unit
-    override def completeBatch(batch: Batch): F[Unit] = Applicative[F].unit
   }
 }

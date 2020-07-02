@@ -138,7 +138,6 @@ The following span completers have been found to be compatible with [`native-ima
 
 ## TODO
 
-- [ ] Better unit test coverage
 - [ ] Initial release
 - [ ] Integration tests
 - [ ] Detailed examples

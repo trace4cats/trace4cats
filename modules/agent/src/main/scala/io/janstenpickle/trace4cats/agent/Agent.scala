@@ -7,7 +7,6 @@ import com.monovore.decline.effect._
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.avro._
 import io.janstenpickle.trace4cats.avro.server.AvroServer
-import io.janstenpickle.trace4cats.model.TraceProcess
 
 object Agent extends CommandIOApp(name = "trace4cats-agent", header = "Trace 4 Cats Agent", version = "0.1.0") {
 
@@ -41,9 +40,9 @@ object Agent extends CommandIOApp(name = "trace4cats-agent", header = "Trace 4 C
           .info(s"Starting Trace 4 Cats Agent on udp://::$port. Forwarding to tcp://$collectorHost:$collectorPort")
       )(_ => logger.info("Shutting down Trace 4 Cats Agent"))
 
-      avroCompleter <- AvroSpanCompleter
-        .tcp[IO](blocker, TraceProcess("trace4cats-agent"), host = collectorHost, port = collectorPort)
+      avroExporter <- AvroSpanExporter
+        .tcp[IO](blocker, host = collectorHost, port = collectorPort)
 
-      udpServer <- AvroServer.udp[IO](blocker, _.evalMap(avroCompleter.completeBatch), port)
+      udpServer <- AvroServer.udp[IO](blocker, _.evalMap(avroExporter.exportBatch), port)
     } yield udpServer).use(_.compile.drain.as(ExitCode.Success))
 }

@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.kernel
 import cats.effect.IO
 import cats.kernel.laws.discipline.MonoidTests
 import cats.{Applicative, Eq, Id}
-import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan}
+import io.janstenpickle.trace4cats.model.CompletedSpan
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -11,7 +11,6 @@ import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 
 class SpanCompleterSpec extends AnyFunSuite with ScalaCheckDrivenPropertyChecks with FunSuiteDiscipline {
   val completedSpan: CompletedSpan = null
-  val batch: Batch = null
 
   def spanCompleterArb[F[_]: Applicative]: Arbitrary[SpanCompleter[F]] =
     Arbitrary(Gen.const(SpanCompleter.empty[F]))
@@ -20,14 +19,12 @@ class SpanCompleterSpec extends AnyFunSuite with ScalaCheckDrivenPropertyChecks 
 
   implicit val idSpanCompleterEq: Eq[SpanCompleter[Id]] = new Eq[SpanCompleter[Id]] {
     override def eqv(x: SpanCompleter[Id], y: SpanCompleter[Id]): Boolean =
-      x.complete(completedSpan) === y.complete(completedSpan) && x.completeBatch(batch) === y.completeBatch(batch)
+      x.complete(completedSpan) === y.complete(completedSpan)
   }
 
   implicit val ioSpanCompleterEq: Eq[SpanCompleter[IO]] = new Eq[SpanCompleter[IO]] {
     override def eqv(x: SpanCompleter[IO], y: SpanCompleter[IO]): Boolean =
-      x.complete(completedSpan).unsafeRunSync() === y.complete(completedSpan).unsafeRunSync() && x
-        .completeBatch(batch)
-        .unsafeRunSync() === y.completeBatch(batch).unsafeRunSync()
+      x.complete(completedSpan).unsafeRunSync() === y.complete(completedSpan).unsafeRunSync()
   }
 
   checkAll("SpanCompleter Monoid non-parallel", MonoidTests[SpanCompleter[Id]].monoid)

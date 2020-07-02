@@ -53,6 +53,7 @@ object Dependencies {
   lazy val vulcanEnumeratum = "com.github.fd4s"        %% "vulcan-enumeratum"              % Versions.vulcan
 
   lazy val catsLaws = "org.typelevel"                         %% "cats-laws"                 % Versions.cats
+  lazy val catsEffectLaws = "org.typelevel"                   %% "cats-effect-laws"          % Versions.catsEffect
   lazy val disciplineScalatest = "org.typelevel"              %% "discipline-scalatest"      % Versions.disciplineScalatest
   lazy val disciplineCore = "org.typelevel"                   %% "discipline-core"           % Versions.discipline
   lazy val scalacheck = "org.scalacheck"                      %% "scalacheck"                % Versions.scalaCheck

@@ -5,7 +5,7 @@ import cats.effect.concurrent.Ref
 import cats.effect.{Blocker, IO, Resource}
 import cats.implicits._
 import cats.kernel.Eq
-import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
+import io.janstenpickle.trace4cats.avro.{AvroSpanCompleter, AvroSpanExporter}
 import io.janstenpickle.trace4cats.avro.server.AvroServer
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceProcess}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
@@ -30,7 +30,7 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
   behavior.of("Avro TCP")
 
   it should "send batches" in {
-    forAll { (process: TraceProcess, batch: Batch) =>
+    forAll { batch: Batch =>
       val ref = Ref.unsafe[IO, Option[Batch]](None)
 
       (for {
@@ -39,8 +39,8 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
         })
         _ <- server.compile.drain.background
         _ <- Resource.liftF(timer.sleep(2.seconds))
-        completer <- AvroSpanCompleter.tcp[IO](blocker, process)
-      } yield completer).use(_.completeBatch(batch) >> timer.sleep(3.seconds)).unsafeRunSync()
+        completer <- AvroSpanExporter.tcp[IO](blocker)
+      } yield completer).use(_.exportBatch(batch) >> timer.sleep(3.seconds)).unsafeRunSync()
 
       assert(Eq[Option[Batch]].eqv(ref.get.unsafeRunSync(), Some(batch)))
     }
@@ -66,7 +66,7 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
   behavior.of("Avro UDP")
 
   it should "send batches" in {
-    forAll { (process: TraceProcess, batch: Batch) =>
+    forAll { batch: Batch =>
       val ref = Ref.unsafe[IO, Option[Batch]](None)
 
       (for {
@@ -75,8 +75,8 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
         })
         _ <- server.compile.drain.background
         _ <- Resource.liftF(timer.sleep(1.second))
-        completer <- AvroSpanCompleter.udp[IO](blocker, process)
-      } yield completer).use(_.completeBatch(batch) >> timer.sleep(3.seconds)).unsafeRunSync()
+        completer <- AvroSpanExporter.udp[IO](blocker)
+      } yield completer).use(_.exportBatch(batch) >> timer.sleep(3.seconds)).unsafeRunSync()
 
       assert(Eq[Option[Batch]].eqv(ref.get.unsafeRunSync(), Some(batch)))
     }

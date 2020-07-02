@@ -43,13 +43,14 @@ lazy val root = (project in file("."))
     core,
     kernel,
     avro,
-    `log-completer`,
-    `jaeger-thrift-completer`,
-    `stackdriver-completer`,
-    `opentelemetry-completer`,
     `avro-completer`,
     `avro-server`,
     `avro-test`,
+    `completer-common`,
+    `log-completer`,
+    `jaeger-thrift-completer`,
+    `opentelemetry-completer`,
+    `stackdriver-completer`,
     natchez
   )
 
@@ -85,15 +86,15 @@ lazy val kernel =
       libraryDependencies ++= Dependencies.test.map(_     % Test),
       libraryDependencies ++= Seq(Dependencies.catsEffect % Test)
     )
-    .dependsOn(model)
+    .dependsOn(model, test % "test->compile")
 
 lazy val core =
   (project in file("modules/core"))
     .settings(publishSettings)
     .settings(
       name := "trace4cats-core",
-      libraryDependencies ++= Dependencies.test.map(_ % Test),
-      libraryDependencies ++= Seq(Dependencies.catsEffect)
+      libraryDependencies ++= Dependencies.test.map(_                                  % Test),
+      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.catsEffectLaws % Test)
     )
     .dependsOn(model, kernel, test % "test->compile")
 
@@ -122,7 +123,7 @@ lazy val `jaeger-thrift-completer` =
       name := "trace4cats-jaeger-thrift-completer",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.jaegerThrift)
     )
-    .dependsOn(model, kernel)
+    .dependsOn(model, kernel, `completer-common`)
 
 lazy val `opentelemetry-completer` =
   (project in file("modules/opentelemetry-completer"))
@@ -132,7 +133,7 @@ lazy val `opentelemetry-completer` =
       name := "trace4cats-opentelemetry-completer",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.openTelemetryExporter)
     )
-    .dependsOn(model, kernel)
+    .dependsOn(model, kernel, `completer-common`)
 
 lazy val `stackdriver-completer` =
   (project in file("modules/stackdriver-completer"))
@@ -147,7 +148,16 @@ lazy val `stackdriver-completer` =
         Dependencies.googleCloudTrace
       )
     )
-    .dependsOn(model, kernel)
+    .dependsOn(model, kernel, `completer-common`)
+
+lazy val `completer-common` =
+  (project in file("modules/completer-common"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-completer-common",
+      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2)
+    )
+    .dependsOn(model, kernel, avro)
 
 lazy val `avro-completer` =
   (project in file("modules/avro-completer"))
@@ -156,7 +166,7 @@ lazy val `avro-completer` =
       name := "trace4cats-avro-completer",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.fs2Io)
     )
-    .dependsOn(model, kernel, avro)
+    .dependsOn(model, kernel, avro, `completer-common`)
 
 lazy val `avro-server` =
   (project in file("modules/avro-server"))

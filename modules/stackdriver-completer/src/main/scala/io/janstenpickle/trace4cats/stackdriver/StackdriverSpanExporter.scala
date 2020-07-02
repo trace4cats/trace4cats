@@ -3,7 +3,6 @@ package io.janstenpickle.trace4cats.stackdriver
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
-import cats.effect.syntax.concurrent._
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
 import cats.syntax.functor._
 import cats.syntax.show._
@@ -15,29 +14,23 @@ import com.google.devtools.cloudtrace.v2.Span.Attributes
 import com.google.devtools.cloudtrace.v2._
 import com.google.protobuf.{BoolValue, Timestamp}
 import com.google.rpc.Status
-import fs2.Stream
-import fs2.concurrent.Queue
-import io.janstenpickle.trace4cats.kernel.SpanCompleter
+import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model._
 
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
-object StackdriverCompleter {
+object StackdriverSpanExporter {
   final val ServiceNameAttributeKey = "service-name"
   private final val ServerPrefix = "Recv."
   private final val ClientPrefix = "Sent."
 
   def apply[F[_]: Concurrent: ContextShift: Timer](
     blocker: Blocker,
-    process: TraceProcess,
     projectId: String,
     credentials: Option[Credentials] = None,
-    requestTimeout: FiniteDuration = 5.seconds,
-    bufferSize: Int = 2000,
-    batchSize: Int = 50,
-    batchTimeout: FiniteDuration = 10.seconds
-  ): Resource[F, SpanCompleter[F]] = {
+    requestTimeout: FiniteDuration = 5.seconds
+  ): Resource[F, SpanExporter[F]] = {
     val projectName = ProjectName.of(projectId)
 
     val traceClient: F[TraceServiceClient] = Sync[F].delay {
@@ -123,29 +116,10 @@ object StackdriverCompleter {
     def write(client: TraceServiceClient, process: TraceProcess, spans: List[CompletedSpan]) =
       blocker.delay(client.batchWriteSpans(projectName, spans.map(convert(process, _)).asJava))
 
-    for {
-      client <- Resource.liftF(traceClient)
-      queue <- Resource.liftF(Queue.circularBuffer[F, CompletedSpan](bufferSize))
-      _ <- Stream
-        .retry(
-          queue.dequeue
-            .groupWithin(batchSize, batchTimeout)
-            .evalMap { spans =>
-              write(client, process, spans.toList)
-            }
-            .compile
-            .drain,
-          5.seconds,
-          _ + 1.second,
-          Int.MaxValue
-        )
-        .compile
-        .drain
-        .background
-    } yield
-      new SpanCompleter[F] {
-        override def complete(span: CompletedSpan): F[Unit] = queue.enqueue1(span)
-        override def completeBatch(batch: Batch): F[Unit] = write(client, batch.process, batch.spans).void
+    Resource.make(traceClient)(client => Sync[F].delay(client.shutdown())).map { client =>
+      new SpanExporter[F] {
+        override def exportBatch(batch: Batch): F[Unit] = write(client, batch.process, batch.spans).void
       }
+    }
   }
 }

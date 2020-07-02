@@ -20,7 +20,7 @@ object SpanSampler {
       spanName: String,
       spanKind: SpanKind
     ): F[Boolean] =
-      Applicative[F].pure(false)
+      Applicative[F].pure(parentContext.fold(false)(_.traceFlags.sampled))
   }
 
   def never[F[_]: Applicative]: SpanSampler[F] = new SpanSampler[F] {

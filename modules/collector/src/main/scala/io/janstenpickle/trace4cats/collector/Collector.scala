@@ -4,16 +4,16 @@ import cats.effect.{Blocker, ExitCode, IO, Resource}
 import cats.implicits._
 import com.monovore.decline._
 import com.monovore.decline.effect._
+import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.jaegertracing.thrift.internal.senders.UdpSender
 import io.janstenpickle.trace4cats.avro._
 import io.janstenpickle.trace4cats.avro.server.AvroServer
-import io.janstenpickle.trace4cats.jaeger.JaegerSpanCompleter
-import io.janstenpickle.trace4cats.kernel.SpanCompleter
-import io.janstenpickle.trace4cats.log.LogCompleter
-import io.janstenpickle.trace4cats.model.TraceProcess
-import io.janstenpickle.trace4cats.opentelemetry.OpenTelemetrySpanCompleter
-import io.janstenpickle.trace4cats.stackdriver.StackdriverCompleter
+import io.janstenpickle.trace4cats.jaeger.JaegerSpanExporter
+import io.janstenpickle.trace4cats.kernel.SpanExporter
+import io.janstenpickle.trace4cats.log.LogExporter
+import io.janstenpickle.trace4cats.opentelemetry.OpenTelemetrySpanExporter
+import io.janstenpickle.trace4cats.stackdriver.StackdriverSpanExporter
 
 object Collector
     extends CommandIOApp(name = "trace4cats-collector", header = "Trace 4 Cats Collector", version = "0.1.0") {
@@ -59,8 +59,6 @@ object Collector
   val stackdriverProjectOpt: Opts[Option[String]] =
     Opts.option[String]("stackdriver-project-id", "Google Project ID for use with Stackdriver").orNone
 
-  final private val traceProcess = TraceProcess("trace4cats-collector")
-
   override def main: Opts[IO[ExitCode]] =
     (
       portOpt,
@@ -90,33 +88,31 @@ object Collector
     (for {
       blocker <- Blocker[IO]
 
-      logger <- Resource.liftF(Slf4jLogger.create[IO])
+      implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
       _ <- Resource.make(logger.info(s"Starting Trace 4 Cats Collector listening on tcp://::$port and udp://::$port"))(
         _ => logger.info("Shutting down Trace 4 Cats Collector")
       )
 
-      collectorCompleter <- collectorHost.traverse { host =>
-        AvroSpanCompleter.tcp[IO](blocker, traceProcess, host = host, port = collectorPort)
+      collectorExporter <- collectorHost.traverse { host =>
+        AvroSpanExporter.tcp[IO](blocker, host = host, port = collectorPort)
       }
 
-      jaegerCompleter <- if (jaegerUdp)
-        JaegerSpanCompleter[IO](blocker, traceProcess, host = jaegerUdpHost, port = jaegerUdpPort).map(Some(_))
-      else Resource.pure[IO, Option[SpanCompleter[IO]]](None)
+      jaegerExporter <- if (jaegerUdp)
+        JaegerSpanExporter[IO](blocker, host = jaegerUdpHost, port = jaegerUdpPort).map(Some(_))
+      else Resource.pure[IO, Option[SpanExporter[IO]]](None)
 
-      logCompleter <- if (log) Resource.liftF(LogCompleter.create[IO]).map(Some(_))
-      else Resource.pure[IO, Option[SpanCompleter[IO]]](None)
+      logExporter <- if (log) Resource.pure[IO, SpanExporter[IO]](LogExporter[IO]).map(Some(_))
+      else Resource.pure[IO, Option[SpanExporter[IO]]](None)
 
-      otCompleter <- otHost.traverse { host =>
-        OpenTelemetrySpanCompleter[IO](blocker, traceProcess, host = host, port = otPort)
+      otExporter <- otHost.traverse { host =>
+        OpenTelemetrySpanExporter[IO](blocker, host = host, port = otPort)
       }
 
-      stackdriverCompleter <- stackdriverProject.traverse { projectId =>
-        StackdriverCompleter[IO](blocker, traceProcess, projectId = projectId)
+      stackdriverExporter <- stackdriverProject.traverse { projectId =>
+        StackdriverSpanExporter[IO](blocker, projectId = projectId)
       }
 
-      sink = Sink[IO](
-        List(collectorCompleter, jaegerCompleter, logCompleter, otCompleter, stackdriverCompleter).flatten: _*
-      )
+      sink = Sink[IO](List(collectorExporter, jaegerExporter, logExporter, otExporter, stackdriverExporter).flatten: _*)
 
       tcp <- AvroServer.tcp[IO](blocker, sink, port)
       udp <- AvroServer.udp[IO](blocker, sink, port)
