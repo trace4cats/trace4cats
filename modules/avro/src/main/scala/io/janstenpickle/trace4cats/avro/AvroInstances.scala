@@ -1,11 +1,11 @@
 package io.janstenpickle.trace4cats.avro
 
 import cats.ApplicativeError
+import cats.syntax.either._
 import io.janstenpickle.trace4cats.model._
+import org.apache.avro.Schema
 import vulcan.generic._
 import vulcan.{AvroError, Codec}
-import cats.syntax.either._
-import org.apache.avro.Schema
 
 object AvroInstances {
   implicit val spanIdCodec: Codec[SpanId] =

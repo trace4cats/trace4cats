@@ -11,20 +11,18 @@ import com.google.auth.Credentials
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.trace.v2.{TraceServiceClient, TraceServiceSettings}
 import com.google.devtools.cloudtrace.v2.Span.Attributes
-import com.google.devtools.cloudtrace.v2._
+import com.google.devtools.cloudtrace.v2.{TruncatableString => GTruncatableString, _}
 import com.google.protobuf.{BoolValue, Timestamp}
 import com.google.rpc.Status
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model._
+import io.janstenpickle.trace4cats.stackdriver.common.TruncatableString
 
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
+import io.janstenpickle.trace4cats.stackdriver.common.StackdriverConstants._
 
-object StackdriverSpanExporter {
-  final val ServiceNameAttributeKey = "service-name"
-  private final val ServerPrefix = "Recv."
-  private final val ClientPrefix = "Sent."
-
+object StackdriverGrpcSpanExporter {
   def apply[F[_]: Concurrent: ContextShift: Timer](
     blocker: Blocker,
     projectId: String,
@@ -46,8 +44,13 @@ object StackdriverSpanExporter {
       TraceServiceClient.create(clientBuilder.build())
     }
 
-    def toTruncatableStringProto(string: String) =
-      TruncatableString.newBuilder.setValue(string).setTruncatedByteCount(0).build
+    def toTruncatableStringProto(string: String) = {
+      val truncatableString = TruncatableString(string)
+      GTruncatableString.newBuilder
+        .setValue(truncatableString.value)
+        .setTruncatedByteCount(truncatableString.truncatedByteCount)
+        .build
+    }
 
     def toTimestampProto(timestamp: Long): Timestamp = {
       val instant = Instant.ofEpochMilli(TimeUnit.MICROSECONDS.toMillis(timestamp))

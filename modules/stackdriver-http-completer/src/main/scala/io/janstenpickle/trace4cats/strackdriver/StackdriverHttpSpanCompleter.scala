@@ -1,43 +1,44 @@
-package io.janstenpickle.trace4cats.avro
+package io.janstenpickle.trace4cats.strackdriver
 
-import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Timer}
+import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.completer.QueuedSpanCompleter
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.TraceProcess
+import org.http4s.client.Client
 
 import scala.concurrent.duration._
 
-object AvroSpanCompleter {
-  def udp[F[_]: Concurrent: ContextShift: Timer](
+object StackdriverHttpSpanCompleter {
+  def emberClient[F[_]: ConcurrentEffect: ContextShift: Timer](
     blocker: Blocker,
     process: TraceProcess,
-    host: String = agentHostname,
-    port: Int = agentPort,
+    projectId: String,
+    serviceAccountPath: String,
     bufferSize: Int = 2000,
     batchSize: Int = 50,
     batchTimeout: FiniteDuration = 10.seconds
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- AvroSpanExporter.udp[F](blocker, host, port, bufferSize)
+      exporter <- StackdriverHttpSpanExporter.emberClient[F](blocker, projectId, serviceAccountPath)
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
 
-  def tcp[F[_]: Concurrent: ContextShift: Timer](
-    blocker: Blocker,
+  def apply[F[_]: Concurrent: Timer](
     process: TraceProcess,
-    host: String = agentHostname,
-    port: Int = agentPort,
+    projectId: String,
+    serviceAccountPath: String,
+    client: Client[F],
     bufferSize: Int = 2000,
     batchSize: Int = 50,
     batchTimeout: FiniteDuration = 10.seconds
-  ): Resource[F, SpanCompleter[F]] = {
+  ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- AvroSpanExporter.tcp[F](blocker, host, port, bufferSize)
+      exporter <- Resource.liftF(StackdriverHttpSpanExporter[F](projectId, serviceAccountPath, client))
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
-  }
+
 }

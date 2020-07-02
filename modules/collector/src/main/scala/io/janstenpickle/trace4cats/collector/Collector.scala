@@ -13,7 +13,8 @@ import io.janstenpickle.trace4cats.jaeger.JaegerSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.log.LogExporter
 import io.janstenpickle.trace4cats.opentelemetry.OpenTelemetrySpanExporter
-import io.janstenpickle.trace4cats.stackdriver.StackdriverSpanExporter
+import io.janstenpickle.trace4cats.stackdriver.StackdriverGrpcSpanExporter
+import io.janstenpickle.trace4cats.strackdriver.StackdriverHttpSpanExporter
 
 object Collector
     extends CommandIOApp(name = "trace4cats-collector", header = "Trace 4 Cats Collector", version = "0.1.0") {
@@ -56,8 +57,22 @@ object Collector
   val otPortOpt: Opts[Int] =
     Opts.option[Int]("opentelemetry-host", "OpenTelelmetry protobufs port").orNone.map(_.getOrElse(55678))
 
+  val stackdriverHttpOpt: Opts[Boolean] = Opts
+    .flag(
+      "stackdriver-http",
+      "Use stackdriver in HTTP mode rather than GRPC (default). Requires a credentials file to be provided along with project ID"
+    )
+    .orFalse
+
   val stackdriverProjectOpt: Opts[Option[String]] =
     Opts.option[String]("stackdriver-project-id", "Google Project ID for use with Stackdriver").orNone
+
+  val stackdriverCredentialsFileOpt: Opts[Option[String]] = Opts
+    .option[String](
+      "stackdriver-credentials-file",
+      "Google service account credenitals file for publishing to stackdriver"
+    )
+    .orNone
 
   override def main: Opts[IO[ExitCode]] =
     (
@@ -70,7 +85,9 @@ object Collector
       logOpt,
       otHostOpt,
       otPortOpt,
-      stackdriverProjectOpt
+      stackdriverHttpOpt,
+      stackdriverProjectOpt,
+      stackdriverCredentialsFileOpt
     ).mapN(run)
 
   def run(
@@ -83,7 +100,9 @@ object Collector
     log: Boolean,
     otHost: Option[String],
     otPort: Int,
-    stackdriverProject: Option[String]
+    stackdriverHttp: Boolean,
+    stackdriverProject: Option[String],
+    stackdriverCredentialsFile: Option[String]
   ): IO[ExitCode] =
     (for {
       blocker <- Blocker[IO]
@@ -108,8 +127,13 @@ object Collector
         OpenTelemetrySpanExporter[IO](blocker, host = host, port = otPort)
       }
 
-      stackdriverExporter <- stackdriverProject.traverse { projectId =>
-        StackdriverSpanExporter[IO](blocker, projectId = projectId)
+      stackdriverExporter <- stackdriverProject.flatTraverse { projectId =>
+        if (stackdriverHttp) stackdriverCredentialsFile.traverse { credsFile =>
+          Resource.liftF(for {
+            client <- Http4sJdkClient[IO](blocker)
+            exporter <- StackdriverHttpSpanExporter[IO](projectId, credsFile, client)
+          } yield exporter)
+        } else StackdriverGrpcSpanExporter[IO](blocker, projectId = projectId).map(Some(_))
       }
 
       sink = Sink[IO](List(collectorExporter, jaegerExporter, logExporter, otExporter, stackdriverExporter).flatten: _*)

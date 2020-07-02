@@ -39,6 +39,7 @@ The following implementations are provided out of the box:
 - [OpenTelemetry] collector via Protobufs over GRPC
 - Log using [Log4Cats]
 - Trace4Cats Avro over TCP or UDP
+- [Stackdriver Trace] over HTTP or GRPC
 
 #### `SpanSampler`
 Used to decide whether or not a span should be sampled.
@@ -79,6 +80,7 @@ the collector supports the following forwarders:
 - [OpenTelemetry] via Protobufs over GRPC
 - Log using [Log4Cats]
 - Trace4Cats Avro over TCP
+- [Stackdriver Trace] over HTTP and GRPC
 
 #### Running
 
@@ -127,14 +129,16 @@ val entryPoint: Resource[IO, Entrypoint[IO]] =
 The following span completers have been found to be compatible with [`native-image`]:
 
 - Trace4Cats Avro
-- Jaeger Thrift over UDP
+- [Jaeger] Thrift over UDP
 - Log
+- [Stackdriver Trace] over HTTP
 
 [Jaeger]: https://www.jaegertracing.io/
 [Log4Cats]: https://github.com/ChristopherDavenport/log4cats
 [Natchez]: https://github.com/tpolecat/natchez
 [`native-image`]: https://www.graalvm.org/docs/reference-manual/native-image/ 
 [OpenTelemetry]: http://opentelemetry.io
+[Stackdriver Trace]: https://cloud.google.com/trace/docs/reference
 
 ## TODO
 
