@@ -4,6 +4,9 @@ import cats.effect.syntax.concurrent._
 import cats.effect.{Concurrent, Resource, Timer}
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
+import cats.syntax.traverse._
+import cats.instances.option._
+import cats.syntax.functor._
 import fs2.Stream
 import fs2.concurrent.{InspectableQueue, Queue}
 import io.chrisdavenport.log4cats.Logger
@@ -33,9 +36,11 @@ object QueuedSpanCompleter {
         }
 
     def drain(queue: InspectableQueue[F, CompletedSpan], exporter: SpanExporter[F]): F[Unit] =
-      queue.getSize.flatMap(queue.tryDequeueChunk1).flatMap { chunk =>
-        exporter.exportBatch(Batch(process, chunk.toList.flatMap(_.toList)))
-      }
+      queue.getSize
+        .flatMap(queue.tryDequeueChunk1)
+        .flatMap(_.traverse { chunk =>
+          exporter.exportBatch(Batch(process, chunk.toList))
+        }.void)
 
     for {
       queue <- Resource.liftF(InspectableQueue.circularBuffer[F, CompletedSpan](bufferSize))
