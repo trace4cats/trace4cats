@@ -7,9 +7,10 @@ import com.monovore.decline.effect._
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.jaegertracing.thrift.internal.senders.UdpSender
+import io.janstenpickle.trace4cats.`export`.QueuedSpanExporter
 import io.janstenpickle.trace4cats.avro._
 import io.janstenpickle.trace4cats.avro.server.AvroServer
-import io.janstenpickle.trace4cats.collector.common.{Http4sJdkClient, Sink}
+import io.janstenpickle.trace4cats.collector.common.Http4sJdkClient
 import io.janstenpickle.trace4cats.jaeger.JaegerSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.log.LogExporter
@@ -24,7 +25,7 @@ object Collector
     Opts
       .env[Int](CollectorPortEnv, help = "The port to run on.")
       .orElse(Opts.option[Int]("port", "The port to run on"))
-      .withDefault(DefaultPort))
+      .withDefault(DefaultPort)
 
   val collectorHostOpt: Opts[Option[String]] =
     Opts
@@ -36,16 +37,16 @@ object Collector
     Opts
       .env[Int](CollectorPortEnv, "Collector port to forward spans")
       .orElse(Opts.option[Int]("collector-port", "Collector port"))
-      .withDefault(DefaultPort))
+      .withDefault(DefaultPort)
 
   val jaegerUdpOpt: Opts[Boolean] = Opts.flag("jaeger-udp", "Send spans via Jaeger UDP").orFalse
   val jaegerUdpPortOpt: Opts[Int] = Opts
     .option[Int]("jaeger-udp-port", "Jaeger UDP agent port")
-    .withDefault(UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT))
+    .withDefault(UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT)
 
   val jaegerUdpHostOpt: Opts[String] = Opts
     .option[String]("jaeger-udp-host", "Jaeger UDP agent host")
-    .withDefault(UdpSender.DEFAULT_AGENT_UDP_HOST))
+    .withDefault(UdpSender.DEFAULT_AGENT_UDP_HOST)
 
   val logOpt: Opts[Boolean] = Opts.flag("log", "Write spans to the log").orFalse
 
@@ -143,12 +144,12 @@ object Collector
         } else StackdriverGrpcSpanExporter[IO](blocker, projectId = projectId).map(e => Some("Stackdriver GRPC" -> e))
       }
 
-      sink <- Sink[IO](
+      queuedExporter <- QueuedSpanExporter(
         bufferSize,
         List(collectorExporter, jaegerExporter, logExporter, otExporter, stackdriverExporter).flatten
       )
 
-      tcp <- AvroServer.tcp[IO](blocker, sink.pipe, port)
-      udp <- AvroServer.udp[IO](blocker, sink.pipe, port)
+      tcp <- AvroServer.tcp[IO](blocker, _.evalMap(queuedExporter.exportBatch), port)
+      udp <- AvroServer.udp[IO](blocker, _.evalMap(queuedExporter.exportBatch), port)
     } yield tcp.concurrently(udp)).use(_.compile.drain.as(ExitCode.Success))
 }

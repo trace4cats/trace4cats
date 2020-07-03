@@ -1,6 +1,5 @@
-package io.janstenpickle.trace4cats.completer
+package io.janstenpickle.trace4cats.`export`
 
-import cats.Applicative
 import cats.effect.concurrent.Ref
 import cats.effect.syntax.bracket._
 import cats.effect.syntax.concurrent._
@@ -47,11 +46,7 @@ object QueuedSpanCompleter {
           .compile
           .drain
           .start
-      )(
-        fiber =>
-          Applicative[F].unit
-            .whileM_(Timer[F].sleep(50.millis) >> inFlight.get.map(_ != 0)) >> fiber.cancel
-      )
+      )(fiber => Timer[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)
     } yield
       new SpanCompleter[F] {
         override def complete(span: CompletedSpan): F[Unit] =

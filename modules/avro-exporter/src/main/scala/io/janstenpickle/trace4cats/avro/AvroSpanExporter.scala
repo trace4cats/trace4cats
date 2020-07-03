@@ -159,11 +159,12 @@ object AvroSpanExporter {
           .start
       )(
         fiber =>
-          Applicative[F].unit.whileM_(for {
-            mvarSet <- mvar.isEmpty.map(!_)
-            semaphoreSet <- semaphore.count.map(_ == 0)
-            _ <- Timer[F].sleep(50.millis)
-          } yield mvarSet || semaphoreSet) >> fiber.cancel
+          Timer[F]
+            .sleep(50.millis)
+            .whileM_(for {
+              mvarSet <- mvar.isEmpty.map(!_)
+              semaphoreSet <- semaphore.count.map(_ == 0)
+            } yield mvarSet || semaphoreSet) >> fiber.cancel
       )
     } yield
       new SpanExporter[F] {

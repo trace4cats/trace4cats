@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.opentelemetry
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Timer}
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import io.janstenpickle.trace4cats.completer.QueuedSpanCompleter
+import io.janstenpickle.trace4cats.`export`.QueuedSpanCompleter
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.TraceProcess
 

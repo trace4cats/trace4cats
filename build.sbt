@@ -71,9 +71,8 @@ lazy val root = (project in file("."))
     `avro-exporter`,
     `avro-server`,
     `avro-test`,
-    `buffering-exporter`,
     `collector-common`,
-    `completer-common`,
+    `exporter-common`,
     `log-exporter`,
     `jaeger-thrift-exporter`,
     `opentelemetry-exporter`,
@@ -160,7 +159,7 @@ lazy val `jaeger-thrift-exporter` =
       name := "trace4cats-jaeger-thrift-exporter",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.jaegerThrift)
     )
-    .dependsOn(model, kernel, `completer-common`)
+    .dependsOn(model, kernel, `exporter-common`)
 
 lazy val `opentelemetry-exporter` =
   (project in file("modules/opentelemetry-exporter"))
@@ -170,7 +169,7 @@ lazy val `opentelemetry-exporter` =
       name := "trace4cats-opentelemetry-exporter",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.openTelemetryExporter)
     )
-    .dependsOn(model, kernel, `completer-common`)
+    .dependsOn(model, kernel, `exporter-common`)
 
 lazy val `stackdriver-common` =
   (project in file("modules/stackdriver-common"))
@@ -189,7 +188,7 @@ lazy val `stackdriver-grpc-exporter` =
         Dependencies.googleCloudTrace
       )
     )
-    .dependsOn(model, kernel, `completer-common`, `stackdriver-common`)
+    .dependsOn(model, kernel, `exporter-common`, `stackdriver-common`)
 
 lazy val `stackdriver-http-exporter` =
   (project in file("modules/stackdriver-http-exporter"))
@@ -210,13 +209,13 @@ lazy val `stackdriver-http-exporter` =
         Dependencies.logback
       )
     )
-    .dependsOn(model, kernel, `completer-common`, `stackdriver-common`)
+    .dependsOn(model, kernel, `exporter-common`, `stackdriver-common`)
 
-lazy val `completer-common` =
-  (project in file("modules/completer-common"))
+lazy val `exporter-common` =
+  (project in file("modules/exporter-common"))
     .settings(publishSettings)
     .settings(
-      name := "trace4cats-completer-common",
+      name := "trace4cats-exporter-common",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.log4cats)
     )
     .dependsOn(model, kernel)
@@ -228,7 +227,7 @@ lazy val `avro-exporter` =
       name := "trace4cats-avro-exporter",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.fs2Io)
     )
-    .dependsOn(model, kernel, avro, `completer-common`)
+    .dependsOn(model, kernel, avro, `exporter-common`)
 
 lazy val `avro-server` =
   (project in file("modules/avro-server"))
@@ -256,16 +255,8 @@ lazy val agent = (project in file("modules/agent"))
       Dependencies.logback
     )
   )
-  .dependsOn(model, `avro-exporter`, `avro-server`, `buffering-exporter`)
+  .dependsOn(model, `avro-exporter`, `avro-server`, `exporter-common`)
   .enablePlugins(GraalVMNativeImagePlugin)
-
-lazy val `buffering-exporter` = (project in file("modules/buffering-exporter"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-buffering-exporter",
-    libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.log4cats)
-  )
-  .dependsOn(model, kernel)
 
 lazy val `collector-common` = (project in file("modules/collector-common"))
   .settings(publishSettings)
@@ -273,13 +264,12 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
     name := "trace4cats-collector-common",
     libraryDependencies ++= Seq(
       Dependencies.catsEffect,
-      Dependencies.declineEffect,
       Dependencies.fs2,
       Dependencies.http4JdkClient,
       Dependencies.log4cats
     )
   )
-  .dependsOn(model, kernel, `buffering-exporter`)
+  .dependsOn(model, kernel)
 
 lazy val collector = (project in file("modules/collector"))
   .settings(noPublishSettings)
@@ -304,6 +294,7 @@ lazy val collector = (project in file("modules/collector"))
   .dependsOn(
     model,
     `collector-common`,
+    `exporter-common`,
     `avro-exporter`,
     `avro-server`,
     `jaeger-thrift-exporter`,
@@ -329,6 +320,7 @@ lazy val `collector-lite` = (project in file("modules/collector-lite"))
   )
   .dependsOn(
     model,
+    `exporter-common`,
     `collector-common`,
     `avro-exporter`,
     `avro-server`,
