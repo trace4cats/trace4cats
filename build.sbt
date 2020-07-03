@@ -24,16 +24,41 @@ lazy val commonSettings = Seq(
   crossScalaVersions := Seq(Dependencies.Versions.scala213, Dependencies.Versions.scala212)
 )
 
-lazy val noPublishSettings = commonSettings ++ Seq(
-  publish := {},
-  publishLocal := {},
-  publishArtifact := false,
-  publishTo := None
-)
+lazy val noPublishSettings = commonSettings ++ Seq(publish := {}, publishArtifact := false, publishTo := None)
 
 lazy val publishSettings = commonSettings ++ Seq(publishMavenStyle := true, pomIncludeRepository := { _ =>
   false
 }, publishArtifact in Test := false)
+
+lazy val graalSettings = Seq(
+  graalVMNativeImageOptions ++= Seq(
+    "--verbose",
+    "--no-server",
+    "--no-fallback",
+    "--enable-http",
+    "--enable-https",
+    "--enable-all-security-services",
+    "--report-unsupported-elements-at-runtime",
+    "--allow-incomplete-classpath",
+    "-Djava.net.preferIPv4Stack=true",
+    "-H:IncludeResources='.*'",
+    "-H:+ReportExceptionStackTraces",
+    "-H:+ReportUnsupportedElementsAtRuntime",
+    "-H:+TraceClassInitialization",
+    "-H:+PrintClassInitialization",
+    "-H:+RemoveSaturatedTypeFlows",
+    "-H:+StackTrace",
+    "-H:+JNI",
+    "-H:-SpawnIsolates",
+    "-H:-UseServiceLoaderFeature",
+    "-H:ConfigurationFileDirectories=../../native-image/",
+    "--install-exit-handlers",
+    "--initialize-at-build-time=scala.runtime.Statics$VM",
+    "--initialize-at-build-time=scala.Symbol$",
+    "--initialize-at-build-time=ch.qos.logback",
+    "--initialize-at-build-time=org.slf4j.LoggerFactory"
+  )
+)
 
 lazy val root = (project in file("."))
   .settings(noPublishSettings)
@@ -46,6 +71,7 @@ lazy val root = (project in file("."))
     `avro-exporter`,
     `avro-server`,
     `avro-test`,
+    `collector-common`,
     `completer-common`,
     `log-exporter`,
     `jaeger-thrift-exporter`,
@@ -68,6 +94,11 @@ lazy val model =
       )
     )
 
+lazy val example = (project in file("modules/example"))
+  .settings(noPublishSettings)
+  .settings(name := "trace4cats-example", libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.logback))
+  .dependsOn(model, kernel, `avro-exporter`, core)
+
 lazy val test = (project in file("modules/test"))
   .settings(noPublishSettings)
   .settings(name := "trace4cats-test", libraryDependencies ++= Dependencies.test)
@@ -75,7 +106,11 @@ lazy val test = (project in file("modules/test"))
 
 lazy val `avro-test` = (project in file("modules/avro-test"))
   .settings(noPublishSettings)
-  .settings(name := "trace4cats-avro-test", libraryDependencies ++= Dependencies.test.map(_ % Test))
+  .settings(
+    name := "trace4cats-avro-test",
+    libraryDependencies ++= Dependencies.test.map(_  % Test),
+    libraryDependencies ++= Seq(Dependencies.logback % Test)
+  )
   .dependsOn(model)
   .dependsOn(`avro-exporter`, `avro-server`, test % "test->compile")
 
@@ -199,7 +234,7 @@ lazy val `avro-server` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-avro-server",
-      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.fs2Io)
+      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.fs2Io, Dependencies.log4cats)
     )
     .dependsOn(model, avro)
 
@@ -210,39 +245,32 @@ lazy val natchez = (project in file("modules/natchez"))
 
 lazy val agent = (project in file("modules/agent"))
   .settings(noPublishSettings)
+  .settings(graalSettings)
   .settings(
     name := "trace4cats-agent",
-    graalVMNativeImageOptions ++= Seq(
-      "--verbose",
-      "--no-server",
-      "--no-fallback",
-      "--enable-http",
-      "--enable-https",
-      "--enable-all-security-services",
-      "--report-unsupported-elements-at-runtime",
-      "--allow-incomplete-classpath",
-      "-Djava.net.preferIPv4Stack=true",
-      "-H:IncludeResources='.*'",
-      "-H:+ReportExceptionStackTraces",
-      "-H:+ReportUnsupportedElementsAtRuntime",
-      "-H:+TraceClassInitialization",
-      "-H:+PrintClassInitialization",
-      "-H:+RemoveSaturatedTypeFlows",
-      "-H:+StackTrace",
-      "-H:+JNI",
-      "-H:-SpawnIsolates",
-      "-H:-UseServiceLoaderFeature",
-      "-H:ConfigurationFileDirectories=../../native-image/",
-      "--install-exit-handlers",
-      "--initialize-at-build-time=scala.runtime.Statics$VM",
-      "--initialize-at-build-time=scala.Symbol$",
-      "--initialize-at-build-time=ch.qos.logback",
-      "--initialize-at-build-time=org.slf4j.LoggerFactory"
-    ),
-    libraryDependencies ++= Seq(Dependencies.declineEffect, Dependencies.log4cats, Dependencies.logback)
+    libraryDependencies ++= Seq(
+      Dependencies.catsEffect,
+      Dependencies.declineEffect,
+      Dependencies.log4cats,
+      Dependencies.logback
+    )
   )
   .dependsOn(model, `avro-exporter`, `avro-server`)
   .enablePlugins(GraalVMNativeImagePlugin)
+
+lazy val `collector-common` = (project in file("modules/collector-common"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-collector-common",
+    libraryDependencies ++= Seq(
+      Dependencies.catsEffect,
+      Dependencies.declineEffect,
+      Dependencies.fs2,
+      Dependencies.http4JdkClient,
+      Dependencies.log4cats
+    )
+  )
+  .dependsOn(model, kernel)
 
 lazy val collector = (project in file("modules/collector"))
   .settings(noPublishSettings)
@@ -259,7 +287,6 @@ lazy val collector = (project in file("modules/collector"))
       Dependencies.catsEffect,
       Dependencies.declineEffect,
       Dependencies.fs2,
-      Dependencies.http4JdkClient,
       Dependencies.grpcOkHttp,
       Dependencies.log4cats,
       Dependencies.logback
@@ -267,6 +294,7 @@ lazy val collector = (project in file("modules/collector"))
   )
   .dependsOn(
     model,
+    `collector-common`,
     `avro-exporter`,
     `avro-server`,
     `jaeger-thrift-exporter`,
@@ -276,3 +304,27 @@ lazy val collector = (project in file("modules/collector"))
     `stackdriver-http-exporter`
   )
   .enablePlugins(UniversalPlugin, JavaAppPackaging, DockerPlugin)
+
+lazy val `collector-lite` = (project in file("modules/collector-lite"))
+  .settings(noPublishSettings)
+  .settings(graalSettings)
+  .settings(
+    name := "trace4cats-collector-lite",
+    libraryDependencies ++= Seq(
+      Dependencies.catsEffect,
+      Dependencies.declineEffect,
+      Dependencies.fs2,
+      Dependencies.log4cats,
+      Dependencies.logback
+    )
+  )
+  .dependsOn(
+    model,
+    `collector-common`,
+    `avro-exporter`,
+    `avro-server`,
+    `jaeger-thrift-exporter`,
+    `log-exporter`,
+    `stackdriver-http-exporter`
+  )
+  .enablePlugins(GraalVMNativeImagePlugin)

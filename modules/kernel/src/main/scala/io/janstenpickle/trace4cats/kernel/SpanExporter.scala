@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.kernel
 
 import cats.kernel.Monoid
-import cats.{Applicative, Apply, Parallel}
+import cats.{Applicative, ApplicativeError, Apply, Parallel}
 import io.janstenpickle.trace4cats.model.Batch
 
 trait SpanExporter[F[_]] {
@@ -9,6 +9,13 @@ trait SpanExporter[F[_]] {
 }
 
 object SpanExporter extends LowPrioritySpanExporterInstances {
+  def handleErrors[F[_], E](
+    exporter: SpanExporter[F]
+  )(pf: PartialFunction[E, F[Unit]])(implicit F: ApplicativeError[F, E]): SpanExporter[F] =
+    new SpanExporter[F] {
+      override def exportBatch(batch: Batch): F[Unit] = F.recoverWith(exporter.exportBatch(batch))(pf)
+    }
+
   implicit def spanExporterMonoidFromParallel[F[_]: Applicative: Parallel]: Monoid[SpanExporter[F]] =
     new Monoid[SpanExporter[F]] {
       override def combine(x: SpanExporter[F], y: SpanExporter[F]): SpanExporter[F] =

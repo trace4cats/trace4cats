@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.collector
+package io.janstenpickle.trace4cats.collector.common
 
 import java.net.http.HttpClient
 import java.util.concurrent.Executor

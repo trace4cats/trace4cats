@@ -1,0 +1,28 @@
+[
+{
+  "name":"java.lang.ClassLoader",
+  "methods":[
+    {"name":"getPlatformClassLoader","parameterTypes":[] }, 
+    {"name":"loadClass","parameterTypes":["java.lang.String"] }
+  ]
+},
+{
+  "name":"java.lang.ClassNotFoundException"
+},
+{
+  "name":"java.lang.InternalError",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.lang.NoSuchMethodError"
+},
+{
+  "name":"sun.instrument.InstrumentationImpl",
+  "methods":[
+    {"name":"<init>","parameterTypes":["long","boolean","boolean"] }, 
+    {"name":"loadClassAndCallAgentmain","parameterTypes":["java.lang.String","java.lang.String"] }, 
+    {"name":"loadClassAndCallPremain","parameterTypes":["java.lang.String","java.lang.String"] }, 
+    {"name":"transform","parameterTypes":["java.lang.Module","java.lang.ClassLoader","java.lang.String","java.lang.Class","java.security.ProtectionDomain","byte[]","boolean"] }
+  ]
+}
+]

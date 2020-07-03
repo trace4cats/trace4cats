@@ -5,8 +5,10 @@ import cats.effect.concurrent.Ref
 import cats.effect.{Blocker, IO, Resource}
 import cats.implicits._
 import cats.kernel.Eq
-import io.janstenpickle.trace4cats.avro.{AvroSpanCompleter, AvroSpanExporter}
+import io.chrisdavenport.log4cats.Logger
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.avro.server.AvroServer
+import io.janstenpickle.trace4cats.avro.{AvroSpanCompleter, AvroSpanExporter}
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceProcess}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalacheck.Shrink
@@ -21,6 +23,8 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
   implicit val timer = IO.timer(ExecutionContext.global)
 
   val blocker = Blocker.liftExecutionContext(ExecutionContext.global)
+
+  implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 1, maxDiscardedFactor = 50.0)
@@ -74,7 +78,7 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
           ref.set(Some(b))
         }, port = 7779)
         _ <- server.compile.drain.background
-        _ <- Resource.liftF(timer.sleep(1.second))
+        _ <- Resource.liftF(timer.sleep(2.seconds))
         completer <- AvroSpanExporter.udp[IO](blocker, port = 7779)
       } yield completer).use(_.exportBatch(batch) >> timer.sleep(3.seconds)).unsafeRunSync()
 
@@ -91,7 +95,7 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
           ref.set(Some(b))
         }, port = 7780)
         _ <- server.compile.drain.background
-        _ <- Resource.liftF(timer.sleep(1.second))
+        _ <- Resource.liftF(timer.sleep(2.seconds))
         completer <- AvroSpanCompleter.udp[IO](blocker, process, port = 7780, batchTimeout = 1.second)
       } yield completer).use(c => spans.traverse(c.complete) >> timer.sleep(3.seconds)).unsafeRunSync()
 
