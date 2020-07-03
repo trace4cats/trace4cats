@@ -5,9 +5,10 @@ import java.net.{ConnectException, InetSocketAddress}
 
 import cats.effect.syntax.concurrent._
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
+import cats.instances.option._
 import cats.syntax.either._
 import cats.syntax.flatMap._
-import fs2.concurrent.Queue
+import fs2.concurrent.InspectableQueue
 import fs2.io.tcp.{Socket => TCPSocket, SocketGroup => TCPSocketGroup}
 import fs2.io.udp.{Packet, Socket => UDPSocket, SocketGroup => UDPSocketGroup}
 import fs2.{Chunk, Stream}
@@ -55,8 +56,9 @@ object AvroSpanExporter {
     port: Int = agentPort,
     bufferSize: Int = 2000,
   ): Resource[F, SpanExporter[F]] = {
-    def write(schema: Schema, address: InetSocketAddress, batchQueue: Queue[F, Batch], socket: UDPSocket[F]): F[Unit] =
-      batchQueue.dequeue
+
+    def write(schema: Schema, address: InetSocketAddress, stream: Stream[F, Batch], socket: UDPSocket[F]): F[Unit] =
+      stream
         .evalMap(encode[F](schema))
         .map { ba =>
           Packet(address, Chunk.bytes(ba))
@@ -65,17 +67,32 @@ object AvroSpanExporter {
         .compile
         .drain
 
+    def drain(
+      schema: Schema,
+      address: InetSocketAddress,
+      batchQueue: InspectableQueue[F, Batch],
+      socket: UDPSocket[F]
+    ): F[Unit] =
+      write(
+        schema: Schema,
+        address: InetSocketAddress,
+        Stream.evals(batchQueue.getSize.flatMap(batchQueue.tryDequeueChunk1)).flatMap(Stream.chunk),
+        socket
+      )
+
     for {
       avroSchema <- Resource.liftF(AvroInstances.batchSchema[F])
       address <- Resource.liftF(Sync[F].delay(new InetSocketAddress(host, port)))
-      batchQueue <- Resource.liftF(Queue.circularBuffer[F, Batch](bufferSize))
+      batchQueue <- Resource.liftF(InspectableQueue.circularBuffer[F, Batch](bufferSize))
       socketGroup <- UDPSocketGroup(blocker)
       socket <- socketGroup.open()
-      _ <- Stream
-        .retry(write(avroSchema, address, batchQueue, socket), 5.seconds, _ + 1.second, Int.MaxValue)
-        .compile
-        .drain
-        .background
+      _ <- Resource.make(
+        Stream
+          .retry(write(avroSchema, address, batchQueue.dequeue, socket), 5.seconds, _ + 1.second, Int.MaxValue)
+          .compile
+          .drain
+          .start
+      )(_.cancel >> drain(avroSchema, address, batchQueue, socket))
     } yield
       new SpanExporter[F] {
         override def exportBatch(batch: Batch): F[Unit] = batchQueue.enqueue1(batch)
@@ -98,12 +115,12 @@ object AvroSpanExporter {
     def write(
       schema: Schema,
       address: InetSocketAddress,
-      batchQueue: Queue[F, Batch],
+      stream: Stream[F, Batch],
       socketGroup: TCPSocketGroup
     ): F[Unit] =
       connect(socketGroup, address)
         .flatMap { socket =>
-          batchQueue.dequeue
+          stream
             .evalMap(encode[F](schema))
             .flatMap { ba =>
               val withTerminator = ba ++ Array(0xC4.byteValue, 0x02.byteValue)
@@ -114,16 +131,31 @@ object AvroSpanExporter {
         .compile
         .drain
 
+    def drain(
+      schema: Schema,
+      address: InetSocketAddress,
+      batchQueue: InspectableQueue[F, Batch],
+      socketGroup: TCPSocketGroup
+    ): F[Unit] =
+      write(
+        schema: Schema,
+        address: InetSocketAddress,
+        Stream.evals(batchQueue.getSize.flatMap(batchQueue.tryDequeueChunk1)).flatMap(Stream.chunk),
+        socketGroup
+      )
+
     for {
       avroSchema <- Resource.liftF(AvroInstances.batchSchema[F])
       address <- Resource.liftF(Sync[F].delay(new InetSocketAddress(host, port)))
-      batchQueue <- Resource.liftF(Queue.circularBuffer[F, Batch](bufferSize))
+      batchQueue <- Resource.liftF(InspectableQueue.circularBuffer[F, Batch](bufferSize))
       socketGroup <- TCPSocketGroup(blocker)
-      _ <- Stream
-        .retry(write(avroSchema, address, batchQueue, socketGroup), 5.seconds, _ + 1.second, Int.MaxValue)
-        .compile
-        .drain
-        .background
+      _ <- Resource.make(
+        Stream
+          .retry(write(avroSchema, address, batchQueue.dequeue, socketGroup), 5.seconds, _ + 1.second, Int.MaxValue)
+          .compile
+          .drain
+          .start
+      )(_.cancel >> drain(avroSchema, address, batchQueue, socketGroup))
     } yield
       new SpanExporter[F] {
         override def exportBatch(batch: Batch): F[Unit] = batchQueue.enqueue1(batch)

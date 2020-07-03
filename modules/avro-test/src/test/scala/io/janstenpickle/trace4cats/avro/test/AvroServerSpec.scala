@@ -46,7 +46,7 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
     }
   }
 
-  it should "send indvidual spans in batches" in {
+  it should "send individual spans in batches" in {
     forAll { (process: TraceProcess, spans: NonEmptyList[CompletedSpan]) =>
       val ref = Ref.unsafe[IO, Option[Batch]](None)
 
@@ -72,27 +72,27 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
       (for {
         server <- AvroServer.udp[IO](blocker, _.evalMap { b =>
           ref.set(Some(b))
-        })
+        }, port = 7779)
         _ <- server.compile.drain.background
         _ <- Resource.liftF(timer.sleep(1.second))
-        completer <- AvroSpanExporter.udp[IO](blocker)
+        completer <- AvroSpanExporter.udp[IO](blocker, port = 7779)
       } yield completer).use(_.exportBatch(batch) >> timer.sleep(3.seconds)).unsafeRunSync()
 
       assert(Eq[Option[Batch]].eqv(ref.get.unsafeRunSync(), Some(batch)))
     }
   }
 
-  it should "send indvidual spans in batches" in {
+  it should "send individual spans in batches" in {
     forAll { (process: TraceProcess, spans: NonEmptyList[CompletedSpan]) =>
       val ref = Ref.unsafe[IO, Option[Batch]](None)
 
       (for {
         server <- AvroServer.udp[IO](blocker, _.evalMap { b =>
           ref.set(Some(b))
-        }, port = 7778)
+        }, port = 7780)
         _ <- server.compile.drain.background
         _ <- Resource.liftF(timer.sleep(1.second))
-        completer <- AvroSpanCompleter.udp[IO](blocker, process, port = 7778, batchTimeout = 1.second)
+        completer <- AvroSpanCompleter.udp[IO](blocker, process, port = 7780, batchTimeout = 1.second)
       } yield completer).use(c => spans.traverse(c.complete) >> timer.sleep(3.seconds)).unsafeRunSync()
 
       assert(Eq[Option[Batch]].eqv(ref.get.unsafeRunSync(), Some(Batch(process, spans.toList))))
