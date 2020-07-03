@@ -26,8 +26,7 @@ object CollectorLite
     Opts
       .env[Int](CollectorPortEnv, help = "The port to run on.")
       .orElse(Opts.option[Int]("port", "The port to run on"))
-      .orNone
-      .map(_.getOrElse(DefaultPort))
+      .withDefault(DefaultPort))
 
   val collectorHostOpt: Opts[Option[String]] =
     Opts
@@ -39,19 +38,16 @@ object CollectorLite
     Opts
       .env[Int](CollectorPortEnv, "Collector port to forward spans")
       .orElse(Opts.option[Int]("collector-port", "Collector port"))
-      .orNone
-      .map(_.getOrElse(DefaultPort))
+      .withDefault(DefaultPort))
 
   val jaegerUdpOpt: Opts[Boolean] = Opts.flag("jaeger-udp", "Send spans via Jaeger UDP").orFalse
   val jaegerUdpPortOpt: Opts[Int] = Opts
     .option[Int]("jaeger-udp-port", "Jaeger UDP agent port")
-    .orNone
-    .map(_.getOrElse(UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT))
+    .withDefault(UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT))
 
   val jaegerUdpHostOpt: Opts[String] = Opts
     .option[String]("jaeger-udp-host", "Jaeger UDP agent host")
-    .orNone
-    .map(_.getOrElse(UdpSender.DEFAULT_AGENT_UDP_HOST))
+    .withDefault(UdpSender.DEFAULT_AGENT_UDP_HOST))
 
   val logOpt: Opts[Boolean] = Opts.flag("log", "Write spans to the log").orFalse
 
@@ -68,6 +64,11 @@ object CollectorLite
     )
     .orNone
 
+  val bufferSizeOpt: Opts[Int] =
+    Opts
+      .option[Int]("buffer-size", "Number of batches to buffer in case of network issues")
+      .withDefault(500)
+
   override def main: Opts[IO[ExitCode]] =
     (
       portOpt,
@@ -78,7 +79,8 @@ object CollectorLite
       jaegerUdpPortOpt,
       logOpt,
       stackdriverProjectOpt,
-      stackdriverCredentialsFileOpt
+      stackdriverCredentialsFileOpt,
+      bufferSizeOpt
     ).mapN(run)
 
   def run(
@@ -90,7 +92,8 @@ object CollectorLite
     jaegerUdpPort: Int,
     log: Boolean,
     stackdriverProject: Option[String],
-    stackdriverCredentialsFile: Option[String]
+    stackdriverCredentialsFile: Option[String],
+    bufferSize: Int
   ): IO[ExitCode] =
     (for {
       blocker <- Blocker[IO]
@@ -119,7 +122,7 @@ object CollectorLite
           } yield "Stackdriver HTTP" -> exporter)
       }
 
-      sink <- Sink[IO](100, List(collectorExporter, jaegerExporter, logExporter, stackdriverExporter).flatten)
+      sink <- Sink[IO](bufferSize, List(collectorExporter, jaegerExporter, logExporter, stackdriverExporter).flatten)
 
       tcp <- AvroServer.tcp[IO](blocker, sink.pipe, port)
       udp <- AvroServer.udp[IO](blocker, sink.pipe, port)

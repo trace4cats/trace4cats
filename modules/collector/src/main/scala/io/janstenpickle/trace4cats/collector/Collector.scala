@@ -24,8 +24,7 @@ object Collector
     Opts
       .env[Int](CollectorPortEnv, help = "The port to run on.")
       .orElse(Opts.option[Int]("port", "The port to run on"))
-      .orNone
-      .map(_.getOrElse(DefaultPort))
+      .withDefault(DefaultPort))
 
   val collectorHostOpt: Opts[Option[String]] =
     Opts
@@ -37,26 +36,23 @@ object Collector
     Opts
       .env[Int](CollectorPortEnv, "Collector port to forward spans")
       .orElse(Opts.option[Int]("collector-port", "Collector port"))
-      .orNone
-      .map(_.getOrElse(DefaultPort))
+      .withDefault(DefaultPort))
 
   val jaegerUdpOpt: Opts[Boolean] = Opts.flag("jaeger-udp", "Send spans via Jaeger UDP").orFalse
   val jaegerUdpPortOpt: Opts[Int] = Opts
     .option[Int]("jaeger-udp-port", "Jaeger UDP agent port")
-    .orNone
-    .map(_.getOrElse(UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT))
+    .withDefault(UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT))
 
   val jaegerUdpHostOpt: Opts[String] = Opts
     .option[String]("jaeger-udp-host", "Jaeger UDP agent host")
-    .orNone
-    .map(_.getOrElse(UdpSender.DEFAULT_AGENT_UDP_HOST))
+    .withDefault(UdpSender.DEFAULT_AGENT_UDP_HOST))
 
   val logOpt: Opts[Boolean] = Opts.flag("log", "Write spans to the log").orFalse
 
   val otHostOpt: Opts[Option[String]] =
     Opts.option[String]("opentelemetry-host", "Write spans via OpenTelemetry protobufs format").orNone
   val otPortOpt: Opts[Int] =
-    Opts.option[Int]("opentelemetry-host", "OpenTelelmetry protobufs port").orNone.map(_.getOrElse(55678))
+    Opts.option[Int]("opentelemetry-host", "OpenTelelmetry protobufs port").withDefault(55678)
 
   val stackdriverHttpOpt: Opts[Boolean] = Opts
     .flag(
@@ -78,6 +74,11 @@ object Collector
     )
     .orNone
 
+  val bufferSizeOpt: Opts[Int] =
+    Opts
+      .option[Int]("buffer-size", "Number of batches to buffer in case of network issues")
+      .withDefault(500)
+
   override def main: Opts[IO[ExitCode]] =
     (
       portOpt,
@@ -91,7 +92,8 @@ object Collector
       otPortOpt,
       stackdriverHttpOpt,
       stackdriverProjectOpt,
-      stackdriverCredentialsFileOpt
+      stackdriverCredentialsFileOpt,
+      bufferSizeOpt
     ).mapN(run)
 
   def run(
@@ -106,7 +108,8 @@ object Collector
     otPort: Int,
     stackdriverHttp: Boolean,
     stackdriverProject: Option[String],
-    stackdriverCredentialsFile: Option[String]
+    stackdriverCredentialsFile: Option[String],
+    bufferSize: Int
   ): IO[ExitCode] =
     (for {
       blocker <- Blocker[IO]
@@ -141,7 +144,7 @@ object Collector
       }
 
       sink <- Sink[IO](
-        100,
+        bufferSize,
         List(collectorExporter, jaegerExporter, logExporter, otExporter, stackdriverExporter).flatten
       )
 

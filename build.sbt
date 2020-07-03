@@ -71,6 +71,7 @@ lazy val root = (project in file("."))
     `avro-exporter`,
     `avro-server`,
     `avro-test`,
+    `buffering-exporter`,
     `collector-common`,
     `completer-common`,
     `log-exporter`,
@@ -255,8 +256,16 @@ lazy val agent = (project in file("modules/agent"))
       Dependencies.logback
     )
   )
-  .dependsOn(model, `avro-exporter`, `avro-server`)
+  .dependsOn(model, `avro-exporter`, `avro-server`, `buffering-exporter`)
   .enablePlugins(GraalVMNativeImagePlugin)
+
+lazy val `buffering-exporter` = (project in file("modules/buffering-exporter"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-buffering-exporter",
+    libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.log4cats)
+  )
+  .dependsOn(model, kernel)
 
 lazy val `collector-common` = (project in file("modules/collector-common"))
   .settings(publishSettings)
@@ -270,7 +279,7 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
       Dependencies.log4cats
     )
   )
-  .dependsOn(model, kernel)
+  .dependsOn(model, kernel, `buffering-exporter`)
 
 lazy val collector = (project in file("modules/collector"))
   .settings(noPublishSettings)
