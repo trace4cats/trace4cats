@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats
 
 import java.util.concurrent.TimeUnit
 
-import cats.Applicative
+import cats.{Applicative, Defer, MonadError}
 import cats.effect.concurrent.Ref
 import cats.effect.{Clock, ExitCase, Resource, Sync}
 import cats.syntax.flatMap._
@@ -15,6 +15,7 @@ trait Span[F[_]] {
   def put(key: String, value: TraceValue): F[Unit]
   def putAll(fields: (String, TraceValue)*): F[Unit]
   def setStatus(spanStatus: SpanStatus): F[Unit]
+  def child(name: String, kind: SpanKind): Resource[F, Span[F]]
   protected[trace4cats] def end: F[Unit]
   protected[trace4cats] def end(status: SpanStatus): F[Unit]
 }
@@ -26,6 +27,7 @@ case class RefSpan[F[_]: Sync: Clock] private (
   start: Long,
   attributes: Ref[F, Map[String, TraceValue]],
   status: Ref[F, SpanStatus],
+  sampler: SpanSampler[F],
   completer: SpanCompleter[F]
 ) extends Span[F] {
 
@@ -34,6 +36,8 @@ case class RefSpan[F[_]: Sync: Clock] private (
   override def putAll(fields: (String, TraceValue)*): F[Unit] =
     attributes.update(_ ++ fields)
   override def setStatus(spanStatus: SpanStatus): F[Unit] = status.set(spanStatus)
+  override def child(name: String, kind: SpanKind): Resource[F, Span[F]] =
+    Span.child[F](name, context, kind, sampler, completer)
 
   override protected[trace4cats] def end: F[Unit] = status.get.flatMap(end)
   override protected[trace4cats] def end(status: SpanStatus): F[Unit] =
@@ -46,10 +50,14 @@ case class RefSpan[F[_]: Sync: Clock] private (
 
 }
 
-case class EmptySpan[F[_]: Applicative] private (context: SpanContext) extends Span[F] {
+case class EmptySpan[F[_]: Defer: MonadError[*[_], Throwable]] private (context: SpanContext) extends Span[F] {
   override def put(key: String, value: TraceValue): F[Unit] = Applicative[F].unit
   override def putAll(fields: (String, TraceValue)*): F[Unit] = Applicative[F].unit
   override def setStatus(spanStatus: SpanStatus): F[Unit] = Applicative[F].unit
+  override def child(name: String, kind: SpanKind): Resource[F, Span[F]] =
+    Resource.make(SpanContext.child[F](context).map { childContext =>
+      EmptySpan(childContext.setIsSampled())
+    })(_.end)
 
   override protected[trace4cats] def end: F[Unit] = Applicative[F].unit
   override protected[trace4cats] def end(status: SpanStatus): F[Unit] = Applicative[F].unit
@@ -75,7 +83,7 @@ object Span {
           attributesRef <- Ref.of[F, Map[String, TraceValue]](Map.empty)
           now <- Clock[F].realTime(TimeUnit.MICROSECONDS)
           statusRef <- Ref.of[F, SpanStatus](SpanStatus.Ok)
-        } yield RefSpan[F](context, name, kind, now, attributesRef, statusRef, completer)) {
+        } yield RefSpan[F](context, name, kind, now, attributesRef, statusRef, sampler, completer)) {
           case (span, ExitCase.Completed) => span.end
           case (span, ExitCase.Canceled) => span.end(SpanStatus.Cancelled)
           case (span, ExitCase.Error(th)) =>

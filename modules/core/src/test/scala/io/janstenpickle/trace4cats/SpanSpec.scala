@@ -140,6 +140,70 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
     span.kind should be(kind)
   }
 
+  it should "create a child ref span" in forAll {
+    (name: String, childName: String, kind: SpanKind, childKind: SpanKind) =>
+      var spans: List[CompletedSpan] = List.empty
+
+      Span
+        .root[IO](name, kind, SpanSampler.always, callbackCompleter(span => spans = span :: spans))
+        .flatTap(_.child(childName, childKind))
+        .use(_ => IO.unit)
+        .unsafeRunSync()
+
+      spans.size should be(2)
+
+      spans.head.context.parent should be(None)
+      spans.head.context.isRemote should be(false)
+      spans.head.context.traceFlags.sampled should be(false)
+      spans.head.name should be(name)
+      spans.head.kind should be(kind)
+
+      spans(1).context.parent should be(Some(Parent(spans.head.context.spanId, isRemote = false)))
+      spans(1).context.isRemote should be(false)
+      spans(1).context.traceFlags.sampled should be(false)
+      spans(1).name should be(childName)
+      spans(1).kind should be(childKind)
+
+  }
+
+  it should "create a sampled child span" in forAll {
+    (name: String, childName: String, kind: SpanKind, childKind: SpanKind) =>
+      var spans: List[CompletedSpan] = List.empty
+
+      val sampler = new SpanSampler[IO] {
+        var callCount: Int = 0
+
+        override def shouldSample(
+          parentContext: Option[SpanContext],
+          traceId: TraceId,
+          spanName: String,
+          spanKind: SpanKind
+        ): IO[Boolean] =
+          IO(if (callCount == 0) {
+            callCount = callCount + 1
+            false
+          } else {
+            true
+          })
+      }
+
+      def assertSampled(span: Span[IO]) = assert(span.isInstanceOf[EmptySpan[IO]])
+
+      Span
+        .root[IO](name, kind, sampler, callbackCompleter(span => spans = span :: spans))
+        .flatTap(_.child(childName, childKind).map(assertSampled))
+        .use(_ => IO.unit)
+        .unsafeRunSync()
+
+      spans.size should be(1)
+
+      spans.head.context.parent should be(None)
+      spans.head.context.isRemote should be(false)
+      spans.head.context.traceFlags.sampled should be(false)
+      spans.head.name should be(name)
+      spans.head.kind should be(kind)
+  }
+
   it should "use the default status of OK when completed" in forAll { (name: String, kind: SpanKind) =>
     var span: CompletedSpan = null
     Span.root[IO](name, kind, SpanSampler.always, callbackCompleter(span = _)).use(_ => IO.unit).unsafeRunSync()
@@ -226,7 +290,20 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
     span should be(null)
   }
 
-  def callbackCompleter(callback: CompletedSpan => Unit): SpanCompleter[IO] = new SpanCompleter[IO] {
-    override def complete(span: CompletedSpan): IO[Unit] = IO(callback(span))
+  it should "create a child empty span" in forAll {
+    (name: String, childName: String, kind: SpanKind, childKind: SpanKind) =>
+      var spans: List[CompletedSpan] = List.empty
+
+      Span
+        .root[IO](name, kind, SpanSampler.never, callbackCompleter(span => spans = span :: spans))
+        .flatTap(_.child(childName, childKind))
+        .use(_ => IO.unit)
+        .unsafeRunSync()
+
+      spans.size should be(0)
+  }
+
+  def callbackCompleter(callback: CompletedSpan => Any): SpanCompleter[IO] = new SpanCompleter[IO] {
+    override def complete(span: CompletedSpan): IO[Unit] = IO(callback(span)).void
   }
 }
