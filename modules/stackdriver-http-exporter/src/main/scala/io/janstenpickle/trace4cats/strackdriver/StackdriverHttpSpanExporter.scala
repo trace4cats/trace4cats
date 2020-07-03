@@ -25,7 +25,7 @@ object StackdriverHttpSpanExporter {
       .build
       .evalMap(apply[F](projectId, serviceAccountPath, _))
 
-  def apply[F[_]: Concurrent: Logger](
+  def apply[F[_]: Concurrent: Timer: Logger](
     projectId: String,
     serviceAccountPath: String,
     client: Client[F]

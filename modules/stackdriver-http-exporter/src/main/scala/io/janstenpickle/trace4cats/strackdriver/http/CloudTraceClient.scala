@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.strackdriver.http
 
 import cats.ApplicativeError
-import cats.effect.Sync
+import cats.effect.{Sync, Timer}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.circe.JsonObject
@@ -15,6 +15,8 @@ import org.http4s.headers.`Content-Type`
 import org.http4s.{MediaType, Status, Uri}
 
 import scala.util.control.NoStackTrace
+import scala.concurrent.duration._
+import fs2.Stream
 
 trait CloudTraceClient[F[_]] {
   def submitBatch(batch: Batch): F[Unit]
@@ -31,7 +33,7 @@ object CloudTraceClient {
 
   private final val base = "https://cloudtrace.googleapis.com/v2/projects"
 
-  def apply[F[_]: Sync](projectId: String, client: Client[F], tokenF: F[AccessToken]): F[CloudTraceClient[F]] =
+  def apply[F[_]: Sync: Timer](projectId: String, client: Client[F], tokenF: F[AccessToken]): F[CloudTraceClient[F]] =
     ApplicativeError[F, Throwable].fromEither(Uri.fromString(s"$base/$projectId/traces:batchWrite")).map { uri =>
       object dsl extends Http4sClientDsl[F]
       import dsl._
@@ -45,7 +47,15 @@ object CloudTraceClient {
               uri.withQueryParam("access_token", token.accessToken),
               `Content-Type`(MediaType.application.json)
             )
-            _ <- client.expectOr[JsonObject](req)(resp => resp.as[String].map(UnexpectedResponse(resp.status, _)))
+            _ <- Stream
+              .retry(
+                client.expectOr[JsonObject](req)(resp => resp.as[String].map(UnexpectedResponse(resp.status, _))),
+                10.millis,
+                _ + 5.millis,
+                2
+              )
+              .compile
+              .drain
           } yield ()
       }
     }
