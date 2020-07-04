@@ -17,11 +17,10 @@ object TraceValue {
   case class DoubleValue(value: Double) extends TraceValue
   case class LongValue(value: Long) extends TraceValue
 
-  implicit def stringToTraceValue(value: String): TraceValue =
-    StringValue(value)
-  implicit def boolToTraceValue(value: Boolean): TraceValue =
-    BooleanValue(value)
+  implicit def stringToTraceValue(value: String): TraceValue = StringValue(value)
+  implicit def boolToTraceValue(value: Boolean): TraceValue = BooleanValue(value)
   implicit def intToTraceValue(value: Int): TraceValue = LongValue(value.toLong)
+  implicit def doubleToTraceValue(value: Double): TraceValue = DoubleValue(value)
 
   implicit val show: Show[TraceValue] = Show(_.toString)
   implicit val eq: Eq[TraceValue] = Eq.instance {

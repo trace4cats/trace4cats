@@ -165,7 +165,7 @@ The following span completers have been found to be compatible with [`native-ima
 
 - [ ] Initial release
 - [ ] Probabilistic span sampler 
-- [ ] Limit number of args
+- [ ] Limit number of attributes
 - [x] Integration tests
 - [ ] Detailed examples
 - [x] Jaeger protobuf exporter

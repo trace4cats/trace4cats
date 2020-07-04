@@ -82,11 +82,7 @@ object StackdriverGrpcSpanExporter {
     def toStatusProto(status: SpanStatus) =
       Status
         .newBuilder()
-        .setCode(status match {
-          case SpanStatus.Ok => 1
-          case SpanStatus.Cancelled => 2
-          case SpanStatus.Internal => 13
-        })
+        .setCode(status.canonicalCode)
         .build()
 
     def convert(process: TraceProcess, completedSpan: CompletedSpan): Span = {

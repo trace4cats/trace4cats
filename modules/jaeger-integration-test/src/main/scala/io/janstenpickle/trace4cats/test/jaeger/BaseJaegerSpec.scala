@@ -31,7 +31,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
   implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
-    PropertyCheckConfiguration(minSuccessful = 2, maxDiscardedFactor = 50.0)
+    PropertyCheckConfiguration(minSuccessful = 3, maxDiscardedFactor = 50.0)
 
   implicit def noShrink[T]: Shrink[T] = Shrink.shrinkAny
 

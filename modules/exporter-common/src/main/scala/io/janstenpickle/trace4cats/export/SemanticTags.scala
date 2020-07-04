@@ -11,18 +11,10 @@ object SemanticTags {
     case SpanKind.Consumer => Map[String, TraceValue]("span.kind" -> "consumer")
   }
 
-  def statusTags(prefix: String, requireMessage: Boolean = true): SpanStatus => Map[String, TraceValue] = {
-    case SpanStatus.Ok =>
-      val attrs = Map[String, TraceValue](s"${prefix}status.code" -> 0)
-      if (requireMessage) attrs + (s"${prefix}status.message" -> "") else attrs
+  def statusTags(prefix: String, requireMessage: Boolean = true): SpanStatus => Map[String, TraceValue] = { s =>
+    val attrs = Map[String, TraceValue](s"${prefix}status.code" -> s.canonicalCode)
+    val errorAttrs: Map[String, TraceValue] = if (s.isOk) attrs else attrs + ("error" -> true)
 
-    case SpanStatus.Cancelled =>
-      val attrs = Map[String, TraceValue]("error" -> true, s"${prefix}status.code" -> 1)
-      if (requireMessage) attrs + (s"${prefix}status.message" -> "") else attrs
-
-    case SpanStatus.Internal =>
-      val attrs = Map[String, TraceValue]("error" -> true, s"${prefix}status.code" -> 13)
-      if (requireMessage) attrs + (s"${prefix}status.message" -> "") else attrs
-
+    if (requireMessage) errorAttrs + (s"${prefix}status.message" -> "") else errorAttrs
   }
 }

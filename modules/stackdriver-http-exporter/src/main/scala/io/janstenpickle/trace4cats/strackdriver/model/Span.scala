@@ -3,10 +3,10 @@ package io.janstenpickle.trace4cats.strackdriver.model
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
-import io.circe.{Encoder, JsonObject}
-import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind, SpanStatus, TraceProcess, TraceValue}
-import io.circe.generic.semiauto._
 import cats.syntax.show._
+import io.circe.generic.semiauto._
+import io.circe.{Encoder, JsonObject}
+import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind, TraceProcess, TraceValue}
 import io.janstenpickle.trace4cats.stackdriver.common.StackdriverConstants._
 import io.janstenpickle.trace4cats.stackdriver.common.TruncatableString
 
@@ -51,11 +51,7 @@ object Span {
         completed.attributes ++ process.attributes + (ServiceNameAttributeKey -> TraceValue
           .StringValue(process.serviceName))
       ),
-      status = Status(completed.status match {
-        case SpanStatus.Ok => 1
-        case SpanStatus.Cancelled => 2
-        case SpanStatus.Internal => 13
-      }),
+      status = Status(completed.status.canonicalCode),
       sameProcessAsParentSpan = completed.context.parent.map(!_.isRemote),
       spanKind = completed.kind
     )
