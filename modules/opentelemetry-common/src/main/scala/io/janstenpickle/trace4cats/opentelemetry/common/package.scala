@@ -13,5 +13,6 @@ package object common {
       case (a, (k, TraceValue.StringValue(value))) => add(a, k, AttributeValue.stringAttributeValue(value))
       case (a, (k, TraceValue.BooleanValue(value))) => add(a, k, AttributeValue.booleanAttributeValue(value))
       case (a, (k, TraceValue.DoubleValue(value))) => add(a, k, AttributeValue.doubleAttributeValue(value))
+      case (a, (k, TraceValue.LongValue(value))) => add(a, k, AttributeValue.longAttributeValue(value))
     }
 }

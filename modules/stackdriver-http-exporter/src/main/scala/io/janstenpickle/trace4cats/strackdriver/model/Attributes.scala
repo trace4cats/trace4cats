@@ -12,6 +12,7 @@ object Attributes {
       case (k, TraceValue.StringValue(value)) => k -> AttributeValue.StringValue(value)
       case (k, TraceValue.DoubleValue(value)) => k -> AttributeValue.IntValue(value.toLong)
       case (k, TraceValue.BooleanValue(value)) => k -> AttributeValue.BoolValue(value)
+      case (k, TraceValue.LongValue(value)) => k -> AttributeValue.IntValue(value)
     }
 
     val attrSize = attrs.size

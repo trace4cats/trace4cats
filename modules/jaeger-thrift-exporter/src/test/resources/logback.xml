@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration name="LogConfig" monitorInterval="5" status="warn">
+    <variable name="LOG_LEVEL" value="${LOG_LEVEL:-INFO}" />
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date [%level] from %logger in %thread - %message%n%xException</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>10000</queueSize>
+        <appender-ref ref="STDOUT" />
+    </appender>
+
+    <root level="${LOG_LEVEL}">
+        <appender-ref ref="ASYNCSTDOUT" />
+    </root>
+</configuration>

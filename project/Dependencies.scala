@@ -31,7 +31,7 @@ object Dependencies {
     val scalaCheck = "1.14.3"
     val scalaCheckShapeless = "1.2.5"
     val scalaTest = "3.2.0"
-
+    val testContainers = "0.37.0"
   }
 
   lazy val cats = "org.typelevel"                           %% "cats-core"                      % Versions.cats
@@ -50,10 +50,10 @@ object Dependencies {
   lazy val fs2Io = "co.fs2"                                 %% "fs2-io"                         % Versions.fs2
   lazy val grpcOkHttp = "io.grpc"                           % "grpc-okhttp"                     % Versions.grpc
   lazy val grpcApi = "io.grpc"                              % "grpc-api"                        % Versions.grpc
-  lazy val http4Client = "org.http4s"                       %% "http4s-client"                  % Versions.http4s
-  lazy val http4Circe = "org.http4s"                        %% "http4s-circe"                   % Versions.http4s
-  lazy val httpEmberClient = "org.http4s"                   %% "http4s-ember-client"            % Versions.http4s
-  lazy val http4JdkClient = "org.http4s"                    %% "http4s-jdk-http-client"         % Versions.http4sJdkClient
+  lazy val http4sClient = "org.http4s"                      %% "http4s-client"                  % Versions.http4s
+  lazy val http4sCirce = "org.http4s"                       %% "http4s-circe"                   % Versions.http4s
+  lazy val http4sEmberClient = "org.http4s"                 %% "http4s-ember-client"            % Versions.http4s
+  lazy val http4sJdkClient = "org.http4s"                   %% "http4s-jdk-http-client"         % Versions.http4sJdkClient
   lazy val jaegerThrift = "io.jaegertracing"                % "jaeger-thrift"                   % Versions.jaeger
   lazy val jwt = "com.auth0"                                % "java-jwt"                        % Versions.jwt
   lazy val kittens = "org.typelevel"                        %% "kittens"                        % Versions.kittens
@@ -67,13 +67,14 @@ object Dependencies {
   lazy val vulcanGeneric = "com.github.fd4s"                %% "vulcan-generic"                 % Versions.vulcan
   lazy val vulcanEnumeratum = "com.github.fd4s"             %% "vulcan-enumeratum"              % Versions.vulcan
 
-  lazy val catsLaws = "org.typelevel"                         %% "cats-laws"                 % Versions.cats
-  lazy val catsEffectLaws = "org.typelevel"                   %% "cats-effect-laws"          % Versions.catsEffect
-  lazy val disciplineScalatest = "org.typelevel"              %% "discipline-scalatest"      % Versions.disciplineScalatest
-  lazy val disciplineCore = "org.typelevel"                   %% "discipline-core"           % Versions.discipline
-  lazy val scalacheck = "org.scalacheck"                      %% "scalacheck"                % Versions.scalaCheck
-  lazy val scalacheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % Versions.scalaCheckShapeless
-  lazy val scalaTest = "org.scalatest"                        %% "scalatest"                 % Versions.scalaTest
+  lazy val catsLaws = "org.typelevel"                         %% "cats-laws"                      % Versions.cats
+  lazy val catsEffectLaws = "org.typelevel"                   %% "cats-effect-laws"               % Versions.catsEffect
+  lazy val disciplineScalatest = "org.typelevel"              %% "discipline-scalatest"           % Versions.disciplineScalatest
+  lazy val disciplineCore = "org.typelevel"                   %% "discipline-core"                % Versions.discipline
+  lazy val scalacheck = "org.scalacheck"                      %% "scalacheck"                     % Versions.scalaCheck
+  lazy val scalacheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.14"      % Versions.scalaCheckShapeless
+  lazy val scalaTest = "org.scalatest"                        %% "scalatest"                      % Versions.scalaTest
+  lazy val testContainers = "com.dimafeng"                    %% "testcontainers-scala-scalatest" % Versions.testContainers
 
   lazy val test = Seq(catsLaws, disciplineScalatest, disciplineCore, scalacheck, scalacheckShapeless, scalaTest)
 }

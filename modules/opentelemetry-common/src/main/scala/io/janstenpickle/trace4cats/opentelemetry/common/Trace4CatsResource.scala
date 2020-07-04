@@ -5,7 +5,7 @@ import io.opentelemetry.common.{AttributeValue, Attributes}
 import io.opentelemetry.sdk.resources.Resource
 
 object Trace4CatsResource {
-  final val ServiceNameResourceKey = "service-name"
+  final val ServiceNameResourceKey = "service.name"
 
   def apply(process: TraceProcess): Resource = {
     val attrs = toAttributes[Attributes.Builder](

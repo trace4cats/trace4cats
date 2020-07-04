@@ -158,6 +158,7 @@ The following span completers have been found to be compatible with [`native-ima
 ## TODO
 
 - [ ] Initial release
-- [ ] Integration tests
+- [x] Integration tests
 - [ ] Detailed examples
 - [x] Jaeger protobuf forwarder
+- [ ] OTLP HTTP Exporter

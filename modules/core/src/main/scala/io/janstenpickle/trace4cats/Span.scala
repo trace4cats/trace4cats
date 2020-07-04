@@ -87,7 +87,7 @@ object Span {
           case (span, ExitCase.Completed) => span.end
           case (span, ExitCase.Canceled) => span.end(SpanStatus.Cancelled)
           case (span, ExitCase.Error(th)) =>
-            span.putAll("error" -> true, "error.message" -> th.getMessage) >> span.end(SpanStatus.Internal)
+            span.putAll("error" -> true, "span.status.message" -> th.getMessage) >> span.end(SpanStatus.Internal)
         }
       )
 

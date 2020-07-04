@@ -218,7 +218,7 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
     span.status should be(status)
   }
 
-  it should "overrides the status to cancelled when execution is cancelled" in forAll {
+  it should "override the status to cancelled when execution is cancelled" in forAll {
     (name: String, kind: SpanKind, status: SpanStatus) =>
       var span: CompletedSpan = null
 
@@ -241,7 +241,7 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
       span.status should be(SpanStatus.Cancelled)
   }
 
-  it should "overrides the status to internal when execution fails" in forAll {
+  it should "override the status to internal when execution fails" in forAll {
     (name: String, kind: SpanKind, status: SpanStatus, errorMsg: String) =>
       var span: CompletedSpan = null
 
@@ -254,7 +254,7 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
 
       span.status should be(SpanStatus.Internal)
       (span.attributes should contain)
-        .theSameElementsAs(Map[String, TraceValue]("error" -> true, "error.message" -> errorMsg))
+        .theSameElementsAs(Map[String, TraceValue]("error" -> true, "span.status.message" -> errorMsg))
   }
 
   it should "add a glob of attributes" in forAll {

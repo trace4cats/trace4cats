@@ -9,7 +9,12 @@ object OpenTelemetryOtlpSpanExporter {
   def apply[F[_]: Sync: ContextShift: Timer](
     blocker: Blocker,
     host: String = "localhost",
-    port: Int = 55678
+    port: Int = 55680
   ): Resource[F, SpanExporter[F]] =
-    OpenTelemetryGrpcSpanExporter(blocker, host, port, OtlpGrpcSpanExporter.newBuilder().setChannel(_).build())
+    OpenTelemetryGrpcSpanExporter(
+      blocker,
+      host,
+      port,
+      (channel, _) => OtlpGrpcSpanExporter.newBuilder().setChannel(channel).build()
+    )
 }

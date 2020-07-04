@@ -6,6 +6,7 @@ import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
 import cats.syntax.functor._
 import io.jaegertracing.thrift.internal.senders.UdpSender
 import io.jaegertracing.thriftjava.{Process, Span, Tag, TagType}
+import io.janstenpickle.trace4cats.`export`.SemanticTags
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.TraceValue._
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceValue}
@@ -21,26 +22,27 @@ object JaegerSpanExporter {
       .flatMap(p => Try(p.toInt).toOption)
       .getOrElse(UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT)
   ): Resource[F, SpanExporter[F]] = {
+    val statusTags = SemanticTags.statusTags("span.")
+
     def makeTags(attributes: Map[String, TraceValue]): java.util.List[Tag] =
       attributes.view
         .map {
           case (key, StringValue(value)) =>
-            val tag = new Tag(key, TagType.STRING)
-            tag.setVStr(value)
+            new Tag(key, TagType.STRING).setVStr(value)
           case (key, DoubleValue(value)) =>
-            val tag = new Tag(key, TagType.DOUBLE)
-            tag.setVDouble(value)
+            new Tag(key, TagType.DOUBLE).setVDouble(value)
           case (key, BooleanValue(value)) =>
-            val tag = new Tag(key, TagType.BOOL)
-            tag.setVBool(value)
+            new Tag(key, TagType.BOOL).setVBool(value)
+          case (key, LongValue(value)) =>
+            new Tag(key, TagType.LONG).setVLong(value)
         }
         .toList
         .asJava
 
     def convert(span: CompletedSpan): Span = {
       val traceIdBuffer = ByteBuffer.wrap(span.context.traceId.value)
-      val traceIdLow = traceIdBuffer.getLong
       val traceIdHigh = traceIdBuffer.getLong
+      val traceIdLow = traceIdBuffer.getLong
 
       val thriftSpan = new Span(
         traceIdLow,
@@ -53,7 +55,7 @@ object JaegerSpanExporter {
         span.end - span.start
       )
 
-      thriftSpan.setTags(makeTags(span.attributes))
+      thriftSpan.setTags(makeTags(span.attributes ++ statusTags(span.status) ++ SemanticTags.kindTags(span.kind)))
     }
 
     Resource.make(Sync[F].delay(new UdpSender(host, port, 0)))(sender => Sync[F].delay(sender.close()).void).map {

@@ -14,7 +14,7 @@ object OpenTelemetryOtlpSpanCompleter {
     blocker: Blocker,
     process: TraceProcess,
     host: String = "localhost",
-    port: Int = 55678,
+    port: Int = 55680,
     bufferSize: Int = 2000,
     batchSize: Int = 50,
     batchTimeout: FiniteDuration = 10.seconds

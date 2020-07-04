@@ -154,6 +154,22 @@ lazy val `log-exporter` =
     )
     .dependsOn(model, kernel)
 
+lazy val `jaeger-integration-test` =
+  (project in file("modules/jaeger-integration-test"))
+    .settings(noPublishSettings)
+    .settings(
+      name := "trace4cats-jaeger-integration-test",
+      libraryDependencies ++= Dependencies.test,
+      libraryDependencies ++= Seq(
+        Dependencies.circeGeneric,
+        Dependencies.http4sCirce,
+        Dependencies.http4sEmberClient,
+        Dependencies.logback,
+        Dependencies.testContainers
+      )
+    )
+    .dependsOn(kernel, test)
+
 lazy val `jaeger-thrift-exporter` =
   (project in file("modules/jaeger-thrift-exporter"))
     .settings(publishSettings)
@@ -161,7 +177,7 @@ lazy val `jaeger-thrift-exporter` =
       name := "trace4cats-jaeger-thrift-exporter",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.jaegerThrift)
     )
-    .dependsOn(model, kernel, `exporter-common`)
+    .dependsOn(model, kernel, `exporter-common`, `jaeger-integration-test` % "test->compile")
 
 lazy val `opentelemetry-common` =
   (project in file("modules/opentelemetry-common"))
@@ -184,9 +200,14 @@ lazy val `opentelemetry-jaeger-exporter` =
     .settings(commonSettings)
     .settings(
       name := "trace4cats-opentelemetry-jaeger-exporter",
-      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.openTelemetryJaegerExporter)
+      libraryDependencies ++= Seq(
+        Dependencies.catsEffect,
+        Dependencies.fs2,
+        Dependencies.openTelemetryJaegerExporter,
+        Dependencies.grpcOkHttp % Test
+      )
     )
-    .dependsOn(model, kernel, `exporter-common`, `opentelemetry-common`)
+    .dependsOn(model, kernel, `exporter-common`, `opentelemetry-common`, `jaeger-integration-test` % "test->compile")
 
 lazy val `opentelemetry-otlp-exporter` =
   (project in file("modules/opentelemetry-otlp-exporter"))
@@ -194,9 +215,14 @@ lazy val `opentelemetry-otlp-exporter` =
     .settings(commonSettings)
     .settings(
       name := "trace4cats-opentelemetry-otlp-exporter",
-      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.openTelemetryOtlpExporter)
+      libraryDependencies ++= Seq(
+        Dependencies.catsEffect,
+        Dependencies.fs2,
+        Dependencies.openTelemetryOtlpExporter,
+        Dependencies.grpcOkHttp % Test
+      )
     )
-    .dependsOn(model, kernel, `exporter-common`, `opentelemetry-common`)
+    .dependsOn(model, kernel, `exporter-common`, `opentelemetry-common`, `jaeger-integration-test` % "test->compile")
 
 lazy val `stackdriver-common` =
   (project in file("modules/stackdriver-common"))
@@ -228,9 +254,9 @@ lazy val `stackdriver-http-exporter` =
         Dependencies.circeParser,
         Dependencies.enumeratumCirce,
         Dependencies.fs2,
-        Dependencies.http4Client,
-        Dependencies.http4Circe,
-        Dependencies.httpEmberClient,
+        Dependencies.http4sClient,
+        Dependencies.http4sCirce,
+        Dependencies.http4sEmberClient,
         Dependencies.jwt,
         Dependencies.log4cats,
         Dependencies.logback
@@ -292,7 +318,7 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
     libraryDependencies ++= Seq(
       Dependencies.catsEffect,
       Dependencies.fs2,
-      Dependencies.http4JdkClient,
+      Dependencies.http4sJdkClient,
       Dependencies.log4cats
     )
   )

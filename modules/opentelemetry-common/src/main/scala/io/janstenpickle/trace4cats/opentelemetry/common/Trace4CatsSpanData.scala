@@ -19,8 +19,8 @@ object Trace4CatsSpanData {
   def apply(resource: Resource, span: CompletedSpan): SpanData = new SpanData {
     override lazy val getTraceId: TraceId = {
       val traceIdBuffer = ByteBuffer.wrap(span.context.traceId.value)
-      val traceIdLow = traceIdBuffer.getLong
       val traceIdHigh = traceIdBuffer.getLong
+      val traceIdLow = traceIdBuffer.getLong
       new TraceId(traceIdHigh, traceIdLow)
     }
 
@@ -40,10 +40,12 @@ object Trace4CatsSpanData {
         .build()
 
     override lazy val getParentSpanId: SpanId =
-      span.context.parent.map { parent =>
-        val spanIdBuffer = ByteBuffer.wrap(parent.spanId.value)
-        new SpanId(spanIdBuffer.getLong)
-      }.orNull
+      span.context.parent
+        .map { parent =>
+          val spanIdBuffer = ByteBuffer.wrap(parent.spanId.value)
+          new SpanId(spanIdBuffer.getLong)
+        }
+        .getOrElse(SpanId.getInvalid)
 
     override def getResource: Resource = resource
 

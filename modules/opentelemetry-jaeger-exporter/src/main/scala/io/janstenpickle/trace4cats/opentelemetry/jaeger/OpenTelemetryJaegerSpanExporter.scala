@@ -11,6 +11,12 @@ object OpenTelemetryJaegerSpanExporter {
     host: String = "localhost",
     port: Int = 14250
   ): Resource[F, SpanExporter[F]] =
-    OpenTelemetryGrpcSpanExporter(blocker, host, port, JaegerGrpcSpanExporter.newBuilder().setChannel(_).build())
+    OpenTelemetryGrpcSpanExporter(
+      blocker,
+      host,
+      port,
+      (channel, serviceName) =>
+        JaegerGrpcSpanExporter.newBuilder().setChannel(channel).setServiceName(serviceName).build()
+    )
 
 }
