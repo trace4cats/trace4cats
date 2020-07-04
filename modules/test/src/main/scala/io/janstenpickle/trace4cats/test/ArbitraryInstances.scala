@@ -1,10 +1,14 @@
 package io.janstenpickle.trace4cats.test
 
+import java.time.Instant
+
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, SpanId, TraceId, TraceProcess, TraceState}
 import org.scalacheck.{Arbitrary, Gen, ScalacheckShapeless}
 
 trait ArbitraryInstances extends ScalacheckShapeless {
   private def byteArray(length: Int) = Gen.listOfN(length, Arbitrary.arbByte.arbitrary).map(_.toArray)
+
+  implicit val instantArb: Arbitrary[Instant] = Arbitrary(Gen.choose(0, 1593882556588L).map(Instant.ofEpochMilli))
 
   implicit val stringArb: Arbitrary[String] = Arbitrary(for {
     size <- Gen.choose(1, 5)
@@ -33,7 +37,7 @@ trait ArbitraryInstances extends ScalacheckShapeless {
   )
 
   implicit val batchArb: Arbitrary[Batch] = Arbitrary(for {
-    size <- Gen.choose(1, 1)
+    size <- Gen.choose(1, 3)
     process <- Arbitrary.arbitrary[TraceProcess]
     spans <- Gen.listOfN(size, Arbitrary.arbitrary[CompletedSpan])
   } yield Batch(process, spans))

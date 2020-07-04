@@ -63,7 +63,7 @@ object Trace4CatsSpanData {
         case SpanKind.Consumer => Span.Kind.CONSUMER
       }
 
-    override lazy val getStartEpochNanos: Long = TimeUnit.MICROSECONDS.toNanos(span.start)
+    override lazy val getStartEpochNanos: Long = TimeUnit.MILLISECONDS.toNanos(span.start.toEpochMilli)
 
     override val getAttributes: ReadableAttributes = Trace4CatsReadableAttributes(
       toAttributes[Map[String, AttributeValue]](
@@ -84,7 +84,7 @@ object Trace4CatsSpanData {
         case SpanStatus.Internal => Status.INTERNAL
       }
 
-    override lazy val getEndEpochNanos: Long = TimeUnit.MICROSECONDS.toNanos(span.end)
+    override lazy val getEndEpochNanos: Long = TimeUnit.MILLISECONDS.toNanos(span.end.toEpochMilli)
 
     override lazy val getHasRemoteParent: Boolean = span.context.parent.fold(false)(_.isRemote)
 

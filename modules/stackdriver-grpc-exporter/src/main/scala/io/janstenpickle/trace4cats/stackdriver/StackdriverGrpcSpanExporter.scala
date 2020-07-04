@@ -1,7 +1,6 @@
 package io.janstenpickle.trace4cats.stackdriver
 
 import java.time.Instant
-import java.util.concurrent.TimeUnit
 
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
 import cats.syntax.functor._
@@ -16,11 +15,11 @@ import com.google.protobuf.{BoolValue, Timestamp}
 import com.google.rpc.Status
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model._
+import io.janstenpickle.trace4cats.stackdriver.common.StackdriverConstants._
 import io.janstenpickle.trace4cats.stackdriver.common.TruncatableString
 
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
-import io.janstenpickle.trace4cats.stackdriver.common.StackdriverConstants._
 
 object StackdriverGrpcSpanExporter {
   def apply[F[_]: Concurrent: ContextShift: Timer](
@@ -52,10 +51,8 @@ object StackdriverGrpcSpanExporter {
         .build
     }
 
-    def toTimestampProto(timestamp: Long): Timestamp = {
-      val instant = Instant.ofEpochMilli(TimeUnit.MICROSECONDS.toMillis(timestamp))
-      Timestamp.newBuilder.setSeconds(instant.getEpochSecond).setNanos(instant.getNano).build
-    }
+    def toTimestampProto(timestamp: Instant): Timestamp =
+      Timestamp.newBuilder.setSeconds(timestamp.getEpochSecond).setNanos(timestamp.getNano).build
 
     def toDisplayName(spanName: String, spanKind: SpanKind) = spanKind match {
       case SpanKind.Server if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName

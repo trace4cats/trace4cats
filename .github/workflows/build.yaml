@@ -44,7 +44,7 @@ jobs:
 
       - name: scala build
         run: |
-          sbt -Dsbt.coursier.home=~/.sbt/coursier/ '; project agent; graalvm-native-image:packageBin' -J-Xms3G -J-Xmx6G
+          sbt -Dsbt.coursier.home=~/.sbt/coursier/ '; project agent; graalvm-native-image:packageBin' -J-Xms3G -J-Xmx6G -J-Xss4m
       - name: docker login
         run: docker login -u janstenpickle -p '${{secrets.DOCKERHUB}}'
       - name: docker build
@@ -100,7 +100,7 @@ jobs:
 
       - name: scala build
         run: |
-          sbt -Dsbt.coursier.home=~/.sbt/coursier/ '; project collector-lite; graalvm-native-image:packageBin' -J-Xms3G -J-Xmx6G
+          sbt -Dsbt.coursier.home=~/.sbt/coursier/ '; project collector-lite; graalvm-native-image:packageBin' -J-Xms3G -J-Xmx6G -J-Xss4m
       - name: docker login
         run: docker login -u janstenpickle -p '${{secrets.DOCKERHUB}}'
       - name: docker build
@@ -230,4 +230,4 @@ jobs:
 
       - name: scala build
         run: |
-          sbt -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.pass=${{ secrets.BINTRAY_PASS }} -Dsbt.coursier.home=~/.sbt/coursier/ ++${{ matrix.scala-version }} '; scalafmt::test; test:scalafmt::test; compile; test; releaseEarly' -J-Xms3G -J-Xmx6G
+          sbt -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.pass=${{ secrets.BINTRAY_PASS }} -Dsbt.coursier.home=~/.sbt/coursier/ ++${{ matrix.scala-version }} '; scalafmt::test; test:scalafmt::test; compile; test; releaseEarly' -J-Xms3G -J-Xmx6G -J-Xss4m

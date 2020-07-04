@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.jaeger
 
-import java.util.concurrent.TimeUnit
+import java.time.Instant
 
 import cats.effect.IO
 import io.janstenpickle.trace4cats.`export`.SemanticTags
@@ -11,10 +11,7 @@ import scala.concurrent.duration._
 
 class JaegerSpanCompleterSpec extends BaseJaegerSpec {
   it should "Send a span to jaeger" in forAll { (span: CompletedSpan, process: TraceProcess) =>
-    val updatedSpan = span.copy(
-      start = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis()),
-      end = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis())
-    )
+    val updatedSpan = span.copy(start = Instant.now(), end = Instant.now())
     val batch = Batch(process, List(updatedSpan))
 
     testCompleter(

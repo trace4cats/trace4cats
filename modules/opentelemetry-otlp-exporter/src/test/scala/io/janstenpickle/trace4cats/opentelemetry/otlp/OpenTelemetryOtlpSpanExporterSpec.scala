@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.opentelemetry.otlp
 
-import java.util.concurrent.TimeUnit
+import java.time.Instant
 
 import cats.effect.IO
 import io.janstenpickle.trace4cats.`export`.SemanticTags
@@ -12,12 +12,7 @@ class OpenTelemetryOtlpSpanExporterSpec extends BaseJaegerSpec {
     val updatedBatch =
       Batch(
         batch.process.copy(attributes = Map.empty),
-        batch.spans.map(
-          _.copy(
-            start = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis()),
-            end = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis())
-          )
-        )
+        batch.spans.map(_.copy(start = Instant.now(), end = Instant.now()))
       )
 
     testExporter(

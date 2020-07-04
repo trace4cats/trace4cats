@@ -1,5 +1,6 @@
 package io.janstenpickle.trace4cats
 
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 import cats.{Applicative, Defer, MonadError}
@@ -42,9 +43,17 @@ case class RefSpan[F[_]: Sync: Clock] private (
   override protected[trace4cats] def end: F[Unit] = status.get.flatMap(end)
   override protected[trace4cats] def end(status: SpanStatus): F[Unit] =
     for {
-      now <- Clock[F].realTime(TimeUnit.MICROSECONDS)
+      now <- Clock[F].realTime(TimeUnit.MILLISECONDS)
       attrs <- attributes.get
-      completed = CompletedSpan(context, name, kind, start, now, attrs, status)
+      completed = CompletedSpan(
+        context,
+        name,
+        kind,
+        Instant.ofEpochMilli(start),
+        Instant.ofEpochMilli(now),
+        attrs,
+        status
+      )
       _ <- completer.complete(completed)
     } yield ()
 
@@ -81,7 +90,7 @@ object Span {
         Resource.make(Applicative[F].pure(EmptySpan[F](context.setIsSampled())))(_.end),
         Resource.makeCase(for {
           attributesRef <- Ref.of[F, Map[String, TraceValue]](Map.empty)
-          now <- Clock[F].realTime(TimeUnit.MICROSECONDS)
+          now <- Clock[F].realTime(TimeUnit.MILLISECONDS)
           statusRef <- Ref.of[F, SpanStatus](SpanStatus.Ok)
         } yield RefSpan[F](context, name, kind, now, attributesRef, statusRef, sampler, completer)) {
           case (span, ExitCase.Completed) => span.end

@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.jaeger
 
 import java.nio.ByteBuffer
+import java.util.concurrent.TimeUnit
 
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
 import cats.syntax.functor._
@@ -44,6 +45,9 @@ object JaegerSpanExporter {
       val traceIdHigh = traceIdBuffer.getLong
       val traceIdLow = traceIdBuffer.getLong
 
+      val startMicros = TimeUnit.MILLISECONDS.toMicros(span.start.toEpochMilli)
+      val endMicros = TimeUnit.MILLISECONDS.toMicros(span.end.toEpochMilli)
+
       val thriftSpan = new Span(
         traceIdLow,
         traceIdHigh,
@@ -51,8 +55,8 @@ object JaegerSpanExporter {
         span.context.parent.map(parent => ByteBuffer.wrap(parent.spanId.value).getLong).getOrElse(0),
         span.name,
         if (span.context.traceFlags.sampled) 1 else 0,
-        span.start,
-        span.end - span.start
+        startMicros,
+        endMicros - startMicros
       )
 
       thriftSpan.setTags(makeTags(span.attributes ++ statusTags(span.status) ++ SemanticTags.kindTags(span.kind)))

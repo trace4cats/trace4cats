@@ -45,8 +45,8 @@ object Span {
       spanId = completed.context.spanId.show,
       parentSpanId = completed.context.parent.map(_.spanId.show),
       displayName = TruncatableString(toDisplayName(completed.name, completed.kind)),
-      startTime = toInstant(completed.start),
-      endTime = toInstant(completed.end),
+      startTime = completed.start,
+      endTime = completed.end,
       attributes = Attributes.fromCompleted(
         completed.attributes ++ process.attributes + (ServiceNameAttributeKey -> TraceValue
           .StringValue(process.serviceName))

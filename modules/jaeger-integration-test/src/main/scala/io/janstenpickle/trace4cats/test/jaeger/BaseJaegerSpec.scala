@@ -1,5 +1,7 @@
 package io.janstenpickle.trace4cats.test.jaeger
 
+import java.util.concurrent.TimeUnit
+
 import cats.data.NonEmptyList
 import cats.effect.{Blocker, IO, Resource}
 import cats.implicits._
@@ -47,38 +49,45 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
       case (k, TraceValue.LongValue(value)) => JaegerTag.LongTag(k, value)
     }
 
-    batch.spans.groupBy(_.context.traceId).toList.map {
-      case (traceId, spans) =>
-        JaegerTraceResponse(
-          NonEmptyList
-            .one(
-              JaegerTrace(
-                traceID = traceId.show,
-                spans = spans.map { span =>
-                  JaegerSpan(
-                    traceID = traceId.show,
-                    spanID = span.context.spanId.show,
-                    operationName = span.name,
-                    startTime = span.start,
-                    duration = span.end - span.start,
-                    tags = (JaegerTag.StringTag("internal.span.format", "proto") :: convertAttributes(
-                      span.attributes ++ kindToAttributes(span.kind) ++ statusToAttributes(span.status)
-                    )).sortBy(_.key),
-                    references = span.context.parent.toList.map { parent =>
-                      JaegerReference("CHILD_OF", traceId.show, parent.spanId.show)
+    batch.spans
+      .groupBy(_.context.traceId)
+      .toList
+      .map {
+        case (traceId, spans) =>
+          JaegerTraceResponse(
+            NonEmptyList
+              .one(
+                JaegerTrace(
+                  traceID = traceId.show,
+                  spans = spans
+                    .map { span =>
+                      JaegerSpan(
+                        traceID = traceId.show,
+                        spanID = span.context.spanId.show,
+                        operationName = span.name,
+                        startTime = TimeUnit.MILLISECONDS.toMicros(span.start.toEpochMilli),
+                        duration = TimeUnit.MILLISECONDS.toMicros(span.end.toEpochMilli) - TimeUnit.MILLISECONDS
+                          .toMicros(span.start.toEpochMilli),
+                        tags = (JaegerTag.StringTag("internal.span.format", "proto") :: convertAttributes(
+                          span.attributes ++ kindToAttributes(span.kind) ++ statusToAttributes(span.status)
+                        )).sortBy(_.key),
+                        references = span.context.parent.toList.map { parent =>
+                          JaegerReference("CHILD_OF", traceId.show, parent.spanId.show)
+                        }
+                      )
                     }
-                  )
-                },
-                processes = Map(
-                  "p1" -> JaegerProcess(
-                    batch.process.serviceName,
-                    convertAttributes(batch.process.attributes).sortBy(_.key)
+                    .sortBy(_.operationName),
+                  processes = Map(
+                    "p1" -> JaegerProcess(
+                      batch.process.serviceName,
+                      convertAttributes(batch.process.attributes).sortBy(_.key)
+                    )
                   )
                 )
               )
-            )
-        )
-    }
+          )
+      }
+      .sortBy(_.data.head.traceID)
   }
 
   def testExporter(
@@ -102,6 +111,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
 
         }
         .unsafeRunSync()
+        .sortBy(_.data.head.traceID)
 
     assert(res === expectedResponse)
   }
@@ -130,6 +140,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
 
         }
         .unsafeRunSync()
+        .sortBy(_.data.head.traceID)
 
     assert(res === expectedResponse)
   }
