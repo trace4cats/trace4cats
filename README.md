@@ -29,25 +29,21 @@ with [Natchez], but may also be used on its own.
 The following interfaces allow different backends to be plugged in and may adjust how traces
 are sampled.
 
-#### `SpanCompleter`
-Used when a spans is finished. Multiple implementations may be combined using
-the provided `Monoid` instance.
+#### `SpanExporter` and `SpanCompleter`
+`SpanExporter`s are used to forward a batch of spans to as certain location in a certain format.
+Multiple implementations may be combined using the provided `Monoid` instance.
+
+`SpanCompleter`s are used when a spans is finished. They will usually delegate to a `SpanExporter`
+of the same format. Multiple implementations may be combined using the provided `Monoid` instance.
+
+`SpanCompleter`s should generally buffer spans in a circular buffer so that completing a span should
+be non-blocking for the hosting application. `SpanExporter`s may be blocking, however a buffering
+wrapper implementation is available, which is used in the Collectors to provide non-blocking behaviour 
+when accepting new spans. 
 
 The following implementations are provided out of the box:
 
-- [Jaeger] agent via Thrift over UDP
-- [OpenTelemetry] collector via Protobufs over GRPC
-- Log using [Log4Cats]
-- Trace4Cats Avro over TCP or UDP
-- [Stackdriver Trace] over HTTP or GRPC
-
-#### `SpanExporter`
-Used when a batch of spans are finished. Multiple implementations may be combined using
-the provided `Monoid` instance.
-
-The following implementations are provided out of the box:
-
-- [Jaeger] agent via Thrift over UDP
+- [Jaeger] agent via Thrift over UDP and Protobufs over GRPC
 - [OpenTelemetry] collector via Protobufs over GRPC
 - Log using [Log4Cats]
 - Trace4Cats Avro over TCP or UDP
@@ -86,9 +82,9 @@ docker run -it janstenpickle/trace4cats-agent:<version or latest>
 ### Collector
 
 A standalone server designed to forward spans via various `SpanExporter` implementations. Currently
-the collector supports the following forwarders:
+the Collector supports the following exporters:
 
-- [Jaeger] via Thrift over UDP
+- [Jaeger] via Thrift over UDP and Protobufs over GRPC
 - [OpenTelemetry] via Protobufs over GRPC
 - Log using [Log4Cats]
 - Trace4Cats Avro over TCP
@@ -98,6 +94,22 @@ the collector supports the following forwarders:
 
 ```bash
 docker run -it janstenpickle/trace4cats-collector:<version or latest>
+```
+
+### Collector Lite
+
+Similar implementation to the Collector, but compiled with [`native-image`] so does not support any
+GRPC based exporters. Currently Collector lite supports the following exporters:
+
+- [Jaeger] via Thrift over UDP
+- Log using [Log4Cats]
+- Trace4Cats Avro over TCP
+- [Stackdriver Trace] over HTTP
+
+#### Running
+
+```bash
+docker run -it janstenpickle/trace4cats-collector-lite:<version or latest>
 ```
 
 ## Example Usage
@@ -110,7 +122,8 @@ To use Trace4Cats within your application add the dependencies listed below as n
 "io.janstenpickle" %% "trace4cats-avro-exporter" % <version>
 "io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % <version>
 "io.janstenpickle" %% "log-exporter" % <version>
-"io.janstenpickle" %% "opentelemetry-exporter" % <version>
+"io.janstenpickle" %% "opentelemetry-otlp-exporter" % <version>
+"io.janstenpickle" %% "opentelemetry-jaeger-exporter" % <version>
 "io.janstenpickle" %% "stackdriver-grpc-exporter" % <version>
 "io.janstenpickle" %% "stackdriver-http-exporter" % <version>
 
@@ -148,17 +161,19 @@ The following span completers have been found to be compatible with [`native-ima
 - Log
 - [Stackdriver Trace] over HTTP
 
+## TODO
+
+- [ ] Initial release
+- [ ] Probabilistic span sampler 
+- [x] Integration tests
+- [ ] Detailed examples
+- [x] Jaeger protobuf exporter
+- [ ] OTLP HTTP exporter
+
+
 [Jaeger]: https://www.jaegertracing.io/
 [Log4Cats]: https://github.com/ChristopherDavenport/log4cats
 [Natchez]: https://github.com/tpolecat/natchez
 [`native-image`]: https://www.graalvm.org/docs/reference-manual/native-image/ 
 [OpenTelemetry]: http://opentelemetry.io
 [Stackdriver Trace]: https://cloud.google.com/trace/docs/reference
-
-## TODO
-
-- [ ] Initial release
-- [x] Integration tests
-- [ ] Detailed examples
-- [x] Jaeger protobuf forwarder
-- [ ] OTLP HTTP Exporter
