@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.opentelemetry
+package io.janstenpickle.trace4cats.opentelemetry.common
 
 import cats.effect.{Blocker, ContextShift, Resource, Sync, Timer}
 import cats.syntax.flatMap._
@@ -6,21 +6,23 @@ import cats.syntax.functor._
 import io.grpc.{ManagedChannel, ManagedChannelBuilder}
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch
-import io.opentelemetry.exporters.otlp.OtlpGrpcSpanExporter
+
+import io.opentelemetry.sdk.trace.export.{SpanExporter => OTSpanExporter}
 
 import scala.jdk.CollectionConverters._
 
-object OpenTelemetrySpanExporter {
+object OpenTelemetryGrpcSpanExporter {
   def apply[F[_]: Sync: ContextShift: Timer](
     blocker: Blocker,
-    host: String = "localhost",
-    port: Int = 55678
+    host: String,
+    port: Int,
+    makeExporter: ManagedChannel => OTSpanExporter
   ): Resource[F, SpanExporter[F]] =
     for {
       channel <- Resource.make[F, ManagedChannel](
         Sync[F].delay(ManagedChannelBuilder.forAddress(host, port).usePlaintext().build())
       )(channel => Sync[F].delay(channel.shutdown()).void)
-      exporter <- Resource.make(Sync[F].delay(OtlpGrpcSpanExporter.newBuilder().setChannel(channel).build()))(
+      exporter <- Resource.make(Sync[F].delay(makeExporter(channel)))(
         exporter => Sync[F].delay(exporter.flush()) >> Sync[F].delay(exporter.shutdown())
       )
     } yield

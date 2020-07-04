@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.opentelemetry
+package io.janstenpickle.trace4cats.opentelemetry.common
 
 import java.nio.ByteBuffer
 import java.util
@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 
 import io.janstenpickle.trace4cats.model.TraceState.{Key, Value}
 import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind, SpanStatus}
-import io.opentelemetry.common.AttributeValue
+import io.opentelemetry.common.{AttributeValue, ReadableAttributes}
 import io.opentelemetry.sdk.common.InstrumentationLibraryInfo
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.data.SpanData
@@ -63,7 +63,13 @@ object Trace4CatsSpanData {
 
     override lazy val getStartEpochNanos: Long = TimeUnit.MICROSECONDS.toNanos(span.start)
 
-    override lazy val getAttributes: util.Map[String, AttributeValue] = toAttributes(span.attributes)
+    override val getAttributes: ReadableAttributes = Trace4CatsReadableAttributes(
+      toAttributes[Map[String, AttributeValue]](
+        span.attributes,
+        Map.empty[String, AttributeValue],
+        (map, k, v) => map.updated(k, v)
+      )
+    )
 
     override lazy val getEvents: util.List[SpanData.Event] = List.empty.asJava
 

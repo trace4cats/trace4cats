@@ -160,4 +160,4 @@ The following span completers have been found to be compatible with [`native-ima
 - [ ] Initial release
 - [ ] Integration tests
 - [ ] Detailed examples
-- [ ] Jaeger protobuf forwarder
+- [x] Jaeger protobuf forwarder

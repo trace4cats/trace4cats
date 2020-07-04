@@ -41,14 +41,12 @@ object CollectorLite
       .orElse(Opts.option[Int]("collector-port", "Collector port"))
       .withDefault(DefaultPort)
 
-  val jaegerUdpOpt: Opts[Boolean] = Opts.flag("jaeger-udp", "Send spans via Jaeger UDP").orFalse
+  val jaegerUdpHostOpt: Opts[Option[String]] = Opts
+    .option[String]("jaeger-udp-host", "Jaeger UDP agent host")
+    .orNone
   val jaegerUdpPortOpt: Opts[Int] = Opts
     .option[Int]("jaeger-udp-port", "Jaeger UDP agent port")
     .withDefault(UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT)
-
-  val jaegerUdpHostOpt: Opts[String] = Opts
-    .option[String]("jaeger-udp-host", "Jaeger UDP agent host")
-    .withDefault(UdpSender.DEFAULT_AGENT_UDP_HOST)
 
   val logOpt: Opts[Boolean] = Opts.flag("log", "Write spans to the log").orFalse
 
@@ -75,7 +73,6 @@ object CollectorLite
       portOpt,
       collectorHostOpt,
       collectorPortOpt,
-      jaegerUdpOpt,
       jaegerUdpHostOpt,
       jaegerUdpPortOpt,
       logOpt,
@@ -88,8 +85,7 @@ object CollectorLite
     port: Int,
     collectorHost: Option[String],
     collectorPort: Int,
-    jaegerUdp: Boolean,
-    jaegerUdpHost: String,
+    jaegerUdpHost: Option[String],
     jaegerUdpPort: Int,
     log: Boolean,
     stackdriverProject: Option[String],
@@ -108,9 +104,9 @@ object CollectorLite
         AvroSpanExporter.tcp[IO](blocker, host = host, port = collectorPort).map("Trace4Cats Avro TCP" -> _)
       }
 
-      jaegerExporter <- if (jaegerUdp)
-        JaegerSpanExporter[IO](blocker, host = jaegerUdpHost, port = jaegerUdpPort).map(e => Some("Jaeger UDP" -> e))
-      else Resource.pure[IO, Option[(String, SpanExporter[IO])]](None)
+      jaegerUdpExporter <- jaegerUdpHost.traverse { host =>
+        JaegerSpanExporter[IO](blocker, host = host, port = jaegerUdpPort).map("Jaeger UDP" -> _)
+      }
 
       logExporter <- if (log) Resource.pure[IO, SpanExporter[IO]](LogExporter[IO]).map(e => Some("Log" -> e))
       else Resource.pure[IO, Option[(String, SpanExporter[IO])]](None)
@@ -125,7 +121,7 @@ object CollectorLite
 
       queuedExporter <- QueuedSpanExporter(
         bufferSize,
-        List(collectorExporter, jaegerExporter, logExporter, stackdriverExporter).flatten
+        List(collectorExporter, jaegerUdpExporter, logExporter, stackdriverExporter).flatten
       )
 
       tcp <- AvroServer.tcp[IO](blocker, _.evalMap(queuedExporter.exportBatch), port)

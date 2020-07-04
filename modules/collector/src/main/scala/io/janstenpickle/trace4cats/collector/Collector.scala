@@ -14,7 +14,8 @@ import io.janstenpickle.trace4cats.collector.common.Http4sJdkClient
 import io.janstenpickle.trace4cats.jaeger.JaegerSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.log.LogExporter
-import io.janstenpickle.trace4cats.opentelemetry.OpenTelemetrySpanExporter
+import io.janstenpickle.trace4cats.opentelemetry.jaeger.OpenTelemetryJaegerSpanExporter
+import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpSpanExporter
 import io.janstenpickle.trace4cats.stackdriver.StackdriverGrpcSpanExporter
 import io.janstenpickle.trace4cats.strackdriver.StackdriverHttpSpanExporter
 
@@ -39,21 +40,24 @@ object Collector
       .orElse(Opts.option[Int]("collector-port", "Collector port"))
       .withDefault(DefaultPort)
 
-  val jaegerUdpOpt: Opts[Boolean] = Opts.flag("jaeger-udp", "Send spans via Jaeger UDP").orFalse
+  val jaegerUdpHostOpt: Opts[Option[String]] = Opts
+    .option[String]("jaeger-udp-host", "Jaeger UDP agent host")
+    .orNone
   val jaegerUdpPortOpt: Opts[Int] = Opts
     .option[Int]("jaeger-udp-port", "Jaeger UDP agent port")
     .withDefault(UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT)
 
-  val jaegerUdpHostOpt: Opts[String] = Opts
-    .option[String]("jaeger-udp-host", "Jaeger UDP agent host")
-    .withDefault(UdpSender.DEFAULT_AGENT_UDP_HOST)
-
   val logOpt: Opts[Boolean] = Opts.flag("log", "Write spans to the log").orFalse
 
-  val otHostOpt: Opts[Option[String]] =
-    Opts.option[String]("opentelemetry-host", "Write spans via OpenTelemetry protobufs format").orNone
-  val otPortOpt: Opts[Int] =
-    Opts.option[Int]("opentelemetry-host", "OpenTelelmetry protobufs port").withDefault(55678)
+  val otlpHostOpt: Opts[Option[String]] =
+    Opts.option[String]("opentelemetry-otlp-host", "Write spans via OpenTelemetry OLTP protobufs format").orNone
+  val otlpPortOpt: Opts[Int] =
+    Opts.option[Int]("opentelemetry-otpl-host", "OpenTelelmetry OLTP protobufs port").withDefault(55678)
+
+  val jaegerProtoHostOpt: Opts[Option[String]] =
+    Opts.option[String]("jaeger-proto-host", "Write spans via Jaeger protobufs format").orNone
+  val jaegerProtoPortOpt: Opts[Int] =
+    Opts.option[Int]("jaeger-proto-host", "Jaeger protobufs port").withDefault(14250)
 
   val stackdriverHttpOpt: Opts[Boolean] = Opts
     .flag(
@@ -85,12 +89,13 @@ object Collector
       portOpt,
       collectorHostOpt,
       collectorPortOpt,
-      jaegerUdpOpt,
       jaegerUdpHostOpt,
       jaegerUdpPortOpt,
+      jaegerProtoHostOpt,
+      jaegerProtoPortOpt,
       logOpt,
-      otHostOpt,
-      otPortOpt,
+      otlpHostOpt,
+      otlpPortOpt,
       stackdriverHttpOpt,
       stackdriverProjectOpt,
       stackdriverCredentialsFileOpt,
@@ -101,9 +106,10 @@ object Collector
     port: Int,
     collectorHost: Option[String],
     collectorPort: Int,
-    jaegerUdp: Boolean,
-    jaegerUdpHost: String,
+    jaegerUdpHost: Option[String],
     jaegerUdpPort: Int,
+    jaegerProtoHost: Option[String],
+    jaegerProtoPort: Int,
     log: Boolean,
     otHost: Option[String],
     otPort: Int,
@@ -124,15 +130,19 @@ object Collector
         AvroSpanExporter.tcp[IO](blocker, host = host, port = collectorPort).map("Trace4Cats Avro TCP" -> _)
       }
 
-      jaegerExporter <- if (jaegerUdp)
-        JaegerSpanExporter[IO](blocker, host = jaegerUdpHost, port = jaegerUdpPort).map(e => Some("Jaeger UDP" -> e))
-      else Resource.pure[IO, Option[(String, SpanExporter[IO])]](None)
+      jaegerUdpExporter <- jaegerUdpHost.traverse { host =>
+        JaegerSpanExporter[IO](blocker, host = host, port = jaegerUdpPort).map("Jaeger UDP" -> _)
+      }
+
+      jaegerProtoExporter <- jaegerProtoHost.traverse { host =>
+        OpenTelemetryJaegerSpanExporter[IO](blocker, host, jaegerProtoPort).map("Jaeger Proto" -> _)
+      }
 
       logExporter <- if (log) Resource.pure[IO, SpanExporter[IO]](LogExporter[IO]).map(e => Some("Log" -> e))
       else Resource.pure[IO, Option[(String, SpanExporter[IO])]](None)
 
       otExporter <- otHost.traverse { host =>
-        OpenTelemetrySpanExporter[IO](blocker, host = host, port = otPort).map("OpenTelemetry" -> _)
+        OpenTelemetryOtlpSpanExporter[IO](blocker, host = host, port = otPort).map("OpenTelemetry" -> _)
       }
 
       stackdriverExporter <- stackdriverProject.flatTraverse { projectId =>
@@ -146,7 +156,7 @@ object Collector
 
       queuedExporter <- QueuedSpanExporter(
         bufferSize,
-        List(collectorExporter, jaegerExporter, logExporter, otExporter, stackdriverExporter).flatten
+        List(collectorExporter, jaegerUdpExporter, jaegerProtoExporter, logExporter, otExporter, stackdriverExporter).flatten
       )
 
       tcp <- AvroServer.tcp[IO](blocker, _.evalMap(queuedExporter.exportBatch), port)

@@ -75,7 +75,9 @@ lazy val root = (project in file("."))
     `exporter-common`,
     `log-exporter`,
     `jaeger-thrift-exporter`,
-    `opentelemetry-exporter`,
+    `opentelemetry-common`,
+    `opentelemetry-jaeger-exporter`,
+    `opentelemetry-otlp-exporter`,
     `stackdriver-grpc-exporter`,
     `stackdriver-http-exporter`,
     natchez
@@ -161,15 +163,40 @@ lazy val `jaeger-thrift-exporter` =
     )
     .dependsOn(model, kernel, `exporter-common`)
 
-lazy val `opentelemetry-exporter` =
-  (project in file("modules/opentelemetry-exporter"))
+lazy val `opentelemetry-common` =
+  (project in file("modules/opentelemetry-common"))
     .settings(publishSettings)
     .settings(commonSettings)
     .settings(
-      name := "trace4cats-opentelemetry-exporter",
-      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.openTelemetryExporter)
+      name := "trace4cats-opentelemetry-common",
+      libraryDependencies ++= Seq(
+        Dependencies.catsEffect,
+        Dependencies.fs2,
+        Dependencies.openTelemetrySdk,
+        Dependencies.grpcApi
+      )
     )
     .dependsOn(model, kernel, `exporter-common`)
+
+lazy val `opentelemetry-jaeger-exporter` =
+  (project in file("modules/opentelemetry-jaeger-exporter"))
+    .settings(publishSettings)
+    .settings(commonSettings)
+    .settings(
+      name := "trace4cats-opentelemetry-jaeger-exporter",
+      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.openTelemetryJaegerExporter)
+    )
+    .dependsOn(model, kernel, `exporter-common`, `opentelemetry-common`)
+
+lazy val `opentelemetry-otlp-exporter` =
+  (project in file("modules/opentelemetry-otlp-exporter"))
+    .settings(publishSettings)
+    .settings(commonSettings)
+    .settings(
+      name := "trace4cats-opentelemetry-otlp-exporter",
+      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.openTelemetryOtlpExporter)
+    )
+    .dependsOn(model, kernel, `exporter-common`, `opentelemetry-common`)
 
 lazy val `stackdriver-common` =
   (project in file("modules/stackdriver-common"))
@@ -299,7 +326,8 @@ lazy val collector = (project in file("modules/collector"))
     `avro-server`,
     `jaeger-thrift-exporter`,
     `log-exporter`,
-    `opentelemetry-exporter`,
+    `opentelemetry-jaeger-exporter`,
+    `opentelemetry-otlp-exporter`,
     `stackdriver-grpc-exporter`,
     `stackdriver-http-exporter`
   )
