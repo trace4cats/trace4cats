@@ -56,7 +56,7 @@ The following implementations are provided out of the box:
 
 - Always
 - Never
-- ~Probabilistic~ (soon)
+- Probabilistic
 
 #### `ToHeaders`
 
@@ -165,6 +165,7 @@ The following span completers have been found to be compatible with [`native-ima
 
 - [ ] Initial release
 - [ ] Probabilistic span sampler 
+- [ ] Limit number of args
 - [x] Integration tests
 - [ ] Detailed examples
 - [x] Jaeger protobuf exporter
