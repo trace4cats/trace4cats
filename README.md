@@ -77,7 +77,7 @@ application. Forwards batches of spans onto the Collector over TCP.
 #### Running
 
 ```bash
-docker run -it janstenpickle/trace4cats-agent:<version or latest>
+docker run -it janstenpickle/trace4cats-agent:0.1.0
 ```
 
 ### Collector
@@ -95,7 +95,7 @@ the Collector supports the following exporters:
 #### Running
 
 ```bash
-docker run -p7777:7777/udp -it janstenpickle/trace4cats-collector:<version or latest>
+docker run -p7777:7777/udp -it janstenpickle/trace4cats-collector:0.1.0
 ```
 
 ### Collector Lite
@@ -112,7 +112,7 @@ GRPC based exporters. Currently Collector lite supports the following exporters:
 #### Running
 
 ```bash
-docker run -p7777:7777 -p7777:7777/udp -it janstenpickle/trace4cats-collector-lite:<version or latest>
+docker run -p7777:7777 -p7777:7777/udp -it janstenpickle/trace4cats-collector-lite:0.1.0
 ```
 
 ## Example Usage
@@ -120,16 +120,16 @@ docker run -p7777:7777 -p7777:7777/udp -it janstenpickle/trace4cats-collector-li
 To use Trace4Cats within your application add the dependencies listed below as needed:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % <version>
-"io.janstenpickle" %% "trace4cats-natchez" % <version>
-"io.janstenpickle" %% "trace4cats-avro-exporter" % <version>
-"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % <version>
-"io.janstenpickle" %% "log-exporter" % <version>
-"io.janstenpickle" %% "opentelemetry-otlp-grpc-exporter" % <version>
-"io.janstenpickle" %% "opentelemetry-otlp-http-exporter" % <version>
-"io.janstenpickle" %% "opentelemetry-jaeger-exporter" % <version>
-"io.janstenpickle" %% "stackdriver-grpc-exporter" % <version>
-"io.janstenpickle" %% "stackdriver-http-exporter" % <version>
+"io.janstenpickle" %% "trace4cats-core" % "0.1.0"
+"io.janstenpickle" %% "trace4cats-natchez" % "0.1.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.1.0"
+"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.1.0"
+"io.janstenpickle" %% "trace4cats-log-exporter" % "0.1.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.1.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.1.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.1.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.1.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.1.0"
 
 ```
 
@@ -147,7 +147,7 @@ The following span completers have been found to be compatible with [`native-ima
 
 ## TODO
 
-- [ ] Initial release
+- [x] Initial release
 - [x] Probabilistic span sampler 
 - [ ] Limit number of attributes
 - [x] Integration tests
