@@ -1,4 +1,4 @@
-addSbtPlugin("com.lucidchart"            % "sbt-scalafmt"        % "1.15")
+addSbtPlugin("com.lucidchart"            % "sbt-scalafmt"        % "1.16")
 addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat"        % "0.1.13")
 addSbtPlugin("com.typesafe.sbt"          % "sbt-native-packager" % "1.7.3")
 addSbtPlugin("org.foundweekends"         % "sbt-bintray"         % "0.5.6")
