@@ -7,7 +7,7 @@ import io.janstenpickle.trace4cats.`export`.SemanticTags
 import io.janstenpickle.trace4cats.model.{Batch, TraceValue}
 import io.janstenpickle.trace4cats.test.jaeger.BaseJaegerSpec
 
-class OpenTelemetryOtlpSpanExporterSpec extends BaseJaegerSpec {
+class OpenTelemetryOtlpHttpSpanExporterSpec extends BaseJaegerSpec {
   it should "Send a batch of spans to jaeger" in forAll { batch: Batch =>
     val updatedBatch =
       Batch(
@@ -16,7 +16,7 @@ class OpenTelemetryOtlpSpanExporterSpec extends BaseJaegerSpec {
       )
 
     testExporter(
-      OpenTelemetryOtlpSpanExporter[IO](blocker, "localhost", 55680),
+      OpenTelemetryOtlpHttpSpanExporter.emberClient[IO](blocker, "localhost", 55681),
       updatedBatch,
       batchToJaegerResponse(updatedBatch, SemanticTags.kindTags.andThen(_.filterNot {
         case (k, TraceValue.StringValue(v)) => k == "span.kind" && v == "internal"

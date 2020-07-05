@@ -14,6 +14,7 @@ import io.janstenpickle.trace4cats.collector.common.Http4sJdkClient
 import io.janstenpickle.trace4cats.jaeger.JaegerSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.log.LogExporter
+import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpHttpSpanExporter
 import io.janstenpickle.trace4cats.strackdriver.StackdriverHttpSpanExporter
 
 object CollectorLite
@@ -50,6 +51,11 @@ object CollectorLite
 
   val logOpt: Opts[Boolean] = Opts.flag("log", "Write spans to the log").orFalse
 
+  val otlpHttpHostOpt: Opts[Option[String]] =
+    Opts.option[String]("opentelemetry-otlp-http-host", "Write spans via OpenTelemetry OLTP HTTP/JSON format").orNone
+  val otlpHttpPortOpt: Opts[Int] =
+    Opts.option[Int]("opentelemetry-otpl-http-port", "OpenTelelmetry OLTP HTTP port").withDefault(55681)
+
   val stackdriverProjectOpt: Opts[Option[String]] =
     Opts.option[String]("stackdriver-project-id", "Google Project ID for use with Stackdriver").orNone
 
@@ -76,6 +82,8 @@ object CollectorLite
       jaegerUdpHostOpt,
       jaegerUdpPortOpt,
       logOpt,
+      otlpHttpHostOpt,
+      otlpHttpPortOpt,
       stackdriverProjectOpt,
       stackdriverCredentialsFileOpt,
       bufferSizeOpt
@@ -88,6 +96,8 @@ object CollectorLite
     jaegerUdpHost: Option[String],
     jaegerUdpPort: Int,
     log: Boolean,
+    otHttpHost: Option[String],
+    otHttpPort: Int,
     stackdriverProject: Option[String],
     stackdriverCredentialsFile: Option[String],
     bufferSize: Int
@@ -111,6 +121,13 @@ object CollectorLite
       logExporter <- if (log) Resource.pure[IO, SpanExporter[IO]](LogExporter[IO]).map(e => Some("Log" -> e))
       else Resource.pure[IO, Option[(String, SpanExporter[IO])]](None)
 
+      otHttpExporter <- otHttpHost.traverse { host =>
+        Resource.liftF(for {
+          client <- Http4sJdkClient[IO](blocker)
+          exporter <- OpenTelemetryOtlpHttpSpanExporter[IO](client, host = host, port = otHttpPort)
+        } yield "OpenTelemetry HTTP" -> exporter)
+      }
+
       stackdriverExporter <- (stackdriverProject, stackdriverCredentialsFile).mapN(_ -> _).traverse {
         case (projectId, credsFile) =>
           Resource.liftF(for {
@@ -121,7 +138,7 @@ object CollectorLite
 
       queuedExporter <- QueuedSpanExporter(
         bufferSize,
-        List(collectorExporter, jaegerUdpExporter, logExporter, stackdriverExporter).flatten
+        List(collectorExporter, jaegerUdpExporter, logExporter, otHttpExporter, stackdriverExporter).flatten
       )
 
       tcp <- AvroServer.tcp[IO](blocker, _.evalMap(queuedExporter.exportBatch), port)

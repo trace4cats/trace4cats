@@ -190,7 +190,7 @@ jobs:
         run: |
           docker network create jaeger
 
-          docker run -d --rm -p 55680:55680 -p 55678:55678 -p 55679:55679 \
+          docker run -d --rm -p 55680:55680 -p 55681:55681 -p 55678:55678 -p 55679:55679 \
             --net jaeger \
             -v `pwd`/.github/otel-test-config.yaml:/otel-local-config.yaml \
             --name otelcol \

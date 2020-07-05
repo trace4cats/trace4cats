@@ -9,7 +9,7 @@ import io.janstenpickle.trace4cats.model.TraceProcess
 
 import scala.concurrent.duration._
 
-object OpenTelemetryOtlpSpanCompleter {
+object OpenTelemetryOtlpGrpcSpanCompleter {
   def apply[F[_]: Concurrent: ContextShift: Timer](
     blocker: Blocker,
     process: TraceProcess,
@@ -21,7 +21,7 @@ object OpenTelemetryOtlpSpanCompleter {
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- OpenTelemetryOtlpSpanExporter[F](blocker, host, port)
+      exporter <- OpenTelemetryOtlpGrpcSpanExporter[F](blocker, host, port)
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
 }

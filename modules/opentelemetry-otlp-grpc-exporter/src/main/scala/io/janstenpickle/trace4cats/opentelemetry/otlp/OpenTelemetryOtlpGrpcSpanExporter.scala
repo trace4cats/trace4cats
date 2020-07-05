@@ -5,7 +5,7 @@ import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.common.OpenTelemetryGrpcSpanExporter
 import io.opentelemetry.exporters.otlp.OtlpGrpcSpanExporter
 
-object OpenTelemetryOtlpSpanExporter {
+object OpenTelemetryOtlpGrpcSpanExporter {
   def apply[F[_]: Sync: ContextShift: Timer](
     blocker: Blocker,
     host: String = "localhost",

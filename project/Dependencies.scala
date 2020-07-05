@@ -24,6 +24,7 @@ object Dependencies {
     val openTelemetry = "0.6.0"
     val scala212 = "2.12.11"
     val scala213 = "2.13.3"
+    val scalapb = "0.10.1"
     val vulcan = "1.1.0"
 
     val disciplineScalatest = "1.0.1"
@@ -63,6 +64,8 @@ object Dependencies {
   lazy val openTelemetrySdk = "io.opentelemetry"            % "opentelemetry-sdk"               % Versions.openTelemetry
   lazy val openTelemetryOtlpExporter = "io.opentelemetry"   % "opentelemetry-exporters-otlp"    % Versions.openTelemetry
   lazy val openTelemetryJaegerExporter = "io.opentelemetry" % "opentelemetry-exporters-jaeger"  % Versions.openTelemetry
+  lazy val openTelemetryProto = "io.opentelemetry"          % "opentelemetry-proto"             % Versions.openTelemetry
+  lazy val scalapbJson = "com.thesamet.scalapb"             %% "scalapb-json4s"                 % Versions.scalapb
   lazy val vulcan = "com.github.fd4s"                       %% "vulcan"                         % Versions.vulcan
   lazy val vulcanGeneric = "com.github.fd4s"                %% "vulcan-generic"                 % Versions.vulcan
   lazy val vulcanEnumeratum = "com.github.fd4s"             %% "vulcan-enumeratum"              % Versions.vulcan

@@ -45,6 +45,7 @@ The following implementations are provided out of the box:
 
 - [Jaeger] agent via Thrift over UDP and Protobufs over GRPC
 - [OpenTelemetry] collector via Protobufs over GRPC
+- [OpenTelemetry] collector via JSON over HTTP
 - Log using [Log4Cats]
 - Trace4Cats Avro over TCP or UDP
 - [Stackdriver Trace] over HTTP or GRPC
@@ -86,6 +87,7 @@ the Collector supports the following exporters:
 
 - [Jaeger] via Thrift over UDP and Protobufs over GRPC
 - [OpenTelemetry] via Protobufs over GRPC
+- [OpenTelemetry] via JSON over HTTP
 - Log using [Log4Cats]
 - Trace4Cats Avro over TCP
 - [Stackdriver Trace] over HTTP and GRPC
@@ -102,6 +104,7 @@ Similar implementation to the Collector, but compiled with [`native-image`] so d
 GRPC based exporters. Currently Collector lite supports the following exporters:
 
 - [Jaeger] via Thrift over UDP
+- [OpenTelemetry] via JSON over HTTP
 - Log using [Log4Cats]
 - Trace4Cats Avro over TCP
 - [Stackdriver Trace] over HTTP
@@ -122,7 +125,8 @@ To use Trace4Cats within your application add the dependencies listed below as n
 "io.janstenpickle" %% "trace4cats-avro-exporter" % <version>
 "io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % <version>
 "io.janstenpickle" %% "log-exporter" % <version>
-"io.janstenpickle" %% "opentelemetry-otlp-exporter" % <version>
+"io.janstenpickle" %% "opentelemetry-otlp-grpc-exporter" % <version>
+"io.janstenpickle" %% "opentelemetry-otlp-http-exporter" % <version>
 "io.janstenpickle" %% "opentelemetry-jaeger-exporter" % <version>
 "io.janstenpickle" %% "stackdriver-grpc-exporter" % <version>
 "io.janstenpickle" %% "stackdriver-http-exporter" % <version>
@@ -158,18 +162,19 @@ The following span completers have been found to be compatible with [`native-ima
 
 - Trace4Cats Avro
 - [Jaeger] Thrift over UDP
+- [OpenTelemetry] JSON over HTTP
 - Log
 - [Stackdriver Trace] over HTTP
 
 ## TODO
 
 - [ ] Initial release
-- [ ] Probabilistic span sampler 
+- [x] Probabilistic span sampler 
 - [ ] Limit number of attributes
 - [x] Integration tests
 - [ ] Detailed examples
 - [x] Jaeger protobuf exporter
-- [ ] OTLP HTTP exporter
+- [x] OTLP HTTP exporter
 
 
 [Jaeger]: https://www.jaegertracing.io/
