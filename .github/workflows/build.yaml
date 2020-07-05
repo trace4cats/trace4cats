@@ -8,6 +8,7 @@ jobs:
   agent:
 
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
     needs: test
     steps:
       - name: checkout
@@ -62,12 +63,15 @@ jobs:
           if [ "x$?" == "x0" ]; then
             docker tag janstenpickle/trace4cats-agent:$GITHUB_RUN_NUMBER janstenpickle/trace4cats-agent:$VERSION
             docker push janstenpickle/trace4cats-agent:$VERSION
+          else
+            exit 0
           fi
           popd
 
   collector-lite:
 
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
     needs: test
     steps:
       - name: checkout
@@ -122,12 +126,15 @@ jobs:
           if [ "x$?" == "x0" ]; then
             docker tag janstenpickle/trace4cats-collector-lite:$GITHUB_RUN_NUMBER janstenpickle/trace4cats-collector-lite:$VERSION
             docker push janstenpickle/trace4cats-collector-lite:$VERSION
+          else
+            exit 0
           fi
           popd
 
   collector:
 
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
     needs: test
     steps:
       - name: checkout
@@ -159,7 +166,12 @@ jobs:
 
       - name: scala build
         run: |
-          sbt -Dsbt.coursier.home=~/.sbt/coursier/ '; project collector; docker:publishLocal' -J-Xms3G -J-Xmx6G
+          export VERSION=`sbt --error 'print version' | tail -n 1 |  sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
+          echo $VERSION | egrep -e '^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$'
+          if [ "x$?" != "x0" ]; then
+            VERSION="latest"
+          fi
+          sbt -Dsbt.coursier.home=~/.sbt/coursier/ "; project collector; set version in ThisBuild := \"latest\"; docker:publishLocal" -J-Xms3G -J-Xmx6G -J-Xss4m
       - name: docker login
         run: docker login -u janstenpickle -p '${{secrets.DOCKERHUB}}'
       - name: docker build
@@ -174,6 +186,8 @@ jobs:
           if [ "x$?" == "x0" ]; then
             docker tag janstenpickle/trace4cats-collector:latest janstenpickle/trace4cats-collector:$VERSION
             docker push janstenpickle/trace4cats-collector:$VERSION
+          else
+            exit 0
           fi
 
   libraries:
