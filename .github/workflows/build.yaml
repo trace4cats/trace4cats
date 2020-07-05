@@ -56,10 +56,13 @@ jobs:
           sh build.sh
 
           docker tag janstenpickle/trace4cats-agent:$GITHUB_RUN_NUMBER janstenpickle/trace4cats-agent:latest
-          docker tag janstenpickle/trace4cats-agent:$GITHUB_RUN_NUMBER janstenpickle/trace4cats-agent:$VERSION
-
           docker push janstenpickle/trace4cats-agent:latest
-          docker push janstenpickle/trace4cats-agent:$VERSION
+
+          echo $VERSION | egrep -e '^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$'
+          if [ "x$?" == "x0" ]; then
+            docker tag janstenpickle/trace4cats-agent:$GITHUB_RUN_NUMBER janstenpickle/trace4cats-agent:$VERSION
+            docker push janstenpickle/trace4cats-agent:$VERSION
+          fi
           popd
 
   collector-lite:
@@ -113,10 +116,13 @@ jobs:
           sh build.sh
 
           docker tag janstenpickle/trace4cats-collector-lite:$GITHUB_RUN_NUMBER janstenpickle/trace4cats-collector-lite:latest
-          docker tag janstenpickle/trace4cats-collector-lite:$GITHUB_RUN_NUMBER janstenpickle/trace4cats-collector-lite:$VERSION
-
           docker push janstenpickle/trace4cats-collector-lite:latest
-          docker push janstenpickle/trace4cats-collector-lite:$VERSION
+
+          echo $VERSION | egrep -e '^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$'
+          if [ "x$?" == "x0" ]; then
+            docker tag janstenpickle/trace4cats-collector-lite:$GITHUB_RUN_NUMBER janstenpickle/trace4cats-collector-lite:$VERSION
+            docker push janstenpickle/trace4cats-collector-lite:$VERSION
+          fi
           popd
 
   collector:
@@ -161,11 +167,14 @@ jobs:
           export VERSION=`sbt --error 'print version' | tail -n 1 |  sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
 
           docker tag janstenpickle/trace4cats-collector:latest janstenpickle/trace4cats-collector:$GITHUB_RUN_NUMBER
-          docker tag janstenpickle/trace4cats-collector:latest janstenpickle/trace4cats-collector:$VERSION
-
           docker push janstenpickle/trace4cats-collector:$GITHUB_RUN_NUMBER
-          docker push janstenpickle/trace4cats-collector:$VERSION
           docker push janstenpickle/trace4cats-collector:latest
+
+          echo $VERSION | egrep -e '^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$'
+          if [ "x$?" == "x0" ]; then
+            docker tag janstenpickle/trace4cats-collector:latest janstenpickle/trace4cats-collector:$VERSION
+            docker push janstenpickle/trace4cats-collector:$VERSION
+          fi
 
   libraries:
 
