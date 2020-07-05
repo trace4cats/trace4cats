@@ -50,6 +50,7 @@ jobs:
       - name: docker login
         run: docker login -u janstenpickle -p '${{secrets.DOCKERHUB}}'
       - name: docker build
+        shell: bash
         run: |
           export VERSION=`sbt --error 'print version' | tail -n 1 |  sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
 
@@ -59,8 +60,8 @@ jobs:
           docker tag janstenpickle/trace4cats-agent:$GITHUB_RUN_NUMBER janstenpickle/trace4cats-agent:latest
           docker push janstenpickle/trace4cats-agent:latest
 
-          echo $VERSION | egrep -e '^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$'
-          if [ "x$?" == "x0" ]; then
+          PAT='^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$'
+          if [[ $VERSION =~ $PAT ]]; then
             docker tag janstenpickle/trace4cats-agent:$GITHUB_RUN_NUMBER janstenpickle/trace4cats-agent:$VERSION
             docker push janstenpickle/trace4cats-agent:$VERSION
           else
@@ -113,6 +114,7 @@ jobs:
       - name: docker login
         run: docker login -u janstenpickle -p '${{secrets.DOCKERHUB}}'
       - name: docker build
+        shell: bash
         run: |
           export VERSION=`sbt --error 'print version' | tail -n 1 |  sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
 
@@ -122,8 +124,8 @@ jobs:
           docker tag janstenpickle/trace4cats-collector-lite:$GITHUB_RUN_NUMBER janstenpickle/trace4cats-collector-lite:latest
           docker push janstenpickle/trace4cats-collector-lite:latest
 
-          echo $VERSION | egrep -e '^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$'
-          if [ "x$?" == "x0" ]; then
+          PAT='^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$'
+          if [[ $VERSION =~ $PAT ]]; then
             docker tag janstenpickle/trace4cats-collector-lite:$GITHUB_RUN_NUMBER janstenpickle/trace4cats-collector-lite:$VERSION
             docker push janstenpickle/trace4cats-collector-lite:$VERSION
           else
@@ -165,16 +167,18 @@ jobs:
             ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
 
       - name: scala build
+        shell: bash
         run: |
           export VERSION=`sbt --error 'print version' | tail -n 1 |  sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
-          echo $VERSION | egrep -e '^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$'
-          if [ "x$?" != "x0" ]; then
+          PAT='^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$'
+          if [[ $VERSION =~ $PAT ]]; then
             VERSION="latest"
           fi
           sbt -Dsbt.coursier.home=~/.sbt/coursier/ "; project collector; set version in ThisBuild := \"latest\"; docker:publishLocal" -J-Xms3G -J-Xmx6G -J-Xss4m
       - name: docker login
         run: docker login -u janstenpickle -p '${{secrets.DOCKERHUB}}'
       - name: docker build
+        shell: bash
         run: |
           export VERSION=`sbt --error 'print version' | tail -n 1 |  sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
 
@@ -182,8 +186,8 @@ jobs:
           docker push janstenpickle/trace4cats-collector:$GITHUB_RUN_NUMBER
           docker push janstenpickle/trace4cats-collector:latest
 
-          echo $VERSION | egrep -e '^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$'
-          if [ "x$?" == "x0" ]; then
+          PAT='^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$'
+          if [[ $VERSION =~ $PAT ]]; then
             docker tag janstenpickle/trace4cats-collector:latest janstenpickle/trace4cats-collector:$VERSION
             docker push janstenpickle/trace4cats-collector:$VERSION
           else
