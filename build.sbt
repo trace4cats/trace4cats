@@ -100,7 +100,20 @@ lazy val model =
 lazy val example = (project in file("modules/example"))
   .settings(noPublishSettings)
   .settings(name := "trace4cats-example", libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.logback))
-  .dependsOn(model, kernel, `avro-exporter`, core)
+  .dependsOn(
+    model,
+    kernel,
+    core,
+    natchez,
+    `avro-exporter`,
+    `log-exporter`,
+    `jaeger-thrift-exporter`,
+    `opentelemetry-jaeger-exporter`,
+    `opentelemetry-otlp-grpc-exporter`,
+    `opentelemetry-otlp-http-exporter`,
+    `stackdriver-grpc-exporter`,
+    `stackdriver-http-exporter`
+  )
 
 lazy val test = (project in file("modules/test"))
   .settings(noPublishSettings)

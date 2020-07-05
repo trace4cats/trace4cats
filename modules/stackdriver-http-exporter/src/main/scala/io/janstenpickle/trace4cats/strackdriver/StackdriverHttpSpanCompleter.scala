@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.strackdriver
 
-import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
+import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Timer}
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.QueuedSpanCompleter
@@ -11,7 +11,7 @@ import org.http4s.client.Client
 import scala.concurrent.duration._
 
 object StackdriverHttpSpanCompleter {
-  def emberClient[F[_]: ConcurrentEffect: ContextShift: Timer](
+  def emberClient[F[_]: Concurrent: ContextShift: Timer](
     blocker: Blocker,
     process: TraceProcess,
     projectId: String,

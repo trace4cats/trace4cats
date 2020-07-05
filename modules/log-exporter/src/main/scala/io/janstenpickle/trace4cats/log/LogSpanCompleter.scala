@@ -8,7 +8,7 @@ import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.CompletedSpan
 
-object LogCompleter {
+object LogSpanCompleter {
   def apply[F[_]: Logger]: SpanCompleter[F] = new SpanCompleter[F] {
     override def complete(span: CompletedSpan): F[Unit] = Logger[F].info(span.show)
   }

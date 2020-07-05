@@ -8,7 +8,7 @@ import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch
 
-object LogExporter {
+object LogSpanExporter {
   def apply[F[_]: Logger]: SpanExporter[F] = new SpanExporter[F] {
     override def exportBatch(batch: Batch): F[Unit] = Logger[F].info(batch.show)
   }

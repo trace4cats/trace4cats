@@ -133,28 +133,7 @@ To use Trace4Cats within your application add the dependencies listed below as n
 
 ```
 
-The example below shows how to create a [Natchez] trace `entryPoint` using Trace4Cats. Spans will
-be sent to both Jaeger and the Trace4Cats agent via UDP. For an example on how to use [Natchez] see
-the project's [example code in github](https://github.com/tpolecat/natchez/blob/master/modules/examples/src/main/scala/Example.scala).
-
-```scala
-import cats.effect._
-import cats.syntax.monoid._
-import io.janstenpickle.trace4cats.kernel._
-import io.janstenpickle.trace4cats.model._
-import io.janstenpickle.trace4cats.natchez.Trace4CatsTracer
-import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
-import io.janstenpickle.trace4cats.jaeger.JaegerSpanCompleter
-
-val process = TraceProcess("SomeServiceName")
-
-val entryPoint: Resource[IO, Entrypoint[IO]] =
-  for {
-    blocker <- Blocker[IO]
-    jaeger <- JaegerSpanCompleter[IO](blocker, process)
-    avro <- AvroSpanCompleter.udp[IO](blocker, process)
-  } yield Trace4CatsTracer.entryPoint[IO](SpanSampler.always[IO], jaeger |+| avro)
-```
+### For example usage please see the source code in [the example module](../../tree/master/modules/example/src/main/scala/io/janstenpickle/trace4cats/example).
 
 ## [`native-image`] Compatibility
 
@@ -172,7 +151,7 @@ The following span completers have been found to be compatible with [`native-ima
 - [x] Probabilistic span sampler 
 - [ ] Limit number of attributes
 - [x] Integration tests
-- [ ] Detailed examples
+- [x] Detailed examples
 - [x] Jaeger protobuf exporter
 - [x] OTLP HTTP exporter
 

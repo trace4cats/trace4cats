@@ -13,7 +13,7 @@ import io.janstenpickle.trace4cats.avro.server.AvroServer
 import io.janstenpickle.trace4cats.collector.common.Http4sJdkClient
 import io.janstenpickle.trace4cats.jaeger.JaegerSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
-import io.janstenpickle.trace4cats.log.LogExporter
+import io.janstenpickle.trace4cats.log.LogSpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpHttpSpanExporter
 import io.janstenpickle.trace4cats.strackdriver.StackdriverHttpSpanExporter
 
@@ -118,7 +118,7 @@ object CollectorLite
         JaegerSpanExporter[IO](blocker, host = host, port = jaegerUdpPort).map("Jaeger UDP" -> _)
       }
 
-      logExporter <- if (log) Resource.pure[IO, SpanExporter[IO]](LogExporter[IO]).map(e => Some("Log" -> e))
+      logExporter <- if (log) Resource.pure[IO, SpanExporter[IO]](LogSpanExporter[IO]).map(e => Some("Log" -> e))
       else Resource.pure[IO, Option[(String, SpanExporter[IO])]](None)
 
       otHttpExporter <- otHttpHost.traverse { host =>
