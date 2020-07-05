@@ -8,7 +8,7 @@ jobs:
   agent:
 
     runs-on: ubuntu-latest
-    needs: libraries
+    needs: test
     steps:
       - name: checkout
         uses: actions/checkout@v1
@@ -65,7 +65,7 @@ jobs:
   collector-lite:
 
     runs-on: ubuntu-latest
-    needs: libraries
+    needs: test
     steps:
       - name: checkout
         uses: actions/checkout@v1
@@ -122,7 +122,7 @@ jobs:
   collector:
 
     runs-on: ubuntu-latest
-    needs: libraries
+    needs: test
     steps:
       - name: checkout
         uses: actions/checkout@v1
@@ -168,6 +168,48 @@ jobs:
           docker push janstenpickle/trace4cats-collector:latest
 
   libraries:
+
+    runs-on: ubuntu-latest
+    needs: test
+    strategy:
+      matrix:
+        scala-version:
+          - "2.12.11"
+          - "2.13.3"
+    steps:
+      - name: checkout
+        uses: actions/checkout@v1
+        with:
+          submodules: true
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: '13'
+
+      - name: Cache ivy2
+        uses: actions/cache@v1
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
+          restore-keys: |
+            ${{ runner.os }}-ivy2-
+            ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
+
+      - name: Cache SBT
+        uses: actions/cache@v1
+        with:
+          path: ~/.sbt
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-
+            ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}
+            ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
+
+      - name: scala build
+        run: |
+          sbt -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.pass=${{ secrets.BINTRAY_PASS }} -Dsbt.coursier.home=~/.sbt/coursier/ ++${{ matrix.scala-version }} '; releaseEarly' -J-Xms3G -J-Xmx6G -J-Xss4m
+
+  test:
 
     runs-on: ubuntu-latest
 
@@ -233,4 +275,4 @@ jobs:
 
       - name: scala build
         run: |
-          sbt -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.pass=${{ secrets.BINTRAY_PASS }} -Dsbt.coursier.home=~/.sbt/coursier/ ++${{ matrix.scala-version }} '; scalafmt::test; test:scalafmt::test; compile; test; releaseEarly' -J-Xms3G -J-Xmx6G -J-Xss4m
+          sbt -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.pass=${{ secrets.BINTRAY_PASS }} -Dsbt.coursier.home=~/.sbt/coursier/ ++${{ matrix.scala-version }} '; scalafmt::test; test:scalafmt::test; compile; test' -J-Xms3G -J-Xmx6G -J-Xss4m
