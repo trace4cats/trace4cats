@@ -95,7 +95,7 @@ the Collector supports the following exporters:
 #### Running
 
 ```bash
-docker run -it janstenpickle/trace4cats-collector:<version or latest>
+docker run -p7777:7777/udp -it janstenpickle/trace4cats-collector:<version or latest>
 ```
 
 ### Collector Lite
@@ -112,7 +112,7 @@ GRPC based exporters. Currently Collector lite supports the following exporters:
 #### Running
 
 ```bash
-docker run -it janstenpickle/trace4cats-collector-lite:<version or latest>
+docker run -p7777:7777 -p7777:7777/udp -it janstenpickle/trace4cats-collector-lite:<version or latest>
 ```
 
 ## Example Usage
