@@ -20,13 +20,13 @@ object Convert {
   def toAttributes(attributes: Map[String, TraceValue]): List[KeyValue] =
     attributes.toList.map {
       case (k, TraceValue.StringValue(v)) =>
-        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.StringValue(v), UnknownFieldSet.empty)))
+        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.StringValue(v))), UnknownFieldSet.empty)
       case (k, TraceValue.BooleanValue(v)) =>
-        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.BoolValue(v), UnknownFieldSet.empty)))
+        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.BoolValue(v))), UnknownFieldSet.empty)
       case (k, TraceValue.DoubleValue(v)) =>
-        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.DoubleValue(v), UnknownFieldSet.empty)))
+        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.DoubleValue(v))), UnknownFieldSet.empty)
       case (k, TraceValue.LongValue(v)) =>
-        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.IntValue(v), UnknownFieldSet.empty)))
+        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.IntValue(v))), UnknownFieldSet.empty)
     }
 
   def toResource(process: TraceProcess): Resource =
