@@ -287,6 +287,13 @@ jobs:
             -p 9411:9411 \
             jaegertracing/all-in-one:1.18
 
+          DOCKER_CONTENT_TRUST=1 docker run --rm -d -p8126:8126 \
+            --name dd-agent \
+            -v /var/run/docker.sock:/var/run/docker.sock:ro \
+            -v /proc/:/host/proc/:ro \
+            -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro \
+            -e DD_API_KEY=test \
+            datadog/agent:7
 
       - name: Cache ivy2
         uses: actions/cache@v1

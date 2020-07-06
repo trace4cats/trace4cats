@@ -11,6 +11,7 @@ import io.janstenpickle.trace4cats.`export`.QueuedSpanExporter
 import io.janstenpickle.trace4cats.avro._
 import io.janstenpickle.trace4cats.avro.server.AvroServer
 import io.janstenpickle.trace4cats.collector.common.Http4sJdkClient
+import io.janstenpickle.trace4cats.datadog.DataDogSpanExporter
 import io.janstenpickle.trace4cats.jaeger.JaegerSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.log.LogSpanExporter
@@ -65,7 +66,7 @@ object Collector
   val jaegerProtoHostOpt: Opts[Option[String]] =
     Opts.option[String]("jaeger-proto-host", "Write spans via Jaeger protobufs format").orNone
   val jaegerProtoPortOpt: Opts[Int] =
-    Opts.option[Int]("jaeger-proto-host", "Jaeger protobufs port").withDefault(14250)
+    Opts.option[Int]("jaeger-proto-port", "Jaeger protobufs port").withDefault(14250)
 
   val stackdriverHttpOpt: Opts[Boolean] = Opts
     .flag(
@@ -86,6 +87,11 @@ object Collector
       Opts.env[String]("GOOGLE_APPLICATION_CREDENTIALS", "Google service account file location environment variable")
     )
     .orNone
+
+  val dataDogHostOpt: Opts[Option[String]] =
+    Opts.option[String]("datadog-agent-host", "Write spans to the DataDog agent at this host").orNone
+  val dataDogPortOpt: Opts[Int] =
+    Opts.option[Int]("datadog-agent-port", "DataDog agent port").withDefault(8126)
 
   val bufferSizeOpt: Opts[Int] =
     Opts
@@ -109,6 +115,8 @@ object Collector
       stackdriverHttpOpt,
       stackdriverProjectOpt,
       stackdriverCredentialsFileOpt,
+      dataDogHostOpt,
+      dataDogPortOpt,
       bufferSizeOpt
     ).mapN(run)
 
@@ -128,6 +136,8 @@ object Collector
     stackdriverHttp: Boolean,
     stackdriverProject: Option[String],
     stackdriverCredentialsFile: Option[String],
+    dataDogHost: Option[String],
+    dataDogPort: Int,
     bufferSize: Int
   ): IO[ExitCode] =
     (for {
@@ -173,6 +183,13 @@ object Collector
         } else StackdriverGrpcSpanExporter[IO](blocker, projectId = projectId).map(e => Some("Stackdriver GRPC" -> e))
       }
 
+      ddExporter <- dataDogHost.traverse { host =>
+        Resource.liftF(for {
+          client <- Http4sJdkClient[IO](blocker)
+          exporter <- DataDogSpanExporter[IO](client, host = host, port = dataDogPort)
+        } yield "DataDog Agent" -> exporter)
+      }
+
       queuedExporter <- QueuedSpanExporter(
         bufferSize,
         List(
@@ -182,7 +199,8 @@ object Collector
           logExporter,
           otGrpcExporter,
           otHttpExporter,
-          stackdriverExporter
+          stackdriverExporter,
+          ddExporter
         ).flatten
       )
 

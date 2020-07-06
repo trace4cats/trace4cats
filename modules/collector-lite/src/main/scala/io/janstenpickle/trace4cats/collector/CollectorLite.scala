@@ -11,6 +11,7 @@ import io.janstenpickle.trace4cats.`export`.QueuedSpanExporter
 import io.janstenpickle.trace4cats.avro._
 import io.janstenpickle.trace4cats.avro.server.AvroServer
 import io.janstenpickle.trace4cats.collector.common.Http4sJdkClient
+import io.janstenpickle.trace4cats.datadog.DataDogSpanExporter
 import io.janstenpickle.trace4cats.jaeger.JaegerSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.log.LogSpanExporter
@@ -69,6 +70,11 @@ object CollectorLite
     )
     .orNone
 
+  val dataDogHostOpt: Opts[Option[String]] =
+    Opts.option[String]("datadog-agent-host", "Write spans to the DataDog agent at this host").orNone
+  val dataDogPortOpt: Opts[Int] =
+    Opts.option[Int]("datadog-agent-port", "DataDog agent port").withDefault(8126)
+
   val bufferSizeOpt: Opts[Int] =
     Opts
       .option[Int]("buffer-size", "Number of batches to buffer in case of network issues")
@@ -86,6 +92,8 @@ object CollectorLite
       otlpHttpPortOpt,
       stackdriverProjectOpt,
       stackdriverCredentialsFileOpt,
+      dataDogHostOpt,
+      dataDogPortOpt,
       bufferSizeOpt
     ).mapN(run)
 
@@ -100,6 +108,8 @@ object CollectorLite
     otHttpPort: Int,
     stackdriverProject: Option[String],
     stackdriverCredentialsFile: Option[String],
+    dataDogHost: Option[String],
+    dataDogPort: Int,
     bufferSize: Int
   ): IO[ExitCode] =
     (for {
@@ -136,9 +146,16 @@ object CollectorLite
           } yield "Stackdriver HTTP" -> exporter)
       }
 
+      ddExporter <- dataDogHost.traverse { host =>
+        Resource.liftF(for {
+          client <- Http4sJdkClient[IO](blocker)
+          exporter <- DataDogSpanExporter[IO](client, host = host, port = dataDogPort)
+        } yield "DataDog Agent" -> exporter)
+      }
+
       queuedExporter <- QueuedSpanExporter(
         bufferSize,
-        List(collectorExporter, jaegerUdpExporter, logExporter, otHttpExporter, stackdriverExporter).flatten
+        List(collectorExporter, jaegerUdpExporter, logExporter, otHttpExporter, stackdriverExporter, ddExporter).flatten
       )
 
       tcp <- AvroServer.tcp[IO](blocker, _.evalMap(queuedExporter.exportBatch), port)
