@@ -5,4 +5,4 @@ addSbtPlugin("org.foundweekends"         % "sbt-bintray"         % "0.5.6")
 addSbtPlugin("ch.epfl.scala"             % "sbt-release-early"   % "2.1.1")
 addSbtPlugin("com.thesamet"              % "sbt-protoc"          % "0.99.34")
 
-libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.10.6"
+libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.10.7"
