@@ -82,6 +82,7 @@ lazy val root = (project in file("."))
     `opentelemetry-jaeger-exporter`,
     `opentelemetry-otlp-grpc-exporter`,
     `opentelemetry-otlp-http-exporter`,
+    `stackdriver-common`,
     `stackdriver-grpc-exporter`,
     `stackdriver-http-exporter`,
     natchez
