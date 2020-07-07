@@ -80,6 +80,7 @@ lazy val root = (project in file("."))
     `exporter-http`,
     `log-exporter`,
     `jaeger-thrift-exporter`,
+    `newrelic-http-exporter`,
     `opentelemetry-common`,
     `opentelemetry-jaeger-exporter`,
     `opentelemetry-otlp-grpc-exporter`,
@@ -321,6 +322,24 @@ lazy val `datadog-http-exporter` =
       )
     )
     .dependsOn(model, kernel, `exporter-common`, `exporter-http`, test % "test->compile")
+
+lazy val `newrelic-http-exporter` =
+  (project in file("modules/newrelic-http-exporter"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-newrelic-http-exporter",
+      libraryDependencies ++= Seq(
+        Dependencies.catsEffect,
+        Dependencies.circeGeneric,
+        Dependencies.circeParser,
+        Dependencies.fs2,
+        Dependencies.http4sClient,
+        Dependencies.http4sCirce,
+        Dependencies.http4sEmberClient,
+        Dependencies.log4cats
+      )
+    )
+    .dependsOn(model, kernel, `exporter-common`, `exporter-http`)
 
 lazy val `exporter-common` =
   (project in file("modules/exporter-common"))

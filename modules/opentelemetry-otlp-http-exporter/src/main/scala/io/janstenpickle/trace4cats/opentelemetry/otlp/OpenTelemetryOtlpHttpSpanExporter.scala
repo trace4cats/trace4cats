@@ -5,21 +5,10 @@ import io.chrisdavenport.log4cats.Logger
 import io.janstenpickle.trace4cats.`export`.HttpSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch
-import org.http4s.Status
 import org.http4s.client.Client
 import org.http4s.ember.client.EmberClientBuilder
 
-import scala.util.control.NoStackTrace
-
 object OpenTelemetryOtlpHttpSpanExporter {
-  case class UnexpectedResponse(status: Status, message: String) extends RuntimeException with NoStackTrace {
-    override def getMessage: String =
-      s"""HTTP Status: ${status.toString()}
-         |
-         |$message
-         |""".stripMargin
-  }
-
   def emberClient[F[_]: Concurrent: Timer: ContextShift: Logger](
     blocker: Blocker,
     host: String = "localhost",
