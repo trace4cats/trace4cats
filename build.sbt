@@ -75,6 +75,7 @@ lazy val root = (project in file("."))
     `avro-server`,
     `avro-test`,
     `collector-common`,
+    `datadog-http-exporter`,
     `exporter-common`,
     `log-exporter`,
     `jaeger-thrift-exporter`,
@@ -301,6 +302,25 @@ lazy val `stackdriver-http-exporter` =
     )
     .dependsOn(model, kernel, `exporter-common`, `stackdriver-common`)
 
+lazy val `datadog-http-exporter` =
+  (project in file("modules/datadog-http-exporter"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-datadog-http-exporter",
+      libraryDependencies ++= Dependencies.test.map(_ % Test),
+      libraryDependencies ++= Seq(
+        Dependencies.catsEffect,
+        Dependencies.circeGeneric,
+        Dependencies.circeParser,
+        Dependencies.fs2,
+        Dependencies.http4sClient,
+        Dependencies.http4sCirce,
+        Dependencies.http4sEmberClient,
+        Dependencies.log4cats
+      )
+    )
+    .dependsOn(model, kernel, `exporter-common`, test % "test->compile")
+
 lazy val `exporter-common` =
   (project in file("modules/exporter-common"))
     .settings(publishSettings)
@@ -387,6 +407,7 @@ lazy val collector = (project in file("modules/collector"))
     `exporter-common`,
     `avro-exporter`,
     `avro-server`,
+    `datadog-http-exporter`,
     `jaeger-thrift-exporter`,
     `log-exporter`,
     `opentelemetry-jaeger-exporter`,
@@ -416,6 +437,7 @@ lazy val `collector-lite` = (project in file("modules/collector-lite"))
     `collector-common`,
     `avro-exporter`,
     `avro-server`,
+    `datadog-http-exporter`,
     `jaeger-thrift-exporter`,
     `log-exporter`,
     `opentelemetry-otlp-http-exporter`,
