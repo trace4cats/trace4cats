@@ -77,6 +77,7 @@ lazy val root = (project in file("."))
     `collector-common`,
     `datadog-http-exporter`,
     `exporter-common`,
+    `exporter-http`,
     `log-exporter`,
     `jaeger-thrift-exporter`,
     `opentelemetry-common`,
@@ -261,7 +262,7 @@ lazy val `opentelemetry-otlp-http-exporter` =
       PB.protoSources in Compile += target.value / "protobuf_external",
       PB.targets in Compile := Seq(scalapb.gen(grpc = false, lenses = false) -> (sourceManaged in Compile).value)
     )
-    .dependsOn(model, kernel, `exporter-common`, `jaeger-integration-test` % "test->compile")
+    .dependsOn(model, kernel, `exporter-common`, `exporter-http`, `jaeger-integration-test` % "test->compile")
 
 lazy val `stackdriver-common` =
   (project in file("modules/stackdriver-common"))
@@ -300,7 +301,7 @@ lazy val `stackdriver-http-exporter` =
         Dependencies.log4cats
       )
     )
-    .dependsOn(model, kernel, `exporter-common`, `stackdriver-common`)
+    .dependsOn(model, kernel, `exporter-common`, `exporter-http`, `stackdriver-common`)
 
 lazy val `datadog-http-exporter` =
   (project in file("modules/datadog-http-exporter"))
@@ -319,7 +320,7 @@ lazy val `datadog-http-exporter` =
         Dependencies.log4cats
       )
     )
-    .dependsOn(model, kernel, `exporter-common`, test % "test->compile")
+    .dependsOn(model, kernel, `exporter-common`, `exporter-http`, test % "test->compile")
 
 lazy val `exporter-common` =
   (project in file("modules/exporter-common"))
@@ -327,6 +328,15 @@ lazy val `exporter-common` =
     .settings(
       name := "trace4cats-exporter-common",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.log4cats)
+    )
+    .dependsOn(model, kernel)
+
+lazy val `exporter-http` =
+  (project in file("modules/exporter-http"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-exporter-http",
+      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.http4sClient)
     )
     .dependsOn(model, kernel)
 
