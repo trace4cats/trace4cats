@@ -36,7 +36,20 @@ object HttpSpanExporter {
       Applicative[F].pure(_),
       Applicative[F].pure(List.empty[Header]),
       Method.POST,
-      List.empty
+      List(`Content-Type`(MediaType.application.json))
+    )
+
+  def apply[F[_]: Sync: Timer, A](client: Client[F], uri: String, makePayload: Batch => A, staticHeaders: List[Header])(
+    implicit encoder: EntityEncoder[F, A]
+  ): F[SpanExporter[F]] =
+    apply(
+      client,
+      uri,
+      makePayload,
+      Applicative[F].pure(_),
+      Applicative[F].pure(List.empty[Header]),
+      Method.POST,
+      staticHeaders
     )
 
   def apply[F[_]: Sync: Timer, A](client: Client[F], uri: String, makePayload: Batch => A, updatedUri: Uri => F[Uri])(
@@ -98,7 +111,8 @@ object HttpSpanExporter {
         for {
           u <- updatedUri(parsedUri)
           dynHeaders <- dynamicHeaders
-          req <- method(makePayload(batch), u, (staticHeaders ++ dynHeaders): _*)
+          req <- method(makePayload(batch), u, staticHeaders ++ dynHeaders: _*)
+          _ = println(req)
           _ <- Stream
             .retry(
               client.expectOr[String](req)(resp => resp.as[String].map(UnexpectedResponse(resp.status, _))),
