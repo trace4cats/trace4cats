@@ -403,12 +403,24 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
     name := "trace4cats-collector-common",
     libraryDependencies ++= Seq(
       Dependencies.catsEffect,
+      Dependencies.declineEffect,
       Dependencies.fs2,
       Dependencies.http4sJdkClient,
       Dependencies.log4cats
     )
   )
-  .dependsOn(model, kernel)
+  .dependsOn(
+    model,
+    `exporter-common`,
+    `avro-exporter`,
+    `avro-server`,
+    `datadog-http-exporter`,
+    `jaeger-thrift-exporter`,
+    `log-exporter`,
+    `opentelemetry-otlp-http-exporter`,
+    `stackdriver-http-exporter`,
+    `newrelic-http-exporter`
+  )
 
 lazy val collector = (project in file("modules/collector"))
   .settings(noPublishSettings)
