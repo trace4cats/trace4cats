@@ -20,8 +20,9 @@ lazy val commonSettings = Seq(
   addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.11.0").cross(CrossVersion.patch)),
   libraryDependencies ++= Seq(Dependencies.cats, Dependencies.collectionCompat),
   bintrayRepository := "trace4cats",
-  releaseEarlyWith := BintrayPublisher,
-  releaseEarlyEnableSyncToMaven := false,
+  releaseEarlyWith in Global := SonatypePublisher,
+  credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials"),
+  releaseEarlyEnableSyncToMaven := true,
   pgpPublicRing := file("./.github/git adlocal.pubring.asc"),
   pgpSecretRing := file("./.github/local.secring.asc"),
   crossScalaVersions := Seq(Dependencies.Versions.scala213, Dependencies.Versions.scala212)

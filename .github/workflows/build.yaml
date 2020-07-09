@@ -233,6 +233,15 @@ jobs:
             ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}
             ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
 
+      - name: sonatype credentials
+        run: |
+          cat << EOF > ~/.sbt/sonatype_credentials
+          realm=Sonatype Nexus Repository Manager
+          host=oss.sonatype.org
+          user=${{ secrets.SONATYPE_USER }}
+          password=${{ secrets.SONATYPE_PASS }}
+          EOF
+
       - name: scala build
         env:
           PGP_PASS: ${{ secrets.PGP_PASS }}
@@ -316,4 +325,4 @@ jobs:
 
       - name: scala build
         run: |
-          sbt -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.pass=${{ secrets.BINTRAY_PASS }} -Dsbt.coursier.home=~/.sbt/coursier/ ++${{ matrix.scala-version }} '; scalafmt::test; test:scalafmt::test; compile; test' -J-Xms3G -J-Xmx6G -J-Xss4m
+          sbt -Dsbt.coursier.home=~/.sbt/coursier/ ++${{ matrix.scala-version }} '; scalafmt::test; test:scalafmt::test; compile; test' -J-Xms3G -J-Xmx6G -J-Xss4m
