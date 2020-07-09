@@ -112,7 +112,6 @@ object HttpSpanExporter {
           u <- updatedUri(parsedUri)
           dynHeaders <- dynamicHeaders
           req <- method(makePayload(batch), u, staticHeaders ++ dynHeaders: _*)
-          _ = println(req)
           _ <- Stream
             .retry(
               client.expectOr[String](req)(resp => resp.as[String].map(UnexpectedResponse(resp.status, _))),
