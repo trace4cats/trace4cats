@@ -35,7 +35,7 @@ object SimpleExample extends IOApp {
                 _ <- child.put("int-attribute", 99)
                 _ <- child.put("bool-attribute", true)
                 _ <- child.put("double-attribute", 23.0)
-                _ <- child.setStatus(SpanStatus.Internal)
+                _ <- child.setStatus(SpanStatus.Internal("Some error message"))
               } yield ExitCode.Success
           }
         }

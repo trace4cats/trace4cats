@@ -4,28 +4,29 @@ import java.util.Base64
 import java.util.concurrent.TimeUnit
 
 import com.google.protobuf.ByteString
-import io.circe.{Encoder, Json, JsonObject}
 import io.circe.generic.extras.Configuration
+import io.circe.generic.extras.semiauto._
+import io.circe.{Encoder, Json, JsonObject}
+import io.janstenpickle.trace4cats.model.SpanStatus._
 import io.janstenpickle.trace4cats.model._
-import io.opentelemetry.proto.common.v1.common.{AnyValue, ArrayValue, InstrumentationLibrary, KeyValue, KeyValueList}
+import io.opentelemetry.proto.common.v1.common._
 import io.opentelemetry.proto.resource.v1.resource.Resource
 import io.opentelemetry.proto.trace.v1.trace.Span.SpanKind._
-import io.opentelemetry.proto.trace.v1.trace.{InstrumentationLibrarySpans, ResourceSpans, Span, Status}
-import scalapb.UnknownFieldSet
-import io.circe.generic.extras.semiauto._
 import io.opentelemetry.proto.trace.v1.trace.Span.{Event, Link}
 import io.opentelemetry.proto.trace.v1.trace.Status.StatusCode
+import io.opentelemetry.proto.trace.v1.trace.{InstrumentationLibrarySpans, ResourceSpans, Span, Status}
+import scalapb.UnknownFieldSet
 
 object Convert {
-  def toAttributes(attributes: Map[String, TraceValue]): List[KeyValue] =
+  def toAttributes(attributes: Map[String, AttributeValue]): List[KeyValue] =
     attributes.toList.map {
-      case (k, TraceValue.StringValue(v)) =>
+      case (k, AttributeValue.StringValue(v)) =>
         KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.StringValue(v))), UnknownFieldSet.empty)
-      case (k, TraceValue.BooleanValue(v)) =>
+      case (k, AttributeValue.BooleanValue(v)) =>
         KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.BoolValue(v))), UnknownFieldSet.empty)
-      case (k, TraceValue.DoubleValue(v)) =>
+      case (k, AttributeValue.DoubleValue(v)) =>
         KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.DoubleValue(v))), UnknownFieldSet.empty)
-      case (k, TraceValue.LongValue(v)) =>
+      case (k, AttributeValue.LongValue(v)) =>
         KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.IntValue(v))), UnknownFieldSet.empty)
     }
 
@@ -49,9 +50,26 @@ object Convert {
       endTimeUnixNano = TimeUnit.MILLISECONDS.toNanos(span.end.toEpochMilli),
       attributes = toAttributes(span.attributes),
       status = Some(Status(span.status match {
-        case SpanStatus.Ok => Status.StatusCode.Ok
-        case SpanStatus.Cancelled => Status.StatusCode.Cancelled
-        case SpanStatus.Internal => Status.StatusCode.InternalError
+        case Ok => StatusCode.Ok
+        case Cancelled => StatusCode.Cancelled
+        case Unknown => StatusCode.UnknownError
+        case InvalidArgument => StatusCode.InvalidArgument
+        case DeadlineExceeded => StatusCode.DeadlineExceeded
+        case NotFound => StatusCode.NotFound
+        case AlreadyExists => StatusCode.AlreadyExists
+        case PermissionDenied => StatusCode.PermissionDenied
+        case ResourceExhausted => StatusCode.ResourceExhausted
+        case FailedPrecondition => StatusCode.FailedPrecondition
+        case Aborted => StatusCode.Aborted
+        case OutOfRange => StatusCode.OutOfRange
+        case Unimplemented => StatusCode.Unimplemented
+        case Internal(_) => StatusCode.InternalError
+        case Unavailable => StatusCode.Unavailable
+        case DataLoss => StatusCode.DataLoss
+        case Unauthenticated => StatusCode.Unauthenticated
+      }, span.status match {
+        case Internal(message) => message
+        case _ => ""
       }))
     )
 

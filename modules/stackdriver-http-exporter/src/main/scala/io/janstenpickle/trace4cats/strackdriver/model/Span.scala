@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 import cats.syntax.show._
 import io.circe.generic.semiauto._
 import io.circe.{Encoder, JsonObject}
-import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind, TraceProcess, TraceValue}
+import io.janstenpickle.trace4cats.model.{AttributeValue, CompletedSpan, SpanKind, TraceProcess}
 import io.janstenpickle.trace4cats.stackdriver.common.StackdriverConstants._
 import io.janstenpickle.trace4cats.stackdriver.common.TruncatableString
 
@@ -48,7 +48,7 @@ object Span {
       startTime = completed.start,
       endTime = completed.end,
       attributes = Attributes.fromCompleted(
-        completed.attributes ++ process.attributes + (ServiceNameAttributeKey -> TraceValue
+        completed.attributes ++ process.attributes + (ServiceNameAttributeKey -> AttributeValue
           .StringValue(process.serviceName))
       ),
       status = Status(completed.status.canonicalCode),

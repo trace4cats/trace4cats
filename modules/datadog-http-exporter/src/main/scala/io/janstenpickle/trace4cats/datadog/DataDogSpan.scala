@@ -6,7 +6,8 @@ import java.util.concurrent.TimeUnit
 import io.circe.Encoder
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.semiauto._
-import io.janstenpickle.trace4cats.model.{Batch, TraceValue}
+import io.janstenpickle.trace4cats.`export`.SemanticTags
+import io.janstenpickle.trace4cats.model.{AttributeValue, Batch}
 
 // implements https://docs.datadoghq.com/api/v1/tracing/
 case class DataDogSpan(
@@ -37,7 +38,8 @@ object DataDogSpan {
           new BigInteger(1, parent.spanId.value)
         }
 
-        val allAttributes = span.attributes ++ batch.process.attributes
+        val allAttributes = span.attributes ++ batch.process.attributes ++ SemanticTags
+          .kindTags(span.kind) ++ SemanticTags.statusTags("")(span.status)
 
         val startNanos = TimeUnit.MILLISECONDS.toNanos(span.start.toEpochMilli)
 
@@ -49,17 +51,17 @@ object DataDogSpan {
           batch.process.serviceName,
           allAttributes.get("resource.name").fold(batch.process.serviceName)(_.toString),
           allAttributes.collect {
-            case (k, TraceValue.StringValue(value)) => k -> value
-            case (k, TraceValue.BooleanValue(value)) if k != "error" => k -> value.toString
+            case (k, AttributeValue.StringValue(value)) => k -> value
+            case (k, AttributeValue.BooleanValue(value)) if k != "error" => k -> value.toString
           },
           allAttributes.collect {
-            case (k, TraceValue.DoubleValue(value)) => k -> value
-            case (k, TraceValue.LongValue(value)) => k -> value.toDouble
+            case (k, AttributeValue.DoubleValue(value)) => k -> value
+            case (k, AttributeValue.LongValue(value)) => k -> value.toDouble
           },
           startNanos,
           TimeUnit.MILLISECONDS.toNanos(span.end.toEpochMilli) - startNanos,
           allAttributes.get("error").map {
-            case TraceValue.BooleanValue(true) => 1
+            case AttributeValue.BooleanValue(true) => 1
             case _ => 0
           }
         )

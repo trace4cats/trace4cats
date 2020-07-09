@@ -9,8 +9,8 @@ import io.jaegertracing.thrift.internal.senders.UdpSender
 import io.jaegertracing.thriftjava.{Process, Span, Tag, TagType}
 import io.janstenpickle.trace4cats.`export`.SemanticTags
 import io.janstenpickle.trace4cats.kernel.SpanExporter
-import io.janstenpickle.trace4cats.model.TraceValue._
-import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceValue}
+import io.janstenpickle.trace4cats.model.AttributeValue._
+import io.janstenpickle.trace4cats.model.{AttributeValue, Batch, CompletedSpan}
 
 import scala.jdk.CollectionConverters._
 import scala.util.Try
@@ -25,7 +25,7 @@ object JaegerSpanExporter {
   ): Resource[F, SpanExporter[F]] = {
     val statusTags = SemanticTags.statusTags("span.")
 
-    def makeTags(attributes: Map[String, TraceValue]): java.util.List[Tag] =
+    def makeTags(attributes: Map[String, AttributeValue]): java.util.List[Tag] =
       attributes.view
         .map {
           case (key, StringValue(value)) =>

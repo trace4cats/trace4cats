@@ -71,6 +71,7 @@ lazy val root = (project in file("."))
     core,
     kernel,
     avro,
+    inject,
     `avro-exporter`,
     `avro-server`,
     `avro-test`,
@@ -111,6 +112,7 @@ lazy val example = (project in file("modules/example"))
     model,
     kernel,
     core,
+    inject,
     natchez,
     `avro-exporter`,
     `log-exporter`,
@@ -377,10 +379,15 @@ lazy val `avro-server` =
     )
     .dependsOn(model, avro)
 
+lazy val inject = (project in file("modules/inject"))
+  .settings(publishSettings)
+  .settings(name := "trace4cats-inject")
+  .dependsOn(model, kernel, core)
+
 lazy val natchez = (project in file("modules/natchez"))
   .settings(publishSettings)
   .settings(name := "trace4cats-natchez", libraryDependencies ++= Seq(Dependencies.natchez))
-  .dependsOn(model, kernel, core)
+  .dependsOn(model, kernel, core, inject)
 
 lazy val agent = (project in file("modules/agent"))
   .settings(noPublishSettings)

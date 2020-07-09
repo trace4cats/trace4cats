@@ -2,13 +2,13 @@ package io.janstenpickle.trace4cats.strackdriver.model
 
 import io.circe.{Encoder, Json, JsonObject}
 
-sealed trait AttributeValue
-object AttributeValue {
-  case class StringValue(value: String) extends AttributeValue
-  case class IntValue(value: Long) extends AttributeValue
-  case class BoolValue(value: Boolean) extends AttributeValue
+sealed trait SDAttributeValue
+object SDAttributeValue {
+  case class StringValue(value: String) extends SDAttributeValue
+  case class IntValue(value: Long) extends SDAttributeValue
+  case class BoolValue(value: Boolean) extends SDAttributeValue
 
-  implicit val encoder: Encoder[AttributeValue] = Encoder.instance {
+  implicit val encoder: Encoder[SDAttributeValue] = Encoder.instance {
     case StringValue(value) =>
       Json.fromJsonObject(
         JsonObject

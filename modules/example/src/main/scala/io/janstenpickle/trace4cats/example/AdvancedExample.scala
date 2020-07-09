@@ -21,5 +21,5 @@ object AdvancedExample extends IOApp {
       // as shown in the simple example, Spans are `cats.effect.Resource`s so may be flatMapped with others
       root <- Span.root[IO]("root", SpanKind.Client, SpanSampler.always, completer)
       child <- root.child("child", SpanKind.Server)
-    } yield child).use(_.setStatus(SpanStatus.Internal)).as(ExitCode.Success)
+    } yield child).use(_.setStatus(SpanStatus.Internal("Error"))).as(ExitCode.Success)
 }

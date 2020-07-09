@@ -11,7 +11,7 @@ case class CompletedSpan(
   kind: SpanKind,
   start: Instant,
   end: Instant,
-  attributes: Map[String, TraceValue],
+  attributes: Map[String, AttributeValue],
   status: SpanStatus
 )
 

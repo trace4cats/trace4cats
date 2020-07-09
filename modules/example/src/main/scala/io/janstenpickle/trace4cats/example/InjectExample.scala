@@ -16,28 +16,28 @@ import cats.syntax.partialOrder._
 import cats.{Monad, Order, Parallel}
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import io.janstenpickle.trace4cats.inject.{Trace => T4CTrace}
+import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.TraceProcess
-import io.janstenpickle.trace4cats.natchez.Trace4CatsTracer
 import io.janstenpickle.trace4cats.natchez.conversions._
-import natchez.{EntryPoint, Trace, Span => NatchezSpan}
+import natchez.{Trace => NatchezTrace}
 
 import scala.concurrent.duration._
 import scala.util.Random
 
 /**
- Adapted from https://github.com/tpolecat/natchez/blob/b995b0ebf7b180666810f4edef46dce959596ace/modules/examples/src/main/scala/Example.scala
-
- This example demonstrates how to use Natchez to implicitly pass spans around the callstack.
+  * Adapted from https://github.com/tpolecat/natchez/blob/b995b0ebf7b180666810f4edef46dce959596ace/modules/examples/src/main/scala/Example.scala
+  *
+  *This example demonstrates how to use Trace4Cats inject to implicitly pass spans around the callstack.
  **/
-object NatchezExample extends IOApp {
+object InjectExample extends IOApp {
   def entryPoint[F[_]: Concurrent: ContextShift: Timer: Parallel: Logger](
     blocker: Blocker,
     process: TraceProcess
   ): Resource[F, EntryPoint[F]] =
     AllCompleters[F](blocker, process).map { completer =>
-      Trace4CatsTracer.entryPoint[F](SpanSampler.probabilistic[F](0.05), completer)
+      EntryPoint[F](SpanSampler.probabilistic[F](0.05), completer)
     }
 
   // Intentionally slow parallel quicksort, to demonstrate branching. If we run too quickly it seems
@@ -54,9 +54,9 @@ object NatchezExample extends IOApp {
       }
     }
 
-  // Demonstrate implicit conversion from Natchez trace to Trace4Cats
+  // Demonstrate implicit conversion from Trace4Cats trace to Natchez
   // use io.janstenpickle.trace4cats.natchez.conversions._ to do this
-  def convertedTrace[F[_]: T4CTrace]: F[Unit] = T4CTrace[F].put("attribute" -> "test")
+  def convertedTrace[F[_]: NatchezTrace]: F[Unit] = NatchezTrace[F].put("attribute" -> "test")
 
   def runF[F[_]: Sync: Trace: Parallel: Timer]: F[Unit] =
     Trace[F].span("Sort some stuff!") {
@@ -75,7 +75,7 @@ object NatchezExample extends IOApp {
     } yield ep)
       .use { ep =>
         ep.root("this is the root span").use { span =>
-          runF[Kleisli[IO, NatchezSpan[IO], *]].run(span)
+          runF[Kleisli[IO, Span[IO], *]].run(span)
         }
       }
       .as(ExitCode.Success)
