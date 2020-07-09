@@ -199,11 +199,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
     needs: test
-    strategy:
-      matrix:
-        scala-version:
-          - "2.12.11"
-          - "2.13.3"
+
     steps:
       - name: checkout
         uses: actions/checkout@v1
@@ -250,7 +246,7 @@ jobs:
           gpg --quiet --batch --yes --decrypt --passphrase=${{ secrets.PGP_PASS }} --output local.secrets.tar secrets.tar.gpg
           tar -xvf local.secrets.tar
           popd
-          sbt -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.pass=${{ secrets.BINTRAY_PASS }} -Dsbt.coursier.home=~/.sbt/coursier/ ++${{ matrix.scala-version }} '; releaseEarly' -J-Xms3G -J-Xmx6G -J-Xss4m
+          sbt -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.pass=${{ secrets.BINTRAY_PASS }} -Dsbt.coursier.home=~/.sbt/coursier/ +releaseEarly -J-Xms3G -J-Xmx6G -J-Xss4m
 
   test:
 
