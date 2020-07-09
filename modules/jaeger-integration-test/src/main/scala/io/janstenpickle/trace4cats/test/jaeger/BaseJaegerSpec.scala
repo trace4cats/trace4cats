@@ -9,7 +9,7 @@ import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.circe.generic.auto._
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanExporter}
-import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, SpanKind, SpanStatus, TraceProcess, TraceValue}
+import io.janstenpickle.trace4cats.model.{AttributeValue, Batch, CompletedSpan, SpanKind, SpanStatus, TraceProcess}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.ember.client.EmberClientBuilder
@@ -39,14 +39,14 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
 
   def batchToJaegerResponse(
     batch: Batch,
-    kindToAttributes: SpanKind => Map[String, TraceValue],
-    statusToAttributes: SpanStatus => Map[String, TraceValue]
+    kindToAttributes: SpanKind => Map[String, AttributeValue],
+    statusToAttributes: SpanStatus => Map[String, AttributeValue]
   ): List[JaegerTraceResponse] = {
-    def convertAttributes(attributes: Map[String, TraceValue]): List[JaegerTag] = attributes.toList.map {
-      case (k, TraceValue.StringValue(value)) => JaegerTag.StringTag(k, value)
-      case (k, TraceValue.BooleanValue(value)) => JaegerTag.BoolTag(k, value)
-      case (k, TraceValue.DoubleValue(value)) => JaegerTag.FloatTag(k, value)
-      case (k, TraceValue.LongValue(value)) => JaegerTag.LongTag(k, value)
+    def convertAttributes(attributes: Map[String, AttributeValue]): List[JaegerTag] = attributes.toList.map {
+      case (k, AttributeValue.StringValue(value)) => JaegerTag.StringTag(k, value)
+      case (k, AttributeValue.BooleanValue(value)) => JaegerTag.BoolTag(k, value)
+      case (k, AttributeValue.DoubleValue(value)) => JaegerTag.FloatTag(k, value)
+      case (k, AttributeValue.LongValue(value)) => JaegerTag.LongTag(k, value)
     }
 
     batch.spans

@@ -252,13 +252,11 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
           .unsafeRunSync()
       )
 
-      span.status should be(SpanStatus.Internal)
-      (span.attributes should contain)
-        .theSameElementsAs(Map[String, TraceValue]("error" -> true, "span.status.message" -> errorMsg))
+      span.status should be(SpanStatus.Internal(errorMsg))
   }
 
   it should "add a glob of attributes" in forAll {
-    (name: String, kind: SpanKind, attributes: Map[String, TraceValue]) =>
+    (name: String, kind: SpanKind, attributes: Map[String, AttributeValue]) =>
       var span: CompletedSpan = null
 
       Span
@@ -270,7 +268,7 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
   }
 
   it should "add individual attributes" in forAll {
-    (name: String, kind: SpanKind, attributes: Map[String, TraceValue]) =>
+    (name: String, kind: SpanKind, attributes: Map[String, AttributeValue]) =>
       var span: CompletedSpan = null
 
       Span

@@ -4,8 +4,9 @@ import java.nio.ByteBuffer
 import java.util
 import java.util.concurrent.TimeUnit
 
+import io.janstenpickle.trace4cats.model.SpanStatus._
 import io.janstenpickle.trace4cats.model.TraceState.{Key, Value}
-import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind, SpanStatus}
+import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind}
 import io.opentelemetry.common.{AttributeValue, ReadableAttributes}
 import io.opentelemetry.sdk.common.InstrumentationLibraryInfo
 import io.opentelemetry.sdk.resources.Resource
@@ -79,9 +80,23 @@ object Trace4CatsSpanData {
 
     override lazy val getStatus: Status =
       span.status match {
-        case SpanStatus.Ok => Status.OK
-        case SpanStatus.Cancelled => Status.CANCELLED
-        case SpanStatus.Internal => Status.INTERNAL
+        case Ok => Status.OK
+        case Cancelled => Status.CANCELLED
+        case Unknown => Status.UNKNOWN
+        case InvalidArgument => Status.INVALID_ARGUMENT
+        case DeadlineExceeded => Status.DEADLINE_EXCEEDED
+        case NotFound => Status.NOT_FOUND
+        case AlreadyExists => Status.ALREADY_EXISTS
+        case PermissionDenied => Status.PERMISSION_DENIED
+        case ResourceExhausted => Status.RESOURCE_EXHAUSTED
+        case FailedPrecondition => Status.FAILED_PRECONDITION
+        case Aborted => Status.ABORTED
+        case OutOfRange => Status.OUT_OF_RANGE
+        case Unimplemented => Status.UNIMPLEMENTED
+        case Internal(message) => Status.INTERNAL.withDescription(message)
+        case Unavailable => Status.UNAVAILABLE
+        case DataLoss => Status.DATA_LOSS
+        case Unauthenticated => Status.UNAUTHENTICATED
       }
 
     override lazy val getEndEpochNanos: Long = TimeUnit.MILLISECONDS.toNanos(span.end.toEpochMilli)

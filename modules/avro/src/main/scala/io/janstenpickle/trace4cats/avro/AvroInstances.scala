@@ -33,9 +33,9 @@ object AvroInstances {
 
   implicit val spanContextCodec: Codec[SpanContext] = Codec.derive
 
-  implicit val traceValueCodec: Codec[TraceValue] = Codec.derive[TraceValue]
+  implicit val traceValueCodec: Codec[AttributeValue] = Codec.derive[AttributeValue]
 
-  implicit val attributesCodec: Codec[Map[String, TraceValue]] = Codec.map[TraceValue]
+  implicit val attributesCodec: Codec[Map[String, AttributeValue]] = Codec.map[AttributeValue]
 
   implicit val spanKindCodec: Codec[SpanKind] = Codec.derive[SpanKind]
 

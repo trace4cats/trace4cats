@@ -1,18 +1,18 @@
 package io.janstenpickle.trace4cats.opentelemetry
 
-import io.janstenpickle.trace4cats.model.TraceValue
-import io.opentelemetry.common.AttributeValue
+import io.janstenpickle.trace4cats.model.AttributeValue
+import io.opentelemetry.common.{AttributeValue => OTAttributeValue}
 
 package object common {
   private[common] def toAttributes[A](
-    attributes: Map[String, TraceValue],
+    attributes: Map[String, AttributeValue],
     builder: A,
-    add: (A, String, AttributeValue) => A
+    add: (A, String, OTAttributeValue) => A
   ): A =
     attributes.foldLeft(builder) {
-      case (a, (k, TraceValue.StringValue(value))) => add(a, k, AttributeValue.stringAttributeValue(value))
-      case (a, (k, TraceValue.BooleanValue(value))) => add(a, k, AttributeValue.booleanAttributeValue(value))
-      case (a, (k, TraceValue.DoubleValue(value))) => add(a, k, AttributeValue.doubleAttributeValue(value))
-      case (a, (k, TraceValue.LongValue(value))) => add(a, k, AttributeValue.longAttributeValue(value))
+      case (a, (k, AttributeValue.StringValue(value))) => add(a, k, OTAttributeValue.stringAttributeValue(value))
+      case (a, (k, AttributeValue.BooleanValue(value))) => add(a, k, OTAttributeValue.booleanAttributeValue(value))
+      case (a, (k, AttributeValue.DoubleValue(value))) => add(a, k, OTAttributeValue.doubleAttributeValue(value))
+      case (a, (k, AttributeValue.LongValue(value))) => add(a, k, OTAttributeValue.longAttributeValue(value))
     }
 }

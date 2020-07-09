@@ -10,7 +10,7 @@ import com.google.auth.Credentials
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.trace.v2.{TraceServiceClient, TraceServiceSettings}
 import com.google.devtools.cloudtrace.v2.Span.Attributes
-import com.google.devtools.cloudtrace.v2.{TruncatableString => GTruncatableString, _}
+import com.google.devtools.cloudtrace.v2.{TruncatableString => GTruncatableString, AttributeValue => GAttributeValue, _}
 import com.google.protobuf.{BoolValue, Timestamp}
 import com.google.rpc.Status
 import io.janstenpickle.trace4cats.kernel.SpanExporter
@@ -62,17 +62,17 @@ object StackdriverGrpcSpanExporter {
       case _ => spanName
     }
 
-    def toAttributesProto(process: TraceProcess, attributes: Map[String, TraceValue]): Attributes =
+    def toAttributesProto(process: TraceProcess, attributes: Map[String, AttributeValue]): Attributes =
       (process.attributes.updated(ServiceNameAttributeKey, process.serviceName) ++ attributes).toList
         .foldLeft(Attributes.newBuilder()) {
           case (acc, (k, v)) =>
             acc.putAttributeMap(
               k,
               (v match {
-                case TraceValue.StringValue(value) =>
-                  AttributeValue.newBuilder().setStringValue(toTruncatableStringProto(value))
-                case TraceValue.BooleanValue(value) => AttributeValue.newBuilder().setBoolValue(value)
-                case TraceValue.DoubleValue(value) => AttributeValue.newBuilder().setIntValue(value.toLong)
+                case AttributeValue.StringValue(value) =>
+                  GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(value))
+                case AttributeValue.BooleanValue(value) => GAttributeValue.newBuilder().setBoolValue(value)
+                case AttributeValue.DoubleValue(value) => GAttributeValue.newBuilder().setIntValue(value.toLong)
               }).build()
             )
 

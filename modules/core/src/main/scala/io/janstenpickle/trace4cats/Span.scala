@@ -13,8 +13,8 @@ import io.janstenpickle.trace4cats.model._
 
 trait Span[F[_]] {
   def context: SpanContext
-  def put(key: String, value: TraceValue): F[Unit]
-  def putAll(fields: (String, TraceValue)*): F[Unit]
+  def put(key: String, value: AttributeValue): F[Unit]
+  def putAll(fields: (String, AttributeValue)*): F[Unit]
   def setStatus(spanStatus: SpanStatus): F[Unit]
   def child(name: String, kind: SpanKind): Resource[F, Span[F]]
   protected[trace4cats] def end: F[Unit]
@@ -26,15 +26,15 @@ case class RefSpan[F[_]: Sync: Clock] private (
   name: String,
   kind: SpanKind,
   start: Long,
-  attributes: Ref[F, Map[String, TraceValue]],
+  attributes: Ref[F, Map[String, AttributeValue]],
   status: Ref[F, SpanStatus],
   sampler: SpanSampler[F],
   completer: SpanCompleter[F]
 ) extends Span[F] {
 
-  override def put(key: String, value: TraceValue): F[Unit] =
+  override def put(key: String, value: AttributeValue): F[Unit] =
     attributes.update(_ + (key -> value))
-  override def putAll(fields: (String, TraceValue)*): F[Unit] =
+  override def putAll(fields: (String, AttributeValue)*): F[Unit] =
     attributes.update(_ ++ fields)
   override def setStatus(spanStatus: SpanStatus): F[Unit] = status.set(spanStatus)
   override def child(name: String, kind: SpanKind): Resource[F, Span[F]] =
@@ -60,8 +60,8 @@ case class RefSpan[F[_]: Sync: Clock] private (
 }
 
 case class EmptySpan[F[_]: Defer: MonadError[*[_], Throwable]] private (context: SpanContext) extends Span[F] {
-  override def put(key: String, value: TraceValue): F[Unit] = Applicative[F].unit
-  override def putAll(fields: (String, TraceValue)*): F[Unit] = Applicative[F].unit
+  override def put(key: String, value: AttributeValue): F[Unit] = Applicative[F].unit
+  override def putAll(fields: (String, AttributeValue)*): F[Unit] = Applicative[F].unit
   override def setStatus(spanStatus: SpanStatus): F[Unit] = Applicative[F].unit
   override def child(name: String, kind: SpanKind): Resource[F, Span[F]] =
     Resource.make(SpanContext.child[F](context).map { childContext =>
@@ -89,14 +89,13 @@ object Span {
       .ifM(
         Resource.make(Applicative[F].pure(EmptySpan[F](context.setIsSampled())))(_.end),
         Resource.makeCase(for {
-          attributesRef <- Ref.of[F, Map[String, TraceValue]](Map.empty)
+          attributesRef <- Ref.of[F, Map[String, AttributeValue]](Map.empty)
           now <- Clock[F].realTime(TimeUnit.MILLISECONDS)
           statusRef <- Ref.of[F, SpanStatus](SpanStatus.Ok)
         } yield RefSpan[F](context, name, kind, now, attributesRef, statusRef, sampler, completer)) {
           case (span, ExitCase.Completed) => span.end
           case (span, ExitCase.Canceled) => span.end(SpanStatus.Cancelled)
-          case (span, ExitCase.Error(th)) =>
-            span.putAll("error" -> true, "span.status.message" -> th.getMessage) >> span.end(SpanStatus.Internal)
+          case (span, ExitCase.Error(th)) => span.end(SpanStatus.Internal(th.getMessage))
         }
       )
 

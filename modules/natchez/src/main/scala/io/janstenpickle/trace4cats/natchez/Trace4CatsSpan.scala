@@ -5,7 +5,7 @@ import cats.Applicative
 import cats.effect.{Clock, Resource, Sync}
 import io.janstenpickle.trace4cats.ToHeaders
 import io.janstenpickle.trace4cats.model.SpanKind
-import io.janstenpickle.trace4cats.model.TraceValue._
+import io.janstenpickle.trace4cats.model.AttributeValue._
 
 final case class Trace4CatsSpan[F[_]: Sync: Clock](span: io.janstenpickle.trace4cats.Span[F], toHeaders: ToHeaders)
     extends Span[F] {
