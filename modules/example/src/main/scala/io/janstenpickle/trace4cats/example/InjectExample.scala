@@ -17,6 +17,7 @@ import cats.{Monad, Order, Parallel}
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.TraceProcess
@@ -36,7 +37,7 @@ object InjectExample extends IOApp {
     blocker: Blocker,
     process: TraceProcess
   ): Resource[F, EntryPoint[F]] =
-    AllCompleters[F](blocker, process).map { completer =>
+    AvroSpanCompleter.udp[F](blocker, process, batchTimeout = 50.millis).map { completer =>
       EntryPoint[F](SpanSampler.probabilistic[F](0.05), completer)
     }
 
