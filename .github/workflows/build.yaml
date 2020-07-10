@@ -245,6 +245,7 @@ jobs:
           pushd .github
           gpg --quiet --batch --yes --decrypt --passphrase=${{ secrets.PGP_PASS }} --output local.secrets.tar secrets.tar.gpg
           tar -xvf local.secrets.tar
+          echo $PGP_PASS | gpg --passphrase-fd 0 --batch --yes --import local.secring.asc
           popd
           sbt -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.pass=${{ secrets.BINTRAY_PASS }} -Dsbt.coursier.home=~/.sbt/coursier/ +releaseEarly sonatypeBundleRelease -J-Xms3G -J-Xmx6G -J-Xss4m
 
