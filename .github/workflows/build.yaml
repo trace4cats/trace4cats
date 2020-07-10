@@ -238,6 +238,9 @@ jobs:
           password=${{ secrets.SONATYPE_PASS }}
           EOF
 
+      - name: setup-gpg
+        uses: olafurpg/setup-gpg@v2
+
       - name: scala build
         env:
           PGP_PASS: ${{ secrets.PGP_PASS }}
