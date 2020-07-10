@@ -238,18 +238,17 @@ jobs:
           password=${{ secrets.SONATYPE_PASS }}
           EOF
 
-      - name: setup-gpg
-        uses: olafurpg/setup-gpg@v2
+      - name: Import GPG key
+        id: import_gpg
+        uses: crazy-max/ghaction-import-gpg@v2
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          PASSPHRASE: ${{ secrets.PGP_PASS }}
 
       - name: scala build
         env:
           PGP_PASS: ${{ secrets.PGP_PASS }}
         run: |
-          pushd .github
-          gpg --quiet --batch --yes --decrypt --passphrase=${{ secrets.PGP_PASS }} --output local.secrets.tar secrets.tar.gpg
-          tar -xvf local.secrets.tar
-          echo $PGP_PASS | gpg --passphrase-fd 0 --batch --yes --import local.secring.asc
-          popd
           sbt -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.pass=${{ secrets.BINTRAY_PASS }} -Dsbt.coursier.home=~/.sbt/coursier/ +releaseEarly sonatypeBundleRelease -J-Xms3G -J-Xmx6G -J-Xss4m
 
   test:
