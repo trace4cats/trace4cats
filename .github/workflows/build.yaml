@@ -249,11 +249,12 @@ jobs:
         env:
           PGP_PASS: ${{ secrets.PGP_PASS }}
         run: |
-          sbt -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.pass=${{ secrets.BINTRAY_PASS }} -Dsbt.coursier.home=~/.sbt/coursier/ +releaseEarly sonatypeBundleRelease -J-Xms3G -J-Xmx6G -J-Xss4m
+          sbt -Dsona.user=${{ secrets.SONATYPE_USER }} -Dsona.pass=${{ secrets.SONATYPE_PASS }} -Dsbt.coursier.home=~/.sbt/coursier/ +releaseEarly sonatypeBundleRelease -J-Xms3G -J-Xmx6G -J-Xss4m
 
   test:
 
     runs-on: ubuntu-latest
+
 
     strategy:
       matrix:
