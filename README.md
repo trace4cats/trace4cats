@@ -7,6 +7,30 @@ Compatible with [OpenTelemetry] and [Jaeger], based on, and interoperates wht [N
 
 [Obligatory XKCD](https://xkcd.com/927/)
 
+#### For release information and changes see [the changelog](CHANGELOG.md)
+
+  * [Motivation](#motivation)
+  * [Design](#design)
+     * [Interfaces](#interfaces)
+        * [SpanExporter and SpanCompleter](#spanexporter-and-spancompleter)
+        * [SpanSampler](#spansampler)
+        * [ToHeaders](#toheaders)
+  * [Components](#components)
+     * [Agent](#agent)
+        * [Running](#running)
+     * [Collector](#collector)
+        * [Running](#running-1)
+     * [Collector Lite](#collector-lite)
+        * [Running](#running-2)
+  * [SBT Dependencies](#sbt-dependencies)
+  * [Code Examples](#code-examples)
+     * [Simple](#simple)
+     * [Advanced](#advanced)
+     * [Inject](#inject)
+     * [Natchez](#natchez)
+  * [native-image Compatibility](#native-image-compatibility)
+  * [TODO](#todo)
+
 ## Motivation
 
 It increasingly seems that Java tracing libraries are dependent on GRPC, which usually
@@ -77,7 +101,7 @@ application. Forwards batches of spans onto the Collector over TCP.
 #### Running
 
 ```bash
-docker run -it janstenpickle/trace4cats-agent:0.1.0
+docker run -it janstenpickle/trace4cats-agent:0.2.0
 ```
 
 ### Collector
@@ -96,7 +120,7 @@ the Collector supports the following exporters:
 #### Running
 
 ```bash
-docker run -p7777:7777/udp -it janstenpickle/trace4cats-collector:0.1.0
+docker run -p7777:7777/udp -it janstenpickle/trace4cats-collector:0.2.0
 ```
 
 ### Collector Lite
@@ -115,7 +139,7 @@ GRPC based exporters. Currently Collector lite supports the following exporters:
 #### Running
 
 ```bash
-docker run -p7777:7777 -p7777:7777/udp -it janstenpickle/trace4cats-collector-lite:0.1.0
+docker run -p7777:7777 -p7777:7777/udp -it janstenpickle/trace4cats-collector-lite:0.2.0
 ```
 
 ## SBT Dependencies
@@ -123,25 +147,25 @@ docker run -p7777:7777 -p7777:7777/udp -it janstenpickle/trace4cats-collector-li
 To use Trace4Cats within your application add the dependencies listed below as needed:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-natchez" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-log-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.1.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-natchez" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-log-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.2.0"
 
 ```
 
 ## Code Examples
 
-### [Simple](../../tree/master/modules/example/src/main/scala/io/janstenpickle/trace4cats/example/SimpleExample.scala)
+### [Simple](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/SimpleExample.scala)
 
 This example shows a simple example of how to use Trace4Cats without the need to 
 inject a root span via a Kleisli (see the Inject example below).
@@ -149,38 +173,38 @@ inject a root span via a Kleisli (see the Inject example below).
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.1.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.2.0"
 
 ```
 
-### [Advanced](../../tree/master/modules/example/src/main/scala/io/janstenpickle/trace4cats/example/AdvancedExample.scala)
+### [Advanced](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/AdvancedExample.scala)
 
 Demonstrates how spans may be used in a for comprehension along side other [`Resource`]s.
 Also shows how multiple completers may be combined using a monoid in the
-[`AllCompleters`](../../tree/master/modules/example/src/main/scala/io/janstenpickle/trace4cats/example/AllCompleters.scala)
+[`AllCompleters`](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/AllCompleters.scala)
 object.
 
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-log-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.1.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-log-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.2.0"
 
 ```
 
-### [Inject](../../tree/master/modules/example/src/main/scala/io/janstenpickle/trace4cats/example/InjectExample.scala)
+### [Inject](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/InjectExample.scala)
 
-Demonstrates how the callstack may be traced using the [`Trace`](../../tree/master/modules/inject/src/main/scala/io/janstenpickle/trace4cats/inject/Trace.scala)
+Demonstrates how the callstack may be traced using the [`Trace`](inject/src/main/scala/io/janstenpickle/trace4cats/inject/Trace.scala)
 typeclass. This functionality has been slightly adapted from [Natchez], but gives
 you the ability to set the span's kind on creation and status during execution.
 
@@ -193,14 +217,14 @@ Requires:
 
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-natchez" % "0.1.0" // required only for interop
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.1.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-natchez" % "0.2.0" // required only for interop
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.2.0"
 
 ```
 
-### [Natchez](../../tree/master/modules/example/src/main/scala/io/janstenpickle/trace4cats/example/NatchezExample.scala)
+### [Natchez](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/NatchezExample.scala)
 
 Demonstrates how the callstack may be traced with Trace4Cats using the [Natchez] `Trace`
 typeclass.
@@ -213,10 +237,10 @@ Requires:
 
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.1.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.1.0" // required only for interop
-"io.janstenpickle" %% "trace4cats-natchez" % "0.1.0" 
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.1.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.2.0" // required only for interop
+"io.janstenpickle" %% "trace4cats-natchez" % "0.2.0" 
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.2.0"
 
 ```
 
