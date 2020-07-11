@@ -11,6 +11,7 @@ Compatible with [OpenTelemetry] and [Jaeger], based on, and interoperates wht [N
 
   * [Motivation](#motivation)
   * [Design](#design)
+     * [Trace Injection](#trace-injection)
      * [Interfaces](#interfaces)
         * [SpanExporter and SpanCompleter](#spanexporter-and-spancompleter)
         * [SpanSampler](#spansampler)
@@ -44,8 +45,14 @@ brings along lots of other dependencies. You may find *Trace4Cats* useful if you
 
 Trace 4 Cats partially implements [OpenTelemetry] tracing, just enough
 traces can be exported to [Jaeger] or the 
-[OpenTelemetry collector](https://opentelemetry.io/docs/collector/about/). It is designed for use
-with [Natchez], but may also be used on its own.
+[OpenTelemetry collector](https://opentelemetry.io/docs/collector/about/). 
+
+## Trace Injection
+
+Based heavily on [Natchez] but exposes the specific Trace4Cats functionality of setting the span
+kind and status. A `Trace` typeclass is used to propagate a span context throughout the callstack.
+
+See the [example](#inject) below for more information, usage, and interoperability with [Natchez].
 
 ### Interfaces
 
