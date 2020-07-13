@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
-import cats.{Applicative, Defer, MonadError}
+import cats.{~>, Applicative, Defer, MonadError}
 import cats.effect.concurrent.Ref
 import cats.effect.{Clock, ExitCase, Resource, Sync}
 import cats.syntax.flatMap._
@@ -19,6 +19,7 @@ trait Span[F[_]] {
   def child(name: String, kind: SpanKind): Resource[F, Span[F]]
   protected[trace4cats] def end: F[Unit]
   protected[trace4cats] def end(status: SpanStatus): F[Unit]
+  final def mapK[G[_]: Defer: Applicative](fk: F ~> G): Span[G] = Span.mapK(fk)(this)
 }
 
 case class RefSpan[F[_]: Sync: Clock] private (
@@ -115,5 +116,16 @@ object Span {
     completer: SpanCompleter[F],
   ): Resource[F, Span[F]] =
     Resource.liftF(SpanContext.root[F]).flatMap(makeSpan(name, None, _, kind, sampler, completer))
+
+  private def mapK[F[_], G[_]: Defer: Applicative](fk: F ~> G)(span: Span[F]): Span[G] = new Span[G] {
+    override def context: SpanContext = span.context
+    override def put(key: String, value: AttributeValue): G[Unit] = fk(span.put(key, value))
+    override def putAll(fields: (String, AttributeValue)*): G[Unit] = fk(span.putAll(fields: _*))
+    override def setStatus(spanStatus: SpanStatus): G[Unit] = fk(span.setStatus(spanStatus))
+    override def child(name: String, kind: SpanKind): Resource[G, Span[G]] =
+      span.child(name, kind).mapK(fk).map(Span.mapK(fk))
+    override protected[trace4cats] def end: G[Unit] = fk(span.end)
+    override protected[trace4cats] def end(status: SpanStatus): G[Unit] = fk(span.end(status))
+  }
 
 }
