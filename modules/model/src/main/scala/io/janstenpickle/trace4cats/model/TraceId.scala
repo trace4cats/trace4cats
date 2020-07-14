@@ -24,6 +24,8 @@ object TraceId {
   def apply(array: Array[Byte]): Option[TraceId] =
     if (array.length == 16) Some(new TraceId(array)) else None
 
+  val invalid: TraceId = new TraceId(Array.fill(16)(0))
+
   implicit val show: Show[TraceId] =
     Show.show(tid => Hex.encodeHexString(tid.value))
 

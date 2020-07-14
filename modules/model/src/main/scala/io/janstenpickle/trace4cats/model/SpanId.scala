@@ -25,6 +25,8 @@ object SpanId {
   def apply(array: Array[Byte]): Option[SpanId] =
     if (array.length == 8) Some(new SpanId(array)) else None
 
+  val invalid: SpanId = new SpanId(Array.fill(8)(0))
+
   implicit val show: Show[SpanId] =
     Show.show(sid => Hex.encodeHexString(sid.value))
 

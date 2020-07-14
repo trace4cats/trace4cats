@@ -57,7 +57,7 @@ object NatchezExample extends IOApp {
 
   // Demonstrate implicit conversion from Natchez trace to Trace4Cats
   // use io.janstenpickle.trace4cats.natchez.conversions._ to do this
-  def convertedTrace[F[_]: T4CTrace]: F[Unit] = T4CTrace[F].put("attribute" -> "test")
+  def convertedTrace[F[_]: T4CTrace]: F[Unit] = T4CTrace[F].put("attribute", "test")
 
   def runF[F[_]: Sync: Trace: Parallel: Timer]: F[Unit] =
     Trace[F].span("Sort some stuff!") {

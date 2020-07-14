@@ -72,6 +72,15 @@ case class EmptySpan[F[_]: Defer: MonadError[*[_], Throwable]] private (context:
   override protected[trace4cats] def end(status: SpanStatus): F[Unit] = Applicative[F].unit
 }
 
+case class NoopSpan[F[_]: Applicative] private (context: SpanContext) extends Span[F] {
+  override def put(key: String, value: AttributeValue): F[Unit] = Applicative[F].unit
+  override def putAll(fields: (String, AttributeValue)*): F[Unit] = Applicative[F].unit
+  override def setStatus(spanStatus: SpanStatus): F[Unit] = Applicative[F].unit
+  override def child(name: String, kind: SpanKind): Resource[F, Span[F]] = Span.noop[F]
+  override protected[trace4cats] def end: F[Unit] = Applicative[F].unit
+  override protected[trace4cats] def end(status: SpanStatus): F[Unit] = Applicative[F].unit
+}
+
 object Span {
   private def makeSpan[F[_]: Sync: Clock](
     name: String,
@@ -98,6 +107,8 @@ object Span {
           case (span, ExitCase.Error(th)) => span.end(SpanStatus.Internal(th.getMessage))
         }
       )
+
+  def noop[F[_]: Applicative]: Resource[F, Span[F]] = Resource.pure[F, Span[F]](NoopSpan[F](SpanContext.invalid))
 
   def child[F[_]: Sync: Clock](
     name: String,

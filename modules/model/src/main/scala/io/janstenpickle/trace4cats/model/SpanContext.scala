@@ -34,6 +34,9 @@ object SpanContext {
       )
     }
 
+  val invalid: SpanContext =
+    SpanContext(TraceId.invalid, SpanId.invalid, None, TraceFlags(sampled = true), TraceState.empty, isRemote = false)
+
   implicit val show: Show[SpanContext] = Show.show { c =>
     val parent = c.parent.fold("")(p => show", parent-id: ${p.spanId}")
     val state = if (c.traceState.values.isEmpty) "" else show", state: ${c.traceState}"
