@@ -15,7 +15,7 @@ import io.janstenpickle.trace4cats.{Span, ToHeaders}
 /** A tracing effect, which always has a current span. */
 trait Trace[F[_]] {
   def put(key: String, value: AttributeValue): F[Unit]
-  def put(fields: (String, AttributeValue)*): F[Unit]
+  def putAll(fields: (String, AttributeValue)*): F[Unit]
   def span[A](name: String)(fa: F[A]): F[A] = span(name, SpanKind.Internal)(fa)
   def span[A](name: String, kind: SpanKind)(fa: F[A]): F[A]
   def headers: F[Map[String, String]] = headers(ToHeaders.w3c)
@@ -40,7 +40,7 @@ object Trace {
         override val headers: F[Map[String, String]] = Map.empty[String, String].pure[F]
         override def headers(toHeaders: ToHeaders): F[Map[String, String]] = Map.empty[String, String].pure[F]
         override def put(key: String, value: AttributeValue): F[Unit] = void
-        override def put(fields: (String, AttributeValue)*): F[Unit] = void
+        override def putAll(fields: (String, AttributeValue)*): F[Unit] = void
         override def span[A](name: String)(fa: F[A]): F[A] = fa
         override def span[A](name: String, kind: SpanKind)(fa: F[A]): F[A] = fa
         override def setStatus(status: SpanStatus): F[Unit] = void
@@ -69,7 +69,7 @@ object Trace {
     override def put(key: String, value: AttributeValue): Kleisli[F, Span[F], Unit] =
       Kleisli(_.put(key, value))
 
-    override def put(fields: (String, AttributeValue)*): Kleisli[F, Span[F], Unit] =
+    override def putAll(fields: (String, AttributeValue)*): Kleisli[F, Span[F], Unit] =
       Kleisli(_.putAll(fields: _*))
 
     override def span[A](name: String, kind: SpanKind)(k: Kleisli[F, Span[F], A]): Kleisli[F, Span[F], A] =
@@ -82,7 +82,7 @@ object Trace {
         override def put(key: String, value: AttributeValue): Kleisli[F, E, Unit] =
           Kleisli(e => f(e).put(key, value))
 
-        override def put(fields: (String, AttributeValue)*): Kleisli[F, E, Unit] =
+        override def putAll(fields: (String, AttributeValue)*): Kleisli[F, E, Unit] =
           Kleisli(e => f(e).putAll(fields: _*))
 
         override def span[A](name: String, kind: SpanKind)(k: Kleisli[F, E, A]): Kleisli[F, E, A] =
