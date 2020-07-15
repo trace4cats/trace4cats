@@ -5,8 +5,8 @@
 
 package io.janstenpickle.trace4cats.inject
 
-import cats.Applicative
-import cats.data.Kleisli
+import cats.{Applicative, Functor}
+import cats.data.{EitherT, Kleisli}
 import cats.effect.Bracket
 import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus}
 import cats.syntax.applicative._
@@ -96,5 +96,22 @@ object Trace {
       }
 
   }
+
+  implicit def eitherTTrace[F[_]: Functor, A](implicit trace: Trace[F]): Trace[EitherT[F, A, *]] =
+    new Trace[EitherT[F, A, *]] {
+      override def put(key: String, value: AttributeValue): EitherT[F, A, Unit] = EitherT.liftF(trace.put(key, value))
+
+      override def putAll(fields: (String, AttributeValue)*): EitherT[F, A, Unit] =
+        EitherT.liftF(trace.putAll(fields: _*))
+
+      override def span[B](name: String, kind: SpanKind)(fa: EitherT[F, A, B]): EitherT[F, A, B] =
+        EitherT(trace.span(name, kind)(fa.value))
+
+      override def headers(toHeaders: ToHeaders): EitherT[F, A, Map[String, String]] =
+        EitherT.liftF(trace.headers(toHeaders))
+
+      override def setStatus(status: SpanStatus): EitherT[F, A, Unit] =
+        EitherT.liftF(trace.setStatus(status))
+    }
 
 }
