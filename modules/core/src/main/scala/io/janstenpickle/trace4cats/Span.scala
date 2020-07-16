@@ -17,8 +17,6 @@ trait Span[F[_]] {
   def putAll(fields: (String, AttributeValue)*): F[Unit]
   def setStatus(spanStatus: SpanStatus): F[Unit]
   def child(name: String, kind: SpanKind): Resource[F, Span[F]]
-  protected[trace4cats] def end: F[Unit]
-  protected[trace4cats] def end(status: SpanStatus): F[Unit]
   final def mapK[G[_]: Defer: Applicative](fk: F ~> G): Span[G] = Span.mapK(fk)(this)
 }
 
@@ -41,8 +39,8 @@ case class RefSpan[F[_]: Sync: Clock] private (
   override def child(name: String, kind: SpanKind): Resource[F, Span[F]] =
     Span.child[F](name, context, kind, sampler, completer)
 
-  override protected[trace4cats] def end: F[Unit] = status.get.flatMap(end)
-  override protected[trace4cats] def end(status: SpanStatus): F[Unit] =
+  private[trace4cats] def end: F[Unit] = status.get.flatMap(end)
+  private[trace4cats] def end(status: SpanStatus): F[Unit] =
     for {
       now <- Clock[F].realTime(TimeUnit.MILLISECONDS)
       attrs <- attributes.get
@@ -65,12 +63,9 @@ case class EmptySpan[F[_]: Defer: MonadError[*[_], Throwable]] private (context:
   override def putAll(fields: (String, AttributeValue)*): F[Unit] = Applicative[F].unit
   override def setStatus(spanStatus: SpanStatus): F[Unit] = Applicative[F].unit
   override def child(name: String, kind: SpanKind): Resource[F, Span[F]] =
-    Resource.make(SpanContext.child[F](context).map { childContext =>
+    Resource.liftF(SpanContext.child[F](context).map { childContext =>
       EmptySpan(childContext.setIsSampled())
-    })(_.end)
-
-  override protected[trace4cats] def end: F[Unit] = Applicative[F].unit
-  override protected[trace4cats] def end(status: SpanStatus): F[Unit] = Applicative[F].unit
+    })
 }
 
 case class NoopSpan[F[_]: Applicative] private (context: SpanContext) extends Span[F] {
@@ -78,8 +73,6 @@ case class NoopSpan[F[_]: Applicative] private (context: SpanContext) extends Sp
   override def putAll(fields: (String, AttributeValue)*): F[Unit] = Applicative[F].unit
   override def setStatus(spanStatus: SpanStatus): F[Unit] = Applicative[F].unit
   override def child(name: String, kind: SpanKind): Resource[F, Span[F]] = Span.noop[F]
-  override protected[trace4cats] def end: F[Unit] = Applicative[F].unit
-  override protected[trace4cats] def end(status: SpanStatus): F[Unit] = Applicative[F].unit
 }
 
 object Span {
@@ -97,7 +90,7 @@ object Span {
           .shouldSample(parent, context.traceId, name, kind)
       )
       .ifM(
-        Resource.make(Applicative[F].pure(EmptySpan[F](context.setIsSampled())))(_.end),
+        Resource.liftF(Applicative[F].pure(EmptySpan[F](context.setIsSampled()))),
         Resource.makeCase(for {
           attributesRef <- Ref.of[F, Map[String, AttributeValue]](Map.empty)
           now <- Clock[F].realTime(TimeUnit.MILLISECONDS)
@@ -135,8 +128,6 @@ object Span {
     override def setStatus(spanStatus: SpanStatus): G[Unit] = fk(span.setStatus(spanStatus))
     override def child(name: String, kind: SpanKind): Resource[G, Span[G]] =
       span.child(name, kind).mapK(fk).map(Span.mapK(fk))
-    override protected[trace4cats] def end: G[Unit] = fk(span.end)
-    override protected[trace4cats] def end(status: SpanStatus): G[Unit] = fk(span.end(status))
   }
 
 }
