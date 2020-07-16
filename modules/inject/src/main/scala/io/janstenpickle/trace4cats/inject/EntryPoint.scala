@@ -6,6 +6,7 @@
 
 package io.janstenpickle.trace4cats.inject
 
+import cats.Applicative
 import cats.effect.{Clock, Resource, Sync}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
@@ -44,5 +45,11 @@ object EntryPoint {
       toHeaders.toContext(headers).fold(root(name, kind)) { parent =>
         Span.child[F](name, parent, kind, sampler, completer)
       }
+  }
+
+  def noop[F[_]: Applicative]: EntryPoint[F] = new EntryPoint[F] {
+    override def root(name: String, kind: SpanKind): Resource[F, Span[F]] = Span.noop[F]
+    override def continueOrElseRoot(name: String, kind: SpanKind, headers: Map[String, String]): Resource[F, Span[F]] =
+      Span.noop[F]
   }
 }
