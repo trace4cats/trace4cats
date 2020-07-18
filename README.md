@@ -156,6 +156,7 @@ To use Trace4Cats within your application add the dependencies listed below as n
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % "0.2.0"
 "io.janstenpickle" %% "trace4cats-inject" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-fs2" % "0.2.0"
 "io.janstenpickle" %% "trace4cats-natchez" % "0.2.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.2.0"
 "io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.2.0"
@@ -251,6 +252,24 @@ Requires:
 
 ```
 
+
+### [FS2](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/FS2Example.scala)
+
+Demonstrates how a span context can be propagated through an FS2 stream. Uses the 
+[Writer monad](http://eed3si9n.com/herding-cats/Writer.html) to include an [FS2 `EntryPoint`] along side each element. 
+Implicit methods are provided with the import `io.janstenpickle.trace4cats.fs2.syntax.all._` to lift an 
+[FS2 `EntryPoint`] into the stream and use it to perform traced operations within the stream, propagating a span context
+between closures.  
+
+Requires:
+
+```scala
+"io.janstenpickle" %% "trace4cats-core" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-fs2" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.2.0"
+
+```
+
 ## [`native-image`] Compatibility
 
 The following span completers have been found to be compatible with [`native-image`]:
@@ -274,6 +293,8 @@ The following span completers have been found to be compatible with [`native-ima
 - [x] OTLP HTTP exporter
 
 
+[FS2]: https:/fs2.io/
+[FS2 `EntryPoint`]: fs2/src/main/scala/io/janstenpickle/trace4cats/fs2/FS2EntryPoint.scala
 [Jaeger]: https://www.jaegertracing.io/
 [Log4Cats]: https://github.com/ChristopherDavenport/log4cats
 [Natchez]: https://github.com/tpolecat/natchez

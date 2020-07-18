@@ -72,7 +72,7 @@ object InjectExample extends IOApp {
     (for {
       blocker <- Blocker[IO]
       implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
-      ep <- entryPoint[IO](blocker, TraceProcess("natchez"))
+      ep <- entryPoint[IO](blocker, TraceProcess("trace4cats"))
     } yield ep)
       .use { ep =>
         ep.root("this is the root span").use { span =>
