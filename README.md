@@ -30,6 +30,7 @@ Compatible with [OpenTelemetry] and [Jaeger], based on, and interoperates wht [N
      * [Inject](#inject)
      * [Natchez](#natchez)
      * [FS2](#fs2)
+     * [Http4s](#http4s)
   * [native-image Compatibility](#native-image-compatibility)
   * [Contributing](#contributing)
   * [TODO](#todo)
@@ -159,6 +160,8 @@ To use Trace4Cats within your application add the dependencies listed below as n
 "io.janstenpickle" %% "trace4cats-core" % "0.2.0"
 "io.janstenpickle" %% "trace4cats-inject" % "0.2.0"
 "io.janstenpickle" %% "trace4cats-fs2" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-http4s-client" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-http4s-server" % "0.2.0"
 "io.janstenpickle" %% "trace4cats-natchez" % "0.2.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.2.0"
 "io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.2.0"
@@ -272,6 +275,27 @@ Requires:
 
 ```
 
+### [Http4s](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/Http4sExample.scala)
+
+Demonstrates how to use Trace4Cats with [Http4s] routes and clients. Span contexts are propagated via HTTP headers, and 
+span status is derived from HTTP status codes. Implicit methods on `HttpRoutes` and `Client` are provided with the
+imports:
+
+```scala
+io.janstenpickle.trace4cats.http4s.server.syntax._
+io.janstenpickle.trace4cats.http4s.client.syntax._
+```
+
+Requires:
+
+```scala
+"io.janstenpickle" %% "trace4cats-core" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-http4s-client" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-http4s-server" % "0.2.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.2.0"
+
+```
+
 ## [`native-image`] Compatibility
 
 The following span completers have been found to be compatible with [`native-image`]:
@@ -301,6 +325,7 @@ This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-
 
 [FS2]: https://fs2.io/
 [FS2 `EntryPoint`]: modules/fs2/src/main/scala/io/janstenpickle/trace4cats/fs2/Fs2EntryPoint.scala
+[Http4s]: https://http4s.org/
 [Jaeger]: https://www.jaegertracing.io/
 [Log4Cats]: https://github.com/ChristopherDavenport/log4cats
 [Natchez]: https://github.com/tpolecat/natchez
