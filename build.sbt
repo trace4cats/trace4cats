@@ -74,6 +74,9 @@ lazy val root = (project in file("."))
     avro,
     inject,
     fs2,
+    `http4s-common`,
+    `http4s-client`,
+    `http4s-server`,
     `avro-exporter`,
     `avro-server`,
     `avro-test`,
@@ -109,13 +112,24 @@ lazy val model =
 
 lazy val example = (project in file("modules/example"))
   .settings(noPublishSettings)
-  .settings(name := "trace4cats-example", libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.logback))
+  .settings(
+    name := "trace4cats-example",
+    libraryDependencies ++= Seq(
+      Dependencies.catsEffect,
+      Dependencies.logback,
+      Dependencies.http4sEmberClient,
+      Dependencies.http4sEmberServer,
+      Dependencies.http4sDsl
+    )
+  )
   .dependsOn(
     model,
     kernel,
     core,
     inject,
     fs2,
+    `http4s-client`,
+    `http4s-server`,
     natchez,
     `avro-exporter`,
     `log-exporter`,
@@ -391,6 +405,21 @@ lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
   .settings(name := "trace4cats-fs2", libraryDependencies ++= Seq(Dependencies.fs2))
   .dependsOn(model, kernel, core, inject)
+
+lazy val `http4s-common` = (project in file("modules/http4s-common"))
+  .settings(publishSettings)
+  .settings(name := "trace4cats-http4s-common", libraryDependencies ++= Seq(Dependencies.http4sServer))
+  .dependsOn(model)
+
+lazy val `http4s-client` = (project in file("modules/http4s-client"))
+  .settings(publishSettings)
+  .settings(name := "trace4cats-http4s-client", libraryDependencies ++= Seq(Dependencies.http4sClient))
+  .dependsOn(model, kernel, core, inject, `http4s-common`)
+
+lazy val `http4s-server` = (project in file("modules/http4s-server"))
+  .settings(publishSettings)
+  .settings(name := "trace4cats-http4s-server", libraryDependencies ++= Seq(Dependencies.http4sServer))
+  .dependsOn(model, kernel, core, inject, `http4s-common`)
 
 lazy val natchez = (project in file("modules/natchez"))
   .settings(publishSettings)
