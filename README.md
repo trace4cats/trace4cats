@@ -1,4 +1,4 @@
-# Trace4Cats
+# Trace4Cats ![](https://github.com/janstenpickle/trace4cats/.github/workflows/build.yml/badge.svg) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.janstenpickle/trace4cats-core_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.janstenpickle/trace4cats-core_2.13) <a href="https://typelevel.org/cats/"><img src="https://typelevel.org/cats/img/cats-badge.svg" height="40px" align="right" alt="Cats friendly" /></a>
 
 Yet another distributed tracing system, this time just for Scala. Heavily relies upon
 [Cats](https://typelevel.org/cats) and [Cats-effect](https://typelevel.org/cats-effect).
@@ -29,7 +29,9 @@ Compatible with [OpenTelemetry] and [Jaeger], based on, and interoperates wht [N
      * [Advanced](#advanced)
      * [Inject](#inject)
      * [Natchez](#natchez)
+     * [FS2](#fs2)
   * [native-image Compatibility](#native-image-compatibility)
+  * [Contributing](#contributing)
   * [TODO](#todo)
 
 ## Motivation
@@ -212,7 +214,7 @@ Requires:
 
 ### [Inject](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/InjectExample.scala)
 
-Demonstrates how the callstack may be traced using the [`Trace`](inject/src/main/scala/io/janstenpickle/trace4cats/inject/Trace.scala)
+Demonstrates how the callstack may be traced using the [`Trace`](modules/inject/src/main/scala/io/janstenpickle/trace4cats/inject/Trace.scala)
 typeclass. This functionality has been slightly adapted from [Natchez], but gives
 you the ability to set the span's kind on creation and status during execution.
 
@@ -253,9 +255,9 @@ Requires:
 ```
 
 
-### [FS2](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/FS2Example.scala)
+### [FS2](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/Fs2Example.scala)
 
-Demonstrates how a span context can be propagated through an FS2 stream. Uses the 
+Demonstrates how a span context can be propagated through an [FS2] stream. Uses the 
 [Writer monad](http://eed3si9n.com/herding-cats/Writer.html) to include an [FS2 `EntryPoint`] along side each element. 
 Implicit methods are provided with the import `io.janstenpickle.trace4cats.fs2.syntax.all._` to lift an 
 [FS2 `EntryPoint`] into the stream and use it to perform traced operations within the stream, propagating a span context
@@ -282,6 +284,11 @@ The following span completers have been found to be compatible with [`native-ima
 - [Datadog] over HTTP
 - [NewRelic] over HTTP
 
+## Contributing
+
+This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-conduct.html) and aims that its channels
+(mailing list, Gitter, github, etc.) to be welcoming environments for everyone.
+
 ## TODO
 
 - [x] Initial release
@@ -292,9 +299,8 @@ The following span completers have been found to be compatible with [`native-ima
 - [x] Jaeger protobuf exporter
 - [x] OTLP HTTP exporter
 
-
-[FS2]: https:/fs2.io/
-[FS2 `EntryPoint`]: fs2/src/main/scala/io/janstenpickle/trace4cats/fs2/FS2EntryPoint.scala
+[FS2]: https://fs2.io/
+[FS2 `EntryPoint`]: modules/fs2/src/main/scala/io/janstenpickle/trace4cats/fs2/Fs2EntryPoint.scala
 [Jaeger]: https://www.jaegertracing.io/
 [Log4Cats]: https://github.com/ChristopherDavenport/log4cats
 [Natchez]: https://github.com/tpolecat/natchez
