@@ -73,6 +73,7 @@ lazy val root = (project in file("."))
     kernel,
     avro,
     inject,
+    fs2,
     `avro-exporter`,
     `avro-server`,
     `avro-test`,
@@ -114,6 +115,7 @@ lazy val example = (project in file("modules/example"))
     kernel,
     core,
     inject,
+    fs2,
     natchez,
     `avro-exporter`,
     `log-exporter`,
@@ -384,6 +386,11 @@ lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
   .settings(name := "trace4cats-inject")
   .dependsOn(model, kernel, core)
+
+lazy val fs2 = (project in file("modules/fs2"))
+  .settings(publishSettings)
+  .settings(name := "trace4cats-fs2", libraryDependencies ++= Seq(Dependencies.fs2))
+  .dependsOn(model, kernel, core, inject)
 
 lazy val natchez = (project in file("modules/natchez"))
   .settings(publishSettings)
