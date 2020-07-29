@@ -28,7 +28,7 @@ object Dependencies {
     val vulcan = "1.1.0"
 
     val disciplineScalatest = "2.0.0"
-    val discipline = "1.0.2"
+    val discipline = "1.0.3"
     val scalaCheck = "1.14.3"
     val scalaCheckShapeless = "1.2.5"
     val scalaTest = "3.2.0"
