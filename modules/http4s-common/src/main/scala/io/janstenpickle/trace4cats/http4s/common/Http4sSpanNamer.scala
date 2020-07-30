@@ -23,7 +23,7 @@ object Http4sSpanNamer {
     val method = req.method.name
     val path = req.pathInfo
       .split("/", -1)
-      .mapInPlace(s => transform.applyOrElse(Uri.decode(s), identity[String]))
+      .map(s => transform.applyOrElse(Uri.decode(s), identity[String]))
       .mkString("/")
     if (path.isEmpty) method else s"$method $path"
   }
