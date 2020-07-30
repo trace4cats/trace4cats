@@ -22,11 +22,10 @@ trait ClientSyntax {
       val responseToTrace: Response[F] => Response[G] = resp => resp.mapK(lift)
       val traceToClientRequest: Request[G] => Request[F] =
         req => {
-          val headers = req.headers.toList.map(h => h.name.value -> h.value).toMap
+          val headers = Http4sHeaders.reqHeaders(req)
           val spanR = entryPoint.continueOrElseRoot(req.uri.path, SpanKind.Client, headers)
           val lower = λ[G ~> F](x => spanR.use(x.run))
           req.mapK(lower)
-
         }
 
       def contextHttpApp(app: HttpApp[F]): Kleisli[G, Request[G], Response[G]] =
