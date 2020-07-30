@@ -25,7 +25,7 @@ trait ClientSyntax {
       val traceToClientRequest: Request[G] => Request[F] =
         req => {
           val headers = Http4sHeaders.reqHeaders(req)
-          val spanR = entryPoint.continueOrElseRoot(spanNamer(req), SpanKind.Client, headers)
+          val spanR = entryPoint.continueOrElseRoot(spanNamer(req.covary), SpanKind.Client, headers)
           val lower = λ[G ~> F](x => spanR.use(x.run))
           req.mapK(lower)
         }

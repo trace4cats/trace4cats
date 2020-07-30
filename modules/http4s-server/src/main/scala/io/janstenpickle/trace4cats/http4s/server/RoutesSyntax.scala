@@ -23,7 +23,7 @@ trait RoutesSyntax {
         type G[A] = Kleisli[F, Span[F], A]
         val lift = λ[F ~> G](fa => Kleisli(_ => fa))
         val headers = req.headers.toList.map(h => h.name.value -> h.value).toMap
-        val spanR = entryPoint.continueOrElseRoot(spanNamer(req), SpanKind.Server, headers)
+        val spanR = entryPoint.continueOrElseRoot(spanNamer(req.covary), SpanKind.Server, headers)
         OptionT[F, Response[F]] {
           spanR.use { span =>
             val lower = λ[G ~> F](_(span))
