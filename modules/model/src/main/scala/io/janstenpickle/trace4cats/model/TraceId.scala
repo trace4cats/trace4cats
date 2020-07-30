@@ -9,7 +9,10 @@ import org.apache.commons.codec.binary.Hex
 
 import scala.util.Try
 
-case class TraceId private (value: Array[Byte]) extends AnyVal
+case class TraceId private (value: Array[Byte]) extends AnyVal {
+  override def toString: String = show"TraceId($this)"
+}
+
 object TraceId {
   def apply[F[_]: Defer: ApplicativeError[*[_], Throwable]]: F[TraceId] =
     Defer[F].defer(ApplicativeError[F, Throwable].catchNonFatal {

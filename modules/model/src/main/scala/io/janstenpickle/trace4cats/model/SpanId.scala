@@ -9,7 +9,9 @@ import org.apache.commons.codec.binary.Hex
 
 import scala.util.Try
 
-case class SpanId private (value: Array[Byte]) extends AnyVal
+case class SpanId private (value: Array[Byte]) extends AnyVal {
+  override def toString: String = show"SpanId($this)"
+}
 
 object SpanId {
   def apply[F[_]: Defer: ApplicativeError[*[_], Throwable]]: F[SpanId] =
