@@ -23,7 +23,7 @@ object Http4sExample extends IOApp {
     import dsl._
 
     HttpRoutes.of {
-      case req @ GET -> Root / "forward" => client.expect[String](req).map(Ok(_))
+      case req @ GET -> Root / "forward" => client.expect[String](req).flatMap(Ok(_))
     }
   }
 
@@ -31,7 +31,7 @@ object Http4sExample extends IOApp {
     (for {
       blocker <- Blocker[IO]
       implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
-      ep <- entryPoint[IO](blocker, TraceProcess("trace4catsFS2"))
+      ep <- entryPoint[IO](blocker, TraceProcess("trace4catsHttp4s"))
 
       client <- EmberClientBuilder.default[IO].withBlocker(blocker).withLogger(logger).build
 
