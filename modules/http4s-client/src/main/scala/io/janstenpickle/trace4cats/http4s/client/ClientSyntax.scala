@@ -4,7 +4,7 @@ import cats.data.Kleisli
 import cats.effect.Sync
 import cats.syntax.functor._
 import cats.~>
-import io.janstenpickle.trace4cats.http4s.common.{Http4sHeaders, Http4sStatusMapping}
+import io.janstenpickle.trace4cats.http4s.common.{Http4sHeaders, Http4sSpanNamer, Http4sStatusMapping}
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
 import io.janstenpickle.trace4cats.model.SpanKind
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
@@ -13,9 +13,11 @@ import org.http4s.{HttpApp, Request, Response}
 
 trait ClientSyntax {
   implicit class TracedClient[F[_]](client: Client[F]) {
-    def inject(entryPoint: EntryPoint[F], toHeaders: ToHeaders = ToHeaders.w3c)(
-      implicit F: Sync[F]
-    ): Client[Kleisli[F, Span[F], *]] = {
+    def inject(
+      entryPoint: EntryPoint[F],
+      toHeaders: ToHeaders = ToHeaders.w3c,
+      spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath
+    )(implicit F: Sync[F]): Client[Kleisli[F, Span[F], *]] = {
       type G[A] = Kleisli[F, Span[F], A]
       val trace = Trace[G]
       val lift = λ[F ~> G](fa => Kleisli(_ => fa))
@@ -23,7 +25,7 @@ trait ClientSyntax {
       val traceToClientRequest: Request[G] => Request[F] =
         req => {
           val headers = Http4sHeaders.reqHeaders(req)
-          val spanR = entryPoint.continueOrElseRoot(req.uri.path, SpanKind.Client, headers)
+          val spanR = entryPoint.continueOrElseRoot(spanNamer(req), SpanKind.Client, headers)
           val lower = λ[G ~> F](x => spanR.use(x.run))
           req.mapK(lower)
         }
