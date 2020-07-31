@@ -15,10 +15,12 @@ object Http4sSpanNamer {
     * {{{
     *   methodWithPartiallyTransformedPath {
     *     case s if s.toLongOption.isDefined => "{long}"
-    *     case s if Try(UUID.fromString(s)).isSuccess => "{uuid}"
+    *     case s if scala.util.Try(java.util.UUID.fromString(s)).isSuccess => "{uuid}"
     *   }
     * }}}
-    **/
+    *
+    * Note that regex matching should generally be preferred over try-catching conversion failures.
+    */
   def methodWithPartiallyTransformedPath(transform: PartialFunction[String, String]): Http4sSpanNamer = req => {
     val method = req.method.name
     val path = req.pathInfo
