@@ -4,7 +4,7 @@ import java.time.Instant
 
 import cats.effect.IO
 import io.janstenpickle.trace4cats.`export`.SemanticTags
-import io.janstenpickle.trace4cats.model.{AttributeValue, Batch, CompletedSpan, TraceProcess}
+import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceProcess}
 import io.janstenpickle.trace4cats.test.jaeger.BaseJaegerSpec
 
 import scala.concurrent.duration._
@@ -20,10 +20,7 @@ class OpenTelemetryOtlpGrpcSpanCompleterSpec extends BaseJaegerSpec {
       OpenTelemetryOtlpGrpcSpanCompleter[IO](blocker, process, "localhost", 55680, batchTimeout = 50.millis),
       updatedSpan,
       process,
-      batchToJaegerResponse(batch, SemanticTags.kindTags.andThen(_.filterNot {
-        case (k, AttributeValue.StringValue(v)) => k == "span.kind" && v == "internal"
-        case _ => false
-      }), SemanticTags.statusTags("", requireMessage = false))
+      batchToJaegerResponse(batch, SemanticTags.kindTags, SemanticTags.statusTags("", requireMessage = false))
     )
   }
 }

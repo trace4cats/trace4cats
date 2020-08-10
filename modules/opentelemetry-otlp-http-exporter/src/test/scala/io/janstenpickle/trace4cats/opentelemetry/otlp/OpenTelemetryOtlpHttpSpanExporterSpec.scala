@@ -4,7 +4,7 @@ import java.time.Instant
 
 import cats.effect.IO
 import io.janstenpickle.trace4cats.`export`.SemanticTags
-import io.janstenpickle.trace4cats.model.{AttributeValue, Batch}
+import io.janstenpickle.trace4cats.model.Batch
 import io.janstenpickle.trace4cats.test.jaeger.BaseJaegerSpec
 
 class OpenTelemetryOtlpHttpSpanExporterSpec extends BaseJaegerSpec {
@@ -18,10 +18,7 @@ class OpenTelemetryOtlpHttpSpanExporterSpec extends BaseJaegerSpec {
     testExporter(
       OpenTelemetryOtlpHttpSpanExporter.emberClient[IO](blocker, "localhost", 55681),
       updatedBatch,
-      batchToJaegerResponse(updatedBatch, SemanticTags.kindTags.andThen(_.filterNot {
-        case (k, AttributeValue.StringValue(v)) => k == "span.kind" && v == "internal"
-        case _ => false
-      }), SemanticTags.statusTags("", requireMessage = false))
+      batchToJaegerResponse(updatedBatch, SemanticTags.kindTags, SemanticTags.statusTags("", requireMessage = false))
     )
   }
 }
