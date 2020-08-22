@@ -9,7 +9,7 @@ object Dependencies {
     val circe = "0.13.0"
     val decline = "1.2.0"
     val enumeratum = "1.6.1"
-    val fs2 = "2.4.2"
+    val fs2 = "2.4.4"
     val googleCredentials = "0.21.1"
     val googleCloudTrace = "1.2.0"
     val grpc = "1.31.1"
