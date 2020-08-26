@@ -1,18 +1,18 @@
 package io.janstenpickle.trace4cats.opentelemetry.otlp
 
-import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Timer}
+import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.QueuedSpanCompleter
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.TraceProcess
 import org.http4s.client.Client
-import org.http4s.ember.client.EmberClientBuilder
+import org.http4s.client.blaze.BlazeClientBuilder
 
 import scala.concurrent.duration._
 
 object OpenTelemetryOtlpHttpSpanCompleter {
-  def emberClient[F[_]: Concurrent: Timer: ContextShift: Logger](
+  def blazeClient[F[_]: ConcurrentEffect: Timer: ContextShift](
     blocker: Blocker,
     process: TraceProcess,
     host: String = "localhost",
@@ -21,11 +21,7 @@ object OpenTelemetryOtlpHttpSpanCompleter {
     batchSize: Int = 50,
     batchTimeout: FiniteDuration = 10.seconds
   ): Resource[F, SpanCompleter[F]] =
-    EmberClientBuilder
-      .default[F]
-      .withLogger(Logger[F])
-      .withBlocker(blocker)
-      .build
+    BlazeClientBuilder[F](blocker.blockingContext).resource
       .flatMap(apply[F](_, process, host, port, bufferSize, batchSize, batchTimeout))
 
   def apply[F[_]: Concurrent: ContextShift: Timer](

@@ -35,7 +35,7 @@ object Http4sExample extends IOApp {
 
       client <- EmberClientBuilder.default[IO].withBlocker(blocker).withLogger(logger).build
 
-      routes = makeRoutes(client.inject(ep)) // use implicit syntax to inject an entry point to http client
+      routes = makeRoutes(client.liftTrace(ep)) // use implicit syntax to inject an entry point to http client
 
       server <- EmberServerBuilder
         .default[IO]

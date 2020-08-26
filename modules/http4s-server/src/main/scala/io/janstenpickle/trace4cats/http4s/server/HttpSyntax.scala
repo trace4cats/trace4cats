@@ -10,9 +10,9 @@ import io.janstenpickle.trace4cats.http4s.common.{Http4sHeaders, Http4sSpanNamer
 import io.janstenpickle.trace4cats.inject.EntryPoint
 import io.janstenpickle.trace4cats.model.SpanKind
 import org.http4s.util.CaseInsensitiveString
-import org.http4s.{Headers, HttpRoutes, Request, Response}
+import org.http4s._
 
-trait RoutesSyntax {
+trait HttpSyntax {
   implicit class TracedRoutes[F[_]](routes: HttpRoutes[Kleisli[F, Span[F], *]]) {
     def inject(
       entryPoint: EntryPoint[F],
@@ -39,6 +39,34 @@ trait RoutesSyntax {
               }
               .value
           }
+        }
+      }
+  }
+
+  implicit class TracedHttpApp[F[_], G[_]](app: HttpApp[Kleisli[F, Span[F], *]]) {
+    def inject(
+      entryPoint: EntryPoint[F],
+      spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath,
+      dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
+    )(implicit F: Bracket[F, Throwable]): HttpApp[F] =
+      Kleisli[F, Request[F], Response[F]] { req =>
+        type G[A] = Kleisli[F, Span[F], A]
+        val lift = λ[F ~> G](fa => Kleisli(_ => fa))
+        val headers = req.headers.toList.map(h => h.name.value -> h.value).toMap
+        val spanR = entryPoint.continueOrElseRoot(spanNamer(req.covary), SpanKind.Server, headers)
+        spanR.use { span =>
+          val lower = λ[G ~> F](_(span))
+          span.putAll(Http4sHeaders.requestFields(req, dropHeadersWhen): _*) *> lower(
+            app
+              .run(req.mapK(lift))
+              .map(_.mapK(lower))
+              .flatMapF { resp =>
+                span.setStatus(Http4sStatusMapping.toSpanStatus(resp.status)) *>
+                  span
+                    .putAll(Http4sHeaders.responseFields(resp, dropHeadersWhen): _*)
+                    .as(resp)
+              }
+          )
         }
       }
   }

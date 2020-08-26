@@ -6,6 +6,7 @@ import cats.effect.concurrent.Deferred
 import cats.effect.laws.util.TestContext
 import cats.effect.{ContextShift, ExitCase, IO, Timer}
 import cats.implicits._
+import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.model._
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
@@ -255,6 +256,22 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
       span.status should be(SpanStatus.Internal(errorMsg))
   }
 
+  it should "override the status using the provided error handler when execution fails" in forAll {
+    (name: String, kind: SpanKind, status: SpanStatus, overrideStatus: SpanStatus, errorMsg: String) =>
+      var span: CompletedSpan = null
+
+      Try(
+        Span
+          .root[IO](name, kind, SpanSampler.always, callbackCompleter(span = _), {
+            case TestException(_) => overrideStatus
+          })
+          .use(_.setStatus(status) >> IO.raiseError[Unit](TestException(errorMsg)))
+          .unsafeRunSync()
+      )
+
+      span.status should be(overrideStatus)
+  }
+
   it should "add a glob of attributes" in forAll {
     (name: String, kind: SpanKind, attributes: Map[String, AttributeValue]) =>
       var span: CompletedSpan = null
@@ -300,6 +317,8 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
 
       spans.size should be(0)
   }
+
+  case class TestException(message: String) extends RuntimeException
 
   def callbackCompleter(callback: CompletedSpan => Any): SpanCompleter[IO] = new SpanCompleter[IO] {
     override def complete(span: CompletedSpan): IO[Unit] = IO(callback(span)).void

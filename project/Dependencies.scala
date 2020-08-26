@@ -13,7 +13,7 @@ object Dependencies {
     val googleCredentials = "0.21.1"
     val googleCloudTrace = "1.2.0"
     val grpc = "1.31.1"
-    val http4s = "0.21.6"
+    val http4s = "0.21.7"
     val http4sJdkClient = "0.3.1"
     val jaeger = "1.3.2"
     val jwt = "3.10.3"
@@ -55,8 +55,8 @@ object Dependencies {
   lazy val http4sCirce = "org.http4s"                       %% "http4s-circe"                   % Versions.http4s
   lazy val http4sCore = "org.http4s"                        %% "http4s-core"                    % Versions.http4s
   lazy val http4sDsl = "org.http4s"                         %% "http4s-dsl"                     % Versions.http4s
-  lazy val http4sEmberClient = "org.http4s"                 %% "http4s-ember-client"            % Versions.http4s
-  lazy val http4sEmberServer = "org.http4s"                 %% "http4s-ember-server"            % Versions.http4s
+  lazy val http4sBlazeClient = "org.http4s"                 %% "http4s-blaze-client"            % Versions.http4s
+  lazy val http4sBlazeServer = "org.http4s"                 %% "http4s-blaze-server"            % Versions.http4s
   lazy val http4sJdkClient = "org.http4s"                   %% "http4s-jdk-http-client"         % Versions.http4sJdkClient
   lazy val http4sServer = "org.http4s"                      %% "http4s-server"                  % Versions.http4s
   lazy val jaegerThrift = "io.jaegertracing"                % "jaeger-thrift"                   % Versions.jaeger
