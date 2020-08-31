@@ -7,7 +7,7 @@ object Dependencies {
     val collectionCompat = "2.1.6"
     val commonsCodec = "1.14"
     val circe = "0.13.0"
-    val decline = "1.2.0"
+    val decline = "1.3.0"
     val enumeratum = "1.6.1"
     val fs2 = "2.4.4"
     val googleCredentials = "0.21.1"
