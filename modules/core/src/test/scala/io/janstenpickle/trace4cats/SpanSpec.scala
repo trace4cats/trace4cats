@@ -15,7 +15,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.concurrent.duration._
-import scala.util.Try
 
 class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks with ArbitraryInstances {
   val ec: TestContext = TestContext()
@@ -45,9 +44,11 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
   }
 
   it should "complete a new root span" in forAll { (name: String, kind: SpanKind) =>
-    var span: CompletedSpan = null
-
-    Span.root[IO](name, kind, SpanSampler.always, callbackCompleter(span = _)).use(_ => IO.unit).unsafeRunSync()
+    val span = (for {
+      completer <- RefSpanCompleter[IO]
+      _ <- Span.root[IO](name, kind, SpanSampler.always, completer).use(_ => IO.unit)
+      spans <- completer.get
+    } yield spans.head).unsafeRunSync()
 
     span.context.parent should be(None)
     span.context.isRemote should be(false)
@@ -55,10 +56,13 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
   }
 
   it should "not complete a sampled root span" in forAll { (name: String, kind: SpanKind, status: SpanStatus) =>
-    var span: CompletedSpan = null
-    Span.root[IO](name, kind, SpanSampler.never, callbackCompleter(span = _)).use(_.setStatus(status)).unsafeRunSync()
+    val span = (for {
+      completer <- RefSpanCompleter[IO]
+      _ <- Span.root[IO](name, kind, SpanSampler.never, completer).use(_.setStatus(status))
+      spans <- completer.get
+    } yield spans.headOption).unsafeRunSync()
 
-    span should be(null)
+    span should be(None)
   }
 
   behavior.of("Span.child")
@@ -97,17 +101,19 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
 
   it should "create a new span from a parent context" in forAll {
     (name: String, parentContext: SpanContext, kind: SpanKind) =>
-      var span: CompletedSpan = null
-      Span
-        .child[IO](
-          name,
-          parentContext.copy(traceFlags = TraceFlags(sampled = false)),
-          kind,
-          SpanSampler.always,
-          callbackCompleter(span = _)
-        )
-        .use(_ => IO.unit)
-        .unsafeRunSync()
+      val span = (for {
+        completer <- RefSpanCompleter[IO]
+        _ <- Span
+          .child[IO](
+            name,
+            parentContext.copy(traceFlags = TraceFlags(sampled = false)),
+            kind,
+            SpanSampler.always,
+            completer
+          )
+          .use(_ => IO.unit)
+        spans <- completer.get
+      } yield spans.head).unsafeRunSync()
 
       span.name should be(name)
       span.kind should be(kind)
@@ -116,26 +122,31 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
 
   it should "not use the completer on a sampled span" in forAll {
     (name: String, parentContext: SpanContext, kind: SpanKind, status: SpanStatus) =>
-      var span: CompletedSpan = null
-      Span
-        .child[IO](
-          name,
-          parentContext.copy(traceFlags = TraceFlags(sampled = true)),
-          kind,
-          SpanSampler.always,
-          callbackCompleter(span = _)
-        )
-        .use(_.setStatus(status))
-        .unsafeRunSync()
+      val span = (for {
+        completer <- RefSpanCompleter[IO]
+        _ <- Span
+          .child[IO](
+            name,
+            parentContext.copy(traceFlags = TraceFlags(sampled = true)),
+            kind,
+            SpanSampler.always,
+            completer
+          )
+          .use(_.setStatus(status))
+        spans <- completer.get
+      } yield spans.headOption).unsafeRunSync()
 
-      span should be(null)
+      span should be(None)
   }
 
   behavior.of("RefSpan")
 
   it should "set the span name and kind" in forAll { (name: String, kind: SpanKind) =>
-    var span: CompletedSpan = null
-    Span.root[IO](name, kind, SpanSampler.always, callbackCompleter(span = _)).use(_ => IO.unit).unsafeRunSync()
+    val span = (for {
+      completer <- RefSpanCompleter[IO]
+      _ <- Span.root[IO](name, kind, SpanSampler.always, completer).use(_ => IO.unit)
+      spans <- completer.get
+    } yield spans.head).unsafeRunSync()
 
     span.name should be(name)
     span.kind should be(kind)
@@ -143,34 +154,33 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
 
   it should "create a child ref span" in forAll {
     (name: String, childName: String, kind: SpanKind, childKind: SpanKind) =>
-      var spans: List[CompletedSpan] = List.empty
-
-      Span
-        .root[IO](name, kind, SpanSampler.always, callbackCompleter(span => spans = span :: spans))
-        .flatTap(_.child(childName, childKind))
-        .use(_ => IO.unit)
-        .unsafeRunSync()
+      val spans = (for {
+        completer <- RefSpanCompleter[IO]
+        _ <- Span
+          .root[IO](name, kind, SpanSampler.always, completer)
+          .flatTap(_.child(childName, childKind))
+          .use(_ => IO.unit)
+        spans <- completer.get
+      } yield spans).unsafeRunSync()
 
       spans.size should be(2)
 
-      spans.head.context.parent should be(None)
-      spans.head.context.isRemote should be(false)
-      spans.head.context.traceFlags.sampled should be(false)
-      spans.head.name should be(name)
-      spans.head.kind should be(kind)
-
-      spans(1).context.parent should be(Some(Parent(spans.head.context.spanId, isRemote = false)))
+      spans(1).context.parent should be(None)
       spans(1).context.isRemote should be(false)
       spans(1).context.traceFlags.sampled should be(false)
-      spans(1).name should be(childName)
-      spans(1).kind should be(childKind)
+      spans(1).name should be(name)
+      spans(1).kind should be(kind)
+
+      spans.head.context.parent should be(Some(Parent(spans(1).context.spanId, isRemote = false)))
+      spans.head.context.isRemote should be(false)
+      spans.head.context.traceFlags.sampled should be(false)
+      spans.head.name should be(childName)
+      spans.head.kind should be(childKind)
 
   }
 
   it should "create a sampled child span" in forAll {
     (name: String, childName: String, kind: SpanKind, childKind: SpanKind) =>
-      var spans: List[CompletedSpan] = List.empty
-
       val sampler = new SpanSampler[IO] {
         var callCount: Int = 0
 
@@ -190,11 +200,14 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
 
       def assertSampled(span: Span[IO]) = assert(span.isInstanceOf[EmptySpan[IO]])
 
-      Span
-        .root[IO](name, kind, sampler, callbackCompleter(span => spans = span :: spans))
-        .flatTap(_.child(childName, childKind).map(assertSampled))
-        .use(_ => IO.unit)
-        .unsafeRunSync()
+      val spans = (for {
+        completer <- RefSpanCompleter[IO]
+        _ <- Span
+          .root[IO](name, kind, sampler, completer)
+          .flatTap(_.child(childName, childKind).map(assertSampled))
+          .use(_ => IO.unit)
+        spans <- completer.get
+      } yield spans).unsafeRunSync()
 
       spans.size should be(1)
 
@@ -206,27 +219,33 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
   }
 
   it should "use the default status of OK when completed" in forAll { (name: String, kind: SpanKind) =>
-    var span: CompletedSpan = null
-    Span.root[IO](name, kind, SpanSampler.always, callbackCompleter(span = _)).use(_ => IO.unit).unsafeRunSync()
+    val span = (for {
+      completer <- RefSpanCompleter[IO]
+      _ <- Span.root[IO](name, kind, SpanSampler.always, completer).use(_ => IO.unit)
+      spans <- completer.get
+    } yield spans.head).unsafeRunSync()
 
     span.status should be(SpanStatus.Ok)
   }
 
   it should "use the provided status when completed" in forAll { (name: String, kind: SpanKind, status: SpanStatus) =>
-    var span: CompletedSpan = null
-    Span.root[IO](name, kind, SpanSampler.always, callbackCompleter(span = _)).use(_.setStatus(status)).unsafeRunSync()
+    val span = (for {
+      completer <- RefSpanCompleter[IO]
+      _ <- Span.root[IO](name, kind, SpanSampler.always, completer).use(_.setStatus(status))
+      spans <- completer.get
+    } yield spans.head).unsafeRunSync()
 
     span.status should be(status)
   }
 
   it should "override the status to cancelled when execution is cancelled" in forAll {
     (name: String, kind: SpanKind, status: SpanStatus) =>
-      var span: CompletedSpan = null
+      val completer = RefSpanCompleter.unsafe[IO]
 
       Deferred[IO, ExitCase[Throwable]]
         .flatMap { stop =>
           val r = Span
-            .root[IO](name, kind, SpanSampler.always, callbackCompleter(span = _))
+            .root[IO](name, kind, SpanSampler.always, completer)
             .use(_.setStatus(status) >> IO.never: IO[Unit])
             .guaranteeCase(stop.complete)
 
@@ -239,59 +258,61 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
 
       ec.tick(3.seconds)
 
+      val span = completer.get.unsafeRunSync().head
+
       span.status should be(SpanStatus.Cancelled)
   }
 
   it should "override the status to internal when execution fails" in forAll {
     (name: String, kind: SpanKind, status: SpanStatus, errorMsg: String) =>
-      var span: CompletedSpan = null
-
-      Try(
-        Span
-          .root[IO](name, kind, SpanSampler.always, callbackCompleter(span = _))
+      val span = (for {
+        completer <- RefSpanCompleter[IO]
+        _ <- Span
+          .root[IO](name, kind, SpanSampler.always, completer)
           .use(_.setStatus(status) >> IO.raiseError[Unit](new RuntimeException(errorMsg)))
-          .unsafeRunSync()
-      )
+          .attempt
+        spans <- completer.get
+      } yield spans.head).unsafeRunSync()
 
       span.status should be(SpanStatus.Internal(errorMsg))
   }
 
   it should "override the status using the provided error handler when execution fails" in forAll {
     (name: String, kind: SpanKind, status: SpanStatus, overrideStatus: SpanStatus, errorMsg: String) =>
-      var span: CompletedSpan = null
-
-      Try(
-        Span
-          .root[IO](name, kind, SpanSampler.always, callbackCompleter(span = _), {
+      val span = (for {
+        completer <- RefSpanCompleter[IO]
+        _ <- Span
+          .root[IO](name, kind, SpanSampler.always, completer, {
             case TestException(_) => overrideStatus
           })
           .use(_.setStatus(status) >> IO.raiseError[Unit](TestException(errorMsg)))
-          .unsafeRunSync()
-      )
+          .attempt
+        spans <- completer.get
+      } yield spans.head).unsafeRunSync()
 
       span.status should be(overrideStatus)
   }
 
   it should "add a glob of attributes" in forAll {
     (name: String, kind: SpanKind, attributes: Map[String, AttributeValue]) =>
-      var span: CompletedSpan = null
-
-      Span
-        .root[IO](name, kind, SpanSampler.always, callbackCompleter(span = _))
-        .use(_.putAll(attributes.toList: _*))
-        .unsafeRunSync()
+      val span = (for {
+        completer <- RefSpanCompleter[IO]
+        _ <- Span.root[IO](name, kind, SpanSampler.always, completer).use(_.putAll(attributes.toList: _*))
+        spans <- completer.get
+      } yield spans.head).unsafeRunSync()
 
       (span.attributes should contain).theSameElementsAs(attributes)
   }
 
   it should "add individual attributes" in forAll {
     (name: String, kind: SpanKind, attributes: Map[String, AttributeValue]) =>
-      var span: CompletedSpan = null
-
-      Span
-        .root[IO](name, kind, SpanSampler.always, callbackCompleter(span = _))
-        .use(span => attributes.toList.traverse { case (k, v) => span.put(k, v) })
-        .unsafeRunSync()
+      val span = (for {
+        completer <- RefSpanCompleter[IO]
+        _ <- Span
+          .root[IO](name, kind, SpanSampler.always, completer)
+          .use(span => attributes.toList.traverse { case (k, v) => span.put(k, v) })
+        spans <- completer.get
+      } yield spans.head).unsafeRunSync()
 
       (span.attributes should contain).theSameElementsAs(attributes)
   }
@@ -299,28 +320,28 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
   behavior.of("EmptySpan")
 
   it should "never complete" in forAll { (name: String, kind: SpanKind) =>
-    var span: CompletedSpan = null
-    Span.root[IO](name, kind, SpanSampler.never, callbackCompleter(span = _)).use(_ => IO.unit).unsafeRunSync()
+    val span = (for {
+      completer <- RefSpanCompleter[IO]
+      _ <- Span.root[IO](name, kind, SpanSampler.never, completer).use(_ => IO.unit)
+      spans <- completer.get
+    } yield spans.headOption).unsafeRunSync()
 
-    span should be(null)
+    span should be(None)
   }
 
   it should "create a child empty span" in forAll {
     (name: String, childName: String, kind: SpanKind, childKind: SpanKind) =>
-      var spans: List[CompletedSpan] = List.empty
-
-      Span
-        .root[IO](name, kind, SpanSampler.never, callbackCompleter(span => spans = span :: spans))
-        .flatTap(_.child(childName, childKind))
-        .use(_ => IO.unit)
-        .unsafeRunSync()
+      val spans = (for {
+        completer <- RefSpanCompleter[IO]
+        _ <- Span
+          .root[IO](name, kind, SpanSampler.never, completer)
+          .flatTap(_.child(childName, childKind))
+          .use(_ => IO.unit)
+        spans <- completer.get
+      } yield spans.headOption).unsafeRunSync()
 
       spans.size should be(0)
   }
 
   case class TestException(message: String) extends RuntimeException
-
-  def callbackCompleter(callback: CompletedSpan => Any): SpanCompleter[IO] = new SpanCompleter[IO] {
-    override def complete(span: CompletedSpan): IO[Unit] = IO(callback(span)).void
-  }
 }

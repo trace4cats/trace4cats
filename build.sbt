@@ -174,7 +174,7 @@ lazy val core =
       libraryDependencies ++= Dependencies.test.map(_                                  % Test),
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.catsEffectLaws % Test)
     )
-    .dependsOn(model, kernel, test % "test->compile")
+    .dependsOn(model, kernel, test % "test->compile", `exporter-common` % "test->compile")
 
 lazy val avro =
   (project in file("modules/avro"))
