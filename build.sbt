@@ -424,8 +424,16 @@ lazy val `http4s-client` = (project in file("modules/http4s-client"))
 
 lazy val `http4s-server` = (project in file("modules/http4s-server"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-http4s-server", libraryDependencies ++= Seq(Dependencies.http4sServer))
-  .dependsOn(model, kernel, core, inject, `http4s-common`)
+  .settings(
+    name := "trace4cats-http4s-server",
+    libraryDependencies ++= Seq(Dependencies.http4sServer),
+    libraryDependencies ++= (Dependencies.test ++ Seq(
+      Dependencies.http4sBlazeClient,
+      Dependencies.http4sBlazeServer,
+      Dependencies.http4sDsl
+    )).map(_ % Test)
+  )
+  .dependsOn(model, kernel, core, inject, `http4s-common`, `exporter-common` % "test->compile")
 
 lazy val natchez = (project in file("modules/natchez"))
   .settings(publishSettings)

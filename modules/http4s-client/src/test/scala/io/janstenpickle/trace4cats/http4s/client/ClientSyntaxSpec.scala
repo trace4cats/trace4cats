@@ -34,11 +34,12 @@ class ClientSyntaxSpec
     with ScalaCheckDrivenPropertyChecks
     with Matchers
     with ClientSyntax
-    with Http4sClientDsl[Kleisli[IO, Span[IO], *]] {
+    with Http4sClientDsl[Kleisli[IO, Span[IO], *]]
+    with Http4sDsl[IO] {
   implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
   implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.fromExecutor(Executors.newCachedThreadPool()))
-  object dsl extends Http4sDsl[IO]
-  import dsl._
+
+  type TraceIO[A] = Kleisli[IO, Span[IO], A]
 
   implicit val responseArb: Arbitrary[Response[IO]] =
     Arbitrary(
@@ -55,8 +56,6 @@ class ClientSyntaxSpec
         ).map(_.unsafeRunSync())
       )
     )
-
-  type TraceIO[A] = Kleisli[IO, Span[IO], A]
 
   it should "correctly set request headers and span status when the response body is read" in test(
     _.expect[String](_).void
