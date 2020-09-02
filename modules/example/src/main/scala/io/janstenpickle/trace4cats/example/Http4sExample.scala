@@ -11,10 +11,10 @@ import io.janstenpickle.trace4cats.http4s.server.syntax._
 import io.janstenpickle.trace4cats.model.TraceProcess
 import org.http4s.HttpRoutes
 import org.http4s.client.Client
+import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.dsl.Http4sDsl
-import org.http4s.ember.client.EmberClientBuilder
-import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits._
+import org.http4s.server.blaze.BlazeServerBuilder
 
 object Http4sExample extends IOApp {
 
@@ -33,18 +33,14 @@ object Http4sExample extends IOApp {
       implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
       ep <- entryPoint[IO](blocker, TraceProcess("trace4catsHttp4s"))
 
-      client <- EmberClientBuilder.default[IO].withBlocker(blocker).withLogger(logger).build
+      client <- BlazeClientBuilder[IO](blocker.blockingContext).resource
 
-      routes = makeRoutes(client.liftTrace(ep)) // use implicit syntax to inject an entry point to http client
+      routes = makeRoutes(client.liftTrace()) // use implicit syntax to lift http client to the trace context
 
-      server <- EmberServerBuilder
-        .default[IO]
-        .withBlocker(blocker)
-        .withLogger(logger)
-        .withHost("0.0.0.0")
-        .withPort(8080)
+      server <- BlazeServerBuilder[IO](blocker.blockingContext)
+        .bindHttp(8080, "0.0.0.0")
         .withHttpApp(routes.inject(ep).orNotFound) // use implicit syntax to inject an entry point to http routes
-        .build
+        .resource
     } yield server).use { _ =>
       IO(ExitCode.Success)
     }

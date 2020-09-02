@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.example
 
 import cats.Parallel
-import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Timer}
+import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Timer}
 import cats.instances.list._
 import cats.syntax.foldable._
 import cats.syntax.parallel._
@@ -27,7 +27,7 @@ import io.janstenpickle.trace4cats.strackdriver.StackdriverHttpSpanCompleter
  provide a `Parallel` typeclass then completers will be executed in sequence
   */
 object AllCompleters {
-  def apply[F[_]: Concurrent: ContextShift: Timer: Parallel: Logger](
+  def apply[F[_]: ConcurrentEffect: ContextShift: Timer: Parallel: Logger](
     blocker: Blocker,
     process: TraceProcess
   ): Resource[F, SpanCompleter[F]] =
@@ -36,10 +36,10 @@ object AllCompleters {
       JaegerSpanCompleter[F](blocker, process),
       OpenTelemetryJaegerSpanCompleter[F](blocker, process),
       OpenTelemetryOtlpGrpcSpanCompleter[F](blocker, process),
-      OpenTelemetryOtlpHttpSpanCompleter.emberClient[F](blocker, process),
+      OpenTelemetryOtlpHttpSpanCompleter.blazeClient[F](blocker, process),
       StackdriverGrpcSpanCompleter[F](blocker, process, "gcp-project-id-123"),
       StackdriverHttpSpanCompleter
-        .emberClient[F](blocker, process, "gcp-project-id-123", "/path/to/service-account.json")
+        .blazeClient[F](blocker, process, "gcp-project-id-123", "/path/to/service-account.json")
     ).parSequence.map { completers =>
       (LogSpanCompleter[F] :: completers).combineAll
     }

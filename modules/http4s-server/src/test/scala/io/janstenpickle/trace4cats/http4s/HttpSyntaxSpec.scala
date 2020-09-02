@@ -1,6 +1,5 @@
 package io.janstenpickle.trace4cats.http4s
 
-import java.net.ServerSocket
 import java.util.concurrent.Executors
 
 import cats.ApplicativeError
@@ -27,6 +26,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.immutable.Queue
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 class HttpSyntaxSpec
     extends AnyFlatSpec
@@ -98,11 +98,10 @@ class HttpSyntaxSpec
   def evaluateTrace(routes: HttpRoutes[TraceIO], app: HttpApp[TraceIO])(
     fa: Queue[CompletedSpan] => Assertion
   ): Assertion = {
-    val s = new ServerSocket(0)
-    val port = s.getLocalPort
+    val port = 8082
 
     def test(f: EntryPoint[IO] => HttpApp[IO]): Assertion =
-      (for {
+      ((for {
         blocker <- Blocker[IO]
         completer <- Resource.liftF(RefSpanCompleter[IO])
         ep = EntryPoint[IO](SpanSampler.always, completer)
@@ -117,8 +116,9 @@ class HttpSyntaxSpec
             for {
               _ <- client.expect[String](s"http://localhost:$port").attempt
               spans <- completer.get
+              _ <- timer.sleep(100.millis)
             } yield fa(spans)
-        }
+        })
         .unsafeRunSync()
 
     test(routes.inject(_).orNotFound)

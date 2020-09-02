@@ -1,6 +1,5 @@
 package io.janstenpickle.trace4cats.http4s.client
 
-import java.net.ServerSocket
 import java.util.concurrent.Executors
 
 import cats.Eq
@@ -13,6 +12,7 @@ import io.janstenpickle.trace4cats.http4s.common.Http4sStatusMapping
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
+import org.http4s._
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.dsl.Http4sClientDsl
@@ -20,7 +20,6 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.`WWW-Authenticate`
 import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
-import org.http4s._
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
@@ -28,6 +27,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 class ClientSyntaxSpec
     extends AnyFlatSpec
@@ -149,8 +149,7 @@ class ClientSyntaxSpec
       }
 
   def withRunningHttpServer(app: HttpApp[IO])(fa: Int => IO[Assertion]): IO[Assertion] = {
-    val s = new ServerSocket(0)
-    val port = s.getLocalPort
+    val port = 8083
 
     Blocker[IO]
       .flatMap { blocker =>
@@ -161,7 +160,7 @@ class ClientSyntaxSpec
 
       }
       .use { _ =>
-        fa(port)
+        fa(port).flatTap(_ => timer.sleep(100.millis))
       }
   }
 
