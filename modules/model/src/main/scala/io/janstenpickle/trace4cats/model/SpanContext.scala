@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.model
 
-import cats.implicits._
+import cats.syntax.all._
 import cats.{Defer, Eq, MonadError, Show}
 
 case class SpanContext(

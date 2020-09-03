@@ -1,8 +1,6 @@
 package io.janstenpickle.trace4cats.model
 
 import java.util.concurrent.ThreadLocalRandom
-
-import cats.instances.string._
 import cats.syntax.show._
 import cats.{ApplicativeError, Defer, Eq, Show}
 import org.apache.commons.codec.binary.Hex

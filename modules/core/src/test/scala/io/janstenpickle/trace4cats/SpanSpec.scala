@@ -5,7 +5,7 @@ import java.util.concurrent.{ScheduledExecutorService, ScheduledThreadPoolExecut
 import cats.effect.concurrent.Deferred
 import cats.effect.laws.util.TestContext
 import cats.effect.{ContextShift, ExitCase, IO, Timer}
-import cats.implicits._
+import cats.syntax.all._
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.model._
 import io.janstenpickle.trace4cats.test.ArbitraryInstances

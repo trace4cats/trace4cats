@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.model
 import java.time.Instant
 
 import cats.{Eq, Show}
-import cats.implicits._
+import cats.syntax.all._
 
 case class CompletedSpan(
   context: SpanContext,
