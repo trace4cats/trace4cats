@@ -25,7 +25,7 @@ object Dependencies {
     val scala212 = "2.12.11"
     val scala213 = "2.13.3"
     val scalapb = "0.10.1"
-    val vulcan = "1.1.0"
+    val vulcan = "1.2.0"
 
     val disciplineScalatest = "2.0.1"
     val discipline = "1.0.3"
