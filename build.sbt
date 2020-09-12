@@ -117,8 +117,8 @@ lazy val example = (project in file("modules/example"))
     libraryDependencies ++= Seq(
       Dependencies.catsEffect,
       Dependencies.logback,
-      Dependencies.http4sEmberClient,
-      Dependencies.http4sEmberServer,
+      Dependencies.http4sBlazeClient,
+      Dependencies.http4sBlazeServer,
       Dependencies.http4sDsl
     )
   )
@@ -174,7 +174,7 @@ lazy val core =
       libraryDependencies ++= Dependencies.test.map(_                                  % Test),
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.catsEffectLaws % Test)
     )
-    .dependsOn(model, kernel, test % "test->compile")
+    .dependsOn(model, kernel, test % "test->compile", `exporter-common` % "test->compile")
 
 lazy val avro =
   (project in file("modules/avro"))
@@ -203,7 +203,7 @@ lazy val `jaeger-integration-test` =
       libraryDependencies ++= Seq(
         Dependencies.circeGeneric,
         Dependencies.http4sCirce,
-        Dependencies.http4sEmberClient,
+        Dependencies.http4sBlazeClient,
         Dependencies.logback,
         Dependencies.testContainers
       )
@@ -275,7 +275,7 @@ lazy val `opentelemetry-otlp-http-exporter` =
         Dependencies.circeGeneric,
         Dependencies.fs2,
         Dependencies.http4sClient,
-        Dependencies.http4sEmberClient,
+        Dependencies.http4sBlazeClient,
         (Dependencies.openTelemetryProto % "protobuf").intransitive(),
         Dependencies.scalapbJson
       ),
@@ -316,7 +316,7 @@ lazy val `stackdriver-http-exporter` =
         Dependencies.fs2,
         Dependencies.http4sClient,
         Dependencies.http4sCirce,
-        Dependencies.http4sEmberClient,
+        Dependencies.http4sBlazeClient,
         Dependencies.jwt,
         Dependencies.log4cats
       )
@@ -336,8 +336,7 @@ lazy val `datadog-http-exporter` =
         Dependencies.fs2,
         Dependencies.http4sClient,
         Dependencies.http4sCirce,
-        Dependencies.http4sEmberClient,
-        Dependencies.log4cats
+        Dependencies.http4sBlazeClient
       )
     )
     .dependsOn(model, kernel, `exporter-common`, `exporter-http`, test % "test->compile")
@@ -354,8 +353,7 @@ lazy val `newrelic-http-exporter` =
         Dependencies.fs2,
         Dependencies.http4sClient,
         Dependencies.http4sCirce,
-        Dependencies.http4sEmberClient,
-        Dependencies.log4cats
+        Dependencies.http4sBlazeClient
       )
     )
     .dependsOn(model, kernel, `exporter-common`, `exporter-http`)
@@ -413,13 +411,29 @@ lazy val `http4s-common` = (project in file("modules/http4s-common"))
 
 lazy val `http4s-client` = (project in file("modules/http4s-client"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-http4s-client", libraryDependencies ++= Seq(Dependencies.http4sClient))
-  .dependsOn(model, kernel, core, inject, `http4s-common`)
+  .settings(
+    name := "trace4cats-http4s-client",
+    libraryDependencies ++= Seq(Dependencies.http4sClient),
+    libraryDependencies ++= (Dependencies.test ++ Seq(
+      Dependencies.http4sBlazeClient,
+      Dependencies.http4sBlazeServer,
+      Dependencies.http4sDsl
+    )).map(_ % Test)
+  )
+  .dependsOn(model, kernel, core, inject, `http4s-common`, `exporter-common` % "test->compile")
 
 lazy val `http4s-server` = (project in file("modules/http4s-server"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-http4s-server", libraryDependencies ++= Seq(Dependencies.http4sServer))
-  .dependsOn(model, kernel, core, inject, `http4s-common`)
+  .settings(
+    name := "trace4cats-http4s-server",
+    libraryDependencies ++= Seq(Dependencies.http4sServer),
+    libraryDependencies ++= (Dependencies.test ++ Seq(
+      Dependencies.http4sBlazeClient,
+      Dependencies.http4sBlazeServer,
+      Dependencies.http4sDsl
+    )).map(_ % Test)
+  )
+  .dependsOn(model, kernel, core, inject, `http4s-common`, `exporter-common` % "test->compile")
 
 lazy val natchez = (project in file("modules/natchez"))
   .settings(publishSettings)

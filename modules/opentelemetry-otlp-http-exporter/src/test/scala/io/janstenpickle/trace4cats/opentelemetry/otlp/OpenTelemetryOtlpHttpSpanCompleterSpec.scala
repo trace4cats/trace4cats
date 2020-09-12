@@ -18,7 +18,7 @@ class OpenTelemetryOtlpHttpSpanCompleterSpec extends BaseJaegerSpec {
 
     testCompleter(
       OpenTelemetryOtlpHttpSpanCompleter
-        .emberClient[IO](blocker, process, "localhost", 55681, batchTimeout = 50.millis),
+        .blazeClient[IO](blocker, process, "localhost", 55681, batchTimeout = 50.millis),
       updatedSpan,
       process,
       batchToJaegerResponse(batch, SemanticTags.kindTags, SemanticTags.statusTags("", requireMessage = false))

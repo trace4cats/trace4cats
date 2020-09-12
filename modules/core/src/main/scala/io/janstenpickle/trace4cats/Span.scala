@@ -17,6 +17,7 @@ trait Span[F[_]] {
   def putAll(fields: (String, AttributeValue)*): F[Unit]
   def setStatus(spanStatus: SpanStatus): F[Unit]
   def child(name: String, kind: SpanKind): Resource[F, Span[F]]
+  def child(name: String, kind: SpanKind, errorHandler: PartialFunction[Throwable, SpanStatus]): Resource[F, Span[F]]
   final def mapK[G[_]: Defer: Applicative](fk: F ~> G): Span[G] = Span.mapK(fk)(this)
 }
 
@@ -38,6 +39,11 @@ case class RefSpan[F[_]: Sync: Clock] private (
   override def setStatus(spanStatus: SpanStatus): F[Unit] = status.set(spanStatus)
   override def child(name: String, kind: SpanKind): Resource[F, Span[F]] =
     Span.child[F](name, context, kind, sampler, completer)
+  override def child(
+    name: String,
+    kind: SpanKind,
+    errorHandler: PartialFunction[Throwable, SpanStatus]
+  ): Resource[F, Span[F]] = Span.child[F](name, context, kind, sampler, completer, errorHandler)
 
   private[trace4cats] def end: F[Unit] = status.get.flatMap(end)
   private[trace4cats] def end(status: SpanStatus): F[Unit] =
@@ -66,6 +72,11 @@ case class EmptySpan[F[_]: Defer: MonadError[*[_], Throwable]] private (context:
     Resource.liftF(SpanContext.child[F](context).map { childContext =>
       EmptySpan(childContext.setIsSampled())
     })
+  override def child(
+    name: String,
+    kind: SpanKind,
+    errorHandler: PartialFunction[Throwable, SpanStatus]
+  ): Resource[F, Span[F]] = child(name, kind)
 }
 
 case class NoopSpan[F[_]: Applicative] private (context: SpanContext) extends Span[F] {
@@ -73,6 +84,11 @@ case class NoopSpan[F[_]: Applicative] private (context: SpanContext) extends Sp
   override def putAll(fields: (String, AttributeValue)*): F[Unit] = Applicative[F].unit
   override def setStatus(spanStatus: SpanStatus): F[Unit] = Applicative[F].unit
   override def child(name: String, kind: SpanKind): Resource[F, Span[F]] = Span.noop[F]
+  override def child(
+    name: String,
+    kind: SpanKind,
+    errorHandler: PartialFunction[Throwable, SpanStatus]
+  ): Resource[F, Span[F]] = child(name, kind)
 }
 
 object Span {
@@ -82,7 +98,8 @@ object Span {
     context: SpanContext,
     kind: SpanKind,
     sampler: SpanSampler[F],
-    completer: SpanCompleter[F]
+    completer: SpanCompleter[F],
+    errorHandler: PartialFunction[Throwable, SpanStatus]
   ): Resource[F, Span[F]] =
     Resource
       .liftF(
@@ -98,7 +115,8 @@ object Span {
         } yield RefSpan[F](context, name, kind, now, attributesRef, statusRef, sampler, completer)) {
           case (span, ExitCase.Completed) => span.end
           case (span, ExitCase.Canceled) => span.end(SpanStatus.Cancelled)
-          case (span, ExitCase.Error(th)) => span.end(SpanStatus.Internal(th.getMessage))
+          case (span, ExitCase.Error(th)) =>
+            span.end(errorHandler.applyOrElse[Throwable, SpanStatus](th, t => SpanStatus.Internal(t.getMessage)))
         }
       )
 
@@ -110,16 +128,20 @@ object Span {
     kind: SpanKind,
     sampler: SpanSampler[F],
     completer: SpanCompleter[F],
+    errorHandler: PartialFunction[Throwable, SpanStatus] = PartialFunction.empty,
   ): Resource[F, Span[F]] =
-    Resource.liftF(SpanContext.child[F](parent)).flatMap(makeSpan(name, Some(parent), _, kind, sampler, completer))
+    Resource
+      .liftF(SpanContext.child[F](parent))
+      .flatMap(makeSpan(name, Some(parent), _, kind, sampler, completer, errorHandler))
 
   def root[F[_]: Sync: Clock](
     name: String,
     kind: SpanKind,
     sampler: SpanSampler[F],
     completer: SpanCompleter[F],
+    errorHandler: PartialFunction[Throwable, SpanStatus] = PartialFunction.empty
   ): Resource[F, Span[F]] =
-    Resource.liftF(SpanContext.root[F]).flatMap(makeSpan(name, None, _, kind, sampler, completer))
+    Resource.liftF(SpanContext.root[F]).flatMap(makeSpan(name, None, _, kind, sampler, completer, errorHandler))
 
   private def mapK[F[_], G[_]: Defer: Applicative](fk: F ~> G)(span: Span[F]): Span[G] = new Span[G] {
     override def context: SpanContext = span.context
@@ -128,6 +150,11 @@ object Span {
     override def setStatus(spanStatus: SpanStatus): G[Unit] = fk(span.setStatus(spanStatus))
     override def child(name: String, kind: SpanKind): Resource[G, Span[G]] =
       span.child(name, kind).mapK(fk).map(Span.mapK(fk))
+    override def child(
+      name: String,
+      kind: SpanKind,
+      errorHandler: PartialFunction[Throwable, SpanStatus]
+    ): Resource[G, Span[G]] = span.child(name, kind, errorHandler).mapK(fk).map(Span.mapK(fk))
   }
 
 }

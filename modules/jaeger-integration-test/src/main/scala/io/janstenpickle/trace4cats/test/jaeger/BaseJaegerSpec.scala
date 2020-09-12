@@ -5,14 +5,12 @@ import java.util.concurrent.TimeUnit
 import cats.data.NonEmptyList
 import cats.effect.{Blocker, IO, Resource}
 import cats.implicits._
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.circe.generic.auto._
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanExporter}
-import io.janstenpickle.trace4cats.model.{AttributeValue, Batch, CompletedSpan, SpanKind, SpanStatus, TraceProcess}
+import io.janstenpickle.trace4cats.model._
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.http4s.circe.CirceEntityCodec._
-import org.http4s.ember.client.EmberClientBuilder
+import org.http4s.client.blaze.BlazeClientBuilder
 import org.scalacheck.Shrink
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
@@ -27,8 +25,6 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
   implicit val timer = IO.timer(ExecutionContext.global)
 
   val blocker = Blocker.liftExecutionContext(ExecutionContext.global)
-
-  implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 3, maxDiscardedFactor = 50.0)
@@ -96,10 +92,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
     expectedResponse: List[JaegerTraceResponse]
   ): Assertion = {
     val res =
-      EmberClientBuilder
-        .default[IO]
-        .withBlocker(blocker)
-        .build
+      BlazeClientBuilder[IO](blocker.blockingContext).resource
         .use { client =>
           exporter.use(_.exportBatch(batch)) >> timer
             .sleep(1.second) >> batch.spans
@@ -125,10 +118,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
     val batch = Batch(process, List(span))
 
     val res =
-      EmberClientBuilder
-        .default[IO]
-        .withBlocker(blocker)
-        .build
+      BlazeClientBuilder[IO](blocker.blockingContext).resource
         .use { client =>
           completer.use(_.complete(span)) >> timer
             .sleep(1.second) >> batch.spans

@@ -31,7 +31,7 @@ class DataDogSpanCompleterSpec extends AnyFlatSpec with ScalaCheckDrivenProperty
   it should "send a span to datadog agent without error" in forAll { (process: TraceProcess, span: CompletedSpan) =>
     assertResult(())(
       DataDogSpanCompleter
-        .emberClient[IO](blocker, process, batchTimeout = 100.millis)
+        .blazeClient[IO](blocker, process, batchTimeout = 100.millis)
         .use(_.complete(span))
         .unsafeRunSync()
     )
