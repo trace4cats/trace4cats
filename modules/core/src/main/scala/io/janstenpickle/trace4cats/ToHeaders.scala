@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats
 
-import cats.implicits._
+import cats.syntax.all._
 import io.janstenpickle.trace4cats.model._
 
 trait ToHeaders {

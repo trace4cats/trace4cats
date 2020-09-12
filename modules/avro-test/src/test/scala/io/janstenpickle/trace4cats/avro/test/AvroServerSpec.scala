@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.avro.test
 import cats.data.NonEmptyList
 import cats.effect.concurrent.Ref
 import cats.effect.{Blocker, IO, Resource}
-import cats.implicits._
+import cats.syntax.all._
 import cats.kernel.Eq
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger

@@ -6,9 +6,6 @@
 package io.janstenpickle.trace4cats.model
 
 import cats.{Eq, Show}
-import cats.instances.string._
-import cats.instances.double._
-import cats.instances.long._
 
 sealed trait AttributeValue extends Product with Serializable {
   def value: Any
