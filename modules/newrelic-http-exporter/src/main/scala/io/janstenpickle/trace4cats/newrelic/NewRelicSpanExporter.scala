@@ -13,7 +13,7 @@ import org.http4s.{Header, MediaType}
 
 object NewRelicSpanExporter {
 
-  def emberClient[F[_]: ConcurrentEffect: Timer: ContextShift](
+  def blazeClient[F[_]: ConcurrentEffect: Timer: ContextShift](
     blocker: Blocker,
     apiKey: String,
     endpoint: Endpoint

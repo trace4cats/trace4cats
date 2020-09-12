@@ -12,7 +12,7 @@ import org.http4s.client.blaze.BlazeClientBuilder
 import scala.concurrent.duration._
 
 object DataDogSpanCompleter {
-  def emberClient[F[_]: ConcurrentEffect: Timer: ContextShift](
+  def blazeClient[F[_]: ConcurrentEffect: Timer: ContextShift](
     blocker: Blocker,
     process: TraceProcess,
     host: String = "localhost",

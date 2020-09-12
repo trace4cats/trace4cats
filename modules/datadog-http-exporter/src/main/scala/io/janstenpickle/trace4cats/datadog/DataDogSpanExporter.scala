@@ -11,7 +11,7 @@ import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 
 object DataDogSpanExporter {
-  def emberClient[F[_]: ConcurrentEffect: Timer: ContextShift: Logger](
+  def blazeClient[F[_]: ConcurrentEffect: Timer: ContextShift: Logger](
     blocker: Blocker,
     host: String = "localhost",
     port: Int = 8126
