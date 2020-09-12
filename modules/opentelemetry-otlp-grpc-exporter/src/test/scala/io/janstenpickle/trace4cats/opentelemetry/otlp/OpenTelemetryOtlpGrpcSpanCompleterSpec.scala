@@ -17,7 +17,7 @@ class OpenTelemetryOtlpGrpcSpanCompleterSpec extends BaseJaegerSpec {
     val batch = Batch(process, List(updatedSpan))
 
     testCompleter(
-      OpenTelemetryOtlpGrpcSpanCompleter[IO](blocker, process, "localhost", 55680, batchTimeout = 50.millis),
+      OpenTelemetryOtlpGrpcSpanCompleter[IO](process, "localhost", 55680, batchTimeout = 50.millis),
       updatedSpan,
       process,
       batchToJaegerResponse(batch, SemanticTags.kindTags, SemanticTags.statusTags("", requireMessage = false))

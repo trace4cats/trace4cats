@@ -16,9 +16,14 @@ class OpenTelemetryJaegerSpanExporterSpec extends BaseJaegerSpec {
       )
 
     testExporter(
-      OpenTelemetryJaegerSpanExporter[IO](blocker, "localhost", 14250),
+      OpenTelemetryJaegerSpanExporter[IO]("localhost", 14250),
       updatedBatch,
-      batchToJaegerResponse(updatedBatch, SemanticTags.kindTags, SemanticTags.statusTags("span."))
+      batchToJaegerResponse(
+        updatedBatch,
+        SemanticTags.kindTags,
+        SemanticTags.statusTags("span."),
+        Map("otel.instrumentation_library.name" -> "trace4cats")
+      )
     )
   }
 }

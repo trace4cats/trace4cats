@@ -34,8 +34,8 @@ object AllCompleters {
     List(
       AvroSpanCompleter.udp[F](blocker, process),
       JaegerSpanCompleter[F](blocker, process),
-      OpenTelemetryJaegerSpanCompleter[F](blocker, process),
-      OpenTelemetryOtlpGrpcSpanCompleter[F](blocker, process),
+      OpenTelemetryJaegerSpanCompleter[F](process),
+      OpenTelemetryOtlpGrpcSpanCompleter[F](process),
       OpenTelemetryOtlpHttpSpanCompleter.blazeClient[F](blocker, process),
       StackdriverGrpcSpanCompleter[F](blocker, process, "gcp-project-id-123"),
       StackdriverHttpSpanCompleter

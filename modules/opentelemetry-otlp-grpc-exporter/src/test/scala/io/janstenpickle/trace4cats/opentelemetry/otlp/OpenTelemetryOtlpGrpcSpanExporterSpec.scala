@@ -16,7 +16,7 @@ class OpenTelemetryOtlpGrpcSpanExporterSpec extends BaseJaegerSpec {
       )
 
     testExporter(
-      OpenTelemetryOtlpGrpcSpanExporter[IO](blocker, "localhost", 55680),
+      OpenTelemetryOtlpGrpcSpanExporter[IO]("localhost", 55680),
       updatedBatch,
       batchToJaegerResponse(updatedBatch, SemanticTags.kindTags, SemanticTags.statusTags("", requireMessage = false))
     )
