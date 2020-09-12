@@ -36,7 +36,8 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
   def batchToJaegerResponse(
     batch: Batch,
     kindToAttributes: SpanKind => Map[String, AttributeValue],
-    statusToAttributes: SpanStatus => Map[String, AttributeValue]
+    statusToAttributes: SpanStatus => Map[String, AttributeValue],
+    additionalAttributes: Map[String, AttributeValue] = Map.empty
   ): List[JaegerTraceResponse] = {
     def convertAttributes(attributes: Map[String, AttributeValue]): List[JaegerTag] = attributes.toList.map {
       case (k, AttributeValue.StringValue(value)) => JaegerTag.StringTag(k, value)
@@ -65,7 +66,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
                         duration = TimeUnit.MILLISECONDS.toMicros(span.end.toEpochMilli) - TimeUnit.MILLISECONDS
                           .toMicros(span.start.toEpochMilli),
                         tags = (JaegerTag.StringTag("internal.span.format", "proto") :: convertAttributes(
-                          span.attributes ++ kindToAttributes(span.kind) ++ statusToAttributes(span.status)
+                          span.attributes ++ kindToAttributes(span.kind) ++ statusToAttributes(span.status) ++ additionalAttributes
                         )).sortBy(_.key),
                         references = span.context.parent.toList.map { parent =>
                           JaegerReference("CHILD_OF", traceId.show, parent.spanId.show)

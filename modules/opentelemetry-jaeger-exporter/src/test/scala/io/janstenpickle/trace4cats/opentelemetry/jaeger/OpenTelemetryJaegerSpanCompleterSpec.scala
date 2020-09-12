@@ -17,10 +17,15 @@ class OpenTelemetryJaegerSpanCompleterSpec extends BaseJaegerSpec {
     val batch = Batch(process, List(updatedSpan))
 
     testCompleter(
-      OpenTelemetryJaegerSpanCompleter[IO](blocker, process, "localhost", 14250, batchTimeout = 50.millis),
+      OpenTelemetryJaegerSpanCompleter[IO](process, "localhost", 14250, batchTimeout = 50.millis),
       updatedSpan,
       process,
-      batchToJaegerResponse(batch, SemanticTags.kindTags, SemanticTags.statusTags("span."))
+      batchToJaegerResponse(
+        batch,
+        SemanticTags.kindTags,
+        SemanticTags.statusTags("span."),
+        Map("otel.instrumentation_library.name" -> "trace4cats")
+      )
     )
   }
 }

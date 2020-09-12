@@ -1,19 +1,25 @@
 package io.janstenpickle.trace4cats.opentelemetry.common
 
-import cats.effect.{Blocker, ContextShift, Resource, Sync, Timer}
+import cats.effect.{Async, ContextShift, Resource, Sync, Timer}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.grpc.{ManagedChannel, ManagedChannelBuilder}
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch
-
+import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.export.{SpanExporter => OTSpanExporter}
 
 import scala.jdk.CollectionConverters._
 
 object OpenTelemetryGrpcSpanExporter {
-  def apply[F[_]: Sync: ContextShift: Timer](
-    blocker: Blocker,
+  case class ShutdownFailure(host: String, port: Int) extends RuntimeException {
+    override def getMessage: String = s"Failed to shutdown Open Telemetry span exporter for $host:$port"
+  }
+  case class ExportFailure(host: String, port: Int) extends RuntimeException {
+    override def getMessage: String = s"Failed to export Open Telemetry span batch to $host:$port"
+  }
+
+  def apply[F[_]: Async: ContextShift: Timer](
     host: String,
     port: Int,
     makeExporter: (ManagedChannel, String) => OTSpanExporter
@@ -24,17 +30,25 @@ object OpenTelemetryGrpcSpanExporter {
       )(channel => Sync[F].delay(channel.shutdown()).void)
     } yield
       new SpanExporter[F] {
+        private def handleResult(onFailure: => Throwable)(code: CompletableResultCode) = Async[F].asyncF[Unit] { cb =>
+          val complete = new Runnable {
+            override def run(): Unit =
+              if (code.isSuccess) cb(Right(()))
+              else cb(Left(onFailure))
+          }
+          Sync[F].delay(code.whenComplete(complete)).void
+        }
+
         override def exportBatch(batch: Batch): F[Unit] =
           Resource
             .make(Sync[F].delay(makeExporter(channel, batch.process.serviceName)))(
-              exporter => Sync[F].delay(exporter.flush()) >> Sync[F].delay(exporter.shutdown())
+              exporter => Sync[F].delay(exporter.shutdown()).flatMap(handleResult(ShutdownFailure(host, port)))
             )
             .use { exporter =>
-              blocker.delay(
+              handleResult(ExportFailure(host, port))(
                 exporter
                   .`export`(batch.spans.map(Trace4CatsSpanData(Trace4CatsResource(batch.process), _)).asJavaCollection)
               )
-
             }
             .void
       }
