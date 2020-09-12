@@ -1,8 +1,6 @@
 package io.janstenpickle.trace4cats.model
 
 import cats.{Eq, Show}
-import cats.instances.map._
-import cats.instances.string._
 import cats.syntax.contravariant._
 import io.janstenpickle.trace4cats.model.TraceState.{Key, Value}
 

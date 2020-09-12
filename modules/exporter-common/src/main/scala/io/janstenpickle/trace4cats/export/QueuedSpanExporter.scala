@@ -5,7 +5,6 @@ import cats.effect.concurrent.Ref
 import cats.effect.syntax.bracket._
 import cats.effect.syntax.concurrent._
 import cats.effect.{Concurrent, Resource, Timer}
-import cats.instances.list._
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
 import cats.syntax.functor._

@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.model
 
 import cats.{Eq, Show}
-import cats.implicits._
+import cats.syntax.all._
 
 case class TraceProcess(serviceName: String, attributes: Map[String, AttributeValue] = Map.empty)
 

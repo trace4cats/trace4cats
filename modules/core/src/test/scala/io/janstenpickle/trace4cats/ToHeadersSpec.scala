@@ -1,7 +1,6 @@
 package io.janstenpickle.trace4cats
 
 import cats.kernel.Eq
-import cats.implicits._
 import io.janstenpickle.trace4cats.model.{SpanContext, SpanId, TraceFlags, TraceId, TraceState}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
