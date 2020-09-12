@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream
 import java.net.{ConnectException, InetSocketAddress}
 
 import cats.Applicative
-import cats.effect.concurrent.{MVar, Semaphore}
+import cats.effect.concurrent.{MVar, MVar2, Semaphore}
 import cats.effect.syntax.bracket._
 import cats.effect.syntax.concurrent._
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
@@ -64,7 +64,7 @@ object AvroSpanExporter {
       schema: Schema,
       address: InetSocketAddress,
       semaphore: Semaphore[F],
-      mvar: MVar[F, Batch],
+      mvar: MVar2[F, Batch],
       socket: UDPSocket[F]
     ): F[Unit] =
       Stream
@@ -126,7 +126,7 @@ object AvroSpanExporter {
       schema: Schema,
       address: InetSocketAddress,
       semaphore: Semaphore[F],
-      mvar: MVar[F, Batch],
+      mvar: MVar2[F, Batch],
       socketGroup: TCPSocketGroup
     ): F[Unit] =
       connect(socketGroup, address)
