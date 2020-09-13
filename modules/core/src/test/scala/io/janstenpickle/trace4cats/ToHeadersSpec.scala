@@ -25,7 +25,7 @@ class ToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks with
     val expected = for {
       traceId <- TraceId.fromHexString("4bf92f3577b34da6a3ce929d0e0e4736")
       spanId <- SpanId.fromHexString("00f067aa0ba902b7")
-    } yield SpanContext(traceId, spanId, None, TraceFlags(sampled = true), TraceState.empty, isRemote = true)
+    } yield SpanContext(traceId, spanId, None, TraceFlags(sampled = false), TraceState.empty, isRemote = true)
 
     assert(Eq[Option[SpanContext]].eqv(ToHeaders.w3c.toContext(headers), expected))
   }
@@ -44,7 +44,7 @@ class ToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks with
       key2 <- TraceState.Key("congo")
       value2 <- TraceState.Value("t61rcWkgMzE")
       traceState <- TraceState(Map(key1 -> value1, key2 -> value2))
-    } yield SpanContext(traceId, spanId, None, TraceFlags(sampled = true), traceState, isRemote = true)
+    } yield SpanContext(traceId, spanId, None, TraceFlags(sampled = false), traceState, isRemote = true)
 
     assert(Eq[Option[SpanContext]].eqv(ToHeaders.w3c.toContext(headers), expected))
   }
