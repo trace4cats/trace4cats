@@ -63,11 +63,11 @@ object Collector
   ): Kleisli[Resource[F, *], Blocker, List[(String, SpanExporter[F])]] = Kleisli { blocker =>
     for {
       jaegerProtoExporter <- jaegerProtoHost.traverse { host =>
-        OpenTelemetryJaegerSpanExporter[F](blocker, host, jaegerProtoPort).map("Jaeger Proto" -> _)
+        OpenTelemetryJaegerSpanExporter[F](host, jaegerProtoPort).map("Jaeger Proto" -> _)
       }
 
       otGrpcExporter <- otGrpcHost.traverse { host =>
-        OpenTelemetryOtlpGrpcSpanExporter[F](blocker, host = host, port = otGrpcPort).map("OpenTelemetry GRPC" -> _)
+        OpenTelemetryOtlpGrpcSpanExporter[F](host = host, port = otGrpcPort).map("OpenTelemetry GRPC" -> _)
       }
 
       stackdriverExporter <- stackdriverProject.flatTraverse { projectId =>
