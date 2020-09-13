@@ -17,8 +17,8 @@ object ToHeaders {
       def splitParent(traceParent: String): Option[(String, String, Boolean)] =
         traceParent.split('-').toList match {
           case _ :: traceId :: spanId :: sampled :: Nil =>
-            if (sampled == "01") Some((traceId, spanId, true))
-            else if (sampled == "00") Some((traceId, spanId, false))
+            if (sampled == "00") Some((traceId, spanId, true))
+            else if (sampled == "01") Some((traceId, spanId, false))
             else None
           case _ => None
         }
@@ -50,7 +50,7 @@ object ToHeaders {
     }
 
     override def fromContext(context: SpanContext): Map[String, String] = {
-      val sampled = if (context.traceFlags.sampled) "01" else "00"
+      val sampled = if (context.traceFlags.sampled) "00" else "01"
       val traceParent = show"00-${context.traceId}-${context.spanId}-$sampled"
 
       val traceState = context.traceState.values
