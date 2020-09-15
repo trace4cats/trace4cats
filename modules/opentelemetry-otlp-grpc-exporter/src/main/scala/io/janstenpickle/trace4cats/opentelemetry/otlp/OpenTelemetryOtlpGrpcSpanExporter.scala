@@ -10,9 +10,5 @@ object OpenTelemetryOtlpGrpcSpanExporter {
     host: String = "localhost",
     port: Int = 55680
   ): Resource[F, SpanExporter[F]] =
-    OpenTelemetryGrpcSpanExporter(
-      host,
-      port,
-      (channel, _) => OtlpGrpcSpanExporter.newBuilder().setChannel(channel).build()
-    )
+    OpenTelemetryGrpcSpanExporter(host, port, channel => OtlpGrpcSpanExporter.newBuilder().setChannel(channel).build())
 }
