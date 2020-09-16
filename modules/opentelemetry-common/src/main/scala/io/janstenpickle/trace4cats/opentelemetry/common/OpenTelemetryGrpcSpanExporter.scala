@@ -37,10 +37,9 @@ object OpenTelemetryGrpcSpanExporter {
       channel <- Resource.make[F, ManagedChannel](
         Sync[F].delay(ManagedChannelBuilder.forAddress(host, port).usePlaintext().build())
       )(channel => Sync[F].delay(channel.shutdown()).void)
-      exporter <- Resource
-        .make(Sync[F].delay(makeExporter(channel)))(
-          exporter => Sync[F].delay(exporter.shutdown()).flatMap(handleResult(ShutdownFailure(host, port)))
-        )
+      exporter <- Resource.make(Sync[F].delay(makeExporter(channel)))(
+        exporter => Sync[F].delay(exporter.shutdown()).flatMap(handleResult(ShutdownFailure(host, port)))
+      )
     } yield
       new SpanExporter[F] {
         override def exportBatch(batch: Batch): F[Unit] =

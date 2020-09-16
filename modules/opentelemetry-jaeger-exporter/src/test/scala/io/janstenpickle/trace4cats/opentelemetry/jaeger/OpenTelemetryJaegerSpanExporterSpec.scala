@@ -16,7 +16,7 @@ class OpenTelemetryJaegerSpanExporterSpec extends BaseJaegerSpec {
       )
 
     testExporter(
-      OpenTelemetryJaegerSpanExporter[IO]("localhost", 14250),
+      OpenTelemetryJaegerSpanExporter[IO]("localhost", 14250, batch.process.serviceName),
       updatedBatch,
       batchToJaegerResponse(
         updatedBatch,
