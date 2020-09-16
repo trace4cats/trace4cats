@@ -259,7 +259,7 @@ jobs:
     strategy:
       matrix:
         scala-version:
-          - "2.12.11"
+          - "2.12.12"
           - "2.13.3"
     steps:
       - name: checkout
