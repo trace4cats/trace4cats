@@ -20,7 +20,7 @@ object OpenTelemetryJaegerSpanCompleter {
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- OpenTelemetryJaegerSpanExporter[F](host, port)
+      exporter <- OpenTelemetryJaegerSpanExporter[F](host, port, process.serviceName)
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
 }

@@ -22,34 +22,31 @@ object OpenTelemetryGrpcSpanExporter {
   def apply[F[_]: Async: ContextShift: Timer](
     host: String,
     port: Int,
-    makeExporter: (ManagedChannel, String) => OTSpanExporter
-  ): Resource[F, SpanExporter[F]] =
+    makeExporter: ManagedChannel => OTSpanExporter
+  ): Resource[F, SpanExporter[F]] = {
+    def handleResult(onFailure: => Throwable)(code: CompletableResultCode): F[Unit] = Async[F].asyncF[Unit] { cb =>
+      val complete = new Runnable {
+        override def run(): Unit =
+          if (code.isSuccess) cb(Right(()))
+          else cb(Left(onFailure))
+      }
+      Sync[F].delay(code.whenComplete(complete)).void
+    }
+
     for {
       channel <- Resource.make[F, ManagedChannel](
         Sync[F].delay(ManagedChannelBuilder.forAddress(host, port).usePlaintext().build())
       )(channel => Sync[F].delay(channel.shutdown()).void)
+      exporter <- Resource.make(Sync[F].delay(makeExporter(channel)))(
+        exporter => Sync[F].delay(exporter.shutdown()).flatMap(handleResult(ShutdownFailure(host, port)))
+      )
     } yield
       new SpanExporter[F] {
-        private def handleResult(onFailure: => Throwable)(code: CompletableResultCode) = Async[F].asyncF[Unit] { cb =>
-          val complete = new Runnable {
-            override def run(): Unit =
-              if (code.isSuccess) cb(Right(()))
-              else cb(Left(onFailure))
-          }
-          Sync[F].delay(code.whenComplete(complete)).void
-        }
-
         override def exportBatch(batch: Batch): F[Unit] =
-          Resource
-            .make(Sync[F].delay(makeExporter(channel, batch.process.serviceName)))(
-              exporter => Sync[F].delay(exporter.shutdown()).flatMap(handleResult(ShutdownFailure(host, port)))
-            )
-            .use { exporter =>
-              handleResult(ExportFailure(host, port))(
-                exporter
-                  .`export`(batch.spans.map(Trace4CatsSpanData(Trace4CatsResource(batch.process), _)).asJavaCollection)
-              )
-            }
-            .void
+          handleResult(ExportFailure(host, port))(
+            exporter
+              .`export`(batch.spans.map(Trace4CatsSpanData(Trace4CatsResource(batch.process), _)).asJavaCollection)
+          )
       }
+  }
 }
