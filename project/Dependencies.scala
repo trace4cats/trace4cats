@@ -22,7 +22,7 @@ object Dependencies {
     val logback = "1.2.3"
     val natchez = "0.0.12"
     val openTelemetry = "0.8.0"
-    val scala212 = "2.12.11"
+    val scala212 = "2.12.12"
     val scala213 = "2.13.3"
     val scalapb = "0.10.1"
     val vulcan = "1.2.0"
