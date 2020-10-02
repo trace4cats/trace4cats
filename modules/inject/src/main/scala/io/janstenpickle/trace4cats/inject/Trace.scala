@@ -5,11 +5,13 @@
 
 package io.janstenpickle.trace4cats.inject
 
-import cats.{Applicative, Functor}
 import cats.data.{EitherT, Kleisli}
 import cats.effect.Bracket
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus}
 import cats.syntax.applicative._
+import cats.syntax.option._
+import cats.syntax.show._
+import cats.{Applicative, Functor}
+import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 
 /** A tracing effect, which always has a current span. */
@@ -21,6 +23,7 @@ trait Trace[F[_]] {
   def headers: F[Map[String, String]] = headers(ToHeaders.w3c)
   def headers(toHeaders: ToHeaders): F[Map[String, String]]
   def setStatus(status: SpanStatus): F[Unit]
+  def traceId: F[Option[String]]
 }
 
 object Trace {
@@ -44,6 +47,7 @@ object Trace {
         override def span[A](name: String)(fa: F[A]): F[A] = fa
         override def span[A](name: String, kind: SpanKind)(fa: F[A]): F[A] = fa
         override def setStatus(status: SpanStatus): F[Unit] = void
+        override def traceId: F[Option[String]] = Option.empty[String].pure[F]
       }
 
   }
@@ -77,6 +81,8 @@ object Trace {
 
     override def setStatus(status: SpanStatus): Kleisli[F, Span[F], Unit] = Kleisli(_.setStatus(status))
 
+    override def traceId: Kleisli[F, Span[F], Option[String]] = Kleisli(span => span.context.traceId.show.some.pure[F])
+
     def lens[E](f: E => Span[F], g: (E, Span[F]) => E): Trace[Kleisli[F, E, *]] =
       new Trace[Kleisli[F, E, *]] {
         override def put(key: String, value: AttributeValue): Kleisli[F, E, Unit] =
@@ -93,6 +99,8 @@ object Trace {
 
         override def setStatus(status: SpanStatus): Kleisli[F, E, Unit] =
           Kleisli(e => f(e).setStatus(status))
+
+        override def traceId: Kleisli[F, E, Option[String]] = Kleisli(e => f(e).context.traceId.show.some.pure[F])
       }
 
   }
@@ -112,6 +120,8 @@ object Trace {
 
       override def setStatus(status: SpanStatus): EitherT[F, A, Unit] =
         EitherT.liftF(trace.setStatus(status))
+
+      override def traceId: EitherT[F, A, Option[String]] = EitherT.liftF(trace.traceId)
     }
 
 }
