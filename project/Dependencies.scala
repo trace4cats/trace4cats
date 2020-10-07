@@ -21,7 +21,7 @@ object Dependencies {
     val log4cats = "1.1.1"
     val logback = "1.2.3"
     val natchez = "0.0.13"
-    val openTelemetry = "0.8.0"
+    val openTelemetry = "0.9.1"
     val scala212 = "2.12.12"
     val scala213 = "2.13.3"
     val scalapb = "0.10.1"
