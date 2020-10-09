@@ -26,11 +26,14 @@ Compatible with [OpenTelemetry] and [Jaeger], based on, and interoperates wht [N
   * [SBT Dependencies](#sbt-dependencies)
   * [Code Examples](#code-examples)
      * [Simple](#simple)
+     * [Simple ZIO](#simple-zio)
      * [Advanced](#advanced)
      * [Inject](#inject)
+     * [Inject ZIO](#inject-zio)
      * [Natchez](#natchez)
      * [FS2](#fs2)
      * [Http4s](#http4s)
+     * [Http4s ZIO](#http4s-zio)
   * [native-image Compatibility](#native-image-compatibility)
   * [Contributing](#contributing)
   * [TODO](#todo)
@@ -159,9 +162,12 @@ To use Trace4Cats within your application add the dependencies listed below as n
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % "0.4.0"
 "io.janstenpickle" %% "trace4cats-inject" % "0.4.0"
+"io.janstenpickle" %% "trace4cats-inject-zio" % "0.4.0"
 "io.janstenpickle" %% "trace4cats-fs2" % "0.4.0"
 "io.janstenpickle" %% "trace4cats-http4s-client" % "0.4.0"
+"io.janstenpickle" %% "trace4cats-http4s-client-zio" % "0.4.0"
 "io.janstenpickle" %% "trace4cats-http4s-server" % "0.4.0"
+"io.janstenpickle" %% "trace4cats-http4s-server-zio" % "0.4.0"
 "io.janstenpickle" %% "trace4cats-natchez" % "0.4.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.4.0"
 "io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.4.0"
@@ -182,6 +188,19 @@ To use Trace4Cats within your application add the dependencies listed below as n
 
 This example shows a simple example of how to use Trace4Cats without the need to 
 inject a root span via a Kleisli (see the Inject example below).
+
+Requires:
+
+```scala
+"io.janstenpickle" %% "trace4cats-core" % "0.4.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.4.0"
+
+```
+
+### [Simple ZIO](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/SimpleZioExample.scala)
+
+This example shows a simple example of how to use Trace4Cats with ZIO without the need to 
+inject a root span via the environment (see the Inject example below).
 
 Requires:
 
@@ -232,6 +251,25 @@ Requires:
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % "0.4.0"
 "io.janstenpickle" %% "trace4cats-inject" % "0.4.0"
+"io.janstenpickle" %% "trace4cats-natchez" % "0.4.0" // required only for interop
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.4.0"
+
+```
+
+### [Inject ZIO](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/InjectZioExample.scala)
+
+Demonstrates how to use the `Trace` typeclass with [ZIO] environment instead of a Kleisli. A `Trace` instance
+is provided with the following import:
+
+```
+io.janstenpickle.trace4cats.inject.zio._
+```
+
+Requires:
+
+```scala
+"io.janstenpickle" %% "trace4cats-core" % "0.4.0"
+"io.janstenpickle" %% "trace4cats-inject-zio" % "0.4.0"
 "io.janstenpickle" %% "trace4cats-natchez" % "0.4.0" // required only for interop
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.4.0"
 
@@ -296,6 +334,28 @@ Requires:
 
 ```
 
+### [Http4s ZIO](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/Http4sZioExample.scala)
+
+Demonstrates how to use Trace4Cats with [Http4s] routes and clients. Span contexts are propagated via HTTP headers, and 
+span status is derived from HTTP status codes. Implicit methods on `HttpRoutes` and `Client` are provided with the
+imports:
+
+```scala
+io.janstenpickle.trace4cats.http4s.server.zio.syntax._
+io.janstenpickle.trace4cats.http4s.client.zio.syntax._
+io.janstenpickle.trace4cats.inject.zio._
+```
+
+Requires:
+
+```scala
+"io.janstenpickle" %% "trace4cats-core" % "0.4.0"
+"io.janstenpickle" %% "trace4cats-http4s-client" % "0.4.0"
+"io.janstenpickle" %% "trace4cats-http4s-server" % "0.4.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.4.0"
+
+```
+
 ## [`native-image`] Compatibility
 
 The following span completers have been found to be compatible with [`native-image`]:
@@ -335,3 +395,4 @@ This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-
 [Datadog]: https://docs.datadoghq.com/api/v1/tracing/
 [NewRelic]: https://docs.newrelic.com/docs/understand-dependencies/distributed-tracing/trace-api/report-new-relic-format-traces-trace-api#new-relic-guidelines 
 [`Resource`]: https://typelevel.org/cats-effect/datatypes/resource.html
+[ZIO]: https://zio.dev

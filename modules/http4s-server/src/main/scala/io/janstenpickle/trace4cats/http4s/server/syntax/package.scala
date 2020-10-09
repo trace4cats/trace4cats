@@ -1,3 +1,3 @@
 package io.janstenpickle.trace4cats.http4s.server
 
-package object syntax extends HttpSyntax
+package object syntax extends ServerSyntax

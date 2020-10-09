@@ -73,10 +73,13 @@ lazy val root = (project in file("."))
     kernel,
     avro,
     inject,
+    `inject-zio`,
     fs2,
     `http4s-common`,
     `http4s-client`,
+    `http4s-client-zio`,
     `http4s-server`,
+    `http4s-server-zio`,
     `avro-exporter`,
     `avro-server`,
     `avro-test`,
@@ -127,9 +130,12 @@ lazy val example = (project in file("modules/example"))
     kernel,
     core,
     inject,
+    `inject-zio`,
     fs2,
     `http4s-client`,
+    `http4s-client-zio`,
     `http4s-server`,
+    `http4s-server-zio`,
     natchez,
     `avro-exporter`,
     `log-exporter`,
@@ -399,6 +405,11 @@ lazy val inject = (project in file("modules/inject"))
   .settings(name := "trace4cats-inject")
   .dependsOn(model, kernel, core)
 
+lazy val `inject-zio` = (project in file("modules/inject-zio"))
+  .settings(publishSettings)
+  .settings(name := "trace4cats-inject-zio", libraryDependencies ++= Seq(Dependencies.zioInterop))
+  .dependsOn(inject)
+
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
   .settings(name := "trace4cats-fs2", libraryDependencies ++= Seq(Dependencies.fs2))
@@ -413,7 +424,7 @@ lazy val `http4s-client` = (project in file("modules/http4s-client"))
   .settings(publishSettings)
   .settings(
     name := "trace4cats-http4s-client",
-    libraryDependencies ++= Seq(Dependencies.http4sClient),
+    libraryDependencies ++= Seq(Dependencies.catsMtl, Dependencies.http4sClient),
     libraryDependencies ++= (Dependencies.test ++ Seq(
       Dependencies.http4sBlazeClient,
       Dependencies.http4sBlazeServer,
@@ -421,6 +432,18 @@ lazy val `http4s-client` = (project in file("modules/http4s-client"))
     )).map(_ % Test)
   )
   .dependsOn(model, kernel, core, inject, `http4s-common`, `exporter-common` % "test->compile")
+
+lazy val `http4s-client-zio` = (project in file("modules/http4s-client-zio"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-http4s-client-zio",
+    libraryDependencies ++= (Dependencies.test ++ Seq(
+      Dependencies.http4sBlazeClient,
+      Dependencies.http4sBlazeServer,
+      Dependencies.http4sDsl
+    )).map(_ % Test)
+  )
+  .dependsOn(`http4s-client` % "compile->compile;test->test", `inject-zio`)
 
 lazy val `http4s-server` = (project in file("modules/http4s-server"))
   .settings(publishSettings)
@@ -434,6 +457,19 @@ lazy val `http4s-server` = (project in file("modules/http4s-server"))
     )).map(_ % Test)
   )
   .dependsOn(model, kernel, core, inject, `http4s-common`, `exporter-common` % "test->compile")
+
+lazy val `http4s-server-zio` = (project in file("modules/http4s-server-zio"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-http4s-server-zio",
+    libraryDependencies ++= Seq(Dependencies.http4sServer),
+    libraryDependencies ++= (Dependencies.test ++ Seq(
+      Dependencies.http4sBlazeClient,
+      Dependencies.http4sBlazeServer,
+      Dependencies.http4sDsl
+    )).map(_ % Test)
+  )
+  .dependsOn(`http4s-server` % "compile->compile;test->test", `inject-zio`)
 
 lazy val natchez = (project in file("modules/natchez"))
   .settings(publishSettings)
