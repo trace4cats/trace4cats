@@ -3,6 +3,7 @@ import sbt._
 object Dependencies {
   object Versions {
     val cats = "2.2.0"
+    val catsMtl = "1.0.0"
     val catsEffect = "2.2.0"
     val collectionCompat = "2.2.0"
     val commonsCodec = "1.15"
@@ -26,6 +27,7 @@ object Dependencies {
     val scala213 = "2.13.3"
     val scalapb = "0.10.1"
     val vulcan = "1.2.0"
+    val zioInterop = "2.2.0.1"
 
     val disciplineScalatest = "2.0.1"
     val discipline = "1.0.3"
@@ -36,6 +38,7 @@ object Dependencies {
   }
 
   lazy val cats = "org.typelevel"                           %% "cats-core"                      % Versions.cats
+  lazy val catsMtl = "org.typelevel"                        %% "cats-mtl"                       % Versions.catsMtl
   lazy val catsEffect = "org.typelevel"                     %% "cats-effect"                    % Versions.catsEffect
   lazy val commonsCodec = "commons-codec"                   % "commons-codec"                   % Versions.commonsCodec
   lazy val collectionCompat = "org.scala-lang.modules"      %% "scala-collection-compat"        % Versions.collectionCompat
@@ -73,6 +76,7 @@ object Dependencies {
   lazy val vulcan = "com.github.fd4s"                       %% "vulcan"                         % Versions.vulcan
   lazy val vulcanGeneric = "com.github.fd4s"                %% "vulcan-generic"                 % Versions.vulcan
   lazy val vulcanEnumeratum = "com.github.fd4s"             %% "vulcan-enumeratum"              % Versions.vulcan
+  lazy val zioInterop = "dev.zio"                           %% "zio-interop-cats"               % Versions.zioInterop
 
   lazy val catsLaws = "org.typelevel"                         %% "cats-laws"                      % Versions.cats
   lazy val catsEffectLaws = "org.typelevel"                   %% "cats-effect-laws"               % Versions.catsEffect

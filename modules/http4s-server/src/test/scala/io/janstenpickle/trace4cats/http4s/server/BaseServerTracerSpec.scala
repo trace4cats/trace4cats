@@ -1,14 +1,14 @@
-package io.janstenpickle.trace4cats.http4s
+package io.janstenpickle.trace4cats.http4s.server
 
-import java.util.concurrent.Executors
-
-import cats.ApplicativeError
-import cats.data.{Kleisli, NonEmptyList}
-import cats.effect.{Blocker, ContextShift, IO, Resource, Timer}
+import cats.data.NonEmptyList
+import cats.effect.{Blocker, ConcurrentEffect, Resource, Sync, Timer}
+import cats.syntax.applicativeError._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
+import cats.{~>, ApplicativeError, Id}
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.http4s.common.Http4sStatusMapping
-import io.janstenpickle.trace4cats.http4s.server.HttpSyntax
 import io.janstenpickle.trace4cats.inject.EntryPoint
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind, SpanStatus}
@@ -25,18 +25,22 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.immutable.Queue
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
-class HttpSyntaxSpec
-    extends AnyFlatSpec
+abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
+  fkId: F ~> Id,
+  lower: Span[F] => G ~> F,
+  injectRoutes: (HttpRoutes[G], EntryPoint[F]) => HttpRoutes[F],
+  injectApp: (HttpApp[G], EntryPoint[F]) => HttpApp[F],
+  timer: Timer[F]
+) extends AnyFlatSpec
     with ScalaCheckDrivenPropertyChecks
     with Matchers
-    with HttpSyntax
-    with Http4sDsl[Kleisli[IO, Span[IO], *]] {
-  implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
-  implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.fromExecutor(Executors.newCachedThreadPool()))
-  implicit val responseArb: Arbitrary[TraceIO[Response[TraceIO]]] =
+    with ServerSyntax
+    with Http4sDsl[G] {
+  implicit val t: Timer[F] = timer
+
+  implicit val responseArb: Arbitrary[G[Response[G]]] =
     Arbitrary(
       Gen.oneOf(
         List(
@@ -52,10 +56,8 @@ class HttpSyntaxSpec
       )
     )
 
-  type TraceIO[A] = Kleisli[IO, Span[IO], A]
-
   it should "record a span when the response is OK" in {
-    val app = HttpRoutes.of[TraceIO] {
+    val app = HttpRoutes.of[G] {
       case GET -> Root => Ok()
     }
 
@@ -68,8 +70,8 @@ class HttpSyntaxSpec
   }
 
   it should "correctly set span status when the server throws an exception" in forAll { errorMsg: String =>
-    val app = HttpRoutes.of[TraceIO] {
-      case GET -> Root => ApplicativeError[TraceIO, Throwable].raiseError(new RuntimeException(errorMsg))
+    val app = HttpRoutes.of[G] {
+      case GET -> Root => ApplicativeError[G, Throwable].raiseError(new RuntimeException(errorMsg))
     }
 
     evaluateTrace(app, app.orNotFound) { spans =>
@@ -80,12 +82,13 @@ class HttpSyntaxSpec
     }
   }
 
-  it should "correctly set the span status from the http response" in forAll { response: TraceIO[Response[TraceIO]] =>
-    val app = HttpRoutes.of[TraceIO] {
+  it should "correctly set the span status from the http response" in forAll { response: G[Response[G]] =>
+    val app = HttpRoutes.of[G] {
       case GET -> Root => response
     }
 
-    val expectedStatus = Http4sStatusMapping.toSpanStatus(Span.noop[IO].use(response.run).unsafeRunSync().status)
+    val expectedStatus =
+      Http4sStatusMapping.toSpanStatus(fkId(Span.noop[F].use(s => lower(s).apply(response))).status)
 
     evaluateTrace(app, app.orNotFound) { spans =>
       spans.size should be(1)
@@ -95,34 +98,33 @@ class HttpSyntaxSpec
     }
   }
 
-  def evaluateTrace(routes: HttpRoutes[TraceIO], app: HttpApp[TraceIO])(
-    fa: Queue[CompletedSpan] => Assertion
-  ): Assertion = {
+  def evaluateTrace(routes: HttpRoutes[G], app: HttpApp[G])(fa: Queue[CompletedSpan] => Assertion): Assertion = {
     val port = 8082
 
-    def test(f: EntryPoint[IO] => HttpApp[IO]): Assertion =
-      ((for {
-        blocker <- Blocker[IO]
-        completer <- Resource.liftF(RefSpanCompleter[IO])
-        ep = EntryPoint[IO](SpanSampler.always, completer)
-        _ <- BlazeServerBuilder[IO](blocker.blockingContext)
-          .bindHttp(port, "localhost")
-          .withHttpApp(f(ep))
-          .resource
-        client <- BlazeClientBuilder[IO](blocker.blockingContext).resource
-      } yield (client, completer))
-        .use {
-          case (client, completer) =>
-            for {
-              _ <- client.expect[String](s"http://localhost:$port").attempt
-              spans <- completer.get
-              _ <- timer.sleep(100.millis)
-            } yield fa(spans)
-        })
-        .unsafeRunSync()
+    def test(f: EntryPoint[F] => HttpApp[F]): Assertion =
+      fkId.apply(
+        (for {
+          blocker <- Blocker[F]
+          completer <- Resource.liftF(RefSpanCompleter[F])
+          ep = EntryPoint[F](SpanSampler.always, completer)
+          _ <- BlazeServerBuilder[F](blocker.blockingContext)
+            .bindHttp(port, "localhost")
+            .withHttpApp(f(ep))
+            .resource
+          client <- BlazeClientBuilder[F](blocker.blockingContext).resource
+        } yield (client, completer))
+          .use {
+            case (client, completer) =>
+              for {
+                _ <- client.expect[String](s"http://localhost:$port").attempt
+                spans <- completer.get
+                _ <- timer.sleep(100.millis)
+              } yield fa(spans)
+          }
+      )
 
-    test(routes.inject(_).orNotFound)
-    test(app.inject(_))
+    test(injectRoutes(routes, _).orNotFound)
+    test(injectApp(app, _))
   }
 
 }
