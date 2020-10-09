@@ -279,7 +279,7 @@ jobs:
             --net jaeger \
             -v `pwd`/.github/otel-test-config.yaml:/otel-local-config.yaml \
             --name otelcol \
-            otel/opentelemetry-collector:0.8.0 \
+            otel/opentelemetry-collector:0.9.1 \
             --config otel-local-config.yaml
 
           docker run -d --rm \
