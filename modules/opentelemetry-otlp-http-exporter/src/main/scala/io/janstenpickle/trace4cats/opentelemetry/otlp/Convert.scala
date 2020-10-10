@@ -1,6 +1,5 @@
 package io.janstenpickle.trace4cats.opentelemetry.otlp
 
-import java.util.Base64
 import java.util.concurrent.TimeUnit
 
 import com.google.protobuf.ByteString
@@ -13,9 +12,10 @@ import io.opentelemetry.proto.common.v1.common._
 import io.opentelemetry.proto.resource.v1.resource.Resource
 import io.opentelemetry.proto.trace.v1.trace.Span.SpanKind._
 import io.opentelemetry.proto.trace.v1.trace.Span.{Event, Link}
-import io.opentelemetry.proto.trace.v1.trace.Status.StatusCode._
 import io.opentelemetry.proto.trace.v1.trace.Status.StatusCode
+import io.opentelemetry.proto.trace.v1.trace.Status.StatusCode._
 import io.opentelemetry.proto.trace.v1.trace.{InstrumentationLibrarySpans, ResourceSpans, Span, Status}
+import org.apache.commons.codec.binary.Hex
 import scalapb.UnknownFieldSet
 
 object Convert {
@@ -91,7 +91,7 @@ object Convert {
   implicit val unknownFieldSetEncoder: Encoder[UnknownFieldSet] = Encoder.instance(_ => Json.Null)
 
   implicit val byteStringEncoder: Encoder[ByteString] = Encoder.encodeString.contramap { bs =>
-    Base64.getEncoder.encodeToString(bs.toByteArray)
+    Hex.encodeHexString(bs.toByteArray)
   }
   implicit val spanKindEncoder: Encoder[Span.SpanKind] = Encoder.encodeInt.contramap(_.value)
 

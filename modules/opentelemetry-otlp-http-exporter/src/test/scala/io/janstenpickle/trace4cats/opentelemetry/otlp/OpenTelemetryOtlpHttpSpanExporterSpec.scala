@@ -18,7 +18,12 @@ class OpenTelemetryOtlpHttpSpanExporterSpec extends BaseJaegerSpec {
     testExporter(
       OpenTelemetryOtlpHttpSpanExporter.blazeClient[IO](blocker, "localhost", 55681),
       updatedBatch,
-      batchToJaegerResponse(updatedBatch, SemanticTags.kindTags, SemanticTags.statusTags("", requireMessage = false))
+      batchToJaegerResponse(
+        updatedBatch,
+        SemanticTags.kindTags,
+        SemanticTags.statusTags("", requireMessage = false),
+        Map("otlp.instrumentation.library.name" -> "trace4cats")
+      )
     )
   }
 }
