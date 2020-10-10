@@ -23,8 +23,8 @@ class OpenTelemetryJaegerSpanCompleterSpec extends BaseJaegerSpec {
       batchToJaegerResponse(
         batch,
         SemanticTags.kindTags,
-        SemanticTags.statusTags("span."),
-        Map("otel.instrumentation_library.name" -> "trace4cats")
+        SemanticTags.statusTags("span.", statusCode),
+        Map("otel.library.name" -> "trace4cats")
       )
     )
   }

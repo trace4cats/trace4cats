@@ -16,8 +16,12 @@ object SemanticTags {
       Map[String, AttributeValue]("span.kind" -> kind)
     }
 
-  def statusTags(prefix: String, requireMessage: Boolean = true): SpanStatus => Map[String, AttributeValue] = { s =>
-    val attrs = Map[String, AttributeValue](s"${prefix}status.code" -> s.canonicalCode)
+  def statusTags(
+    prefix: String,
+    statusCode: SpanStatus => Int = _.canonicalCode,
+    requireMessage: Boolean = true
+  ): SpanStatus => Map[String, AttributeValue] = { s =>
+    val attrs = Map[String, AttributeValue](s"${prefix}status.code" -> statusCode(s))
     val errorAttrs: Map[String, AttributeValue] =
       s match {
         case SpanStatus.Internal(message) =>

@@ -20,7 +20,12 @@ class OpenTelemetryOtlpGrpcSpanCompleterSpec extends BaseJaegerSpec {
       OpenTelemetryOtlpGrpcSpanCompleter[IO](process, "localhost", 55680, batchTimeout = 50.millis),
       updatedSpan,
       process,
-      batchToJaegerResponse(batch, SemanticTags.kindTags, SemanticTags.statusTags("", requireMessage = false))
+      batchToJaegerResponse(
+        batch,
+        SemanticTags.kindTags,
+        SemanticTags.statusTags("", statusCode, requireMessage = false),
+        Map("otlp.instrumentation.library.name" -> "trace4cats")
+      )
     )
   }
 }
