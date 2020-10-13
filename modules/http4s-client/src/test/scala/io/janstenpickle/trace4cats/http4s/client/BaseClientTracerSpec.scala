@@ -27,6 +27,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scala.concurrent.duration._
 
 abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace](
+  port: Int,
   fkId: F ~> Id,
   lower: Span[F] => G ~> F,
   liftClient: Client[F] => Client[G],
@@ -150,8 +151,6 @@ abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace](
       }
 
   def withRunningHttpServer(app: HttpApp[F])(fa: Int => F[Assertion]): F[Assertion] = {
-    val port = 8083
-
     Blocker[F]
       .flatMap { blocker =>
         BlazeServerBuilder[F](blocker.blockingContext)
