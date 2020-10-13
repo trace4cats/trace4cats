@@ -4,6 +4,8 @@ import io.janstenpickle.trace4cats.model.AttributeValue
 import io.janstenpickle.trace4cats.model.AttributeValue._
 import io.opentelemetry.common.{AttributeConsumer, AttributeKey, AttributeType, ReadableAttributes}
 
+import scala.jdk.CollectionConverters._
+
 object Trace4CatsReadableAttributes {
 
   def apply(map: Map[String, AttributeValue]): ReadableAttributes = new ReadableAttributes {
@@ -14,10 +16,14 @@ object Trace4CatsReadableAttributes {
         case AttributeType.BOOLEAN => map.get(key.getKey).collect { case BooleanValue(value) => value.asInstanceOf[T] }
         case AttributeType.LONG => map.get(key.getKey).collect { case LongValue(value) => value.asInstanceOf[T] }
         case AttributeType.DOUBLE => map.get(key.getKey).collect { case DoubleValue(value) => value.asInstanceOf[T] }
-        case AttributeType.STRING_ARRAY => Option.empty[T]
-        case AttributeType.BOOLEAN_ARRAY => Option.empty[T]
-        case AttributeType.LONG_ARRAY => Option.empty[T]
-        case AttributeType.DOUBLE_ARRAY => Option.empty[T]
+        case AttributeType.STRING_ARRAY =>
+          map.get(key.getKey).collect { case StringList(value) => value.toList.asJava.asInstanceOf[T] }
+        case AttributeType.BOOLEAN_ARRAY =>
+          map.get(key.getKey).collect { case BooleanList(value) => value.toList.asJava.asInstanceOf[T] }
+        case AttributeType.LONG_ARRAY =>
+          map.get(key.getKey).collect { case LongList(value) => value.toList.asJava.asInstanceOf[T] }
+        case AttributeType.DOUBLE_ARRAY =>
+          map.get(key.getKey).collect { case DoubleList(value) => value.toList.asJava.asInstanceOf[T] }
       }).get
     }
 
@@ -32,6 +38,26 @@ object Trace4CatsReadableAttributes {
           case BooleanValue(value) => consumer.consume[java.lang.Boolean](AttributeKey.booleanKey(k), value)
           case DoubleValue(value) => consumer.consume[java.lang.Double](AttributeKey.doubleKey(k), value)
           case LongValue(value) => consumer.consume[java.lang.Long](AttributeKey.longKey(k), value)
+          case StringList(value) =>
+            consumer.consume[java.util.List[java.lang.String]](
+              AttributeKey.stringArrayKey(k),
+              value.toList.asJava.asInstanceOf[java.util.List[java.lang.String]]
+            )
+          case BooleanList(value) =>
+            consumer.consume[java.util.List[java.lang.Boolean]](
+              AttributeKey.booleanArrayKey(k),
+              value.toList.asJava.asInstanceOf[java.util.List[java.lang.Boolean]]
+            )
+          case DoubleList(value) =>
+            consumer.consume[java.util.List[java.lang.Double]](
+              AttributeKey.doubleArrayKey(k),
+              value.toList.asJava.asInstanceOf[java.util.List[java.lang.Double]]
+            )
+          case LongList(value) =>
+            consumer.consume[java.util.List[java.lang.Long]](
+              AttributeKey.longArrayKey(k),
+              value.toList.asJava.asInstanceOf[java.util.List[java.lang.Long]]
+            )
         }
     }
   }

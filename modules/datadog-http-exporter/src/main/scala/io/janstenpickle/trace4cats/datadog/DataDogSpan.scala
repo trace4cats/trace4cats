@@ -3,6 +3,7 @@ package io.janstenpickle.trace4cats.datadog
 import java.math.BigInteger
 import java.util.concurrent.TimeUnit
 
+import cats.syntax.show._
 import io.circe.Encoder
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.semiauto._
@@ -53,6 +54,7 @@ object DataDogSpan {
           allAttributes.collect {
             case (k, AttributeValue.StringValue(value)) => k -> value
             case (k, AttributeValue.BooleanValue(value)) if k != "error" => k -> value.toString
+            case (k, value: AttributeValue.AttributeList) => k -> value.show
           },
           allAttributes.collect {
             case (k, AttributeValue.DoubleValue(value)) => k -> value

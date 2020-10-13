@@ -5,7 +5,10 @@
 
 package io.janstenpickle.trace4cats.model
 
+import cats.data.NonEmptyList
 import cats.{Eq, Show}
+import cats.syntax.foldable._
+import cats.syntax.show._
 
 sealed trait AttributeValue extends Product with Serializable {
   def value: Any
@@ -19,17 +22,49 @@ object AttributeValue {
   case class DoubleValue(value: Double) extends AttributeValue
   case class LongValue(value: Long) extends AttributeValue
 
+  sealed trait AttributeList extends AttributeValue {
+    override def value: NonEmptyList[Any]
+    override def toString: String = value.map(_.toString).mkString_("[", ",", "]")
+  }
+
+  object AttributeList {
+    private def listString[A: Show](fa: NonEmptyList[A]): String = fa.mkString_("[", ",", "]")
+
+    implicit val show: Show[AttributeList] = Show.show {
+      case StringList(value) => listString(value)(Show.show(s => s""""$s""""))
+      case BooleanList(value) => listString(value)
+      case DoubleList(value) => listString(value)
+      case LongList(value) => listString(value)
+    }
+  }
+
+  case class StringList(value: NonEmptyList[String]) extends AttributeList
+  case class BooleanList(value: NonEmptyList[Boolean]) extends AttributeList
+  case class DoubleList(value: NonEmptyList[Double]) extends AttributeList
+  case class LongList(value: NonEmptyList[Long]) extends AttributeList
+
   implicit def stringToTraceValue(value: String): AttributeValue = StringValue(value)
   implicit def boolToTraceValue(value: Boolean): AttributeValue = BooleanValue(value)
   implicit def intToTraceValue(value: Int): AttributeValue = LongValue(value.toLong)
   implicit def doubleToTraceValue(value: Double): AttributeValue = DoubleValue(value)
 
-  implicit val show: Show[AttributeValue] = Show(_.toString)
+  implicit val show: Show[AttributeValue] = Show.show {
+    case StringValue(value) => value
+    case BooleanValue(value) => value.show
+    case DoubleValue(value) => value.show
+    case LongValue(value) => value.show
+    case list: AttributeList => list.show
+  }
+
   implicit val eq: Eq[AttributeValue] = Eq.instance {
     case (StringValue(x), StringValue(y)) => Eq[String].eqv(x, y)
     case (BooleanValue(x), BooleanValue(y)) => x == y
     case (DoubleValue(x), DoubleValue(y)) => Eq[Double].eqv(x, y)
     case (LongValue(x), LongValue(y)) => Eq[Long].eqv(x, y)
+    case (StringList(x), StringList(y)) => Eq[NonEmptyList[String]].eqv(x, y)
+    case (BooleanList(x), BooleanList(y)) => Eq[NonEmptyList[Boolean]].eqv(x, y)
+    case (DoubleList(x), DoubleList(y)) => Eq[NonEmptyList[Double]].eqv(x, y)
+    case (LongList(x), LongList(y)) => Eq[NonEmptyList[Long]].eqv(x, y)
     case (_, _) => false
   }
 }

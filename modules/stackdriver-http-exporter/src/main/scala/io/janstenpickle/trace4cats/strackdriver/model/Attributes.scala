@@ -1,5 +1,6 @@
 package io.janstenpickle.trace4cats.strackdriver.model
 
+import cats.syntax.show._
 import io.circe.Encoder
 import io.circe.generic.semiauto._
 import io.janstenpickle.trace4cats.model.AttributeValue
@@ -10,9 +11,10 @@ object Attributes {
   def fromCompleted(attributes: Map[String, AttributeValue]): Attributes = {
     val attrs = attributes.take(32).map {
       case (k, AttributeValue.StringValue(value)) => k -> SDAttributeValue.StringValue(value)
-      case (k, AttributeValue.DoubleValue(value)) => k -> SDAttributeValue.IntValue(value.toLong)
+      case (k, AttributeValue.DoubleValue(value)) => k -> SDAttributeValue.StringValue(value.toString)
       case (k, AttributeValue.BooleanValue(value)) => k -> SDAttributeValue.BoolValue(value)
       case (k, AttributeValue.LongValue(value)) => k -> SDAttributeValue.IntValue(value)
+      case (k, v: AttributeValue.AttributeList) => k -> SDAttributeValue.StringValue(v.show)
     }
 
     val attrSize = attrs.size

@@ -14,6 +14,7 @@ object Convert {
     case AttributeValue.BooleanValue(value) => Json.fromBoolean(value)
     case AttributeValue.LongValue(value) => Json.fromLong(value)
     case AttributeValue.DoubleValue(value) => Json.fromDoubleOrString(value)
+    case value: AttributeValue.AttributeList => Json.fromString(value.show)
   }
 
   def attributesJson(attributes: Map[String, AttributeValue]): Json =

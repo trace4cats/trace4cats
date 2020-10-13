@@ -44,6 +44,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
       case (k, AttributeValue.BooleanValue(value)) => JaegerTag.BoolTag(k, value)
       case (k, AttributeValue.DoubleValue(value)) => JaegerTag.FloatTag(k, value)
       case (k, AttributeValue.LongValue(value)) => JaegerTag.LongTag(k, value)
+      case (k, v: AttributeValue.AttributeList) => JaegerTag.StringTag(k, v.show)
     }
 
     batch.spans

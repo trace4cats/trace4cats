@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
 import cats.syntax.functor._
+import cats.syntax.show._
 import io.jaegertracing.thrift.internal.senders.UdpSender
 import io.jaegertracing.thriftjava.{Process, Span, Tag, TagType}
 import io.janstenpickle.trace4cats.`export`.SemanticTags
@@ -36,6 +37,8 @@ object JaegerSpanExporter {
             new Tag(key, TagType.BOOL).setVBool(value)
           case (key, LongValue(value)) =>
             new Tag(key, TagType.LONG).setVLong(value)
+          case (key, value: AttributeList) =>
+            new Tag(key, TagType.STRING).setVStr(value.show)
         }
         .toList
         .asJava
