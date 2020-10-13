@@ -10,7 +10,7 @@ import zio.interop.catz._
 
 class ClientSyntaxSpec
     extends BaseClientTracerSpec[Task, ZIOTrace](
-      8085,
+      9085,
       λ[Task ~> Id](fa => Runtime.default.unsafeRun(fa)),
       span => λ[ZIOTrace ~> Task](_.provide(span)),
       _.liftTrace(),
