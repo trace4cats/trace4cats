@@ -28,6 +28,7 @@ import scala.collection.immutable.Queue
 import scala.concurrent.duration._
 
 abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
+  port: Int,
   fkId: F ~> Id,
   lower: Span[F] => G ~> F,
   injectRoutes: (HttpRoutes[G], EntryPoint[F]) => HttpRoutes[F],
@@ -99,8 +100,6 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
   }
 
   def evaluateTrace(routes: HttpRoutes[G], app: HttpApp[G])(fa: Queue[CompletedSpan] => Assertion): Assertion = {
-    val port = 8082
-
     def test(f: EntryPoint[F] => HttpApp[F]): Assertion =
       fkId.apply(
         (for {

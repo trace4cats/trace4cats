@@ -10,6 +10,7 @@ import zio.interop.catz._
 
 class ServerSyntaxSpec
     extends BaseServerTracerSpec[Task, ZIOTrace](
+      8084,
       λ[Task ~> Id](fa => Runtime.default.unsafeRun(fa)),
       span => λ[ZIOTrace ~> Task](_.provide(span)),
       _.inject(_),

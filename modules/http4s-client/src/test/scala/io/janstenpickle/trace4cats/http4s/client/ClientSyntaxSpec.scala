@@ -10,6 +10,7 @@ import scala.concurrent.ExecutionContext
 
 class ClientSyntaxSpec
     extends BaseClientTracerSpec[IO, Kleisli[IO, Span[IO], *]](
+      8083,
       λ[IO ~> Id](_.unsafeRunSync()),
       span => λ[Kleisli[IO, Span[IO], *] ~> IO](_(span)),
       _.liftTrace(),
