@@ -1,3 +1,41 @@
+## [0.5.0] - 2020-10-20
+
+### Added
+
+* [`inject-zio`], [`http4s-server-zio`],  [`http4s-client-zio`]
+  - Add [ZIO] support as a substitute for a Kleisli monad transformer ([#72](../../pull/72)
+  
+
+### Changed
+
+* [`model`]
+  - Allow list based attribute values ([#76](../../pull/76))
+  
+* [`opentelemetry-otlp-grpc-exporter`]
+  - Fix channel resource leak in OT GRPC span exporter by [@catostrophe] ([#63](../../pull/63))
+
+* [`http4s-server`] and  [`http4s-client`]
+  - Abstract away server and client tracers ([#72](../../pull/72)
+  
+* [`example`]
+  - Update examples to show how to use [ZIO] as an effect type ([#72](../../pull/72)
+
+### Housekeeping
+
+  - `jwt` to `3.11.0`
+  - `google-auth-library-credentials` to `0.22.0`
+  - `google-cloud-trace` to `1.2.4`
+  - `grpc-api` and `grpc-okhttp` to `1.32.2`
+  - `http4s-core`, `http4s-dsl`, `http4-server`, `http4s-client`, `http4s-circe`, `http4s-blaze-client` 
+  and `http4s-blaze-server` to `0.21.8`  
+  - `natchez` to `0.0.13`
+  - `opentelemetry-sdk`, `opentelemetry-proto`, `opentelemetry-exporters-otlp` and `opentelemetry-exporters-jaeger` to
+  `0.9.1`  
+  - `sbt` to `1.4.1`
+  - `sbt-native-packager` to `1.7.6`
+  - `sbt-tpolecat` to `0.1.14`
+  - `scala2.12` to `2.12.12`
+
 ## [0.4.0] - 2020-09-13
 
 ### Added
@@ -122,11 +160,14 @@ Initial Release
 [`kernel`]: modules/kernel
 [`core`]: modules/core
 [`inject`]: modules/inject
+[`inject-zio`]: modules/inject-zio
 [`fs2`]: modules/fs2
 [`example`]: modules/example
 [`http4s-common`]: modules/http4s-common
 [`http4s-client`]: modules/http4s-client
 [`http4s-server`]: modules/http4s-server
+[`http4s-client-zio`]: modules/http4s-client-zio
+[`http4s-server-zio`]: modules/http4s-server-zio
 [`test`]: modules/avro
 [`avro`]: modules/avro
 [`avro-exporter`]: modules/avro-exporter
@@ -150,7 +191,9 @@ Initial Release
 [Natchez]: https://github.com/tpolecat/natchez
 [FS2]: https://fs2.io
 [Http4s]: https://http4s.org
+[ZIO]: https://zio.dev
 
+[0.5.0]: https://github.com/janstenpickle/trace4cats/compare/v0.4.0..v0.5.0
 [0.4.0]: https://github.com/janstenpickle/trace4cats/compare/v0.3.0..v0.4.0
 [0.3.0]: https://github.com/janstenpickle/trace4cats/compare/v0.2.0..v0.3.0
 [0.2.0]: https://github.com/janstenpickle/trace4cats/compare/v0.1.0..v0.2.0
