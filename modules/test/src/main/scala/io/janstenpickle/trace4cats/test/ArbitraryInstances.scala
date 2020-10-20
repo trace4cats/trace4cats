@@ -8,7 +8,7 @@ import org.scalacheck.{Arbitrary, Gen, ScalacheckShapeless}
 trait ArbitraryInstances extends ScalacheckShapeless {
   private def byteArray(length: Int) = Gen.listOfN(length, Arbitrary.arbByte.arbitrary).map(_.toArray)
 
-  implicit val doubleArb: Arbitrary[Double] = Arbitrary(Gen.chooseNum(-1000.0, 1000.0))
+  implicit val doubleArb: Arbitrary[Double] = Arbitrary(Gen.chooseNum(-1000.0, 1000.0).map(_ + 0.5))
 
   implicit val instantArb: Arbitrary[Instant] = Arbitrary(Gen.choose(0, 1593882556588L).map(Instant.ofEpochMilli))
 
