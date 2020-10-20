@@ -7,7 +7,16 @@ import cats.Applicative
 import cats.syntax.functor._
 import io.janstenpickle.trace4cats.ToHeaders
 import io.janstenpickle.trace4cats.inject.Trace
-import io.janstenpickle.trace4cats.model.AttributeValue.{BooleanValue, DoubleValue, LongValue, StringValue}
+import io.janstenpickle.trace4cats.model.AttributeValue.{
+  BooleanList,
+  BooleanValue,
+  DoubleList,
+  DoubleValue,
+  LongList,
+  LongValue,
+  StringList,
+  StringValue
+}
 import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus}
 
 trait Trace4CatsConversions {
@@ -32,6 +41,10 @@ trait Trace4CatsConversions {
         case (k, DoubleValue(v)) => k -> V.NumberValue(v)
         case (k, LongValue(v)) => k -> V.NumberValue(v)
         case (k, BooleanValue(v)) => k -> V.BooleanValue(v)
+        case (k, StringList(v)) => k -> V.StringValue(v.toString())
+        case (k, BooleanList(v)) => k -> V.StringValue(v.toString())
+        case (k, DoubleList(v)) => k -> V.StringValue(v.toString())
+        case (k, LongList(v)) => k -> V.StringValue(v.toString())
       }: _*)
     override def span[A](name: String, kind: SpanKind)(fa: F[A]): F[A] = trace.span(name)(fa)
     override def headers(toHeaders: ToHeaders): F[Map[String, String]] = trace.kernel.map(_.toHeaders)

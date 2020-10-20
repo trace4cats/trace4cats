@@ -10,7 +10,7 @@ import scala.concurrent.ExecutionContext
 
 class ServerSyntaxSpec
     extends BaseServerTracerSpec[IO, Kleisli[IO, Span[IO], *]](
-      8082,
+      9082,
       λ[IO ~> Id](_.unsafeRunSync()),
       span => λ[Kleisli[IO, Span[IO], *] ~> IO](_(span)),
       _.inject(_),

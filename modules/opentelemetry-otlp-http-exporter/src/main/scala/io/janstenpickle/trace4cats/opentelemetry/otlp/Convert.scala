@@ -2,6 +2,7 @@ package io.janstenpickle.trace4cats.opentelemetry.otlp
 
 import java.util.concurrent.TimeUnit
 
+import cats.syntax.show._
 import com.google.protobuf.ByteString
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.semiauto._
@@ -22,13 +23,15 @@ object Convert {
   def toAttributes(attributes: Map[String, AttributeValue]): List[KeyValue] =
     attributes.toList.map {
       case (k, AttributeValue.StringValue(v)) =>
-        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.StringValue(v))), UnknownFieldSet.empty)
+        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.StringValue(v))))
       case (k, AttributeValue.BooleanValue(v)) =>
-        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.BoolValue(v))), UnknownFieldSet.empty)
+        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.BoolValue(v))))
       case (k, AttributeValue.DoubleValue(v)) =>
-        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.DoubleValue(v))), UnknownFieldSet.empty)
+        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.DoubleValue(v))))
       case (k, AttributeValue.LongValue(v)) =>
-        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.IntValue(v))), UnknownFieldSet.empty)
+        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.IntValue(v))))
+      case (k, v: AttributeValue.AttributeList) =>
+        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.StringValue(v.show))))
     }
 
   def toResource(process: TraceProcess): Resource =
