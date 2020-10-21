@@ -34,6 +34,8 @@ Compatible with [OpenTelemetry] and [Jaeger], based on, and interoperates wht [N
      * [FS2](#fs2)
      * [Http4s](#http4s)
      * [Http4s ZIO](#http4s-zio)
+     * [Sttp](#http4s)
+     * [Sttp ZIO](#http4s-zio)     
   * [native-image Compatibility](#native-image-compatibility)
   * [Contributing](#contributing)
   * [TODO](#todo)
@@ -168,6 +170,8 @@ To use Trace4Cats within your application add the dependencies listed below as n
 "io.janstenpickle" %% "trace4cats-http4s-client-zio" % "0.5.2"
 "io.janstenpickle" %% "trace4cats-http4s-server" % "0.5.2"
 "io.janstenpickle" %% "trace4cats-http4s-server-zio" % "0.5.2"
+"io.janstenpickle" %% "trace4cats-sttp-client" % "0.5.2"
+"io.janstenpickle" %% "trace4cats-sttp-client-zio" % "0.5.2"
 "io.janstenpickle" %% "trace4cats-natchez" % "0.5.2"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.5.2"
 "io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.5.2"
@@ -350,6 +354,35 @@ Requires:
 
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % "0.5.2"
+"io.janstenpickle" %% "trace4cats-http4s-client-zio" % "0.5.2"
+"io.janstenpickle" %% "trace4cats-http4s-server-zio" % "0.5.2"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.5.2"
+
+```
+
+### [Sttp](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/SttpExample.scala)
+
+Demonstrates how to use Trace4Cats with an [Sttp] backend. Span contexts are propagated via HTTP headers, and 
+span status is derived from HTTP status codes.
+
+Requires:
+
+```scala
+"io.janstenpickle" %% "trace4cats-core" % "0.5.2"
+"io.janstenpickle" %% "trace4cats-sttp-client" % "0.5.2"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.5.2"
+
+```
+
+### [Sttp ZIO](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/SttpZioExample.scala)
+
+Demonstrates how to use Trace4Cats with an [Sttp] backend and [ZIO]. Span contexts are propagated via HTTP headers, and 
+span status is derived from HTTP status codes.
+
+Requires:
+
+```scala
+"io.janstenpickle" %% "trace4cats-core" % "0.5.2"
 "io.janstenpickle" %% "trace4cats-http4s-client" % "0.5.2"
 "io.janstenpickle" %% "trace4cats-http4s-server" % "0.5.2"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.5.2"
@@ -396,3 +429,4 @@ This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-
 [NewRelic]: https://docs.newrelic.com/docs/understand-dependencies/distributed-tracing/trace-api/report-new-relic-format-traces-trace-api#new-relic-guidelines 
 [`Resource`]: https://typelevel.org/cats-effect/datatypes/resource.html
 [ZIO]: https://zio.dev
+[Sttp]: https://sttp.softwaremill.com

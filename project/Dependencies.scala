@@ -26,6 +26,7 @@ object Dependencies {
     val scala212 = "2.12.12"
     val scala213 = "2.13.3"
     val scalapb = "0.10.1"
+    val sttp = "2.2.9"
     val vulcan = "1.2.0"
     val zioInterop = "2.2.0.1"
 
@@ -73,6 +74,8 @@ object Dependencies {
   lazy val openTelemetryJaegerExporter = "io.opentelemetry" % "opentelemetry-exporters-jaeger"  % Versions.openTelemetry
   lazy val openTelemetryProto = "io.opentelemetry"          % "opentelemetry-proto"             % Versions.openTelemetry
   lazy val scalapbJson = "com.thesamet.scalapb"             %% "scalapb-json4s"                 % Versions.scalapb
+  lazy val sttpClient = "com.softwaremill.sttp.client"      %% "cats"                           % Versions.sttp
+  lazy val sttpHttp4s = "com.softwaremill.sttp.client"      %% "http4s-backend"                 % Versions.sttp
   lazy val vulcan = "com.github.fd4s"                       %% "vulcan"                         % Versions.vulcan
   lazy val vulcanGeneric = "com.github.fd4s"                %% "vulcan-generic"                 % Versions.vulcan
   lazy val vulcanEnumeratum = "com.github.fd4s"             %% "vulcan-enumeratum"              % Versions.vulcan
