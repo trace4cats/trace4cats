@@ -73,6 +73,8 @@ object StackdriverGrpcSpanExporter {
                   GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(value))
                 case AttributeValue.BooleanValue(value) => GAttributeValue.newBuilder().setBoolValue(value)
                 case AttributeValue.DoubleValue(value) => GAttributeValue.newBuilder().setIntValue(value.toLong)
+                case vs: AttributeValue.AttributeList =>
+                  GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(vs.show))
               }).build()
             )
 

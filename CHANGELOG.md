@@ -1,3 +1,10 @@
+## [0.5.1] - 2020-10-21
+
+### Fixed
+
+* [`stackdriver-grpc-exporter`]
+  - Fix match error on repeated attribute values
+
 ## [0.5.0] - 2020-10-20
 
 ### Added
