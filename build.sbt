@@ -25,7 +25,8 @@ lazy val commonSettings = Seq(
   releaseEarlyEnableSyncToMaven := true,
   pgpPublicRing := file("./.github/git adlocal.pubring.asc"),
   pgpSecretRing := file("./.github/local.secring.asc"),
-  crossScalaVersions := Seq(Dependencies.Versions.scala213, Dependencies.Versions.scala212)
+  crossScalaVersions := Seq(Dependencies.Versions.scala213, Dependencies.Versions.scala212),
+  resolvers += Resolver.sonatypeRepo("releases"),
 )
 
 lazy val noPublishSettings = commonSettings ++ Seq(publish := {}, publishArtifact := false, publishTo := None)
@@ -97,6 +98,8 @@ lazy val root = (project in file("."))
     `stackdriver-common`,
     `stackdriver-grpc-exporter`,
     `stackdriver-http-exporter`,
+    `sttp-client`,
+    `sttp-client-zio`,
     natchez
   )
 
@@ -122,7 +125,8 @@ lazy val example = (project in file("modules/example"))
       Dependencies.logback,
       Dependencies.http4sBlazeClient,
       Dependencies.http4sBlazeServer,
-      Dependencies.http4sDsl
+      Dependencies.http4sDsl,
+      Dependencies.sttpHttp4s
     )
   )
   .dependsOn(
@@ -144,7 +148,9 @@ lazy val example = (project in file("modules/example"))
     `opentelemetry-otlp-grpc-exporter`,
     `opentelemetry-otlp-http-exporter`,
     `stackdriver-grpc-exporter`,
-    `stackdriver-http-exporter`
+    `stackdriver-http-exporter`,
+    `sttp-client`,
+    `sttp-client-zio`
   )
 
 lazy val test = (project in file("modules/test"))
@@ -419,6 +425,33 @@ lazy val `http4s-common` = (project in file("modules/http4s-common"))
   .settings(publishSettings)
   .settings(name := "trace4cats-http4s-common", libraryDependencies ++= Seq(Dependencies.http4sServer))
   .dependsOn(model)
+
+lazy val `sttp-client` = (project in file("modules/sttp-client"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-sttp-client",
+    libraryDependencies ++= Seq(Dependencies.catsMtl, Dependencies.sttpClient),
+    libraryDependencies ++= (Dependencies.test ++ Seq(
+      Dependencies.http4sBlazeClient,
+      Dependencies.http4sBlazeServer,
+      Dependencies.http4sDsl,
+      Dependencies.sttpHttp4s
+    )).map(_ % Test)
+  )
+  .dependsOn(model, kernel, core, inject, `exporter-common` % "test->compile")
+
+lazy val `sttp-client-zio` = (project in file("modules/sttp-client-zio"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-sttp-client-zio",
+    libraryDependencies ++= (Dependencies.test ++ Seq(
+      Dependencies.http4sBlazeClient,
+      Dependencies.http4sBlazeServer,
+      Dependencies.http4sDsl,
+      Dependencies.sttpHttp4s
+    )).map(_ % Test)
+  )
+  .dependsOn(`sttp-client` % "compile->compile;test->test", `inject-zio`)
 
 lazy val `http4s-client` = (project in file("modules/http4s-client"))
   .settings(publishSettings)
