@@ -1,3 +1,14 @@
+## [0.5.2] - 2020-10-21
+
+### Fixed
+
+* [`stackdriver-grpc-exporter`]
+  - Ensure service name is correctly converted to an attribute value
+  
+### Housekeeping
+
+  - `grpc-api` and `grpc-okhttp` to `1.33.0`
+  
 ## [0.5.1] - 2020-10-21
 
 ### Fixed
@@ -200,6 +211,8 @@ Initial Release
 [Http4s]: https://http4s.org
 [ZIO]: https://zio.dev
 
+[0.5.2]: https://github.com/janstenpickle/trace4cats/compare/v0.5.1..v0.5.2
+[0.5.1]: https://github.com/janstenpickle/trace4cats/compare/v0.5.0..v0.5.1
 [0.5.0]: https://github.com/janstenpickle/trace4cats/compare/v0.4.0..v0.5.0
 [0.4.0]: https://github.com/janstenpickle/trace4cats/compare/v0.3.0..v0.4.0
 [0.3.0]: https://github.com/janstenpickle/trace4cats/compare/v0.2.0..v0.3.0

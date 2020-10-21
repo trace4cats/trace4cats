@@ -63,7 +63,7 @@ object StackdriverGrpcSpanExporter {
     }
 
     def toAttributesProto(process: TraceProcess, attributes: Map[String, AttributeValue]): Attributes =
-      (process.attributes.updated(ServiceNameAttributeKey, process.serviceName) ++ attributes).toList
+      (process.attributes.updated(ServiceNameAttributeKey, AttributeValue.StringValue(process.serviceName)) ++ attributes).toList
         .foldLeft(Attributes.newBuilder()) {
           case (acc, (k, v)) =>
             acc.putAttributeMap(
@@ -73,6 +73,7 @@ object StackdriverGrpcSpanExporter {
                   GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(value))
                 case AttributeValue.BooleanValue(value) => GAttributeValue.newBuilder().setBoolValue(value)
                 case AttributeValue.DoubleValue(value) => GAttributeValue.newBuilder().setIntValue(value.toLong)
+                case AttributeValue.LongValue(value) => GAttributeValue.newBuilder().setIntValue(value)
                 case vs: AttributeValue.AttributeList =>
                   GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(vs.show))
               }).build()
