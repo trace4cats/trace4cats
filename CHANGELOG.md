@@ -1,3 +1,10 @@
+## [0.6.0] - 2020-10-21
+
+### Added
+
+* [`sttp-client`],  [`sttp-client-zio`]
+  - Add [Sttp] client support ([#82](../../pull/82)
+ 
 ## [0.5.2] - 2020-10-21
 
 ### Fixed
@@ -186,6 +193,8 @@ Initial Release
 [`http4s-server`]: modules/http4s-server
 [`http4s-client-zio`]: modules/http4s-client-zio
 [`http4s-server-zio`]: modules/http4s-server-zio
+[`sttp-client`]: modules/sttp-client
+[`sttp-client-zio`]: modules/sttp-client-zio
 [`test`]: modules/avro
 [`avro`]: modules/avro
 [`avro-exporter`]: modules/avro-exporter
@@ -210,7 +219,9 @@ Initial Release
 [FS2]: https://fs2.io
 [Http4s]: https://http4s.org
 [ZIO]: https://zio.dev
+[Sttp]: https://sttp.softwaremill.com
 
+[0.6.0]: https://github.com/janstenpickle/trace4cats/compare/v0.5.2..v0.6.0
 [0.5.2]: https://github.com/janstenpickle/trace4cats/compare/v0.5.1..v0.5.2
 [0.5.1]: https://github.com/janstenpickle/trace4cats/compare/v0.5.0..v0.5.1
 [0.5.0]: https://github.com/janstenpickle/trace4cats/compare/v0.4.0..v0.5.0
