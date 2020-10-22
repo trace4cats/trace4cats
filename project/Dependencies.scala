@@ -12,7 +12,7 @@ object Dependencies {
     val enumeratum = "1.6.1"
     val fs2 = "2.4.4"
     val googleCredentials = "0.22.0"
-    val googleCloudTrace = "1.2.4"
+    val googleCloudTrace = "1.2.5"
     val grpc = "1.33.0"
     val http4s = "0.21.8"
     val http4sJdkClient = "0.3.1"
