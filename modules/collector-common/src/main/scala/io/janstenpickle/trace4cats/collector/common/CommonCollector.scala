@@ -72,6 +72,14 @@ object CommonCollector {
     )
     .orNone
 
+  val stackdriverServiceAccountOpt: Opts[Option[String]] =
+    Opts
+      .option[String](
+        "stackdriver-service-account-name",
+        "Google service account name for extracting token from instance metadata"
+      )
+      .orNone
+
   val dataDogHostOpt: Opts[Option[String]] =
     Opts.option[String]("datadog-agent-host", "Write spans to the DataDog agent at this host").orNone
   val dataDogPortOpt: Opts[Int] =
@@ -112,6 +120,7 @@ object CommonCollector {
       stackdriverHttpOpt,
       stackdriverProjectOpt,
       stackdriverCredentialsFileOpt,
+      stackdriverServiceAccountOpt,
       dataDogHostOpt,
       dataDogPortOpt,
       newRelicApiKeyOpt,
@@ -131,6 +140,7 @@ object CommonCollector {
     stackdriverHttp: Boolean,
     stackdriverProject: Option[String],
     stackdriverCredentialsFile: Option[String],
+    stackdriverServiceAccount: Option[String],
     dataDogHost: Option[String],
     dataDogPort: Int,
     newRelicApiKey: Option[String],
@@ -142,6 +152,8 @@ object CommonCollector {
         _ <- Resource.make(
           logger.info(s"Starting Trace 4 Cats Collector listening on tcp://::$port and udp://::$port")
         )(_ => logger.info("Shutting down Trace 4 Cats Collector"))
+
+        client <- Resource.liftF(Http4sJdkClient[F](blocker))
 
         collectorExporter <- collectorHost.traverse { host =>
           AvroSpanExporter.tcp[F](blocker, host = host, port = collectorPort).map("Trace4Cats Avro TCP" -> _)
@@ -155,36 +167,31 @@ object CommonCollector {
         else Resource.pure[F, Option[(String, SpanExporter[F])]](None)
 
         otHttpExporter <- otHttpHost.traverse { host =>
-          Resource.liftF(for {
-            client <- Http4sJdkClient[F](blocker)
-            exporter <- OpenTelemetryOtlpHttpSpanExporter[F](client, host = host, port = otHttpPort)
-          } yield "OpenTelemetry HTTP" -> exporter)
+          Resource.liftF(
+            OpenTelemetryOtlpHttpSpanExporter[F](client, host = host, port = otHttpPort).map("OpenTelemetry HTTP" -> _)
+          )
         }
 
-        stackdriverExporter <- (stackdriverProject, stackdriverCredentialsFile).mapN(_ -> _).flatTraverse {
-          case (projectId, credsFile) =>
-            Resource.liftF[F, Option[(String, SpanExporter[F])]] {
-              if (stackdriverHttp)
-                for {
-                  client <- Http4sJdkClient[F](blocker)
-                  exporter <- StackdriverHttpSpanExporter[F](projectId, credsFile, client)
-                } yield Some("Stackdriver HTTP" -> exporter)
-              else Applicative[F].pure(None)
-            }
-        }
+        stackdriverExporter <- Resource.liftF(
+          (stackdriverHttp, stackdriverProject, stackdriverCredentialsFile, stackdriverServiceAccount) match {
+            case (true, Some(projectId), Some(credsFile), _) =>
+              StackdriverHttpSpanExporter[F](projectId, credsFile, client).map("Stackdriver HTTP" -> _).map(Some(_))
+            case (false, _, _, None) =>
+              StackdriverHttpSpanExporter[F](client).map("Stackdriver HTTP" -> _).map(Some(_))
+            case (false, _, _, Some(serviceAccount)) =>
+              StackdriverHttpSpanExporter[F](client, serviceAccount).map("Stackdriver HTTP" -> _).map(Some(_))
+            case _ => Applicative[F].pure(None)
+          }
+        )
 
         ddExporter <- dataDogHost.traverse { host =>
-          Resource.liftF(for {
-            client <- Http4sJdkClient[F](blocker)
-            exporter <- DataDogSpanExporter[F](client, host = host, port = dataDogPort)
-          } yield "DataDog Agent" -> exporter)
+          Resource.liftF(DataDogSpanExporter[F](client, host = host, port = dataDogPort).map("DataDog Agent" -> _))
         }
 
         newRelicExporter <- newRelicApiKey.traverse { apiKey =>
-          Resource.liftF(for {
-            client <- Http4sJdkClient[F](blocker)
-            exporter <- NewRelicSpanExporter[F](client, apiKey = apiKey, endpoint = newRelicEndpoint)
-          } yield "NewRelic HTTP" -> exporter)
+          Resource.liftF(
+            NewRelicSpanExporter[F](client, apiKey = apiKey, endpoint = newRelicEndpoint).map("NewRelic HTTP" -> _)
+          )
         }
 
         queuedExporter <- QueuedSpanExporter(
