@@ -90,5 +90,6 @@ object Dependencies {
   lazy val scalaTest = "org.scalatest"                        %% "scalatest"                      % Versions.scalaTest
   lazy val testContainers = "com.dimafeng"                    %% "testcontainers-scala-scalatest" % Versions.testContainers
 
-  lazy val test = Seq(catsLaws, disciplineScalatest, disciplineCore, scalacheck, scalacheckShapeless, scalaTest)
+  lazy val test =
+    Seq(catsLaws, catsEffectLaws, disciplineScalatest, disciplineCore, scalacheck, scalacheckShapeless, scalaTest)
 }

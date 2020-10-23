@@ -8,13 +8,18 @@ import cats.syntax.functor._
 import cats.syntax.flatMap._
 import cats.syntax.applicative._
 
+import scala.concurrent.duration._
+
 object CachedTokenProvider {
-  def apply[F[_]: Sync: Clock](underlying: TokenProvider[F]): F[TokenProvider[F]] =
+  def apply[F[_]: Sync: Clock](
+    underlying: TokenProvider[F],
+    expiryOffset: FiniteDuration = 10.seconds
+  ): F[TokenProvider[F]] =
     Ref.of[F, Option[(Long, AccessToken)]](None).map { ref =>
       new TokenProvider[F] {
         private def refreshToken = underlying.accessToken.flatTap { token =>
           Clock[F].realTime(TimeUnit.SECONDS).flatMap { now =>
-            ref.set(Some((now + token.expiresIn - 10, token)))
+            ref.set(Some((now + token.expiresIn - expiryOffset.toSeconds, token)))
           }
         }
 

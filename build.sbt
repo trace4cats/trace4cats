@@ -320,6 +320,7 @@ lazy val `stackdriver-http-exporter` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-stackdriver-http-exporter",
+      libraryDependencies ++= Dependencies.test.map(_ % Test),
       libraryDependencies ++= Seq(
         Dependencies.catsEffect,
         Dependencies.circeGeneric,
