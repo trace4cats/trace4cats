@@ -6,12 +6,12 @@ Code adapted from https://github.com/permutive/fs2-google-pubsub
 import java.io.File
 import java.time.Instant
 
-import cats.effect.{Concurrent, Sync}
+import cats.effect.Sync
 import cats.syntax.all._
 import io.chrisdavenport.log4cats.Logger
 import org.http4s.client.Client
 
-class DefaultTokenProvider[F[_]](emailAddress: String, scope: List[String], auth: OAuth[F])(
+class OAuthTokenProvider[F[_]](emailAddress: String, scope: List[String], auth: OAuth[F])(
   implicit
   F: Sync[F]
 ) extends TokenProvider[F] {
@@ -24,26 +24,20 @@ class DefaultTokenProvider[F[_]](emailAddress: String, scope: List[String], auth
   }
 }
 
-object DefaultTokenProvider {
-  def google[F[_]: Logger](serviceAccountPath: String, httpClient: Client[F])(
+object OAuthTokenProvider {
+  def apply[F[_]: Logger](serviceAccountPath: String, httpClient: Client[F])(
     implicit
-    F: Concurrent[F]
-  ): F[DefaultTokenProvider[F]] =
+    F: Sync[F]
+  ): F[OAuthTokenProvider[F]] =
     for {
       serviceAccount <- F.fromEither(GoogleAccountParser.parse(new File(serviceAccountPath).toPath))
     } yield
-      new DefaultTokenProvider(
+      new OAuthTokenProvider(
         serviceAccount.clientEmail,
         List("https://www.googleapis.com/auth/trace.append"),
         new GoogleOAuth(serviceAccount.privateKey, httpClient)
       )
 
-  def noAuth[F[_]: Sync]: DefaultTokenProvider[F] =
-    new DefaultTokenProvider("noop", Nil, new NoopOAuth)
-}
-
-sealed trait TokenProviderType
-object TokenProviderType {
-  case object NoopProvider extends TokenProviderType
-  case object GoogleProvider extends TokenProviderType
+  def noAuth[F[_]: Sync]: OAuthTokenProvider[F] =
+    new OAuthTokenProvider("noop", Nil, new NoopOAuth)
 }
