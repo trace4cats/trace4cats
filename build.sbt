@@ -59,9 +59,14 @@ lazy val graalSettings = Seq(
     "-H:ConfigurationFileDirectories=../../native-image/",
     "--install-exit-handlers",
     "--initialize-at-build-time=scala.runtime.Statics$VM",
+    "--initialize-at-build-time=sun.instrument.InstrumentationImpl",
     "--initialize-at-build-time=scala.Symbol$",
     "--initialize-at-build-time=ch.qos.logback",
-    "--initialize-at-build-time=org.slf4j.LoggerFactory"
+    "--initialize-at-build-time=org.slf4j.impl.StaticLoggerBinder",
+    "--initialize-at-build-time=org.slf4j.LoggerFactory",
+    "--initialize-at-build-time=org.apache.kafka,net.jpountz",
+    "--initialize-at-run-time=com.sun.management.internal.Flag",
+    "--initialize-at-run-time=com.sun.management.internal.OperatingSystemImpl"
   )
 )
 
@@ -82,10 +87,14 @@ lazy val root = (project in file("."))
     `http4s-server`,
     `http4s-server-zio`,
     `avro-exporter`,
+    `avro-kafka`,
+    `avro-kafka-exporter`,
     `avro-server`,
+    `avro-kafka-consumer`,
     `avro-test`,
     `collector-common`,
     `datadog-http-exporter`,
+    `exporter-stream`,
     `exporter-common`,
     `exporter-http`,
     `log-exporter`,
@@ -371,6 +380,29 @@ lazy val `newrelic-http-exporter` =
     )
     .dependsOn(model, kernel, `exporter-common`, `exporter-http`)
 
+lazy val `avro-kafka-exporter` =
+  (project in file("modules/avro-kafka-exporter"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-avro-kafka-exporter",
+      libraryDependencies ++= Seq(
+        Dependencies.catsEffect,
+        Dependencies.fs2,
+        Dependencies.fs2Kafka,
+        Dependencies.log4cats
+      )
+    )
+    .dependsOn(model, kernel, `exporter-common`, avro, `avro-kafka` )
+
+lazy val `exporter-stream` =
+  (project in file("modules/exporter-stream"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-exporter-stream",
+      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2)
+    )
+    .dependsOn(model, kernel)
+
 lazy val `exporter-common` =
   (project in file("modules/exporter-common"))
     .settings(publishSettings)
@@ -378,7 +410,7 @@ lazy val `exporter-common` =
       name := "trace4cats-exporter-common",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.log4cats)
     )
-    .dependsOn(model, kernel)
+    .dependsOn(model, kernel, `exporter-stream`)
 
 lazy val `exporter-http` =
   (project in file("modules/exporter-http"))
@@ -406,6 +438,23 @@ lazy val `avro-server` =
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.fs2Io, Dependencies.log4cats)
     )
     .dependsOn(model, avro)
+
+lazy val `avro-kafka` =
+  (project in file("modules/avro-kafka"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-avro-kafka",
+    )
+    .dependsOn(model, kernel, avro)
+
+lazy val `avro-kafka-consumer` =
+  (project in file("modules/avro-kafka-consumer"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-avro-kafka-consumer",
+      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.fs2Kafka, Dependencies.log4cats)
+    )
+    .dependsOn(model, avro, `avro-kafka`, `tail-sampling`)
 
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
@@ -512,6 +561,17 @@ lazy val natchez = (project in file("modules/natchez"))
   .settings(name := "trace4cats-natchez", libraryDependencies ++= Seq(Dependencies.natchez))
   .dependsOn(model, kernel, core, inject)
 
+lazy val `graal-kafka-common` = (project in file("modules/graal-kafka-common"))
+  .settings(noPublishSettings)
+  .settings(
+    name := "trace4cats-graal-kafka-common",
+    libraryDependencies ++= Seq(
+      Dependencies.svm,
+      Dependencies.micronautCore
+    )
+  )
+  .dependsOn(`avro-kafka-exporter`)
+
 lazy val agent = (project in file("modules/agent"))
   .settings(noPublishSettings)
   .settings(graalSettings)
@@ -527,12 +587,42 @@ lazy val agent = (project in file("modules/agent"))
   .dependsOn(model, `avro-exporter`, `avro-server`, `exporter-common`)
   .enablePlugins(GraalVMNativeImagePlugin)
 
+lazy val `agent-kafka` = (project in file("modules/agent-kafka"))
+  .settings(noPublishSettings)
+  .settings(graalSettings)
+  .settings(
+    name := "trace4cats-agent-kafka",
+    libraryDependencies ++= Seq(
+      Dependencies.catsEffect,
+      Dependencies.declineEffect,
+      Dependencies.log4cats,
+      Dependencies.logback
+    )
+  )
+  .dependsOn(model, `avro-exporter`, `avro-kafka-exporter`, `avro-server`, `exporter-common`, `graal-kafka-common`)
+  .enablePlugins(GraalVMNativeImagePlugin)
+
+lazy val `tail-sampling` = (project in file("modules/tail-sampling"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-tail-sampling",
+    libraryDependencies ++= Seq(
+      Dependencies.catsEffect,
+      Dependencies.scalaCacheCaffeine,
+      Dependencies.log4cats
+    )
+  )
+  .dependsOn(model, kernel, `exporter-stream`)
+
+
 lazy val `collector-common` = (project in file("modules/collector-common"))
   .settings(publishSettings)
   .settings(
     name := "trace4cats-collector-common",
     libraryDependencies ++= Seq(
       Dependencies.catsEffect,
+      Dependencies.circeGeneric,
+      Dependencies.circeYaml,
       Dependencies.declineEffect,
       Dependencies.fs2,
       Dependencies.http4sJdkClient,
@@ -549,7 +639,9 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
     `log-exporter`,
     `opentelemetry-otlp-http-exporter`,
     `stackdriver-http-exporter`,
-    `newrelic-http-exporter`
+    `newrelic-http-exporter`,
+    `avro-kafka-exporter`,
+    `avro-kafka-consumer`
   )
 
 lazy val collector = (project in file("modules/collector"))
@@ -612,6 +704,7 @@ lazy val `collector-lite` = (project in file("modules/collector-lite"))
     `jaeger-thrift-exporter`,
     `log-exporter`,
     `opentelemetry-otlp-http-exporter`,
-    `stackdriver-http-exporter`
+    `stackdriver-http-exporter`,
+    `graal-kafka-common`
   )
   .enablePlugins(GraalVMNativeImagePlugin)

@@ -14,12 +14,14 @@ object CollectorLite
     ) {
 
   override def main: Opts[IO[ExitCode]] =
-    CommonCollector[IO].map { collector =>
-      Blocker[IO].use { blocker =>
-        for {
-          logger <- Slf4jLogger.create[IO]
-          exitCode <- collector.run((blocker, logger, List.empty)).use(_.compile.drain.as(ExitCode.Success))
-        } yield exitCode
+    CommonCollector.configFileOpt.map { configFile =>
+      Slf4jLogger.create[IO].flatMap { implicit logger =>
+        (for {
+          blocker <- Blocker[IO]
+          stream <- CommonCollector[IO](blocker, configFile, List.empty)
+        } yield stream).use(_.compile.drain.as(ExitCode.Success)).handleErrorWith { th =>
+          logger.error(th)("Trace 4 Cats collector failed").as(ExitCode.Error)
+        }
       }
     }
 

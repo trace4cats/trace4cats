@@ -1,4 +1,8 @@
 {
-  "resources":[{"pattern":"\\Qorg/slf4j/impl/StaticLoggerBinder.class\\E"}],
+  "resources":[
+    {"pattern":"\\Qkafka/kafka-version.properties\\E"},
+    {"pattern":"\\Qlogback.xml\\E"},
+    {"pattern":"\\Qorg/slf4j/impl/StaticLoggerBinder.class\\E"}
+  ],
   "bundles":[]
 }

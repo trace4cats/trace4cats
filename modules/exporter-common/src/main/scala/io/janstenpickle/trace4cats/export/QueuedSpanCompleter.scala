@@ -22,8 +22,10 @@ object QueuedSpanCompleter {
     exporter: SpanExporter[F],
     bufferSize: Int,
     batchSize: Int,
-    batchTimeout: FiniteDuration
+    batchTimeout: FiniteDuration,
   ): Resource[F, SpanCompleter[F]] = {
+    val realBufferSize = if (bufferSize < batchSize * 5) batchSize * 5 else bufferSize
+
     def write(inFlight: Ref[F, Int], queue: Queue[F, CompletedSpan], exporter: SpanExporter[F]): F[Unit] =
       queue.dequeue
         .groupWithin(batchSize, batchTimeout)
@@ -39,7 +41,7 @@ object QueuedSpanCompleter {
 
     for {
       inFlight <- Resource.liftF(Ref.of(0))
-      queue <- Resource.liftF(Queue.circularBuffer[F, CompletedSpan](bufferSize))
+      queue <- Resource.liftF(Queue.bounded[F, CompletedSpan](realBufferSize))
       _ <- Resource.make(
         Stream
           .retry(write(inFlight, queue, exporter), 5.seconds, _ + 1.second, Int.MaxValue)
@@ -49,11 +51,16 @@ object QueuedSpanCompleter {
       )(fiber => Timer[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)
     } yield
       new SpanCompleter[F] {
-        override def complete(span: CompletedSpan): F[Unit] =
-          queue.enqueue1(span) >> inFlight.update { current =>
-            if (current == bufferSize) current
+        override def complete(span: CompletedSpan): F[Unit] = {
+          val enqueue = queue.enqueue1(span) >> inFlight.update { current =>
+            if (current == realBufferSize) current
             else current + 1
           }
+
+          inFlight.get
+            .map(_ == realBufferSize)
+            .ifM(Logger[F].warn(s"Failed to enqueue new span, buffer is full of $realBufferSize"), enqueue)
+        }
       }
   }
 }

@@ -3,3 +3,5 @@ target/
 .swp
 local.*
 .bsb/
+.bsp
+.java-version
