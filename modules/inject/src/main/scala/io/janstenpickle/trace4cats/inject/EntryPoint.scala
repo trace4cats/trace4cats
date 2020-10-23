@@ -36,7 +36,7 @@ object EntryPoint {
   def apply[F[_]: Sync: Clock](
     sampler: SpanSampler[F],
     completer: SpanCompleter[F],
-    toHeaders: ToHeaders = ToHeaders.w3c
+    toHeaders: ToHeaders = ToHeaders.all
   ): EntryPoint[F] = new EntryPoint[F] {
     override def root(name: String, kind: SpanKind): Resource[F, Span[F]] =
       Span.root[F](name, kind, sampler, completer)

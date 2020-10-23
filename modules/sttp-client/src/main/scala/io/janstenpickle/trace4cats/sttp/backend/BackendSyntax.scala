@@ -8,7 +8,7 @@ import sttp.client.SttpBackend
 trait BackendSyntax {
 
   implicit class TracedBackendSyntax[F[_], -S, -WS_HANDLER[_]](backend: SttpBackend[F, S, WS_HANDLER]) {
-    def liftTrace(toHeaders: ToHeaders = ToHeaders.w3c, spanNamer: SttpSpanNamer = SttpSpanNamer.methodWithPath)(
+    def liftTrace(toHeaders: ToHeaders = ToHeaders.all, spanNamer: SttpSpanNamer = SttpSpanNamer.methodWithPath)(
       implicit F: Bracket[F, Throwable]
     ): SttpBackend[Kleisli[F, Span[F], *], S, WS_HANDLER] =
       TracedBackend(backend, toHeaders, spanNamer)

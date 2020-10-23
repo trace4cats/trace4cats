@@ -11,11 +11,14 @@ object TraceState {
   def apply(values: Map[Key, Value]): Option[TraceState] =
     if (values.size > 32) None else Some(new TraceState(values))
 
-  case class Key private (k: String) extends AnyVal
+  case class Key private (k: String) extends AnyVal {
+    override def toString: String = k
+  }
   object Key {
     private val regex = "^([0-9a-z_\\-*/]+)$".r
     def apply(k: String): Option[Key] =
       if (regex.findFirstMatchIn(k).isDefined) Some(new Key(k)) else None
+    def unsafe(k: String): Key = apply(k).getOrElse(throw new RuntimeException("Invalid trace state key format"))
 
     implicit val show: Show[Key] = Show.show(_.k)
     implicit val eq: Eq[Key] = Eq.by(_.k)
@@ -28,6 +31,7 @@ object TraceState {
     private val regex = "((,|=|\\s)+)".r
     def apply(v: String): Option[Value] =
       if (v.length > 256 && regex.findFirstMatchIn(v).isDefined) None else Some(new Value(v))
+    def unsafe(v: String): Value = apply(v).getOrElse(throw new RuntimeException("Invalid trace state value format"))
 
     implicit val show: Show[Value] = Show.show(_.v)
     implicit val eq: Eq[Value] = Eq.by(_.v)

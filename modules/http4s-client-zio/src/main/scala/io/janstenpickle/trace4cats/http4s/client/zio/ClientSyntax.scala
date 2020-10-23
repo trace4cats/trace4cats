@@ -13,7 +13,7 @@ import zio.interop.catz.mtl._
 trait ClientSyntax {
   implicit class TracedClient(client: Client[Task]) {
     def liftTrace(
-      toHeaders: ToHeaders = ToHeaders.w3c,
+      toHeaders: ToHeaders = ToHeaders.all,
       spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath
     ): Client[ZIOTrace] =
       ClientTracer

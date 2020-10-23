@@ -10,7 +10,7 @@ object Trace4CatsTracer {
   def entryPoint[F[_]: Sync: Clock](
     sampler: SpanSampler[F],
     completer: SpanCompleter[F],
-    toHeaders: ToHeaders = ToHeaders.w3c
+    toHeaders: ToHeaders = ToHeaders.all
   ): EntryPoint[F] =
     new EntryPoint[F] {
       override def root(name: String): Resource[F, Span[F]] =
