@@ -7,7 +7,12 @@ import io.chrisdavenport.log4cats.Logger
 import io.janstenpickle.trace4cats.`export`.HttpSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch
-import io.janstenpickle.trace4cats.strackdriver.oauth.{InstanceMetadataTokenProvider, OAuthTokenProvider, TokenProvider}
+import io.janstenpickle.trace4cats.strackdriver.oauth.{
+  CachedTokenProvider,
+  InstanceMetadataTokenProvider,
+  OAuthTokenProvider,
+  TokenProvider
+}
 import io.janstenpickle.trace4cats.strackdriver.project.{
   InstanceMetadataProjectIdProvider,
   ProjectIdProvider,
@@ -59,13 +64,14 @@ object StackdriverHttpSpanExporter {
     client: Client[F]
   ): F[SpanExporter[F]] =
     for {
+      cachedTokenProvider <- CachedTokenProvider(tokenProvider)
       projectId <- projectIdProvider.projectId
       exporter <- HttpSpanExporter[F, model.Batch](
         client,
         s"$base/$projectId/traces:batchWrite",
         (batch: Batch) => model.Batch(batch.spans.map(model.Span.fromCompleted(projectId, batch.process, _))),
         (uri: Uri) =>
-          tokenProvider.accessToken.map { token =>
+          cachedTokenProvider.accessToken.map { token =>
             uri.withQueryParam("access_token", token.accessToken)
         }
       )
