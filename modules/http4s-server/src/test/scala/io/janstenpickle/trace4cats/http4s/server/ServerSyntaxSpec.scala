@@ -13,7 +13,7 @@ class ServerSyntaxSpec
       9082,
       λ[IO ~> Id](_.unsafeRunSync()),
       span => λ[Kleisli[IO, Span[IO], *] ~> IO](_(span)),
-      _.inject(_),
-      _.inject(_),
+      (routes, filter, ep) => routes.inject(ep, requestFilter = filter),
+      (app, filter, ep) => app.inject(ep, requestFilter = filter),
       IO.timer(ExecutionContext.global)
     )

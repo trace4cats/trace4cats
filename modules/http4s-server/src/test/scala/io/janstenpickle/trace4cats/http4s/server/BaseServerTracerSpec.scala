@@ -1,5 +1,7 @@
 package io.janstenpickle.trace4cats.http4s.server
 
+import java.util.UUID
+
 import cats.data.NonEmptyList
 import cats.effect.{Blocker, ConcurrentEffect, Resource, Sync, Timer}
 import cats.syntax.applicativeError._
@@ -8,7 +10,7 @@ import cats.syntax.functor._
 import cats.{~>, ApplicativeError, Id}
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
-import io.janstenpickle.trace4cats.http4s.common.Http4sStatusMapping
+import io.janstenpickle.trace4cats.http4s.common.{Http4sRequestFilter, Http4sStatusMapping}
 import io.janstenpickle.trace4cats.inject.EntryPoint
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind, SpanStatus}
@@ -17,7 +19,7 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.`WWW-Authenticate`
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.syntax.all._
-import org.http4s.{Challenge, HttpApp, HttpRoutes, Response}
+import org.http4s._
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
@@ -31,8 +33,8 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
   port: Int,
   fkId: F ~> Id,
   lower: Span[F] => G ~> F,
-  injectRoutes: (HttpRoutes[G], EntryPoint[F]) => HttpRoutes[F],
-  injectApp: (HttpApp[G], EntryPoint[F]) => HttpApp[F],
+  injectRoutes: (HttpRoutes[G], Http4sRequestFilter, EntryPoint[F]) => HttpRoutes[F],
+  injectApp: (HttpApp[G], Http4sRequestFilter, EntryPoint[F]) => HttpApp[F],
   timer: Timer[F]
 ) extends AnyFlatSpec
     with ScalaCheckDrivenPropertyChecks
@@ -99,7 +101,56 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
     }
   }
 
-  def evaluateTrace(routes: HttpRoutes[G], app: HttpApp[G])(fa: Queue[CompletedSpan] => Assertion): Assertion = {
+  it should "should filter all requests" in forAll { response: G[Response[G]] =>
+    val app = HttpRoutes.of[G] {
+      case GET -> Root => response
+    }
+
+    evaluateTrace(app, app.orNotFound, { case _ => false }) { spans =>
+      spans.size should be(0)
+    }
+  }
+
+  it should "should filter prometheus and kubernetes endpoints" in {
+    val app = HttpRoutes.of[G] {
+      case GET -> Root => Ok()
+      case GET -> Root / "healthcheck" => Ok()
+      case GET -> Root / "liveness" => Ok()
+      case GET -> Root / "metrics" => Ok()
+    }
+
+    evaluateTrace(
+      app,
+      app.orNotFound,
+      Http4sRequestFilter.kubernetesPrometheus,
+      NonEmptyList.of("/", "/healthcheck", "/liveness", "/metrics")
+    ) { spans =>
+      spans.size should be(1)
+    }
+  }
+
+  it should "should filter arbitrary paths" in forAll(Gen.uuid, Gen.listOf(Gen.uuid)) {
+    (first: UUID, others: List[UUID]) =>
+      val NEPaths = NonEmptyList(first, others).map("/" + _)
+      val paths = NEPaths.toList.toSet
+
+      val app = HttpRoutes.of[G] {
+        case req if paths.contains(Uri.decode(req.uri.path)) => Ok()
+        case GET -> Root => Ok()
+      }
+
+      evaluateTrace(app, app.orNotFound, Http4sRequestFilter.fullPaths(NEPaths.head, NEPaths.tail: _*), "/" :: NEPaths) {
+        spans =>
+          spans.size should be(1)
+      }
+  }
+
+  def evaluateTrace(
+    routes: HttpRoutes[G],
+    app: HttpApp[G],
+    filter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
+    paths: NonEmptyList[String] = NonEmptyList.one("/")
+  )(fa: Queue[CompletedSpan] => Assertion): Assertion = {
     def test(f: EntryPoint[F] => HttpApp[F]): Assertion =
       fkId.apply(
         (for {
@@ -115,15 +166,15 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
           .use {
             case (client, completer) =>
               for {
-                _ <- client.expect[String](s"http://localhost:$port").attempt
+                _ <- paths.traverse(path => client.expect[String](s"http://localhost:$port$path").attempt)
                 spans <- completer.get
                 _ <- timer.sleep(100.millis)
               } yield fa(spans)
           }
       )
 
-    test(injectRoutes(routes, _).orNotFound)
-    test(injectApp(app, _))
+    test(injectRoutes(routes, filter, _).orNotFound)
+    test(injectApp(app, filter, _))
   }
 
 }

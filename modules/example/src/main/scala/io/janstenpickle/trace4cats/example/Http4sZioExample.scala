@@ -5,6 +5,7 @@ import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.example.Fs2Example.entryPoint
 import io.janstenpickle.trace4cats.http4s.client.zio.syntax._
+import io.janstenpickle.trace4cats.http4s.common.Http4sRequestFilter
 import io.janstenpickle.trace4cats.http4s.server.zio.syntax._
 import io.janstenpickle.trace4cats.inject.zio._
 import io.janstenpickle.trace4cats.model.TraceProcess
@@ -40,7 +41,7 @@ object Http4sZioExample extends CatsApp {
 
       server <- BlazeServerBuilder[Task](blocker.blockingContext)
         .bindHttp(8080, "0.0.0.0")
-        .withHttpApp(routes.inject(ep).orNotFound) // use implicit syntax to inject an entry point to http routes
+        .withHttpApp(routes.inject(ep, requestFilter = Http4sRequestFilter.kubernetesPrometheus).orNotFound) // use implicit syntax to inject an entry point to http routes
         .resource
     } yield server)
       .use { _ =>

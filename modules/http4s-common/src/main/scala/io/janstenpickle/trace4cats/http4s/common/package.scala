@@ -10,4 +10,6 @@ package object common {
     * may be used to get a `String` from a `Request[F]`.
     */
   type Http4sSpanNamer = Request[AnyK] => String
+
+  type Http4sRequestFilter = PartialFunction[Request[AnyK], Boolean]
 }
