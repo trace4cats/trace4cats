@@ -424,7 +424,10 @@ lazy val fs2 = (project in file("modules/fs2"))
 
 lazy val `http4s-common` = (project in file("modules/http4s-common"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-http4s-common", libraryDependencies ++= Seq(Dependencies.http4sServer))
+  .settings(
+    name := "trace4cats-http4s-common",
+    libraryDependencies ++= Seq(Dependencies.http4sServer, Dependencies.http4sDsl)
+  )
   .dependsOn(model)
 
 lazy val `sttp-client` = (project in file("modules/sttp-client"))
@@ -486,8 +489,7 @@ lazy val `http4s-server` = (project in file("modules/http4s-server"))
     libraryDependencies ++= Seq(Dependencies.http4sServer),
     libraryDependencies ++= (Dependencies.test ++ Seq(
       Dependencies.http4sBlazeClient,
-      Dependencies.http4sBlazeServer,
-      Dependencies.http4sDsl
+      Dependencies.http4sBlazeServer
     )).map(_ % Test)
   )
   .dependsOn(model, kernel, core, inject, `http4s-common`, `exporter-common` % "test->compile")

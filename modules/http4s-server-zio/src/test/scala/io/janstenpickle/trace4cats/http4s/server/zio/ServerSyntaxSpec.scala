@@ -13,7 +13,7 @@ class ServerSyntaxSpec
       9084,
       λ[Task ~> Id](fa => Runtime.default.unsafeRun(fa)),
       span => λ[ZIOTrace ~> Task](_.provide(span)),
-      _.inject(_),
-      _.inject(_),
+      (routes, filter, ep) => routes.inject(ep, requestFilter = filter),
+      (app, filter, ep) => app.inject(ep, requestFilter = filter),
       Timer[Task]
     )

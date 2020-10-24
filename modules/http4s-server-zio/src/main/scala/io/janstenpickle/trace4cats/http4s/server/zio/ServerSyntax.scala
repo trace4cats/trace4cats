@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.http4s.server.zio
 
 import cats.~>
-import io.janstenpickle.trace4cats.http4s.common.Http4sSpanNamer
+import io.janstenpickle.trace4cats.http4s.common.{Http4sRequestFilter, Http4sSpanNamer}
 import io.janstenpickle.trace4cats.http4s.server.ServerTracer
 import io.janstenpickle.trace4cats.inject.EntryPoint
 import io.janstenpickle.trace4cats.inject.zio.ZIOTrace
@@ -15,6 +15,7 @@ trait ServerSyntax {
     def inject(
       entryPoint: EntryPoint[Task],
       spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath,
+      requestFilter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
       dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
     ): HttpRoutes[Task] =
       ServerTracer.injectRoutes[Task, ZIOTrace](
@@ -23,6 +24,7 @@ trait ServerSyntax {
         λ[Task ~> ZIOTrace](fa => fa),
         span => λ[ZIOTrace ~> Task](_.provide(span)),
         spanNamer,
+        requestFilter,
         dropHeadersWhen
       )
   }
@@ -31,6 +33,7 @@ trait ServerSyntax {
     def inject(
       entryPoint: EntryPoint[Task],
       spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath,
+      requestFilter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
       dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
     ): HttpApp[Task] =
       ServerTracer.injectApp[Task, ZIOTrace](
@@ -39,6 +42,7 @@ trait ServerSyntax {
         λ[Task ~> ZIOTrace](fa => fa),
         span => λ[ZIOTrace ~> Task](_.provide(span)),
         spanNamer,
+        requestFilter,
         dropHeadersWhen
       )
   }
