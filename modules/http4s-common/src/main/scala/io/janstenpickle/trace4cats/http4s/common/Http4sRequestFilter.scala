@@ -3,7 +3,10 @@ package io.janstenpickle.trace4cats.http4s.common
 import org.http4s.Uri
 import org.http4s.dsl.Http4sDsl
 
-object Http4sRequestFilter extends Http4sDsl[AnyK] {
+object Http4sRequestFilter {
+  private object dsl extends Http4sDsl[AnyK]
+  import dsl._
+
   val allowAll: Http4sRequestFilter = {
     case _ => true
   }

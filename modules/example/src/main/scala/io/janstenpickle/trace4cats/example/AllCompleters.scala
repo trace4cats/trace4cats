@@ -38,8 +38,7 @@ object AllCompleters {
       OpenTelemetryOtlpGrpcSpanCompleter[F](process),
       OpenTelemetryOtlpHttpSpanCompleter.blazeClient[F](blocker, process),
       StackdriverGrpcSpanCompleter[F](blocker, process, "gcp-project-id-123"),
-      StackdriverHttpSpanCompleter
-        .blazeClient[F](blocker, process, "gcp-project-id-123", "/path/to/service-account.json")
+      StackdriverHttpSpanCompleter.blazeClient[F](blocker, process)
     ).parSequence.map { completers =>
       (LogSpanCompleter[F] :: completers).combineAll
     }
