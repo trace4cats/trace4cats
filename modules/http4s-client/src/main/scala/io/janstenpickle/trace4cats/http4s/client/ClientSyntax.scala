@@ -8,7 +8,7 @@ import org.http4s.client.Client
 
 trait ClientSyntax {
   implicit class TracedClient[F[_]](client: Client[F]) {
-    def liftTrace(toHeaders: ToHeaders = ToHeaders.w3c, spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath)(
+    def liftTrace(toHeaders: ToHeaders = ToHeaders.all, spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath)(
       implicit F: Sync[F]
     ): Client[Kleisli[F, Span[F], *]] =
       ClientTracer

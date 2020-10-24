@@ -11,6 +11,6 @@ import zio.interop.catz.mtl._
 
 case class TracedBackend[-S, -WS_HANDLER[_]](
   backend: SttpBackend[Task, S, WS_HANDLER],
-  toHeaders: ToHeaders = ToHeaders.w3c,
+  toHeaders: ToHeaders = ToHeaders.all,
   spanNamer: SttpSpanNamer = SttpSpanNamer.methodWithPath
 ) extends BackendTracer[Task, ZIOTrace, S, WS_HANDLER](backend, λ[Task ~> ZIOTrace](fa => fa), toHeaders, spanNamer)

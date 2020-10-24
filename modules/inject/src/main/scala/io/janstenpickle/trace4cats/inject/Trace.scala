@@ -20,7 +20,7 @@ trait Trace[F[_]] {
   def putAll(fields: (String, AttributeValue)*): F[Unit]
   def span[A](name: String)(fa: F[A]): F[A] = span(name, SpanKind.Internal)(fa)
   def span[A](name: String, kind: SpanKind)(fa: F[A]): F[A]
-  def headers: F[Map[String, String]] = headers(ToHeaders.w3c)
+  def headers: F[Map[String, String]] = headers(ToHeaders.all)
   def headers(toHeaders: ToHeaders): F[Map[String, String]]
   def setStatus(status: SpanStatus): F[Unit]
   def traceId: F[Option[String]]

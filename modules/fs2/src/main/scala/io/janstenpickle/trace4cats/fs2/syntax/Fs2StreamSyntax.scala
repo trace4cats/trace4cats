@@ -137,18 +137,18 @@ trait Fs2StreamSyntax {
     )(implicit G: Applicative[G], defer: Defer[G]): WriterT[Stream[G, *], (Fs2EntryPoint[G], SpanContext), A] =
       WriterT(stream.run.translate(fk).map { case ((ep, context), a) => (ep.mapK(fk), context) -> a })
 
-    def traceHeaders: Stream[F, (Map[String, String], A)] = traceHeaders(ToHeaders.w3c)
+    def traceHeaders: Stream[F, (Map[String, String], A)] = traceHeaders(ToHeaders.all)
     def traceHeaders(toHeaders: ToHeaders): Stream[F, (Map[String, String], A)] = stream.run.map {
       case ((_, context), a) => toHeaders.fromContext(context) -> a
     }
 
-    def mapTraceHeaders[B](f: (Map[String, String], A) => B): Stream[F, B] = mapTraceHeaders[B](ToHeaders.w3c)(f)
+    def mapTraceHeaders[B](f: (Map[String, String], A) => B): Stream[F, B] = mapTraceHeaders[B](ToHeaders.all)(f)
     def mapTraceHeaders[B](toHeaders: ToHeaders)(f: (Map[String, String], A) => B): Stream[F, B] = stream.run.map {
       case ((_, context), a) => f(toHeaders.fromContext(context), a)
     }
 
     def evalMapTraceHeaders[B](f: (Map[String, String], A) => F[B])(implicit F: Bracket[F, Throwable]): Stream[F, B] =
-      evalMapTraceHeaders(ToHeaders.w3c)(f)
+      evalMapTraceHeaders(ToHeaders.all)(f)
     def evalMapTraceHeaders[B](
       toHeaders: ToHeaders
     )(f: (Map[String, String], A) => F[B])(implicit F: Bracket[F, Throwable]): Stream[F, B] =

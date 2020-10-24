@@ -17,7 +17,7 @@ object Fs2EntryPoint {
   def apply[F[_]: Sync: Clock](
     sampler: SpanSampler[F],
     completer: SpanCompleter[F],
-    toHeaders: ToHeaders = ToHeaders.w3c
+    toHeaders: ToHeaders
   ): Fs2EntryPoint[F] = new Fs2EntryPoint[F] {
     override def root(name: String, kind: SpanKind): Resource[F, Span[F]] =
       Span.root[F](name, kind, sampler, completer)
