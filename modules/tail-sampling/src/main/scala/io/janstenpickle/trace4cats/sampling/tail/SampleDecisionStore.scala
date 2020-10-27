@@ -23,20 +23,27 @@ object SampleDecisionStore {
 
   def localCache[F[_]: Sync: Clock](ttl: FiniteDuration = 5.minutes): F[SampleDecisionStore[F]] =
     Sync[F]
-      .delay(Caffeine.newBuilder().expireAfterAccess(Duration.ofMillis(ttl.toMillis)).build[TraceId, Boolean])
+      .delay(
+        Caffeine
+          .newBuilder()
+          .expireAfterAccess(Duration.ofMillis(ttl.toMillis))
+          .build[TraceId with Object, Boolean with Object]
+      )
       .map { cache =>
         new SampleDecisionStore[F] {
           override def getDecision(traceId: TraceId): F[Option[Boolean]] =
             Sync[F].delay(Option(cache.getIfPresent(traceId)))
 
           override def storeDecision(traceId: TraceId, sampleDecision: Boolean): F[Unit] =
-            Sync[F].delay(cache.put(traceId, sampleDecision))
+            Sync[F].delay(
+              cache.put(traceId.asInstanceOf[TraceId with Object], sampleDecision.asInstanceOf[Boolean with Object])
+            )
 
           override def batch(traceIds: NonEmptyList[TraceId]): F[Map[TraceId, Boolean]] =
             Sync[F].delay(cache.getAllPresent(traceIds.toList.asJava).asScala.toMap)
 
           override def storeDecisions(decisions: Map[TraceId, Boolean]): F[Unit] =
-            Sync[F].delay(cache.putAll(decisions.asJava))
+            Sync[F].delay(cache.putAll(decisions.asInstanceOf[Map[TraceId with Object, Boolean with Object]].asJava))
         }
 
       }
