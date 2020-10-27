@@ -33,6 +33,8 @@ trait EntryPoint[F[_]] {
 }
 
 object EntryPoint {
+  def apply[F[_]](implicit entryPoint: EntryPoint[F]): EntryPoint[F] = entryPoint
+
   def apply[F[_]: Sync: Clock](
     sampler: SpanSampler[F],
     completer: SpanCompleter[F],

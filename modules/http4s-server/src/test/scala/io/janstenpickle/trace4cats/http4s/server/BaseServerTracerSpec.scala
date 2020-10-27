@@ -11,7 +11,7 @@ import cats.{~>, ApplicativeError, Id}
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.http4s.common.{Http4sRequestFilter, Http4sStatusMapping}
-import io.janstenpickle.trace4cats.inject.EntryPoint
+import io.janstenpickle.trace4cats.inject.{EntryPoint, Provide}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind, SpanStatus}
 import org.http4s.client.blaze.BlazeClientBuilder
@@ -32,11 +32,11 @@ import scala.concurrent.duration._
 abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
   port: Int,
   fkId: F ~> Id,
-  lower: Span[F] => G ~> F,
   injectRoutes: (HttpRoutes[G], Http4sRequestFilter, EntryPoint[F]) => HttpRoutes[F],
   injectApp: (HttpApp[G], Http4sRequestFilter, EntryPoint[F]) => HttpApp[F],
   timer: Timer[F]
-) extends AnyFlatSpec
+)(implicit provide: Provide[F, G])
+    extends AnyFlatSpec
     with ScalaCheckDrivenPropertyChecks
     with Matchers
     with ServerSyntax
@@ -91,7 +91,7 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
     }
 
     val expectedStatus =
-      Http4sStatusMapping.toSpanStatus(fkId(Span.noop[F].use(s => lower(s).apply(response))).status)
+      Http4sStatusMapping.toSpanStatus(fkId(Span.noop[F].use(provide(response))).status)
 
     evaluateTrace(app, app.orNotFound) { spans =>
       spans.size should be(1)

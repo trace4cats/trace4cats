@@ -11,7 +11,7 @@ import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
-import io.janstenpickle.trace4cats.fs2.Fs2EntryPoint
+import io.janstenpickle.trace4cats.fs2.{EntryPointStream, Fs2EntryPoint, TracedStream}
 import io.janstenpickle.trace4cats.fs2.syntax.all._
 import io.janstenpickle.trace4cats.inject.Trace
 import io.janstenpickle.trace4cats.kernel.SpanSampler
@@ -57,13 +57,13 @@ object Fs2Example extends IOApp {
   def sourceStream[F[_]: Functor: Timer]: Stream[F, FiniteDuration] = Stream.awakeEvery[F](10.seconds)
 
   // uses WriterT to inject the Fs2EntryPoint with element in the stream
-  def inject[F[_]: Functor: Timer](ep: Fs2EntryPoint[F]): WriterT[Stream[F, *], Fs2EntryPoint[F], FiniteDuration] =
+  def inject[F[_]: Functor: Timer](ep: Fs2EntryPoint[F]): EntryPointStream[F, FiniteDuration] =
     sourceStream[F].inject(ep)
 
   // after the first call to `evalMap` a `SpanContext` is propagated alongside the entry point
   def doWork[F[_]: Bracket[*[_], Throwable]: Clock](
-    stream: WriterT[Stream[F, *], Fs2EntryPoint[F], FiniteDuration]
-  ): WriterT[Stream[F, *], (Fs2EntryPoint[F], SpanContext), Long] =
+    stream: EntryPointStream[F, FiniteDuration]
+  ): TracedStream[F, Long] =
     stream
     // eval some effect within a span
       .evalMap("this is the root span", SpanKind.Consumer, "optional-attribute" -> true) { dur =>
@@ -71,9 +71,7 @@ object Fs2Example extends IOApp {
       }
 
   // perform a map operation on the underlying stream where each element is traced
-  def map[F[_]: Bracket[*[_], Throwable]: Clock](
-    stream: WriterT[Stream[F, *], (Fs2EntryPoint[F], SpanContext), Long]
-  ): WriterT[Stream[F, *], (Fs2EntryPoint[F], SpanContext), String] =
+  def map[F[_]: Bracket[*[_], Throwable]: Clock](stream: TracedStream[F, Long]): TracedStream[F, String] =
     stream.traceMapChunk("map", "opt-attr-2" -> LongValue(1))(_.toString)
 
   // `evalMapTrace` takes a function which transforms A => Kleisli[F, Span[F], B] and injects a root or child span
@@ -81,7 +79,7 @@ object Fs2Example extends IOApp {
   // evaluation
   def doTracedWork[F[_]: Sync: Parallel: Timer](
     stream: WriterT[Stream[F, *], (Fs2EntryPoint[F], SpanContext), String]
-  ): WriterT[Stream[F, *], (Fs2EntryPoint[F], SpanContext), Unit] =
+  ): TracedStream[F, Unit] =
     stream.evalMapTrace("this is a child span of the root", SpanKind.Consumer) { time =>
       runF[Kleisli[F, Span[F], *]](time)
     }

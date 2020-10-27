@@ -5,10 +5,10 @@ import cats.effect.concurrent.Ref
 import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Sync, Timer}
 import cats.implicits._
 import cats.{~>, Eq, Id}
+import io.janstenpickle.trace4cats.ToHeaders
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
-import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
+import io.janstenpickle.trace4cats.inject.{EntryPoint, Provide, Trace}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
-import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.`WWW-Authenticate`
@@ -29,10 +29,10 @@ import scala.concurrent.duration._
 abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift, G[_]: Sync: Trace](
   port: Int,
   fkId: F ~> Id,
-  lower: Span[F] => G ~> F,
   liftBackend: SttpBackend[F, Nothing, NothingT] => SttpBackend[G, Nothing, NothingT],
   timer: Timer[F]
-) extends AnyFlatSpec
+)(implicit provide: Provide[F, G])
+    extends AnyFlatSpec
     with ScalaCheckDrivenPropertyChecks
     with Matchers
     with Http4sDsl[F] {
@@ -76,13 +76,15 @@ abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift, G[_]:
                   runReq(backend, basicRequest.get(uri"http://localhost:$port").body(body))
 
                 for {
-                  _ <- entryPoint(completer).root(rootSpanName).use { root =>
-                    lower(root)(
-                      Trace[G]
-                        .span(req1SpanName)(req(req1SpanName))
-                        .handleError(_ => ()) >> Trace[G].span(req2SpanName)(req(req2SpanName)).handleError(_ => ())
+                  _ <- entryPoint(completer)
+                    .root(rootSpanName)
+                    .use(
+                      provide(
+                        Trace[G]
+                          .span(req1SpanName)(req(req1SpanName))
+                          .handleError(_ => ()) >> Trace[G].span(req2SpanName)(req(req2SpanName)).handleError(_ => ())
+                      )
                     )
-                  }
                   spans <- completer.get
                   headersMap <- headersRef.get
                 } yield {
