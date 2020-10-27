@@ -65,8 +65,10 @@ lazy val graalSettings = Seq(
     "--initialize-at-build-time=org.slf4j.impl.StaticLoggerBinder",
     "--initialize-at-build-time=org.slf4j.LoggerFactory",
     "--initialize-at-build-time=org.apache.kafka,net.jpountz",
+    "--initialize-at-build-time=com.github.luben.zstd.ZstdInputStream",
+    "--initialize-at-build-time=com.github.luben.zstd.ZstdOutputStream",
     "--initialize-at-run-time=com.sun.management.internal.Flag",
-    "--initialize-at-run-time=com.sun.management.internal.OperatingSystemImpl"
+    "--initialize-at-run-time=com.sun.management.internal.OperatingSystemImpl",
   )
 )
 
@@ -385,10 +387,14 @@ lazy val `avro-kafka-exporter` =
         Dependencies.catsEffect,
         Dependencies.fs2,
         Dependencies.fs2Kafka,
+        Dependencies.kafka,
         Dependencies.log4cats
-      )
+      ),
+      libraryDependencies ++= Dependencies.test ++ Seq(Dependencies.embeddedKafka % Test),
+      classLoaderLayeringStrategy in Test := ClassLoaderLayeringStrategy.ScalaLibrary,
+      classLoaderLayeringStrategy in Test := ClassLoaderLayeringStrategy.Flat
     )
-    .dependsOn(model, kernel, `exporter-common`, avro, `avro-kafka` )
+    .dependsOn(model, kernel, `exporter-common`, avro, `avro-kafka`, test % "test->compile")
 
 lazy val `exporter-stream` =
   (project in file("modules/exporter-stream"))
@@ -439,7 +445,7 @@ lazy val `avro-kafka` =
   (project in file("modules/avro-kafka"))
     .settings(publishSettings)
     .settings(
-      name := "trace4cats-avro-kafka",
+      name := "trace4cats-avro-kafka"
     )
     .dependsOn(model, kernel, avro)
 
@@ -448,9 +454,15 @@ lazy val `avro-kafka-consumer` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-avro-kafka-consumer",
-      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.fs2Kafka, Dependencies.log4cats)
-    )
-    .dependsOn(model, avro, `avro-kafka`, `tail-sampling`)
+      libraryDependencies ++= Seq(
+        Dependencies.catsEffect,
+        Dependencies.fs2,
+        Dependencies.fs2Kafka,
+        Dependencies.kafka,
+        Dependencies.log4cats
+      ),
+      libraryDependencies ++= Seq(Dependencies.embeddedKafka, Dependencies.logback).map(_ % Test))
+    .dependsOn(model, avro, `avro-kafka`, `tail-sampling`, test % "test->compile")
 
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
@@ -528,15 +540,16 @@ lazy val natchez = (project in file("modules/natchez"))
   .dependsOn(model, kernel, core, inject)
 
 lazy val `graal-kafka` = (project in file("modules/graal-kafka"))
-  .settings(noPublishSettings)
+  .settings(publishSettings)
   .settings(
     name := "trace4cats-graal-kafka",
+    publishArtifact in (Compile, packageDoc) := false,
     libraryDependencies ++= Seq(
       Dependencies.svm,
+      Dependencies.kafka,
       Dependencies.micronautCore
     )
   )
-  .dependsOn(`avro-kafka-exporter`)
 
 lazy val agent = (project in file("modules/agent"))
   .settings(noPublishSettings)
@@ -574,7 +587,7 @@ lazy val `tail-sampling` = (project in file("modules/tail-sampling"))
     name := "trace4cats-tail-sampling",
     libraryDependencies ++= Seq(
       Dependencies.catsEffect,
-      Dependencies.scalaCacheCaffeine,
+      Dependencies.caffeine,
       Dependencies.log4cats
     )
   )

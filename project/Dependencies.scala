@@ -2,6 +2,7 @@ import sbt._
 
 object Dependencies {
   object Versions {
+    val caffeine = "2.8.6"
     val cats = "2.2.0"
     val catsMtl = "1.0.0"
     val catsEffect = "2.2.0"
@@ -19,6 +20,7 @@ object Dependencies {
     val http4sJdkClient = "0.3.1"
     val jaeger = "1.4.0"
     val jwt = "3.11.0"
+    val kafka = "2.6.0"
     val kittens = "2.1.0"
     val log4cats = "1.1.1"
     val logback = "1.2.3"
@@ -27,7 +29,6 @@ object Dependencies {
     val openTelemetry = "0.9.1"
     val scala212 = "2.12.12"
     val scala213 = "2.13.3"
-    val scalaCache = "1.0.0-M1"
     val scalapb = "0.10.1"
     val sttp = "2.2.9"
     val svm = "19.2.1"
@@ -42,6 +43,7 @@ object Dependencies {
     val testContainers = "0.37.0"
   }
 
+  lazy val caffeine = "com.github.ben-manes.caffeine"       % "caffeine"                        % Versions.caffeine
   lazy val cats = "org.typelevel"                           %% "cats-core"                      % Versions.cats
   lazy val catsMtl = "org.typelevel"                        %% "cats-mtl"                       % Versions.catsMtl
   lazy val catsEffect = "org.typelevel"                     %% "cats-effect"                    % Versions.catsEffect
@@ -50,6 +52,7 @@ object Dependencies {
   lazy val circeGeneric = "io.circe"                        %% "circe-generic-extras"           % Versions.circe
   lazy val circeParser = "io.circe"                         %% "circe-parser"                   % Versions.circe
   lazy val circeYaml = "io.circe"                           %% "circe-yaml"                     % Versions.circe
+  lazy val embeddedKafka = "io.github.embeddedkafka"        %% "embedded-kafka"                 % Versions.kafka
   lazy val enumeratum = "com.beachape"                      %% "enumeratum"                     % Versions.enumeratum
   lazy val enumeratumCats = "com.beachape"                  %% "enumeratum-cats"                % Versions.enumeratum
   lazy val enumeratumCirce = "com.beachape"                 %% "enumeratum-circe"               % Versions.enumeratum
@@ -71,6 +74,7 @@ object Dependencies {
   lazy val http4sServer = "org.http4s"                      %% "http4s-server"                  % Versions.http4s
   lazy val jaegerThrift = "io.jaegertracing"                % "jaeger-thrift"                   % Versions.jaeger
   lazy val jwt = "com.auth0"                                % "java-jwt"                        % Versions.jwt
+  lazy val kafka = "org.apache.kafka"                       % "kafka-clients"                   % Versions.kafka
   lazy val kittens = "org.typelevel"                        %% "kittens"                        % Versions.kittens
   lazy val log4cats = "io.chrisdavenport"                   %% "log4cats-slf4j"                 % Versions.log4cats
   lazy val logback = "ch.qos.logback"                       % "logback-classic"                 % Versions.logback
@@ -80,7 +84,6 @@ object Dependencies {
   lazy val openTelemetryOtlpExporter = "io.opentelemetry"   % "opentelemetry-exporters-otlp"    % Versions.openTelemetry
   lazy val openTelemetryJaegerExporter = "io.opentelemetry" % "opentelemetry-exporters-jaeger"  % Versions.openTelemetry
   lazy val openTelemetryProto = "io.opentelemetry"          % "opentelemetry-proto"             % Versions.openTelemetry
-  lazy val scalaCacheCaffeine = "com.github.cb372"          %% "scalacache-caffeine"            % Versions.scalaCache
   lazy val scalapbJson = "com.thesamet.scalapb"             %% "scalapb-json4s"                 % Versions.scalapb
   lazy val sttpClient = "com.softwaremill.sttp.client"      %% "cats"                           % Versions.sttp
   lazy val sttpHttp4s = "com.softwaremill.sttp.client"      %% "http4s-backend"                 % Versions.sttp

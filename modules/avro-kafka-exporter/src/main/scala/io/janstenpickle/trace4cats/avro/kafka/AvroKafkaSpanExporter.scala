@@ -13,7 +13,6 @@ import cats.syntax.functor._
 import cats.syntax.show._
 import fs2.kafka._
 import io.chrisdavenport.log4cats.Logger
-import io.janstenpickle.trace4cats.avro.AvroInstances.batchCodec
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.{Batch, TraceId}
 import org.apache.avro.Schema
@@ -59,16 +58,17 @@ object AvroKafkaSpanExporter {
     modifySettings: ProducerSettings[F, TraceId, KafkaSpan] => ProducerSettings[F, TraceId, KafkaSpan] =
       (x: ProducerSettings[F, TraceId, KafkaSpan]) => x
   ): Resource[F, SpanExporter[F]] =
-    Resource.liftF(batchCodec.schema.leftMap(_.throwable).map(valueSerializer[F]).liftTo[F]).flatMap { implicit ser =>
-      producerResource[F]
-        .using(
-          modifySettings(
-            ProducerSettings[F, TraceId, KafkaSpan]
-              .withBlocker(blocker)
-              .withBootstrapServers(bootStrapServers.mkString_(","))
+    Resource.liftF(KafkaSpan.kafkaSpanCodec.schema.leftMap(_.throwable).map(valueSerializer[F]).liftTo[F]).flatMap {
+      implicit ser =>
+        producerResource[F]
+          .using(
+            modifySettings(
+              ProducerSettings[F, TraceId, KafkaSpan]
+                .withBlocker(blocker)
+                .withBootstrapServers(bootStrapServers.mkString_(","))
+            )
           )
-        )
-        .map(fromProducer[F](_, topic))
+          .map(fromProducer[F](_, topic))
     }
 
   def fromProducer[F[_]: ApplicativeError[*[_], Throwable]: Logger](

@@ -18,9 +18,8 @@ package io.janstenpickle.trace4cats.graal;
 
 import com.oracle.svm.core.annotate.*;
 import io.micronaut.core.reflect.InstantiationUtils;
-import org.apache.kafka.common.metrics.KafkaMetric;
-import org.apache.kafka.common.metrics.Metrics;
-import org.apache.kafka.common.metrics.MetricsReporter;
+import org.apache.kafka.common.MetricName;
+import org.apache.kafka.common.metrics.*;
 import org.apache.kafka.common.record.CompressionType;
 import org.apache.kafka.common.utils.AppInfoParser;
 import org.graalvm.nativeimage.hosted.Feature;
@@ -44,7 +43,7 @@ final class ChecksumFeature implements Feature {
     }
 }
 
-@TargetClass(className = "org.apache.kafka.common.utils.Crc32C$" + "Java9ChecksumFactory")
+@TargetClass(className = "org.apache.kafka.common.utils.Crc32C$Java9ChecksumFactory")
 @Substitute
 final class Java9ChecksumFactory {
 
@@ -118,6 +117,34 @@ final class AppInfoParserNoJMX {
 
     @Substitute
     public static void unregisterAppInfo(String prefix, String id, Metrics metrics) {
+        // no-op
+    }
+}
+
+@TargetClass(Metrics.class)
+final class MetricsNoJMX {
+
+    @Substitute
+    public void removeSensor(String name) {
+        // no-op
+    }
+    @Substitute
+    public void addMetric(MetricName metricName, Measurable measurable) {
+        // no-op
+    }
+
+    @Substitute
+    public void addMetric(MetricName metricName, MetricConfig config, Measurable measurable) {
+        // no-op
+    }
+
+    @Substitute
+    public void addMetric(MetricName metricName, MetricConfig config, MetricValueProvider<?> metricValueProvider) {
+        // no-op
+    }
+
+    @Substitute
+    public void addMetric(MetricName metricName, MetricValueProvider<?> metricValueProvider) {
         // no-op
     }
 }

@@ -1,6 +1,5 @@
 package io.janstenpickle.trace4cats.avro.kafka
 
-import cats.Id
 import cats.data.NonEmptyList
 import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Sync, Timer}
 import cats.kernel.Semigroup
@@ -9,12 +8,13 @@ import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
 import cats.syntax.functor._
+import cats.syntax.traverse._
 import cats.syntax.semigroup._
-import fs2.{Pipe, Stream}
 import fs2.kafka._
+import fs2.{Pipe, Stream}
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import io.janstenpickle.trace4cats.model.{AttributeValue, Batch, CompletedSpan, TraceProcess}
+import io.janstenpickle.trace4cats.model._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.io.DecoderFactory
@@ -22,21 +22,27 @@ import org.apache.avro.io.DecoderFactory
 import scala.concurrent.duration._
 
 object AvroKafkaConsumer {
+  implicit def keyDeserializer[F[_]: Sync]: Deserializer[F, Option[TraceId]] = Deserializer.instance { (_, _, bytes) =>
+    Sync[F].delay(Option(bytes).flatMap(TraceId(_)))
+  }
+
   def valueDeserializer[F[_]: Sync: Logger](schema: Schema): Deserializer[F, Option[KafkaSpan]] =
-    Deserializer.instance { (_, _, bytes) =>
-      Sync[F]
-        .delay {
-          val reader = new GenericDatumReader[Any](schema)
-          val decoder = DecoderFactory.get.binaryDecoder(bytes, null)
-          val record = reader.read(null, decoder)
+    Deserializer.instance { (_, _, ba) =>
+      Option(ba).flatTraverse { bytes =>
+        Sync[F]
+          .delay {
+            val reader = new GenericDatumReader[Any](schema)
+            val decoder = DecoderFactory.get.binaryDecoder(bytes, null)
+            val record = reader.read(null, decoder)
 
-          record
-        }
-        .flatMap[Option[KafkaSpan]] { record =>
-          Sync[F].fromEither(KafkaSpan.kafkaSpanCodec.decode(record, schema).bimap(_.throwable, Some(_)))
-        }
-        .handleErrorWith(th => Logger[F].warn(th)("Failed to decode span").as(Option.empty[KafkaSpan]))
+            record
+          }
+          .flatMap[Option[KafkaSpan]] { record =>
+            Sync[F].fromEither(KafkaSpan.kafkaSpanCodec.decode(record, schema).bimap(_.throwable, Some(_)))
+          }
+          .handleErrorWith(th => Logger[F].warn(th)("Failed to decode span").as(Option.empty[KafkaSpan]))
 
+      }
     }
 
   case class BatchConfig(size: Int, timeoutSeconds: Int)
@@ -47,8 +53,9 @@ object AvroKafkaConsumer {
     consumerGroup: String,
     topic: String,
     sink: Pipe[F, Batch, Unit],
-    modifySettings: ConsumerSettings[F, String, Option[KafkaSpan]] => ConsumerSettings[F, String, Option[KafkaSpan]] =
-      (s: ConsumerSettings[F, String, Option[KafkaSpan]]) => s,
+    modifySettings: ConsumerSettings[F, Option[TraceId], Option[KafkaSpan]] => ConsumerSettings[F, Option[TraceId], Option[
+      KafkaSpan
+    ]] = (s: ConsumerSettings[F, Option[TraceId], Option[KafkaSpan]]) => s,
     batch: Option[BatchConfig] = None
   ): Stream[F, Unit] = Stream.eval(Slf4jLogger.create[F]).flatMap { implicit logger =>
     Stream
@@ -58,7 +65,7 @@ object AvroKafkaConsumer {
 
         consumerStream(
           modifySettings(
-            ConsumerSettings[F, String, Option[KafkaSpan]]
+            ConsumerSettings[F, Option[TraceId], Option[KafkaSpan]]
               .withBlocker(blocker)
               .withBootstrapServers(bootStrapServers.mkString_(","))
               .withGroupId(consumerGroup)
@@ -78,12 +85,12 @@ object AvroKafkaConsumer {
     }
 
   def apply[F[_]: Concurrent: Timer](
-    consumer: KafkaConsumer[F, String, Option[KafkaSpan]],
+    consumer: KafkaConsumer[F, Option[TraceId], Option[KafkaSpan]],
     topic: String,
     sink: Pipe[F, Batch, Unit],
     batch: Option[BatchConfig]
   ): Stream[F, Unit] = {
-    val stream = Stream.eval(consumer.subscribe[Id](topic)).flatMap(_ => consumer.stream)
+    val stream = Stream.eval(consumer.subscribeTo(topic)).flatMap(_ => consumer.stream)
 
     batch.fold(stream.chunks)(config => stream.groupWithin(config.size, config.timeoutSeconds.seconds)).evalMap {
       records =>

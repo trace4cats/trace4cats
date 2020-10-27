@@ -119,7 +119,7 @@ abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift, G[_]:
       })
     }
 
-  def entryPoint(completer: SpanCompleter[F]): EntryPoint[F] = EntryPoint[F](SpanSampler.always, completer)
+  def entryPoint(completer: SpanCompleter[F]): EntryPoint[F] = EntryPoint[F](SpanSampler.always[F], completer)
 
   def makeHttpApp(resp: Response[F]): (HttpApp[F], Ref[F, Map[String, Map[String, String]]]) = {
     val headersRef = Ref.unsafe[F, Map[String, Map[String, String]]](Map.empty)
