@@ -110,7 +110,9 @@ lazy val root = (project in file("."))
     `sttp-client`,
     `kafka-client`,
     `graal-kafka`,
-    natchez
+    natchez,
+    `tail-sampling`,
+    `tail-sampling-cache-store`
   )
 
 lazy val model =
