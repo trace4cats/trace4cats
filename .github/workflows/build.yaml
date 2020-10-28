@@ -118,7 +118,7 @@ jobs:
         run: |
           export VERSION=`sbt --error 'print version' | tail -n 1 |  sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'`
 
-          pushd modules/agent/src/main/docker
+          pushd modules/agent-kafka/src/main/docker
           sh build.sh
 
           docker tag janstenpickle/trace4cats-agent-kafka:$GITHUB_RUN_NUMBER janstenpickle/trace4cats-agent-kafka:latest

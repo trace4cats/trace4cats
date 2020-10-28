@@ -103,7 +103,7 @@ object CommonCollector {
       )
 
       exporter <- Resource.liftF(config.sampling.fold(Applicative[F].pure(queuedExporter)) { sampling =>
-        LocalCacheSampleDecisionStore[F](sampling.cacheTtlMinutes.minutes, Some(sampling.maximumCacheSize))
+        LocalCacheSampleDecisionStore[F](sampling.cacheTtlMinutes.minutes, Some(sampling.maxCacheSize))
           .map(TailSpanSampler.probabilistic[F](_, sampling.sampleProbability))
           .map(TailSamplingSpanExporter[F](queuedExporter, _))
       })
