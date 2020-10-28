@@ -1,4 +1,4 @@
-# Trace4Cats ![](https://github.com/janstenpickle/trace4cats/.github/workflows/build.yml/badge.svg) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.janstenpickle/trace4cats-core_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.janstenpickle/trace4cats-core_2.13) [![Join the chat at https://gitter.im/trace4cats/community](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/trace4cats/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) <a href="https://typelevel.org/cats/"><img src="https://typelevel.org/cats/img/cats-badge.svg" height="40px" align="right" alt="Cats friendly" /></a>
+# Trace4Cats ![](https://github.com/janstenpickle/trace4cats/.github/workflows/build.yml/badge.svg) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.janstenpickle/trace4cats-core_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.janstenpickle/trace4cats-core_2.13) [![Join the chat at https://gitter.im/trace4cats/community](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/trace4cats/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) 
 
 Yet another distributed tracing system, this time just for Scala. Heavily relies upon
 [Cats](https://typelevel.org/cats) and [Cats-effect](https://typelevel.org/cats-effect).
@@ -19,10 +19,14 @@ Compatible with [OpenTelemetry] and [Jaeger], based on, and interoperates wht [N
   * [Components](#components)
      * [Agent](#agent)
         * [Running](#running)
+      * [Agent Kafka](#agent-kafka)
+         * [Running](#running-1)
      * [Collector](#collector)
-        * [Running](#running-1)
-     * [Collector Lite](#collector-lite)
+        * [Configuring](#configuring)
         * [Running](#running-2)
+     * [Collector Lite](#collector-lite)
+        * [Configuring](#configuring-1)
+        * [Running](#running-3)
   * [SBT Dependencies](#sbt-dependencies)
   * [Code Examples](#code-examples)
      * [Simple](#simple)
@@ -119,6 +123,17 @@ application. Forwards batches of spans onto the Collector over TCP.
 docker run -it janstenpickle/trace4cats-agent:0.6.0
 ```
 
+### Agent Kafka
+
+A lightweight Avro UDP server, built with [`native-image`] designed to be co-located with a traced
+application. Forwards batches of spans onto a supplied Kafka topic.
+
+#### Running
+
+```bash
+docker run -it janstenpickle/trace4cats-agent-kafka:0.6.0
+```
+
 ### Collector
 
 A standalone server designed to forward spans via various `SpanExporter` implementations. Currently
@@ -128,14 +143,106 @@ the Collector supports the following exporters:
 - [OpenTelemetry] via Protobufs over GRPC and JSON over HTTP
 - Log using [Log4Cats]
 - Trace4Cats Avro over TCP
+- Trace4Cats Avro over Kafka
 - [Stackdriver Trace] over HTTP and GRPC
 - [Datadog] over HTTP
 - [NewRelic] over HTTP
 
+#### Configuring
+
+The Collector is configured using YAML or JSON, all configuration is optional, however you should probably configure
+at least one exporter, set up forwarding or enable span logging.
+
+See Kafka documentation for additional [Kafka consumer config] and [Kafka producer config]
+
+```yaml
+listener:
+  port: 7779 # Change the default lister port
+
+log-spans: true # Log spans to the console, defaults to false
+
+buffer-size: 1000 # How many batches to buffer in case of a slow exporter, defaults to 500
+
+# Optionally configure probability sampling
+sampling:
+  sample-probability: 0.05 # Must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
+  cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
+  max-cache-size: 500000 # Max number of entries in the sample decision cache, defaults to 1000000
+
+# Listen for spans on a Kafka topic
+kafka-listener:
+  group: trace4cats-collector
+  topic: spans
+  bootstrap-servers:
+    - "localhost:9092"
+  # Optional Kafka batching within collector
+  batch:
+    size: 1000 # Maximum number of spans within a batch from kafka
+    timeout-seconds: 10 # How long to linger if batch is < configured size
+  # Optional additional Kafka consumer config
+  consumer-config:
+    key: value
+
+# Forward spans to another collector
+forwarder:
+  host: some-remote-host
+  port: 7777
+
+# Forward spans to a kafka topic
+kafka-forwarder:
+  topic: spans
+  bootstrap-servers:
+    - "localhost:9092"  
+  # Optional additional Kafka producer config
+  producer-config:
+    key: value
+
+# Export to Jaeger
+jaeger:
+  host: jaeger-host
+  port: 9999 # Defaults to 6831
+
+# Export to Jaeger via protbufs
+jaeger-proto:
+  host: jaeger-host
+  port: 9999 # Defaults to 14250
+
+# Export to OpenTelemetry Collector via HTTP
+otlp-http:
+  host: otlp-host
+  port: 9999 # Defaults to 55681
+
+# Export to OpenTelemetry Collector via GRPC
+otlp-grpc
+  host: otlp-host
+  port: 9999 # Defaults to 55680
+
+# Export to Stackdriver via HTTP
+# All config is optional, if running in GCP they will be obtained from the metadata endpoint
+stackdriver-http:
+  project-id: some-project-id
+  credentials-file: /path/to/credentials.json
+  service-account-name: svcacc2 # Defaults to 'default'
+
+# Export to Stackdriver via GRPC
+stackdriver-grpc:
+  project-id: some-project-id
+
+# Export to Datadog agent - All config is optional
+datadog:
+  host: agent-host # defaults to 'localhost'
+  port: 9999 # defaults to 8126
+
+# Export to NewRelic
+new-relic:
+  api-key: 7c1989d1-e019-46bc-a04e-824fdf33b237
+  endpoint: EU # defaults to US, may be a custom endpoint
+```
+
 #### Running
 
 ```bash
-docker run -p7777:7777/udp -it janstenpickle/trace4cats-collector:0.6.0
+docker run -p7777:7777 -p7777:7777/udp -it -v /path/to/your/collector-config.yaml:/tmp/collector.yaml janstenpickle/trace4cats-collector:0.6.0 --config-file=/tmp/collector.yaml
 ```
 
 ### Collector Lite
@@ -147,14 +254,90 @@ GRPC based exporters. Currently Collector lite supports the following exporters:
 - [OpenTelemetry] via JSON over HTTP
 - Log using [Log4Cats]
 - Trace4Cats Avro over TCP
+- Trace4Cats Avro over Kafka
 - [Stackdriver Trace] over HTTP
 - [Datadog] over HTTP
 - [NewRelic] over HTTP
 
+#### Configuring
+
+As with the [Collector](#collector), Collector Lite is configured using YAML or JSON, however not all exporters are
+supported
+
+```yaml
+listener:
+  port: 7779 # Change the default lister port
+
+log-spans: true # Log spans to the console, defaults to false
+
+buffer-size: 1000 # How many batches to buffer in case of a slow exporter, defaults to 500
+
+# Optionally configure probability sampling
+sampling:
+  sample-probability: 0.05 # Must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
+  cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
+  max-cache-size: 500000 # Max number of entries in the sample decision cache, defaults to 1000000
+
+# Listen for spans on a Kafka topic
+kafka-listener:
+  group: trace4cats-collector
+  topic: spans
+  bootstrap-servers:
+    - "localhost:9092"
+  # Optional Kafka batching within collector
+  batch:
+    size: 1000 # Maximum number of spans within a batch from kafka
+    timeout-seconds: 10 # How long to linger if batch is < configured size
+  # Optional additional Kafka consumer config
+  consumer-config:
+    key: value
+
+# Forward spans to another collector
+forwarder:
+  host: some-remote-host
+  port: 7777
+
+# Forward spans to a kafka topic
+kafka-forwarder:
+  topic: spans
+  bootstrap-servers:
+    - "localhost:9092"  
+  # Optional additional Kafka producer config
+  producer-config:
+    key: value
+
+# Export to Jaeger
+jaeger:
+  host: jaeger-host
+  port: 9999 # Defaults to 6831
+
+# Export to OpenTelemetry Collector via HTTP
+otlp-http:
+  host: otlp-host
+  port: 9999 # Defaults to 55681
+
+# Export to Stackdriver via HTTP
+# All config is optional, if running in GCP they will be obtained from the metadata endpoint
+stackdriver-http:
+  project-id: some-project-id
+  credentials-file: /path/to/credentials.json
+  service-account-name: svcacc2 # Defaults to 'default'
+
+# Export to Datadog agent - All config is optional
+datadog:
+  host: agent-host # defaults to 'localhost'
+  port: 9999 # defaults to 8126
+
+# Export to NewRelic
+new-relic:
+  api-key: 7c1989d1-e019-46bc-a04e-824fdf33b237
+  endpoint: EU # defaults to US, may be a custom endpoint
+```
+
 #### Running
 
 ```bash
-docker run -p7777:7777 -p7777:7777/udp -it janstenpickle/trace4cats-collector-lite:0.6.0
+docker run -p7777:7777 -p7777:7777/udp -it -v /path/to/your/collector-config.yaml:/tmp/collector.yaml janstenpickle/trace4cats-collector-lite:0.6.0 --config-file=/tmp/collector.yaml
 ```
 
 ## SBT Dependencies
@@ -167,11 +350,8 @@ To use Trace4Cats within your application add the dependencies listed below as n
 "io.janstenpickle" %% "trace4cats-inject-zio" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-fs2" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-http4s-client" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-client-zio" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-http4s-server" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-server-zio" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-sttp-client" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-sttp-client-zio" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-natchez" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.6.0"
@@ -332,6 +512,7 @@ Requires:
 
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-http4s-client" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-http4s-server" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
@@ -345,8 +526,8 @@ span status is derived from HTTP status codes. Implicit methods on `HttpRoutes` 
 imports:
 
 ```scala
-io.janstenpickle.trace4cats.http4s.server.zio.syntax._
-io.janstenpickle.trace4cats.http4s.client.zio.syntax._
+io.janstenpickle.trace4cats.http4s.server.syntax._
+io.janstenpickle.trace4cats.http4s.client.syntax._
 io.janstenpickle.trace4cats.inject.zio._
 ```
 
@@ -354,8 +535,9 @@ Requires:
 
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-client-zio" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-server-zio" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-inject-zio" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-http4s-client" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-http4s-server" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
 
 ```
@@ -369,6 +551,7 @@ Requires:
 
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-sttp-client" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
 
@@ -383,8 +566,8 @@ Requires:
 
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-client" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-server" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-inject-zio" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-sttp-client" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
 
 ```
@@ -430,3 +613,5 @@ This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-
 [`Resource`]: https://typelevel.org/cats-effect/datatypes/resource.html
 [ZIO]: https://zio.dev
 [Sttp]: https://sttp.softwaremill.com
+[Kafka consumer config]: https://kafka.apache.org/26/javadoc/?org/apache/kafka/clients/consumer/ConsumerConfig.html
+[Kafka producer config]: https://kafka.apache.org/26/javadoc/?org/apache/kafka/clients/producer/ProducerConfig.html

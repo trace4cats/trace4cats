@@ -59,9 +59,16 @@ lazy val graalSettings = Seq(
     "-H:ConfigurationFileDirectories=../../native-image/",
     "--install-exit-handlers",
     "--initialize-at-build-time=scala.runtime.Statics$VM",
+    "--initialize-at-build-time=sun.instrument.InstrumentationImpl",
     "--initialize-at-build-time=scala.Symbol$",
     "--initialize-at-build-time=ch.qos.logback",
-    "--initialize-at-build-time=org.slf4j.LoggerFactory"
+    "--initialize-at-build-time=org.slf4j.impl.StaticLoggerBinder",
+    "--initialize-at-build-time=org.slf4j.LoggerFactory",
+    "--initialize-at-build-time=org.apache.kafka,net.jpountz",
+    "--initialize-at-build-time=com.github.luben.zstd.ZstdInputStream",
+    "--initialize-at-build-time=com.github.luben.zstd.ZstdOutputStream",
+    "--initialize-at-run-time=com.sun.management.internal.Flag",
+    "--initialize-at-run-time=com.sun.management.internal.OperatingSystemImpl",
   )
 )
 
@@ -78,14 +85,16 @@ lazy val root = (project in file("."))
     fs2,
     `http4s-common`,
     `http4s-client`,
-    `http4s-client-zio`,
     `http4s-server`,
-    `http4s-server-zio`,
     `avro-exporter`,
+    `avro-kafka`,
+    `avro-kafka-exporter`,
     `avro-server`,
+    `avro-kafka-consumer`,
     `avro-test`,
     `collector-common`,
     `datadog-http-exporter`,
+    `exporter-stream`,
     `exporter-common`,
     `exporter-http`,
     `log-exporter`,
@@ -99,8 +108,11 @@ lazy val root = (project in file("."))
     `stackdriver-grpc-exporter`,
     `stackdriver-http-exporter`,
     `sttp-client`,
-    `sttp-client-zio`,
-    natchez
+    `kafka-client`,
+    `graal-kafka`,
+    natchez,
+    `tail-sampling`,
+    `tail-sampling-cache-store`
   )
 
 lazy val model =
@@ -137,9 +149,7 @@ lazy val example = (project in file("modules/example"))
     `inject-zio`,
     fs2,
     `http4s-client`,
-    `http4s-client-zio`,
     `http4s-server`,
-    `http4s-server-zio`,
     natchez,
     `avro-exporter`,
     `log-exporter`,
@@ -150,7 +160,6 @@ lazy val example = (project in file("modules/example"))
     `stackdriver-grpc-exporter`,
     `stackdriver-http-exporter`,
     `sttp-client`,
-    `sttp-client-zio`
   )
 
 lazy val test = (project in file("modules/test"))
@@ -371,6 +380,33 @@ lazy val `newrelic-http-exporter` =
     )
     .dependsOn(model, kernel, `exporter-common`, `exporter-http`)
 
+lazy val `avro-kafka-exporter` =
+  (project in file("modules/avro-kafka-exporter"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-avro-kafka-exporter",
+      libraryDependencies ++= Seq(
+        Dependencies.catsEffect,
+        Dependencies.fs2,
+        Dependencies.fs2Kafka,
+        Dependencies.kafka,
+        Dependencies.log4cats
+      ),
+      libraryDependencies ++= Dependencies.test ++ Seq(Dependencies.embeddedKafka % Test),
+      classLoaderLayeringStrategy in Test := ClassLoaderLayeringStrategy.ScalaLibrary,
+      classLoaderLayeringStrategy in Test := ClassLoaderLayeringStrategy.Flat
+    )
+    .dependsOn(model, kernel, `exporter-common`, avro, `avro-kafka`, test % "test->compile")
+
+lazy val `exporter-stream` =
+  (project in file("modules/exporter-stream"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-exporter-stream",
+      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2)
+    )
+    .dependsOn(model, kernel)
+
 lazy val `exporter-common` =
   (project in file("modules/exporter-common"))
     .settings(publishSettings)
@@ -378,7 +414,7 @@ lazy val `exporter-common` =
       name := "trace4cats-exporter-common",
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.log4cats)
     )
-    .dependsOn(model, kernel)
+    .dependsOn(model, kernel, `exporter-stream`)
 
 lazy val `exporter-http` =
   (project in file("modules/exporter-http"))
@@ -407,6 +443,29 @@ lazy val `avro-server` =
     )
     .dependsOn(model, avro)
 
+lazy val `avro-kafka` =
+  (project in file("modules/avro-kafka"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-avro-kafka"
+    )
+    .dependsOn(model, kernel, avro)
+
+lazy val `avro-kafka-consumer` =
+  (project in file("modules/avro-kafka-consumer"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-avro-kafka-consumer",
+      libraryDependencies ++= Seq(
+        Dependencies.catsEffect,
+        Dependencies.fs2,
+        Dependencies.fs2Kafka,
+        Dependencies.kafka,
+        Dependencies.log4cats
+      ),
+      libraryDependencies ++= Seq(Dependencies.embeddedKafka, Dependencies.logback).map(_ % Test))
+    .dependsOn(model, avro, `avro-kafka`, test % "test->compile")
+
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
   .settings(name := "trace4cats-inject")
@@ -414,13 +473,21 @@ lazy val inject = (project in file("modules/inject"))
 
 lazy val `inject-zio` = (project in file("modules/inject-zio"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-inject-zio", libraryDependencies ++= Seq(Dependencies.zioInterop))
+  .settings(name := "trace4cats-inject-zio", libraryDependencies ++= Seq(Dependencies.zioInterop, Dependencies.catsMtl))
   .dependsOn(inject)
 
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
   .settings(name := "trace4cats-fs2", libraryDependencies ++= Seq(Dependencies.fs2))
   .dependsOn(model, kernel, core, inject)
+
+lazy val `kafka-client` = (project in file("modules/kafka-client"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-kafka-client",
+    libraryDependencies ++= Seq(Dependencies.catsMtl, Dependencies.fs2Kafka),
+  )
+  .dependsOn(model, kernel, core, inject, fs2, `exporter-common` % "test->compile")
 
 lazy val `http4s-common` = (project in file("modules/http4s-common"))
   .settings(publishSettings)
@@ -444,19 +511,6 @@ lazy val `sttp-client` = (project in file("modules/sttp-client"))
   )
   .dependsOn(model, kernel, core, inject, `exporter-common` % "test->compile")
 
-lazy val `sttp-client-zio` = (project in file("modules/sttp-client-zio"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-sttp-client-zio",
-    libraryDependencies ++= (Dependencies.test ++ Seq(
-      Dependencies.http4sBlazeClient,
-      Dependencies.http4sBlazeServer,
-      Dependencies.http4sDsl,
-      Dependencies.sttpHttp4s
-    )).map(_ % Test)
-  )
-  .dependsOn(`sttp-client` % "compile->compile;test->test", `inject-zio`)
-
 lazy val `http4s-client` = (project in file("modules/http4s-client"))
   .settings(publishSettings)
   .settings(
@@ -470,18 +524,6 @@ lazy val `http4s-client` = (project in file("modules/http4s-client"))
   )
   .dependsOn(model, kernel, core, inject, `http4s-common`, `exporter-common` % "test->compile")
 
-lazy val `http4s-client-zio` = (project in file("modules/http4s-client-zio"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-http4s-client-zio",
-    libraryDependencies ++= (Dependencies.test ++ Seq(
-      Dependencies.http4sBlazeClient,
-      Dependencies.http4sBlazeServer,
-      Dependencies.http4sDsl
-    )).map(_ % Test)
-  )
-  .dependsOn(`http4s-client` % "compile->compile;test->test", `inject-zio`)
-
 lazy val `http4s-server` = (project in file("modules/http4s-server"))
   .settings(publishSettings)
   .settings(
@@ -494,23 +536,22 @@ lazy val `http4s-server` = (project in file("modules/http4s-server"))
   )
   .dependsOn(model, kernel, core, inject, `http4s-common`, `exporter-common` % "test->compile")
 
-lazy val `http4s-server-zio` = (project in file("modules/http4s-server-zio"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-http4s-server-zio",
-    libraryDependencies ++= Seq(Dependencies.http4sServer),
-    libraryDependencies ++= (Dependencies.test ++ Seq(
-      Dependencies.http4sBlazeClient,
-      Dependencies.http4sBlazeServer,
-      Dependencies.http4sDsl
-    )).map(_ % Test)
-  )
-  .dependsOn(`http4s-server` % "compile->compile;test->test", `inject-zio`)
-
 lazy val natchez = (project in file("modules/natchez"))
   .settings(publishSettings)
   .settings(name := "trace4cats-natchez", libraryDependencies ++= Seq(Dependencies.natchez))
   .dependsOn(model, kernel, core, inject)
+
+lazy val `graal-kafka` = (project in file("modules/graal-kafka"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-graal-kafka",
+    publishArtifact in (Compile, packageDoc) := false,
+    libraryDependencies ++= Seq(
+      Dependencies.svm,
+      Dependencies.kafka,
+      Dependencies.micronautCore
+    )
+  )
 
 lazy val agent = (project in file("modules/agent"))
   .settings(noPublishSettings)
@@ -527,12 +568,49 @@ lazy val agent = (project in file("modules/agent"))
   .dependsOn(model, `avro-exporter`, `avro-server`, `exporter-common`)
   .enablePlugins(GraalVMNativeImagePlugin)
 
+lazy val `agent-kafka` = (project in file("modules/agent-kafka"))
+  .settings(noPublishSettings)
+  .settings(graalSettings)
+  .settings(
+    name := "trace4cats-agent-kafka",
+    libraryDependencies ++= Seq(
+      Dependencies.catsEffect,
+      Dependencies.declineEffect,
+      Dependencies.log4cats,
+      Dependencies.logback
+    )
+  )
+  .dependsOn(model, `avro-exporter`, `avro-kafka-exporter`, `avro-server`, `exporter-common`, `graal-kafka`)
+  .enablePlugins(GraalVMNativeImagePlugin)
+
+lazy val `tail-sampling` = (project in file("modules/tail-sampling"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-tail-sampling",
+    libraryDependencies ++= Seq(
+      Dependencies.catsEffect,
+      Dependencies.log4cats
+    )
+  )
+  .dependsOn(model, kernel, `exporter-stream`)
+
+lazy val `tail-sampling-cache-store` = (project in file("modules/tail-sampling-cache-store"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-tail-sampling-cache-store",
+    libraryDependencies ++= Seq(Dependencies.scaffeine)
+  )
+  .dependsOn(`tail-sampling`)
+
+
 lazy val `collector-common` = (project in file("modules/collector-common"))
   .settings(publishSettings)
   .settings(
     name := "trace4cats-collector-common",
     libraryDependencies ++= Seq(
       Dependencies.catsEffect,
+      Dependencies.circeGeneric,
+      Dependencies.circeYaml,
       Dependencies.declineEffect,
       Dependencies.fs2,
       Dependencies.http4sJdkClient,
@@ -549,7 +627,11 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
     `log-exporter`,
     `opentelemetry-otlp-http-exporter`,
     `stackdriver-http-exporter`,
-    `newrelic-http-exporter`
+    `newrelic-http-exporter`,
+    `avro-kafka-exporter`,
+    `avro-kafka-consumer`,
+    `tail-sampling`,
+    `tail-sampling-cache-store`
   )
 
 lazy val collector = (project in file("modules/collector"))
@@ -612,6 +694,7 @@ lazy val `collector-lite` = (project in file("modules/collector-lite"))
     `jaeger-thrift-exporter`,
     `log-exporter`,
     `opentelemetry-otlp-http-exporter`,
-    `stackdriver-http-exporter`
+    `stackdriver-http-exporter`,
+    `graal-kafka`
   )
   .enablePlugins(GraalVMNativeImagePlugin)

@@ -11,7 +11,7 @@ import io.jaegertracing.thriftjava.{Process, Span, Tag, TagType}
 import io.janstenpickle.trace4cats.`export`.SemanticTags
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.AttributeValue._
-import io.janstenpickle.trace4cats.model.{AttributeValue, Batch, CompletedSpan}
+import io.janstenpickle.trace4cats.model.{AttributeValue, Batch, CompletedSpan, SampleDecision}
 
 import scala.jdk.CollectionConverters._
 import scala.util.Try
@@ -57,7 +57,10 @@ object JaegerSpanExporter {
         ByteBuffer.wrap(span.context.spanId.value).getLong,
         span.context.parent.map(parent => ByteBuffer.wrap(parent.spanId.value).getLong).getOrElse(0),
         span.name,
-        if (span.context.traceFlags.sampled) 1 else 0,
+        span.context.traceFlags.sampled match {
+          case SampleDecision.Include => 0
+          case SampleDecision.Drop => 1
+        },
         startMicros,
         endMicros - startMicros
       )

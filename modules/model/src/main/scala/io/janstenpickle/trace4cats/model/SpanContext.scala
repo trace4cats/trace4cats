@@ -12,7 +12,7 @@ case class SpanContext(
   isRemote: Boolean
 ) {
   def setIsSampled(): SpanContext =
-    copy(traceFlags = traceFlags.copy(sampled = true))
+    copy(traceFlags = traceFlags.copy(sampled = SampleDecision.Drop))
 }
 
 object SpanContext {
@@ -20,7 +20,7 @@ object SpanContext {
     for {
       traceId <- TraceId[F]
       spanId <- SpanId[F]
-    } yield SpanContext(traceId, spanId, None, TraceFlags(false), TraceState.empty, isRemote = false)
+    } yield SpanContext(traceId, spanId, None, TraceFlags(SampleDecision.Include), TraceState.empty, isRemote = false)
 
   def child[F[_]: Defer: MonadError[*[_], Throwable]](parent: SpanContext, isRemote: Boolean = false): F[SpanContext] =
     SpanId[F].map { spanId =>
@@ -35,7 +35,14 @@ object SpanContext {
     }
 
   val invalid: SpanContext =
-    SpanContext(TraceId.invalid, SpanId.invalid, None, TraceFlags(sampled = true), TraceState.empty, isRemote = false)
+    SpanContext(
+      TraceId.invalid,
+      SpanId.invalid,
+      None,
+      TraceFlags(SampleDecision.Drop),
+      TraceState.empty,
+      isRemote = false
+    )
 
   implicit val show: Show[SpanContext] = Show.show { c =>
     val parent = c.parent.fold("")(p => show", parent-id: ${p.spanId}")

@@ -15,9 +15,11 @@ object SttpExample extends IOApp {
       blocker <- Blocker[IO]
       client <- BlazeClientBuilder[IO](blocker.blockingContext).resource
       sttpBackend = Http4sBackend.usingClient(client, blocker)
-      tracedBackend: SttpBackend[Kleisli[IO, Span[IO], *], Nothing, NothingT] = TracedBackend[IO, Nothing, NothingT](
-        sttpBackend
-      )
+      tracedBackend: SttpBackend[Kleisli[IO, Span[IO], *], Nothing, NothingT] = TracedBackend[IO, Kleisli[
+        IO,
+        Span[IO],
+        *
+      ], Nothing, NothingT](sttpBackend)
     } yield tracedBackend).use { _ =>
       IO(ExitCode.Success)
     }

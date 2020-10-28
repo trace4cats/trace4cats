@@ -5,11 +5,11 @@ import cats.effect.concurrent.Ref
 import cats.effect.{Blocker, ConcurrentEffect, Sync, Timer}
 import cats.implicits._
 import cats.{~>, Eq, Id}
+import io.janstenpickle.trace4cats.ToHeaders
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.http4s.common.Http4sStatusMapping
-import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
+import io.janstenpickle.trace4cats.inject.{EntryPoint, Provide, Trace}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
-import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import org.http4s._
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
@@ -29,10 +29,10 @@ import scala.concurrent.duration._
 abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace](
   port: Int,
   fkId: F ~> Id,
-  lower: Span[F] => G ~> F,
   liftClient: Client[F] => Client[G],
   timer: Timer[F]
-) extends AnyFlatSpec
+)(implicit provide: Provide[F, G])
+    extends AnyFlatSpec
     with ScalaCheckDrivenPropertyChecks
     with Matchers
     with Http4sClientDsl[G]
@@ -81,13 +81,15 @@ abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace](
                   runReq(client, GET(body, Uri.unsafeFromString(s"http://localhost:$port")))
 
                 for {
-                  _ <- entryPoint(completer).root(rootSpanName).use { root =>
-                    lower(root)(
-                      Trace[G]
-                        .span(req1SpanName)(req(req1SpanName))
-                        .handleError(_ => ()) >> Trace[G].span(req2SpanName)(req(req2SpanName)).handleError(_ => ())
+                  _ <- entryPoint(completer)
+                    .root(rootSpanName)
+                    .use(
+                      provide(
+                        Trace[G]
+                          .span(req1SpanName)(req(req1SpanName))
+                          .handleError(_ => ()) >> Trace[G].span(req2SpanName)(req(req2SpanName)).handleError(_ => ())
+                      )
                     )
-                  }
                   spans <- completer.get
                   headersMap <- headersRef.get
                 } yield {
@@ -121,7 +123,7 @@ abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace](
       })
     }
 
-  def entryPoint(completer: SpanCompleter[F]): EntryPoint[F] = EntryPoint[F](SpanSampler.always, completer)
+  def entryPoint(completer: SpanCompleter[F]): EntryPoint[F] = EntryPoint[F](SpanSampler.always[F], completer)
 
   def makeHttpApp(resp: Response[F]): (HttpApp[F], Ref[F, Map[String, Map[String, String]]]) = {
     val headersRef = Ref.unsafe[F, Map[String, Map[String, String]]](Map.empty)

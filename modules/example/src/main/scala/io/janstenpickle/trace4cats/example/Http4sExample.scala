@@ -36,7 +36,7 @@ object Http4sExample extends IOApp {
 
       client <- BlazeClientBuilder[IO](blocker.blockingContext).resource
 
-      routes = makeRoutes(client.liftTrace()) // use implicit syntax to lift http client to the trace context
+      routes = makeRoutes[IO](client.liftTrace()) // use implicit syntax to lift http client to the trace context
 
       server <- BlazeServerBuilder[IO](blocker.blockingContext)
         .bindHttp(8080, "0.0.0.0")

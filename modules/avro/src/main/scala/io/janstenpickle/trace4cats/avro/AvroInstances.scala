@@ -27,7 +27,8 @@ object AvroInstances {
     })
     .imapError[TraceState](TraceState(_).toRight(AvroError("Invalid trace state size")))(_.values)
 
-  implicit val traceFlagsCodec: Codec[TraceFlags] = Codec.boolean.imap(TraceFlags(_))(_.sampled)
+  implicit val traceFlagsCodec: Codec[TraceFlags] =
+    Codec.boolean.imap(sampled => TraceFlags(SampleDecision(sampled)))(_.sampled.toBoolean)
 
   implicit val parentCodec: Codec[Parent] = Codec.derive
 

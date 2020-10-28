@@ -8,11 +8,11 @@ private[trace4cats] class W3cToHeaders extends ToHeaders {
   final val stateHeader = "tracestate"
 
   override def toContext(headers: Map[String, String]): Option[SpanContext] = {
-    def splitParent(traceParent: String): Option[(String, String, Boolean)] =
+    def splitParent(traceParent: String): Option[(String, String, SampleDecision)] =
       traceParent.split('-').toList match {
         case _ :: traceId :: spanId :: sampled :: Nil =>
-          if (sampled == "00") Some((traceId, spanId, true))
-          else if (sampled == "01") Some((traceId, spanId, false))
+          if (sampled == "00") Some((traceId, spanId, SampleDecision.Drop))
+          else if (sampled == "01") Some((traceId, spanId, SampleDecision.Include))
           else None
         case _ => None
       }
@@ -44,7 +44,11 @@ private[trace4cats] class W3cToHeaders extends ToHeaders {
   }
 
   override def fromContext(context: SpanContext): Map[String, String] = {
-    val sampled = if (context.traceFlags.sampled) "00" else "01"
+    val sampled = context.traceFlags.sampled match {
+      case SampleDecision.Drop => "00"
+      case SampleDecision.Include => "01"
+    }
+
     val traceParent = show"00-${context.traceId}-${context.spanId}-$sampled"
 
     val traceState = context.traceState.values

@@ -12,7 +12,6 @@ class ServerSyntaxSpec
     extends BaseServerTracerSpec[IO, Kleisli[IO, Span[IO], *]](
       9082,
       λ[IO ~> Id](_.unsafeRunSync()),
-      span => λ[Kleisli[IO, Span[IO], *] ~> IO](_(span)),
       (routes, filter, ep) => routes.inject(ep, requestFilter = filter),
       (app, filter, ep) => app.inject(ep, requestFilter = filter),
       IO.timer(ExecutionContext.global)

@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats
 
 import cats.Eq
-import io.janstenpickle.trace4cats.model.{Parent, SpanContext, SpanId, TraceFlags, TraceId, TraceState}
+import io.janstenpickle.trace4cats.model.{Parent, SampleDecision, SpanContext, SpanId, TraceFlags, TraceId, TraceState}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -43,7 +43,7 @@ class B3ToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wi
         traceId,
         spanId,
         Some(Parent(parentSpanId, isRemote = true)),
-        TraceFlags(sampled = false),
+        TraceFlags(sampled = SampleDecision.Include),
         TraceState.empty,
         isRemote = true
       )

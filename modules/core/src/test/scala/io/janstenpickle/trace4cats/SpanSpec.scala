@@ -52,7 +52,7 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
 
     span.context.parent should be(None)
     span.context.isRemote should be(false)
-    span.context.traceFlags.sampled should be(false)
+    span.context.traceFlags.sampled should be(SampleDecision.Include)
   }
 
   it should "not complete a sampled root span" in forAll { (name: String, kind: SpanKind, status: SpanStatus) =>
@@ -73,7 +73,7 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
         Span
           .child[IO](
             name,
-            parentContext.copy(traceFlags = TraceFlags(sampled = false)),
+            parentContext.copy(traceFlags = TraceFlags(sampled = SampleDecision.Include)),
             kind,
             SpanSampler.always,
             SpanCompleter.empty
@@ -89,7 +89,7 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
         Span
           .child[IO](
             name,
-            parentContext.copy(traceFlags = TraceFlags(sampled = true)),
+            parentContext.copy(traceFlags = TraceFlags(sampled = SampleDecision.Drop)),
             kind,
             SpanSampler.always,
             SpanCompleter.empty
@@ -106,7 +106,7 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
         _ <- Span
           .child[IO](
             name,
-            parentContext.copy(traceFlags = TraceFlags(sampled = false)),
+            parentContext.copy(traceFlags = TraceFlags(sampled = SampleDecision.Include)),
             kind,
             SpanSampler.always,
             completer
@@ -127,7 +127,7 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
         _ <- Span
           .child[IO](
             name,
-            parentContext.copy(traceFlags = TraceFlags(sampled = true)),
+            parentContext.copy(traceFlags = TraceFlags(sampled = SampleDecision.Drop)),
             kind,
             SpanSampler.always,
             completer
@@ -167,13 +167,13 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
 
       spans(1).context.parent should be(None)
       spans(1).context.isRemote should be(false)
-      spans(1).context.traceFlags.sampled should be(false)
+      spans(1).context.traceFlags.sampled should be(SampleDecision.Include)
       spans(1).name should be(name)
       spans(1).kind should be(kind)
 
       spans.head.context.parent should be(Some(Parent(spans(1).context.spanId, isRemote = false)))
       spans.head.context.isRemote should be(false)
-      spans.head.context.traceFlags.sampled should be(false)
+      spans.head.context.traceFlags.sampled should be(SampleDecision.Include)
       spans.head.name should be(childName)
       spans.head.kind should be(childKind)
 
@@ -189,12 +189,12 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
           traceId: TraceId,
           spanName: String,
           spanKind: SpanKind
-        ): IO[Boolean] =
+        ): IO[SampleDecision] =
           IO(if (callCount == 0) {
             callCount = callCount + 1
-            false
+            SampleDecision.Include
           } else {
-            true
+            SampleDecision.Drop
           })
       }
 
@@ -213,7 +213,7 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
 
       spans.head.context.parent should be(None)
       spans.head.context.isRemote should be(false)
-      spans.head.context.traceFlags.sampled should be(false)
+      spans.head.context.traceFlags.sampled should be(SampleDecision.Include)
       spans.head.name should be(name)
       spans.head.kind should be(kind)
   }

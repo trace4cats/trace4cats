@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats
 
-import io.janstenpickle.trace4cats.model.{Parent, SpanContext, SpanId, TraceFlags, TraceId, TraceState}
+import io.janstenpickle.trace4cats.model.{Parent, SampleDecision, SpanContext, SpanId, TraceFlags, TraceId, TraceState}
 import cats.syntax.show._
 
 private[trace4cats] class B3ToHeaders extends ToHeaders {
@@ -23,7 +23,10 @@ private[trace4cats] class B3ToHeaders extends ToHeaders {
     }
 
   override def fromContext(context: SpanContext): Map[String, String] = {
-    val sampled = if (context.traceFlags.sampled) "0" else "1"
+    val sampled = context.traceFlags.sampled match {
+      case SampleDecision.Drop => "0"
+      case SampleDecision.Include => "1"
+    }
 
     Map(traceIdHeader -> context.traceId.show, spanIdHeader -> context.spanId.show, sampledHeader -> sampled) ++ context.parent
       .map { parent =>
