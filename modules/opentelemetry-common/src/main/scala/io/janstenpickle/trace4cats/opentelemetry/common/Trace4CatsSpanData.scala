@@ -23,7 +23,7 @@ object Trace4CatsSpanData {
 
     override lazy val getSpanId: String = span.context.spanId.show
 
-    override lazy val isSampled: Boolean = span.context.traceFlags.sampled
+    override lazy val isSampled: Boolean = span.context.traceFlags.sampled.toBoolean
 
     override lazy val getTraceState: TraceState =
       span.context.traceState.values

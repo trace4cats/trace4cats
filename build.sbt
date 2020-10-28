@@ -462,7 +462,7 @@ lazy val `avro-kafka-consumer` =
         Dependencies.log4cats
       ),
       libraryDependencies ++= Seq(Dependencies.embeddedKafka, Dependencies.logback).map(_ % Test))
-    .dependsOn(model, avro, `avro-kafka`, `tail-sampling`, test % "test->compile")
+    .dependsOn(model, avro, `avro-kafka`, test % "test->compile")
 
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
@@ -587,11 +587,18 @@ lazy val `tail-sampling` = (project in file("modules/tail-sampling"))
     name := "trace4cats-tail-sampling",
     libraryDependencies ++= Seq(
       Dependencies.catsEffect,
-      Dependencies.log4cats,
-      Dependencies.scaffeine
+      Dependencies.log4cats
     )
   )
   .dependsOn(model, kernel, `exporter-stream`)
+
+lazy val `tail-sampling-cache-store` = (project in file("modules/tail-sampling-cache-store"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-tail-sampling-cache-store",
+    libraryDependencies ++= Seq(Dependencies.scaffeine)
+  )
+  .dependsOn(`tail-sampling`)
 
 
 lazy val `collector-common` = (project in file("modules/collector-common"))
@@ -620,7 +627,9 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
     `stackdriver-http-exporter`,
     `newrelic-http-exporter`,
     `avro-kafka-exporter`,
-    `avro-kafka-consumer`
+    `avro-kafka-consumer`,
+    `tail-sampling`,
+    `tail-sampling-cache-store`
   )
 
 lazy val collector = (project in file("modules/collector"))

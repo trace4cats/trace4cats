@@ -17,8 +17,11 @@ import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.log.LogSpanExporter
 import io.janstenpickle.trace4cats.newrelic.NewRelicSpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpHttpSpanExporter
-import io.janstenpickle.trace4cats.sampling.tail.{SampleDecisionStore, TailSamplingSpanExporter, TailSpanSampler}
+import io.janstenpickle.trace4cats.sampling.tail.cache.LocalCacheSampleDecisionStore
+import io.janstenpickle.trace4cats.sampling.tail.{TailSamplingSpanExporter, TailSpanSampler}
 import io.janstenpickle.trace4cats.strackdriver.StackdriverHttpSpanExporter
+
+import scala.concurrent.duration._
 
 object CommonCollector {
   val configFileOpt: Opts[String] =
@@ -100,10 +103,9 @@ object CommonCollector {
       )
 
       exporter <- Resource.liftF(config.sampling.fold(Applicative[F].pure(queuedExporter)) { sampling =>
-        SampleDecisionStore.localCache[F]().map(TailSpanSampler.probabilistic[F](sampling.sampleProbability, _)).map {
-          sampler =>
-            TailSamplingSpanExporter[F](queuedExporter, sampler)
-        }
+        LocalCacheSampleDecisionStore[F](sampling.cacheTtlMinutes.minutes, Some(sampling.maximumCacheSize))
+          .map(TailSpanSampler.probabilistic[F](_, sampling.sampleProbability))
+          .map(TailSamplingSpanExporter[F](queuedExporter, _))
       })
 
       tcp <- AvroServer.tcp[F](blocker, exporter.pipe, config.listener.port)

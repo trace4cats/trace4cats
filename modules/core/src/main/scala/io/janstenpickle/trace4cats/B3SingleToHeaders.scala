@@ -20,7 +20,10 @@ private[trace4cats] class B3SingleToHeaders extends ToHeaders {
     }
 
   override def fromContext(context: SpanContext): Map[String, String] = {
-    val sampled = if (context.traceFlags.sampled) "0" else "1"
+    val sampled = context.traceFlags.sampled match {
+      case SampleDecision.Drop => "0"
+      case SampleDecision.Include => "1"
+    }
 
     val header = show"${context.traceId}-${context.spanId}-$sampled"
 

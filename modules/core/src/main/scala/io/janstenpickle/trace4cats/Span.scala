@@ -105,6 +105,7 @@ object Span {
       .liftF(
         sampler
           .shouldSample(parent, context.traceId, name, kind)
+          .map(_.toBoolean)
       )
       .ifM(
         Resource.liftF(Applicative[F].pure(EmptySpan[F](context.setIsSampled()))),

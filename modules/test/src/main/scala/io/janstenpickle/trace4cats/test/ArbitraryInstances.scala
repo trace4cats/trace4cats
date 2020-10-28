@@ -2,7 +2,15 @@ package io.janstenpickle.trace4cats.test
 
 import java.time.Instant
 
-import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, SpanId, TraceId, TraceProcess, TraceState}
+import io.janstenpickle.trace4cats.model.{
+  Batch,
+  CompletedSpan,
+  SampleDecision,
+  SpanId,
+  TraceId,
+  TraceProcess,
+  TraceState
+}
 import org.scalacheck.{Arbitrary, Gen, ScalacheckShapeless}
 
 trait ArbitraryInstances extends ScalacheckShapeless {
@@ -16,6 +24,8 @@ trait ArbitraryInstances extends ScalacheckShapeless {
     size <- Gen.choose(1, 5)
     chars <- Gen.listOfN(size, Gen.alphaNumChar)
   } yield new String(chars.toArray))
+
+  implicit val sampleArb: Arbitrary[SampleDecision] = Arbitrary(Gen.oneOf(SampleDecision.Include, SampleDecision.Drop))
 
   implicit val spanIdArb: Arbitrary[SpanId] = Arbitrary(byteArray(8).map(SpanId(_).get))
   implicit val traceIdArb: Arbitrary[TraceId] = Arbitrary(byteArray(16).map(TraceId(_).get))
