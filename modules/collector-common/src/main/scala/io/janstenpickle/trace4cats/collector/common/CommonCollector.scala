@@ -5,16 +5,18 @@ import cats.implicits._
 import cats.{Applicative, Parallel}
 import com.monovore.decline._
 import fs2.Stream
+import fs2.kafka.ConsumerSettings
 import io.chrisdavenport.log4cats.Logger
 import io.janstenpickle.trace4cats.`export`.QueuedSpanExporter
 import io.janstenpickle.trace4cats.avro._
-import io.janstenpickle.trace4cats.avro.kafka.{AvroKafkaConsumer, AvroKafkaSpanExporter}
+import io.janstenpickle.trace4cats.avro.kafka.{AvroKafkaConsumer, AvroKafkaSpanExporter, KafkaSpan}
 import io.janstenpickle.trace4cats.avro.server.AvroServer
 import io.janstenpickle.trace4cats.collector.common.config.{CommonCollectorConfig, ConfigParser, StackdriverHttpConfig}
 import io.janstenpickle.trace4cats.datadog.DataDogSpanExporter
 import io.janstenpickle.trace4cats.jaeger.JaegerSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.log.LogSpanExporter
+import io.janstenpickle.trace4cats.model.TraceId
 import io.janstenpickle.trace4cats.newrelic.NewRelicSpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpHttpSpanExporter
 import io.janstenpickle.trace4cats.sampling.tail.cache.LocalCacheSampleDecisionStore
@@ -85,7 +87,8 @@ object CommonCollector {
 
       kafkaExporter <- config.kafkaForwarder
         .traverse { kafka =>
-          AvroKafkaSpanExporter[F](blocker, kafka.bootstrapServers, kafka.topic).map("Kafka" -> _)
+          AvroKafkaSpanExporter[F](blocker, kafka.bootstrapServers, kafka.topic, _.withProperties(kafka.producerConfig))
+            .map("Kafka" -> _)
         }
 
       queuedExporter <- QueuedSpanExporter(
@@ -119,7 +122,8 @@ object CommonCollector {
           kafka.group,
           kafka.topic,
           exporter.pipe,
-          batch = kafka.batch
+          (s: ConsumerSettings[F, Option[TraceId], Option[KafkaSpan]]) => s.withProperties(kafka.consumerConfig),
+          kafka.batch
         )
       }
     } yield kafka.fold(network)(network.concurrently(_))

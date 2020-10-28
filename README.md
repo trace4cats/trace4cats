@@ -153,6 +153,8 @@ the Collector supports the following exporters:
 The Collector is configured using YAML or JSON, all configuration is optional, however you should probably configure
 at least one exporter, set up forwarding or enable span logging.
 
+See Kafka documentation for additional [Kafka consumer config] and [Kafka producer config]
+
 ```yaml
 listener:
   port: 7779 # Change the default lister port
@@ -167,12 +169,19 @@ sampling:
   cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
   max-cache-size: 500000 # Max number of entries in the sample decision cache, defaults to 1000000
 
-# Listen for spans on a kafka topic
+# Listen for spans on a Kafka topic
 kafka-listener:
   group: trace4cats-collector
   topic: spans
   bootstrap-servers:
     - "localhost:9092"
+  # Optional Kafka batching within collector
+  batch:
+    size: 1000 # Maximum number of spans within a batch from kafka
+    timeout-seconds: 10 # How long to linger if batch is < configured size
+  # Optional additional Kafka consumer config
+  consumer-config:
+    key: value
 
 # Forward spans to another collector
 forwarder:
@@ -184,6 +193,9 @@ kafka-forwarder:
   topic: spans
   bootstrap-servers:
     - "localhost:9092"  
+  # Optional additional Kafka producer config
+  producer-config:
+    key: value
 
 # Export to Jaeger
 jaeger:
@@ -266,12 +278,19 @@ sampling:
   cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
   max-cache-size: 500000 # Max number of entries in the sample decision cache, defaults to 1000000
 
-# Listen for spans on a kafka topic
+# Listen for spans on a Kafka topic
 kafka-listener:
   group: trace4cats-collector
   topic: spans
   bootstrap-servers:
     - "localhost:9092"
+  # Optional Kafka batching within collector
+  batch:
+    size: 1000 # Maximum number of spans within a batch from kafka
+    timeout-seconds: 10 # How long to linger if batch is < configured size
+  # Optional additional Kafka consumer config
+  consumer-config:
+    key: value
 
 # Forward spans to another collector
 forwarder:
@@ -283,6 +302,9 @@ kafka-forwarder:
   topic: spans
   bootstrap-servers:
     - "localhost:9092"  
+  # Optional additional Kafka producer config
+  producer-config:
+    key: value
 
 # Export to Jaeger
 jaeger:
@@ -490,6 +512,7 @@ Requires:
 
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-http4s-client" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-http4s-server" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
@@ -503,8 +526,8 @@ span status is derived from HTTP status codes. Implicit methods on `HttpRoutes` 
 imports:
 
 ```scala
-io.janstenpickle.trace4cats.http4s.server.zio.syntax._
-io.janstenpickle.trace4cats.http4s.client.zio.syntax._
+io.janstenpickle.trace4cats.http4s.server.syntax._
+io.janstenpickle.trace4cats.http4s.client.syntax._
 io.janstenpickle.trace4cats.inject.zio._
 ```
 
@@ -512,8 +535,9 @@ Requires:
 
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-client-zio" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-server-zio" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-inject-zio" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-http4s-client" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-http4s-server" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
 
 ```
@@ -527,6 +551,7 @@ Requires:
 
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-sttp-client" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
 
@@ -541,8 +566,8 @@ Requires:
 
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-client" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-server" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-inject-zio" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-sttp-client" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
 
 ```
@@ -588,3 +613,5 @@ This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-
 [`Resource`]: https://typelevel.org/cats-effect/datatypes/resource.html
 [ZIO]: https://zio.dev
 [Sttp]: https://sttp.softwaremill.com
+[Kafka consumer config]: https://kafka.apache.org/26/javadoc/?org/apache/kafka/clients/consumer/ConsumerConfig.html
+[Kafka producer config]: https://kafka.apache.org/26/javadoc/?org/apache/kafka/clients/producer/ProducerConfig.html

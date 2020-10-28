@@ -35,6 +35,7 @@ case class KafkaListenerConfig(
   bootstrapServers: NonEmptyList[String],
   topic: String,
   group: String,
+  consumerConfig: Map[String, String] = Map.empty,
   batch: Option[BatchConfig] = None
 )
 object KafkaListenerConfig {
@@ -47,7 +48,11 @@ object ForwarderConfig {
   implicit val decoder: Decoder[ForwarderConfig] = deriveConfiguredDecoder
 }
 
-case class KafkaForwarderConfig(bootstrapServers: NonEmptyList[String], topic: String)
+case class KafkaForwarderConfig(
+  bootstrapServers: NonEmptyList[String],
+  topic: String,
+  producerConfig: Map[String, String] = Map.empty
+)
 object KafkaForwarderConfig {
   implicit val decoder: Decoder[KafkaForwarderConfig] = deriveConfiguredDecoder
 }
