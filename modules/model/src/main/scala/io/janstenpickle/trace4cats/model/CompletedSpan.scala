@@ -31,5 +31,5 @@ object CompletedSpan {
   }
 
   implicit val instant: Eq[Instant] = Eq.fromUniversalEquals
-  implicit val eq: Eq[CompletedSpan] = cats.derived.semi.eq[CompletedSpan]
+  implicit val eq: Eq[CompletedSpan] = cats.derived.semiauto.eq[CompletedSpan]
 }

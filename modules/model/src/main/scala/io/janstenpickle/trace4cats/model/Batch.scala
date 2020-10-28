@@ -12,5 +12,5 @@ object Batch {
           |${batch.spans.map(_.show).map(s => s"  $s").mkString("")}""".stripMargin
   }
 
-  implicit val eq: Eq[Batch] = cats.derived.semi.eq[Batch]
+  implicit val eq: Eq[Batch] = cats.derived.semiauto.eq[Batch]
 }
