@@ -12,6 +12,7 @@ object Http4sRequestFilter {
   }
 
   val kubernetes: Http4sRequestFilter = {
+    case GET -> Root / "readiness" => false
     case GET -> Root / "liveness" => false
     case GET -> Root / "healthcheck" => false
   }
