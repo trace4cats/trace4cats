@@ -1,5 +1,83 @@
 [
 {
+  "name":"ch.qos.logback.classic.encoder.PatternLayoutEncoder",
+  "allPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.pattern.DateConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.pattern.LevelConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.pattern.LineSeparatorConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.pattern.LoggerConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.pattern.MessageConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.pattern.ThreadConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.core.ConsoleAppender",
+  "allPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.fasterxml.jackson.databind.ext.Java7SupportImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.BLCHeader$DrainStatusRef",
+  "fields":[{"name":"drainStatus", "allowUnsafeAccess":true}]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.BaseMpscLinkedArrayQueueColdProducerFields",
+  "fields":[{"name":"producerLimit", "allowUnsafeAccess":true}]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.BaseMpscLinkedArrayQueueConsumerFields",
+  "fields":[{"name":"consumerIndex", "allowUnsafeAccess":true}]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.BaseMpscLinkedArrayQueueProducerFields",
+  "fields":[{"name":"producerIndex", "allowUnsafeAccess":true}]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.PS",
+  "fields":[
+    {"name":"key", "allowUnsafeAccess":true}, 
+    {"name":"value", "allowUnsafeAccess":true}
+  ]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.PSA",
+  "fields":[{"name":"accessTime", "allowUnsafeAccess":true}],
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.SSA",
+  "methods":[{"name":"<init>","parameterTypes":["com.github.benmanes.caffeine.cache.Caffeine","com.github.benmanes.caffeine.cache.CacheLoader","boolean"] }]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.StripedBuffer",
+  "fields":[{"name":"tableBusy", "allowUnsafeAccess":true}]
+},
+{
+  "name":"com.intellij.rt.execution.application.AppMainV2$Agent",
+  "methods":[{"name":"premain","parameterTypes":["java.lang.String","java.lang.instrument.Instrumentation"] }]
+},
+{
   "name":"com.sun.crypto.provider.TlsMasterSecretGenerator",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -44,6 +122,10 @@
   "allPublicConstructors":true
 },
 {
+  "name":"com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"java.io.FilePermission"
 },
 {
@@ -86,14 +168,17 @@
   "allPublicMethods":true
 },
 {
+  "name":"java.lang.StackTraceElement[]"
+},
+{
   "name":"java.lang.String"
 },
 {
   "name":"java.lang.String[]"
 },
 {
-  "name":"java.lang.Throwable",
-  "methods":[{"name":"getSuppressed","parameterTypes":[] }]
+  "name":"java.lang.Thread",
+  "fields":[{"name":"threadLocalRandomProbe", "allowUnsafeAccess":true}]
 },
 {
   "name":"java.lang.Void",
@@ -253,6 +338,10 @@
   "allPublicMethods":true
 },
 {
+  "name":"org.apache.kafka.clients.consumer.RangeAssignor",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"org.apache.kafka.clients.producer.internals.DefaultPartitioner",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -299,6 +388,10 @@
 {
   "name":"sun.management.RuntimeImpl",
   "allPublicConstructors":true
+},
+{
+  "name":"sun.misc.Unsafe",
+  "fields":[{"name":"theUnsafe"}]
 },
 {
   "name":"sun.security.pkcs12.PKCS12KeyStore",
@@ -387,24 +480,5 @@
 {
   "name":"sun.security.x509.SubjectKeyIdentifierExtension",
   "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
-},
-{
-  "name":"com.fasterxml.jackson.databind.ext.Java7SupportImpl",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.fasterxml.jackson.databind.ser.Serializers[]"
-},
-{
-  "name":"java.lang.String[]"
-},
-{
-  "name":"java.lang.invoke.VarHandle"
-},
-{
-  "name":"scala.Symbol"
-},
-{
-  "name":"scala.util.Either[]"
 }
 ]
