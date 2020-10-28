@@ -2,6 +2,7 @@ import sbt._
 
 object Dependencies {
   object Versions {
+    val ahoCorasick = "1.2.2"
     val cats = "2.2.0"
     val catsMtl = "1.0.0"
     val catsEffect = "2.2.0"
@@ -43,6 +44,7 @@ object Dependencies {
     val testContainers = "0.37.0"
   }
 
+  lazy val ahoCorasick = "com.hankcs"                       % "aho-corasick-double-array-trie"  % Versions.ahoCorasick
   lazy val cats = "org.typelevel"                           %% "cats-core"                      % Versions.cats
   lazy val catsMtl = "org.typelevel"                        %% "cats-mtl"                       % Versions.catsMtl
   lazy val catsEffect = "org.typelevel"                     %% "cats-effect"                    % Versions.catsEffect

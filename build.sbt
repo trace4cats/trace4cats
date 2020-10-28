@@ -112,7 +112,8 @@ lazy val root = (project in file("."))
     `graal-kafka`,
     natchez,
     `tail-sampling`,
-    `tail-sampling-cache-store`
+    `tail-sampling-cache-store`,
+    filtering
   )
 
 lazy val model =
@@ -582,6 +583,19 @@ lazy val `agent-kafka` = (project in file("modules/agent-kafka"))
   )
   .dependsOn(model, `avro-exporter`, `avro-kafka-exporter`, `avro-server`, `exporter-common`, `graal-kafka`)
   .enablePlugins(GraalVMNativeImagePlugin)
+
+lazy val filtering = (project in file("modules/filtering"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-filtering",
+    libraryDependencies ++= Seq(
+      Dependencies.ahoCorasick,
+      Dependencies.catsEffect,
+      Dependencies.fs2,
+      Dependencies.log4cats
+    )
+  )
+  .dependsOn(model, kernel, `exporter-stream`)
 
 lazy val `tail-sampling` = (project in file("modules/tail-sampling"))
   .settings(publishSettings)
