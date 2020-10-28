@@ -2,7 +2,6 @@ import sbt._
 
 object Dependencies {
   object Versions {
-    val caffeine = "2.8.6"
     val cats = "2.2.0"
     val catsMtl = "1.0.0"
     val catsEffect = "2.2.0"
@@ -27,6 +26,7 @@ object Dependencies {
     val micronaut = "2.1.2"
     val natchez = "0.0.13"
     val openTelemetry = "0.9.1"
+    val scaffeine = "4.0.2"
     val scala212 = "2.12.12"
     val scala213 = "2.13.3"
     val scalapb = "0.10.1"
@@ -43,7 +43,6 @@ object Dependencies {
     val testContainers = "0.37.0"
   }
 
-  lazy val caffeine = "com.github.ben-manes.caffeine"       % "caffeine"                        % Versions.caffeine
   lazy val cats = "org.typelevel"                           %% "cats-core"                      % Versions.cats
   lazy val catsMtl = "org.typelevel"                        %% "cats-mtl"                       % Versions.catsMtl
   lazy val catsEffect = "org.typelevel"                     %% "cats-effect"                    % Versions.catsEffect
@@ -84,6 +83,7 @@ object Dependencies {
   lazy val openTelemetryOtlpExporter = "io.opentelemetry"   % "opentelemetry-exporters-otlp"    % Versions.openTelemetry
   lazy val openTelemetryJaegerExporter = "io.opentelemetry" % "opentelemetry-exporters-jaeger"  % Versions.openTelemetry
   lazy val openTelemetryProto = "io.opentelemetry"          % "opentelemetry-proto"             % Versions.openTelemetry
+  lazy val scaffeine = "com.github.blemale"                 %% "scaffeine"                      % Versions.scaffeine
   lazy val scalapbJson = "com.thesamet.scalapb"             %% "scalapb-json4s"                 % Versions.scalapb
   lazy val sttpClient = "com.softwaremill.sttp.client"      %% "cats"                           % Versions.sttp
   lazy val sttpHttp4s = "com.softwaremill.sttp.client"      %% "http4s-backend"                 % Versions.sttp

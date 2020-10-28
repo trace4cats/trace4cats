@@ -587,8 +587,8 @@ lazy val `tail-sampling` = (project in file("modules/tail-sampling"))
     name := "trace4cats-tail-sampling",
     libraryDependencies ++= Seq(
       Dependencies.catsEffect,
-      Dependencies.caffeine,
-      Dependencies.log4cats
+      Dependencies.log4cats,
+      Dependencies.scaffeine
     )
   )
   .dependsOn(model, kernel, `exporter-stream`)
