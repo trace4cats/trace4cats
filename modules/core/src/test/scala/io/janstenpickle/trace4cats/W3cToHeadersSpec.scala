@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats
 
 import cats.kernel.Eq
-import io.janstenpickle.trace4cats.model.{SpanContext, SpanId, TraceFlags, TraceId, TraceState}
+import io.janstenpickle.trace4cats.model.{SampleDecision, SpanContext, SpanId, TraceFlags, TraceId, TraceState}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -24,7 +24,15 @@ class W3cToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks w
     val expected = for {
       traceId <- TraceId.fromHexString("4bf92f3577b34da6a3ce929d0e0e4736")
       spanId <- SpanId.fromHexString("00f067aa0ba902b7")
-    } yield SpanContext(traceId, spanId, None, TraceFlags(sampled = false), TraceState.empty, isRemote = true)
+    } yield
+      SpanContext(
+        traceId,
+        spanId,
+        None,
+        TraceFlags(sampled = SampleDecision.Include),
+        TraceState.empty,
+        isRemote = true
+      )
 
     assert(Eq[Option[SpanContext]].eqv(w3c.toContext(headers), expected))
   }
@@ -43,7 +51,8 @@ class W3cToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks w
       key2 <- TraceState.Key("congo")
       value2 <- TraceState.Value("t61rcWkgMzE")
       traceState <- TraceState(Map(key1 -> value1, key2 -> value2))
-    } yield SpanContext(traceId, spanId, None, TraceFlags(sampled = false), traceState, isRemote = true)
+    } yield
+      SpanContext(traceId, spanId, None, TraceFlags(sampled = SampleDecision.Include), traceState, isRemote = true)
 
     assert(Eq[Option[SpanContext]].eqv(w3c.toContext(headers), expected))
   }

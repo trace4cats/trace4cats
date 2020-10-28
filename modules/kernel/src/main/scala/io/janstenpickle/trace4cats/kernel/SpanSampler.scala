@@ -44,7 +44,7 @@ object SpanSampler {
         spanName: String,
         spanKind: SpanKind
       ): F[SampleDecision] = primary.shouldSample(parentContext, traceId, spanName, spanKind).flatMap {
-        case drop @ SampleDecision.Drop => Applicative[F].pure(drop)
+        case SampleDecision.Drop => Applicative[F].pure(SampleDecision.Drop)
         case SampleDecision.Include => secondary.shouldSample(parentContext, traceId, spanName, spanKind)
       }
     }
@@ -71,7 +71,7 @@ object SpanSampler {
       case SampleDecision.Include =>
         if (rootSpansOnly) SampleDecision.Include
         else shouldSample
-      case s @ SampleDecision.Drop => s
+      case SampleDecision.Drop => SampleDecision.Drop
     }
   }
 

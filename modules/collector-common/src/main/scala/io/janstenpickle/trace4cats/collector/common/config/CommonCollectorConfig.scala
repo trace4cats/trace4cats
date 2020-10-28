@@ -86,7 +86,7 @@ object NewRelicConfig {
   implicit val decoder: Decoder[NewRelicConfig] = deriveConfiguredDecoder
 }
 
-case class SamplingConfig(sampleProbability: Double, cacheTtlMinutes: Int = 2, maxCacheSize: Long = 1_000_000)
+case class SamplingConfig(sampleProbability: Double, cacheTtlMinutes: Int = 2, maxCacheSize: Long = 1000000)
 object SamplingConfig {
   implicit val decoder: Decoder[SamplingConfig] = deriveConfiguredDecoder
 }

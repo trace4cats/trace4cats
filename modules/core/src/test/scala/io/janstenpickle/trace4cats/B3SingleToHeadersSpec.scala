@@ -38,7 +38,7 @@ class B3SingleToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChe
         traceId,
         spanId,
         Some(Parent(parentSpanId, isRemote = true)),
-        TraceFlags(sampled = false),
+        TraceFlags(sampled = SampleDecision.Include),
         TraceState.empty,
         isRemote = true
       )

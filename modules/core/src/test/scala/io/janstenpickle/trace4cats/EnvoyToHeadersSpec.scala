@@ -21,7 +21,7 @@ class EnvoyToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks
           spanContext.copy(
             parent = spanContext.parent.map(_.copy(isRemote = true)),
             traceState = TraceState.empty,
-            traceFlags = TraceFlags(sampled = false),
+            traceFlags = TraceFlags(sampled = SampleDecision.Include),
             isRemote = true
           )
         )
@@ -41,7 +41,7 @@ class EnvoyToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks
         traceId,
         spanId,
         Some(Parent(parentSpanId, isRemote = true)),
-        TraceFlags(sampled = false),
+        TraceFlags(sampled = SampleDecision.Include),
         TraceState.empty,
         isRemote = true
       )
@@ -55,7 +55,15 @@ class EnvoyToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks
     val expected = for {
       traceId <- TraceId.fromHexString("80f198ee56343ba864fe8b2a57d3eff7")
       spanId <- SpanId.fromHexString("e457b5a2e4d86bd1")
-    } yield SpanContext(traceId, spanId, None, TraceFlags(sampled = false), TraceState.empty, isRemote = true)
+    } yield
+      SpanContext(
+        traceId,
+        spanId,
+        None,
+        TraceFlags(sampled = SampleDecision.Include),
+        TraceState.empty,
+        isRemote = true
+      )
 
     assert(Eq.eqv(envoy.toContext(headers), expected))
   }
@@ -75,7 +83,7 @@ class EnvoyToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks
         traceId,
         spanId,
         None,
-        TraceFlags(sampled = false),
+        TraceFlags(sampled = SampleDecision.Include),
         TraceState(Map(TraceState.Key.unsafe("envoy-request-id") -> TraceState.Value.unsafe(reqId))).get,
         isRemote = true
       )
