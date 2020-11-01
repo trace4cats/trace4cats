@@ -21,35 +21,36 @@ import org.apache.avro.io.EncoderFactory
 
 object AvroKafkaSpanExporter {
   implicit def keySerializer[F[_]: Sync]: Serializer[F, TraceId] = Serializer.string[F].contramap[TraceId](_.show)
-  def valueSerializer[F[_]: Sync](schema: Schema): Serializer[F, KafkaSpan] = Serializer.instance[F, KafkaSpan] {
-    (_, _, span) =>
+  def valueSerializer[F[_]: Sync](schema: Schema): Serializer[F, KafkaSpan] =
+    Serializer.instance[F, KafkaSpan] { (_, _, span) =>
       for {
         record <- KafkaSpan.kafkaSpanCodec.encode(span).leftMap(_.throwable).liftTo[F]
-        ba <- Resource
-          .make(
-            Sync[F]
-              .delay {
-                val writer = new GenericDatumWriter[Any](schema)
-                val out = new ByteArrayOutputStream
+        ba <-
+          Resource
+            .make(
+              Sync[F]
+                .delay {
+                  val writer = new GenericDatumWriter[Any](schema)
+                  val out = new ByteArrayOutputStream
 
-                val encoder = EncoderFactory.get.binaryEncoder(out, null)
+                  val encoder = EncoderFactory.get.binaryEncoder(out, null)
 
-                (writer, out, encoder)
-              }
-          ) {
-            case (_, out, _) =>
-              Sync[F].delay(out.close())
-          }
-          .use {
-            case (writer, out, encoder) =>
-              Sync[F].delay {
-                writer.write(record, encoder)
-                encoder.flush()
-                out.toByteArray
-              }
-          }
+                  (writer, out, encoder)
+                }
+            ) {
+              case (_, out, _) =>
+                Sync[F].delay(out.close())
+            }
+            .use {
+              case (writer, out, encoder) =>
+                Sync[F].delay {
+                  writer.write(record, encoder)
+                  encoder.flush()
+                  out.toByteArray
+                }
+            }
       } yield ba
-  }
+    }
 
   def apply[F[_]: ConcurrentEffect: ContextShift: Logger](
     blocker: Blocker,
@@ -74,16 +75,17 @@ object AvroKafkaSpanExporter {
   def fromProducer[F[_]: ApplicativeError[*[_], Throwable]: Logger](
     producer: KafkaProducer[F, TraceId, KafkaSpan],
     topic: String
-  ): SpanExporter[F] = new SpanExporter[F] {
-    override def exportBatch(batch: Batch): F[Unit] =
-      producer
-        .produce(ProducerRecords[List, TraceId, KafkaSpan](batch.spans.map { span =>
-          ProducerRecord(topic, span.context.traceId, KafkaSpan(batch.process, span))
-        }))
-        .map(_.onError {
-          case e =>
-            Logger[F].warn(e)("Failed to export record batch to Kafka")
-        })
-        .void
-  }
+  ): SpanExporter[F] =
+    new SpanExporter[F] {
+      override def exportBatch(batch: Batch): F[Unit] =
+        producer
+          .produce(ProducerRecords[List, TraceId, KafkaSpan](batch.spans.map { span =>
+            ProducerRecord(topic, span.context.traceId, KafkaSpan(batch.process, span))
+          }))
+          .map(_.onError {
+            case e =>
+              Logger[F].warn(e)("Failed to export record batch to Kafka")
+          })
+          .void
+    }
 }

@@ -49,18 +49,17 @@ object QueuedSpanCompleter {
           .drain
           .start
       )(fiber => Timer[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)
-    } yield
-      new SpanCompleter[F] {
-        override def complete(span: CompletedSpan): F[Unit] = {
-          val enqueue = queue.enqueue1(span) >> inFlight.update { current =>
-            if (current == realBufferSize) current
-            else current + 1
-          }
-
-          inFlight.get
-            .map(_ == realBufferSize)
-            .ifM(Logger[F].warn(s"Failed to enqueue new span, buffer is full of $realBufferSize"), enqueue)
+    } yield new SpanCompleter[F] {
+      override def complete(span: CompletedSpan): F[Unit] = {
+        val enqueue = queue.enqueue1(span) >> inFlight.update { current =>
+          if (current == realBufferSize) current
+          else current + 1
         }
+
+        inFlight.get
+          .map(_ == realBufferSize)
+          .ifM(Logger[F].warn(s"Failed to enqueue new span, buffer is full of $realBufferSize"), enqueue)
       }
+    }
   }
 }

@@ -16,14 +16,15 @@ trait TailSpanSampler[F[_]] {
 }
 
 object TailSpanSampler {
-  def head[F[_]: Applicative]: TailSpanSampler[F] = new TailSpanSampler[F] {
-    override def shouldSample(span: CompletedSpan): F[SampleDecision] = span.context.traceFlags.sampled.pure[F]
-    override def sampleBatch(batch: Batch): F[Option[Batch]] = {
-      val spans = batch.spans.filter(_.context.traceFlags.sampled == SampleDecision.Include)
+  def head[F[_]: Applicative]: TailSpanSampler[F] =
+    new TailSpanSampler[F] {
+      override def shouldSample(span: CompletedSpan): F[SampleDecision] = span.context.traceFlags.sampled.pure[F]
+      override def sampleBatch(batch: Batch): F[Option[Batch]] = {
+        val spans = batch.spans.filter(_.context.traceFlags.sampled == SampleDecision.Include)
 
-      (if (spans.isEmpty) None else Some(Batch(batch.process, spans))).pure[F]
+        (if (spans.isEmpty) None else Some(Batch(batch.process, spans))).pure[F]
+      }
     }
-  }
 
   private def storedShouldSample[F[_]: Monad](
     decider: CompletedSpan => F[SampleDecision],
@@ -51,23 +52,25 @@ object TailSpanSampler {
           spans =>
             store.batch(spans.map(_.context.traceId)).flatMap { decisions =>
               for {
-                (sampledSpans, newDecisions) <- spans
-                  .foldM((List.empty[CompletedSpan], Map.empty[TraceId, SampleDecision])) {
-                    case ((sampled, computedDecisions), span) =>
-                      val traceId = span.context.traceId
+                (sampledSpans, newDecisions) <-
+                  spans
+                    .foldM((List.empty[CompletedSpan], Map.empty[TraceId, SampleDecision])) {
+                      case ((sampled, computedDecisions), span) =>
+                        val traceId = span.context.traceId
 
-                      decisions.get(traceId).orElse(computedDecisions.get(traceId)) match {
-                        case None =>
-                          decider(span).map { decision =>
-                            val spans = if (decision == SampleDecision.Include) sampled else span :: sampled
-                            spans -> computedDecisions.updated(traceId, decision)
-                          }
+                        decisions.get(traceId).orElse(computedDecisions.get(traceId)) match {
+                          case None =>
+                            decider(span).map { decision =>
+                              val spans = if (decision == SampleDecision.Include) sampled else span :: sampled
+                              spans -> computedDecisions.updated(traceId, decision)
+                            }
 
-                        case Some(SampleDecision.Drop) => Applicative[F].pure(sampled -> computedDecisions)
-                        case Some(SampleDecision.Include) => Applicative[F].pure((span :: sampled) -> computedDecisions)
-                      }
+                          case Some(SampleDecision.Drop) => Applicative[F].pure(sampled -> computedDecisions)
+                          case Some(SampleDecision.Include) =>
+                            Applicative[F].pure((span :: sampled) -> computedDecisions)
+                        }
 
-                  }
+                    }
 
                 _ <- store.storeDecisions(newDecisions)
               } yield if (sampledSpans.isEmpty) None else Some(Batch(batch.process, sampledSpans))

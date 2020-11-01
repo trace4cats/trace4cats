@@ -73,7 +73,7 @@ object StackdriverHttpSpanExporter {
         (uri: Uri) =>
           cachedTokenProvider.accessToken.map { token =>
             uri.withQueryParam("access_token", token.accessToken)
-        }
+          }
       )
     } yield exporter
 }

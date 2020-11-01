@@ -12,10 +12,16 @@ private[trace4cats] class B3SingleToHeaders extends ToHeaders {
         for {
           traceId <- TraceId.fromHexString(traceIdHex)
           spanId <- SpanId.fromHexString(spanIdHex)
-        } yield
-          SpanContext(traceId, spanId, rest.lift(1).flatMap { hex =>
+        } yield SpanContext(
+          traceId,
+          spanId,
+          rest.lift(1).flatMap { hex =>
             SpanId.fromHexString(hex).map(parent => Parent(parent, isRemote = true))
-          }, TraceFlags(b3SampledFlag(rest.headOption)), TraceState.empty, isRemote = true)
+          },
+          TraceFlags(b3SampledFlag(rest.headOption)),
+          TraceState.empty,
+          isRemote = true
+        )
       case _ => None
     }
 

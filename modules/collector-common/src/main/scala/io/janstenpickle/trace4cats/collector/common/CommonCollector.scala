@@ -52,9 +52,10 @@ object CommonCollector {
         JaegerSpanExporter[F](blocker, host = jaeger.host, port = jaeger.port).map("Jaeger UDP" -> _)
       }
 
-      logExporter <- if (config.logSpans)
-        Resource.pure[F, SpanExporter[F]](LogSpanExporter[F]).map(e => Some("Log" -> e))
-      else Resource.pure[F, Option[(String, SpanExporter[F])]](None)
+      logExporter <-
+        if (config.logSpans)
+          Resource.pure[F, SpanExporter[F]](LogSpanExporter[F]).map(e => Some("Log" -> e))
+        else Resource.pure[F, Option[(String, SpanExporter[F])]](None)
 
       otHttpExporter <- config.otlpHttp.traverse { otlp =>
         Resource.liftF(
@@ -85,11 +86,17 @@ object CommonCollector {
         )
       }
 
-      kafkaExporter <- config.kafkaForwarder
-        .traverse { kafka =>
-          AvroKafkaSpanExporter[F](blocker, kafka.bootstrapServers, kafka.topic, _.withProperties(kafka.producerConfig))
-            .map("Kafka" -> _)
-        }
+      kafkaExporter <-
+        config.kafkaForwarder
+          .traverse { kafka =>
+            AvroKafkaSpanExporter[F](
+              blocker,
+              kafka.bootstrapServers,
+              kafka.topic,
+              _.withProperties(kafka.producerConfig)
+            )
+              .map("Kafka" -> _)
+          }
 
       queuedExporter <- QueuedSpanExporter(
         config.bufferSize,

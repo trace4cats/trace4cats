@@ -24,14 +24,15 @@ object OpenTelemetryGrpcSpanExporter {
     port: Int,
     makeExporter: ManagedChannel => OTSpanExporter
   ): Resource[F, SpanExporter[F]] = {
-    def handleResult(onFailure: => Throwable)(code: CompletableResultCode): F[Unit] = Async[F].asyncF[Unit] { cb =>
-      val complete = new Runnable {
-        override def run(): Unit =
-          if (code.isSuccess) cb(Right(()))
-          else cb(Left(onFailure))
+    def handleResult(onFailure: => Throwable)(code: CompletableResultCode): F[Unit] =
+      Async[F].asyncF[Unit] { cb =>
+        val complete = new Runnable {
+          override def run(): Unit =
+            if (code.isSuccess) cb(Right(()))
+            else cb(Left(onFailure))
+        }
+        Sync[F].delay(code.whenComplete(complete)).void
       }
-      Sync[F].delay(code.whenComplete(complete)).void
-    }
 
     for {
       channel <- Resource.make[F, ManagedChannel](
@@ -40,13 +41,12 @@ object OpenTelemetryGrpcSpanExporter {
       exporter <- Resource.make(Sync[F].delay(makeExporter(channel)))(
         exporter => Sync[F].delay(exporter.shutdown()).flatMap(handleResult(ShutdownFailure(host, port)))
       )
-    } yield
-      new SpanExporter[F] {
-        override def exportBatch(batch: Batch): F[Unit] =
-          handleResult(ExportFailure(host, port))(
-            exporter
-              .`export`(batch.spans.map(Trace4CatsSpanData(Trace4CatsResource(batch.process), _)).asJavaCollection)
-          )
-      }
+    } yield new SpanExporter[F] {
+      override def exportBatch(batch: Batch): F[Unit] =
+        handleResult(ExportFailure(host, port))(
+          exporter
+            .`export`(batch.spans.map(Trace4CatsSpanData(Trace4CatsResource(batch.process), _)).asJavaCollection)
+        )
+    }
   }
 }

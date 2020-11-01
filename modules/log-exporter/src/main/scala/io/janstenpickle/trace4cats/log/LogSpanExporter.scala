@@ -9,11 +9,13 @@ import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch
 
 object LogSpanExporter {
-  def apply[F[_]: Logger]: SpanExporter[F] = new SpanExporter[F] {
-    override def exportBatch(batch: Batch): F[Unit] = Logger[F].info(batch.show)
-  }
+  def apply[F[_]: Logger]: SpanExporter[F] =
+    new SpanExporter[F] {
+      override def exportBatch(batch: Batch): F[Unit] = Logger[F].info(batch.show)
+    }
 
-  def create[F[_]: Sync]: F[SpanExporter[F]] = Slf4jLogger.create[F].map { implicit logger =>
-    apply[F]
-  }
+  def create[F[_]: Sync]: F[SpanExporter[F]] =
+    Slf4jLogger.create[F].map { implicit logger =>
+      apply[F]
+    }
 }

@@ -22,9 +22,10 @@ import org.apache.avro.io.DecoderFactory
 import scala.concurrent.duration._
 
 object AvroKafkaConsumer {
-  implicit def keyDeserializer[F[_]: Sync]: Deserializer[F, Option[TraceId]] = Deserializer.instance { (_, _, bytes) =>
-    Sync[F].delay(Option(bytes).flatMap(TraceId(_)))
-  }
+  implicit def keyDeserializer[F[_]: Sync]: Deserializer[F, Option[TraceId]] =
+    Deserializer.instance { (_, _, bytes) =>
+      Sync[F].delay(Option(bytes).flatMap(TraceId(_)))
+    }
 
   def valueDeserializer[F[_]: Sync: Logger](schema: Schema): Deserializer[F, Option[KafkaSpan]] =
     Deserializer.instance { (_, _, ba) =>
@@ -53,28 +54,29 @@ object AvroKafkaConsumer {
     consumerGroup: String,
     topic: String,
     sink: Pipe[F, Batch, Unit],
-    modifySettings: ConsumerSettings[F, Option[TraceId], Option[KafkaSpan]] => ConsumerSettings[F, Option[TraceId], Option[
-      KafkaSpan
-    ]] = (s: ConsumerSettings[F, Option[TraceId], Option[KafkaSpan]]) => s,
+    modifySettings: ConsumerSettings[F, Option[TraceId], Option[KafkaSpan]] => ConsumerSettings[F, Option[
+      TraceId
+    ], Option[KafkaSpan]] = (s: ConsumerSettings[F, Option[TraceId], Option[KafkaSpan]]) => s,
     batch: Option[BatchConfig] = None
-  ): Stream[F, Unit] = Stream.eval(Slf4jLogger.create[F]).flatMap { implicit logger =>
-    Stream
-      .fromEither[F](KafkaSpan.kafkaSpanCodec.schema.leftMap(_.throwable))
-      .flatMap { schema =>
-        implicit val deser: Deserializer[F, Option[KafkaSpan]] = valueDeserializer[F](schema)
+  ): Stream[F, Unit] =
+    Stream.eval(Slf4jLogger.create[F]).flatMap { implicit logger =>
+      Stream
+        .fromEither[F](KafkaSpan.kafkaSpanCodec.schema.leftMap(_.throwable))
+        .flatMap { schema =>
+          implicit val deser: Deserializer[F, Option[KafkaSpan]] = valueDeserializer[F](schema)
 
-        consumerStream(
-          modifySettings(
-            ConsumerSettings[F, Option[TraceId], Option[KafkaSpan]]
-              .withBlocker(blocker)
-              .withBootstrapServers(bootStrapServers.mkString_(","))
-              .withGroupId(consumerGroup)
-              .withAutoOffsetReset(AutoOffsetReset.Latest)
+          consumerStream(
+            modifySettings(
+              ConsumerSettings[F, Option[TraceId], Option[KafkaSpan]]
+                .withBlocker(blocker)
+                .withBootstrapServers(bootStrapServers.mkString_(","))
+                .withGroupId(consumerGroup)
+                .withAutoOffsetReset(AutoOffsetReset.Latest)
+            )
           )
-        )
-      }
-      .flatMap(apply[F](_, topic, sink, batch))
-  }
+        }
+        .flatMap(apply[F](_, topic, sink, batch))
+    }
 
   private implicit val attrMapSemigroup: Semigroup[Map[String, AttributeValue]] =
     new Semigroup[Map[String, AttributeValue]] {

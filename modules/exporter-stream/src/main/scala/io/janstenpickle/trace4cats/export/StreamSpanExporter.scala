@@ -14,21 +14,23 @@ trait StreamSpanExporter[F[_]] extends SpanExporter[F] {
 object StreamSpanExporter {
   def apply[F[_]](exporter: StreamSpanExporter[F]): StreamSpanExporter[F] = exporter
 
-  def empty[F[_]: Applicative]: StreamSpanExporter[F] = new StreamSpanExporter[F] {
-    override def pipe: Pipe[F, Batch, Unit] = _.void
+  def empty[F[_]: Applicative]: StreamSpanExporter[F] =
+    new StreamSpanExporter[F] {
+      override def pipe: Pipe[F, Batch, Unit] = _.void
 
-    override def exportBatch(batch: Batch): F[Unit] = Applicative[F].unit
-  }
+      override def exportBatch(batch: Batch): F[Unit] = Applicative[F].unit
+    }
 
-  implicit def monoid[F[_]: Concurrent: Parallel]: Monoid[StreamSpanExporter[F]] = new Monoid[StreamSpanExporter[F]] {
-    override def empty: StreamSpanExporter[F] = StreamSpanExporter.empty[F]
+  implicit def monoid[F[_]: Concurrent: Parallel]: Monoid[StreamSpanExporter[F]] =
+    new Monoid[StreamSpanExporter[F]] {
+      override def empty: StreamSpanExporter[F] = StreamSpanExporter.empty[F]
 
-    override def combine(x: StreamSpanExporter[F], y: StreamSpanExporter[F]): StreamSpanExporter[F] =
-      new StreamSpanExporter[F] {
-        override def pipe: Pipe[F, Batch, Unit] = in => in.through(x.pipe).concurrently(in.through(y.pipe))
+      override def combine(x: StreamSpanExporter[F], y: StreamSpanExporter[F]): StreamSpanExporter[F] =
+        new StreamSpanExporter[F] {
+          override def pipe: Pipe[F, Batch, Unit] = in => in.through(x.pipe).concurrently(in.through(y.pipe))
 
-        override def exportBatch(batch: Batch): F[Unit] =
-          Parallel.parMap2(x.exportBatch(batch), y.exportBatch(batch))((_, _) => ())
-      }
-  }
+          override def exportBatch(batch: Batch): F[Unit] =
+            Parallel.parMap2(x.exportBatch(batch), y.exportBatch(batch))((_, _) => ())
+        }
+    }
 }

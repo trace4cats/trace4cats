@@ -38,9 +38,12 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
       val ref = Ref.unsafe[IO, Option[Batch]](None)
 
       (for {
-        server <- AvroServer.tcp[IO](blocker, _.evalMap { b =>
-          ref.set(Some(b))
-        })
+        server <- AvroServer.tcp[IO](
+          blocker,
+          _.evalMap { b =>
+            ref.set(Some(b))
+          }
+        )
         _ <- server.compile.drain.background
         _ <- Resource.liftF(timer.sleep(2.seconds))
         completer <- AvroSpanExporter.tcp[IO](blocker)
@@ -55,9 +58,13 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
       val ref = Ref.unsafe[IO, Option[Batch]](None)
 
       (for {
-        server <- AvroServer.tcp[IO](blocker, _.evalMap { b =>
-          ref.set(Some(b))
-        }, port = 7778)
+        server <- AvroServer.tcp[IO](
+          blocker,
+          _.evalMap { b =>
+            ref.set(Some(b))
+          },
+          port = 7778
+        )
         _ <- server.compile.drain.background
         _ <- Resource.liftF(timer.sleep(2.seconds))
         completer <- AvroSpanCompleter.tcp[IO](blocker, process, port = 7778, batchTimeout = 1.second)
@@ -74,9 +81,13 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
       val ref = Ref.unsafe[IO, Option[Batch]](None)
 
       (for {
-        server <- AvroServer.udp[IO](blocker, _.evalMap { b =>
-          ref.set(Some(b))
-        }, port = 7779)
+        server <- AvroServer.udp[IO](
+          blocker,
+          _.evalMap { b =>
+            ref.set(Some(b))
+          },
+          port = 7779
+        )
         _ <- server.compile.drain.background
         _ <- Resource.liftF(timer.sleep(2.seconds))
         completer <- AvroSpanExporter.udp[IO](blocker, port = 7779)
@@ -91,9 +102,13 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
       val ref = Ref.unsafe[IO, Option[Batch]](None)
 
       (for {
-        server <- AvroServer.udp[IO](blocker, _.evalMap { b =>
-          ref.set(Some(b))
-        }, port = 7780)
+        server <- AvroServer.udp[IO](
+          blocker,
+          _.evalMap { b =>
+            ref.set(Some(b))
+          },
+          port = 7780
+        )
         _ <- server.compile.drain.background
         _ <- Resource.liftF(timer.sleep(2.seconds))
         completer <- AvroSpanCompleter.udp[IO](blocker, process, port = 7780, batchTimeout = 1.second)

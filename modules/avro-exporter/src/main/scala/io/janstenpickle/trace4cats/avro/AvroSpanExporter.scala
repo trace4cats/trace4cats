@@ -100,10 +100,9 @@ object AvroSpanExporter {
             _ <- Timer[F].sleep(50.millis)
           } yield mvarSet || semaphoreSet) >> fiber.cancel
       )
-    } yield
-      new SpanExporter[F] {
-        override def exportBatch(batch: Batch): F[Unit] = mvar.put(batch)
-      }
+    } yield new SpanExporter[F] {
+      override def exportBatch(batch: Batch): F[Unit] = mvar.put(batch)
+    }
   }
 
   def tcp[F[_]: Concurrent: ContextShift: Timer: Logger](
@@ -137,7 +136,7 @@ object AvroSpanExporter {
                 batch <- mvar.take
                 _ <- semaphore.acquire
                 ba <- encode[F](schema)(batch)
-                withTerminator = ba ++ Array(0xC4.byteValue, 0x02.byteValue)
+                withTerminator = ba ++ Array(0xc4.byteValue, 0x02.byteValue)
                 _ <- socket.write(Chunk.bytes(withTerminator))
               } yield ()).guarantee(semaphore.release)
             }
@@ -166,9 +165,8 @@ object AvroSpanExporter {
               semaphoreSet <- semaphore.count.map(_ == 0)
             } yield mvarSet || semaphoreSet) >> fiber.cancel
       )
-    } yield
-      new SpanExporter[F] {
-        override def exportBatch(batch: Batch): F[Unit] = mvar.put(batch)
-      }
+    } yield new SpanExporter[F] {
+      override def exportBatch(batch: Batch): F[Unit] = mvar.put(batch)
+    }
   }
 }

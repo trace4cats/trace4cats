@@ -26,8 +26,8 @@ object HttpSpanExporter {
          |""".stripMargin
   }
 
-  def apply[F[_]: Sync: Timer, A](client: Client[F], uri: String, makePayload: Batch => A)(
-    implicit encoder: EntityEncoder[F, A]
+  def apply[F[_]: Sync: Timer, A](client: Client[F], uri: String, makePayload: Batch => A)(implicit
+    encoder: EntityEncoder[F, A]
   ): F[SpanExporter[F]] =
     apply(
       client,
@@ -105,23 +105,25 @@ object HttpSpanExporter {
     dynamicHeaders: F[List[Header]],
     method: Method with PermitsBody,
     staticHeaders: List[Header]
-  )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F]] = Uri.fromString(uri).liftTo[F].map { parsedUri =>
-    new SpanExporter[F] with Http4sClientDsl[F] {
-      override def exportBatch(batch: Batch): F[Unit] =
-        for {
-          u <- updatedUri(parsedUri)
-          dynHeaders <- dynamicHeaders
-          req <- method(makePayload(batch), u, staticHeaders ++ dynHeaders: _*)
-          _ <- Stream
-            .retry(
-              client.expectOr[String](req)(resp => resp.as[String].map(UnexpectedResponse(resp.status, _))),
-              10.millis,
-              _ + 5.millis,
-              2
-            )
-            .compile
-            .drain
-        } yield ()
+  )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F]] =
+    Uri.fromString(uri).liftTo[F].map { parsedUri =>
+      new SpanExporter[F] with Http4sClientDsl[F] {
+        override def exportBatch(batch: Batch): F[Unit] =
+          for {
+            u <- updatedUri(parsedUri)
+            dynHeaders <- dynamicHeaders
+            req <- method(makePayload(batch), u, staticHeaders ++ dynHeaders: _*)
+            _ <-
+              Stream
+                .retry(
+                  client.expectOr[String](req)(resp => resp.as[String].map(UnexpectedResponse(resp.status, _))),
+                  10.millis,
+                  _ + 5.millis,
+                  2
+                )
+                .compile
+                .drain
+          } yield ()
+      }
     }
-  }
 }

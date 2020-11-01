@@ -40,7 +40,8 @@ trait LowPrioritySpanExporterInstances {
       override def empty: SpanExporter[F] = SpanExporter.empty[F]
     }
 
-  def empty[F[_]: Applicative]: SpanExporter[F] = new SpanExporter[F] {
-    override def exportBatch(batch: Batch): F[Unit] = Applicative[F].unit
-  }
+  def empty[F[_]: Applicative]: SpanExporter[F] =
+    new SpanExporter[F] {
+      override def exportBatch(batch: Batch): F[Unit] = Applicative[F].unit
+    }
 }

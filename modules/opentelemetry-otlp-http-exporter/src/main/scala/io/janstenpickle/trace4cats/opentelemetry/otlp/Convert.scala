@@ -53,28 +53,33 @@ object Convert {
       startTimeUnixNano = TimeUnit.MILLISECONDS.toNanos(span.start.toEpochMilli),
       endTimeUnixNano = TimeUnit.MILLISECONDS.toNanos(span.end.toEpochMilli),
       attributes = toAttributes(span.attributes),
-      status = Some(Status(span.status match {
-        case Ok => STATUS_CODE_OK
-        case Cancelled => STATUS_CODE_CANCELLED
-        case Unknown => STATUS_CODE_UNKNOWN_ERROR
-        case InvalidArgument => STATUS_CODE_INVALID_ARGUMENT
-        case DeadlineExceeded => STATUS_CODE_DEADLINE_EXCEEDED
-        case NotFound => STATUS_CODE_NOT_FOUND
-        case AlreadyExists => STATUS_CODE_ALREADY_EXISTS
-        case PermissionDenied => STATUS_CODE_PERMISSION_DENIED
-        case ResourceExhausted => STATUS_CODE_RESOURCE_EXHAUSTED
-        case FailedPrecondition => STATUS_CODE_FAILED_PRECONDITION
-        case Aborted => STATUS_CODE_ABORTED
-        case OutOfRange => STATUS_CODE_OUT_OF_RANGE
-        case Unimplemented => STATUS_CODE_UNIMPLEMENTED
-        case Internal(_) => STATUS_CODE_INTERNAL_ERROR
-        case Unavailable => STATUS_CODE_UNAVAILABLE
-        case DataLoss => STATUS_CODE_DATA_LOSS
-        case Unauthenticated => STATUS_CODE_UNAUTHENTICATED
-      }, span.status match {
-        case Internal(message) => message
-        case _ => ""
-      }))
+      status = Some(
+        Status(
+          span.status match {
+            case Ok => STATUS_CODE_OK
+            case Cancelled => STATUS_CODE_CANCELLED
+            case Unknown => STATUS_CODE_UNKNOWN_ERROR
+            case InvalidArgument => STATUS_CODE_INVALID_ARGUMENT
+            case DeadlineExceeded => STATUS_CODE_DEADLINE_EXCEEDED
+            case NotFound => STATUS_CODE_NOT_FOUND
+            case AlreadyExists => STATUS_CODE_ALREADY_EXISTS
+            case PermissionDenied => STATUS_CODE_PERMISSION_DENIED
+            case ResourceExhausted => STATUS_CODE_RESOURCE_EXHAUSTED
+            case FailedPrecondition => STATUS_CODE_FAILED_PRECONDITION
+            case Aborted => STATUS_CODE_ABORTED
+            case OutOfRange => STATUS_CODE_OUT_OF_RANGE
+            case Unimplemented => STATUS_CODE_UNIMPLEMENTED
+            case Internal(_) => STATUS_CODE_INTERNAL_ERROR
+            case Unavailable => STATUS_CODE_UNAVAILABLE
+            case DataLoss => STATUS_CODE_DATA_LOSS
+            case Unauthenticated => STATUS_CODE_UNAUTHENTICATED
+          },
+          span.status match {
+            case Internal(message) => message
+            case _ => ""
+          }
+        )
+      )
     )
 
   def toInstrumentationLibrarySpans(spans: List[CompletedSpan]): InstrumentationLibrarySpans =

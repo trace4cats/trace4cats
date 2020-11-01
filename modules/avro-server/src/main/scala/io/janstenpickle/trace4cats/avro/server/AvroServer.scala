@@ -19,22 +19,23 @@ import io.chrisdavenport.log4cats.Logger
 
 object AvroServer {
 
-  private def buffer[F[_]]: Pipe[F, Byte, Chunk[Byte]] = bytes => {
-    def go(lastBytes: (Byte, Byte), state: List[Byte], stream: Stream[F, Byte]): Pull[F, Chunk[Byte], Unit] =
-      stream.pull.uncons1.flatMap {
-        case Some((hd, tl)) =>
-          val newLastBytes = (lastBytes._2, hd)
-          val newState = hd :: state
-          if (newLastBytes == (0xC4.byteValue -> 0x02.byteValue))
-            Pull.output1(Chunk(newState.drop(2).reverse: _*)) >> go((0, 0), List.empty, tl)
-          else
-            go(newLastBytes, newState, tl)
+  private def buffer[F[_]]: Pipe[F, Byte, Chunk[Byte]] =
+    bytes => {
+      def go(lastBytes: (Byte, Byte), state: List[Byte], stream: Stream[F, Byte]): Pull[F, Chunk[Byte], Unit] =
+        stream.pull.uncons1.flatMap {
+          case Some((hd, tl)) =>
+            val newLastBytes = (lastBytes._2, hd)
+            val newState = hd :: state
+            if (newLastBytes == (0xc4.byteValue -> 0x02.byteValue))
+              Pull.output1(Chunk(newState.drop(2).reverse: _*)) >> go((0, 0), List.empty, tl)
+            else
+              go(newLastBytes, newState, tl)
 
-        case None => Pull.done
-      }
+          case None => Pull.done
+        }
 
-    go((0, 0), List.empty, bytes).stream
-  }
+      go((0, 0), List.empty, bytes).stream
+    }
 
   private def decode[F[_]: Sync: Logger](schema: Schema)(bytes: Chunk[Byte]): F[Option[Batch]] =
     Sync[F]
@@ -59,20 +60,19 @@ object AvroServer {
       avroSchema <- Resource.liftF(AvroInstances.batchSchema[F])
       socketGroup <- TCPSocketGroup(blocker)
       address <- Resource.liftF(Sync[F].delay(new InetSocketAddress(port)))
-    } yield
-      socketGroup
-        .server(address)
-        .map { serverResource =>
-          Stream.resource(serverResource).flatMap { server =>
-            server
-              .reads(8192)
-              .through(buffer[F])
-              .evalMap(decode[F](avroSchema))
-              .unNone
-              .through(sink)
-          }
+    } yield socketGroup
+      .server(address)
+      .map { serverResource =>
+        Stream.resource(serverResource).flatMap { server =>
+          server
+            .reads(8192)
+            .through(buffer[F])
+            .evalMap(decode[F](avroSchema))
+            .unNone
+            .through(sink)
         }
-        .parJoin(100)
+      }
+      .parJoin(100)
 
   def udp[F[_]: Concurrent: ContextShift: Logger](
     blocker: Blocker,

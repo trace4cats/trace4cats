@@ -29,13 +29,14 @@ case class Span(
 
 object Span {
 
-  def toDisplayName(spanName: String, spanKind: SpanKind) = spanKind match {
-    case SpanKind.Server if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
-    case SpanKind.Client if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
-    case SpanKind.Consumer if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
-    case SpanKind.Producer if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
-    case _ => spanName
-  }
+  def toDisplayName(spanName: String, spanKind: SpanKind) =
+    spanKind match {
+      case SpanKind.Server if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
+      case SpanKind.Client if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
+      case SpanKind.Consumer if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
+      case SpanKind.Producer if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
+      case _ => spanName
+    }
 
   def toInstant(time: Long) = Instant.ofEpochMilli(TimeUnit.MICROSECONDS.toMillis(time))
 

@@ -50,15 +50,8 @@ case class RefSpan[F[_]: Sync: Clock] private (
     for {
       now <- Clock[F].realTime(TimeUnit.MILLISECONDS)
       attrs <- attributes.get
-      completed = CompletedSpan(
-        context,
-        name,
-        kind,
-        Instant.ofEpochMilli(start),
-        Instant.ofEpochMilli(now),
-        attrs,
-        status
-      )
+      completed =
+        CompletedSpan(context, name, kind, Instant.ofEpochMilli(start), Instant.ofEpochMilli(now), attrs, status)
       _ <- completer.complete(completed)
     } yield ()
 
@@ -144,18 +137,19 @@ object Span {
   ): Resource[F, Span[F]] =
     Resource.liftF(SpanContext.root[F]).flatMap(makeSpan(name, None, _, kind, sampler, completer, errorHandler))
 
-  private def mapK[F[_], G[_]: Defer: Applicative](fk: F ~> G)(span: Span[F]): Span[G] = new Span[G] {
-    override def context: SpanContext = span.context
-    override def put(key: String, value: AttributeValue): G[Unit] = fk(span.put(key, value))
-    override def putAll(fields: (String, AttributeValue)*): G[Unit] = fk(span.putAll(fields: _*))
-    override def setStatus(spanStatus: SpanStatus): G[Unit] = fk(span.setStatus(spanStatus))
-    override def child(name: String, kind: SpanKind): Resource[G, Span[G]] =
-      span.child(name, kind).mapK(fk).map(Span.mapK(fk))
-    override def child(
-      name: String,
-      kind: SpanKind,
-      errorHandler: PartialFunction[Throwable, SpanStatus]
-    ): Resource[G, Span[G]] = span.child(name, kind, errorHandler).mapK(fk).map(Span.mapK(fk))
-  }
+  private def mapK[F[_], G[_]: Defer: Applicative](fk: F ~> G)(span: Span[F]): Span[G] =
+    new Span[G] {
+      override def context: SpanContext = span.context
+      override def put(key: String, value: AttributeValue): G[Unit] = fk(span.put(key, value))
+      override def putAll(fields: (String, AttributeValue)*): G[Unit] = fk(span.putAll(fields: _*))
+      override def setStatus(spanStatus: SpanStatus): G[Unit] = fk(span.setStatus(spanStatus))
+      override def child(name: String, kind: SpanKind): Resource[G, Span[G]] =
+        span.child(name, kind).mapK(fk).map(Span.mapK(fk))
+      override def child(
+        name: String,
+        kind: SpanKind,
+        errorHandler: PartialFunction[Throwable, SpanStatus]
+      ): Resource[G, Span[G]] = span.child(name, kind, errorHandler).mapK(fk).map(Span.mapK(fk))
+    }
 
 }

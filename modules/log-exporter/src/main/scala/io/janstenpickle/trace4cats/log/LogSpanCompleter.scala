@@ -9,11 +9,13 @@ import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.CompletedSpan
 
 object LogSpanCompleter {
-  def apply[F[_]: Logger]: SpanCompleter[F] = new SpanCompleter[F] {
-    override def complete(span: CompletedSpan): F[Unit] = Logger[F].info(span.show)
-  }
+  def apply[F[_]: Logger]: SpanCompleter[F] =
+    new SpanCompleter[F] {
+      override def complete(span: CompletedSpan): F[Unit] = Logger[F].info(span.show)
+    }
 
-  def create[F[_]: Sync]: F[SpanCompleter[F]] = Slf4jLogger.create[F].map { implicit logger =>
-    apply[F]
-  }
+  def create[F[_]: Sync]: F[SpanCompleter[F]] =
+    Slf4jLogger.create[F].map { implicit logger =>
+      apply[F]
+    }
 }

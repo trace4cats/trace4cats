@@ -16,25 +16,27 @@ trait SpanSampler[F[_]] {
 }
 
 object SpanSampler {
-  def always[F[_]: Applicative]: SpanSampler[F] = new SpanSampler[F] {
-    override def shouldSample(
-      parentContext: Option[SpanContext],
-      traceId: TraceId,
-      spanName: String,
-      spanKind: SpanKind
-    ): F[SampleDecision] =
-      Applicative[F].pure(parentContext.fold[SampleDecision](SampleDecision.Include)(_.traceFlags.sampled))
-  }
+  def always[F[_]: Applicative]: SpanSampler[F] =
+    new SpanSampler[F] {
+      override def shouldSample(
+        parentContext: Option[SpanContext],
+        traceId: TraceId,
+        spanName: String,
+        spanKind: SpanKind
+      ): F[SampleDecision] =
+        Applicative[F].pure(parentContext.fold[SampleDecision](SampleDecision.Include)(_.traceFlags.sampled))
+    }
 
-  def never[F[_]: Applicative]: SpanSampler[F] = new SpanSampler[F] {
-    override def shouldSample(
-      parentContext: Option[SpanContext],
-      traceId: TraceId,
-      spanName: String,
-      spanKind: SpanKind
-    ): F[SampleDecision] =
-      Applicative[F].pure(SampleDecision.Drop)
-  }
+  def never[F[_]: Applicative]: SpanSampler[F] =
+    new SpanSampler[F] {
+      override def shouldSample(
+        parentContext: Option[SpanContext],
+        traceId: TraceId,
+        spanName: String,
+        spanKind: SpanKind
+      ): F[SampleDecision] =
+        Applicative[F].pure(SampleDecision.Drop)
+    }
 
   def fallback[F[_]: Monad](primary: SpanSampler[F], secondary: SpanSampler[F]): SpanSampler[F] =
     new SpanSampler[F] {
@@ -43,10 +45,11 @@ object SpanSampler {
         traceId: TraceId,
         spanName: String,
         spanKind: SpanKind
-      ): F[SampleDecision] = primary.shouldSample(parentContext, traceId, spanName, spanKind).flatMap {
-        case SampleDecision.Drop => Applicative[F].pure(SampleDecision.Drop)
-        case SampleDecision.Include => secondary.shouldSample(parentContext, traceId, spanName, spanKind)
-      }
+      ): F[SampleDecision] =
+        primary.shouldSample(parentContext, traceId, spanName, spanKind).flatMap {
+          case SampleDecision.Drop => Applicative[F].pure(SampleDecision.Drop)
+          case SampleDecision.Include => secondary.shouldSample(parentContext, traceId, spanName, spanKind)
+        }
     }
 
   private[trace4cats] def decideProbabilistic(

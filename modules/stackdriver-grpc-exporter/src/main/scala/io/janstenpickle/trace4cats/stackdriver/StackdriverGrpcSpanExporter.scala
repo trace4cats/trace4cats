@@ -54,16 +54,20 @@ object StackdriverGrpcSpanExporter {
     def toTimestampProto(timestamp: Instant): Timestamp =
       Timestamp.newBuilder.setSeconds(timestamp.getEpochSecond).setNanos(timestamp.getNano).build
 
-    def toDisplayName(spanName: String, spanKind: SpanKind) = spanKind match {
-      case SpanKind.Server if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
-      case SpanKind.Client if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
-      case SpanKind.Consumer if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
-      case SpanKind.Producer if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
-      case _ => spanName
-    }
+    def toDisplayName(spanName: String, spanKind: SpanKind) =
+      spanKind match {
+        case SpanKind.Server if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
+        case SpanKind.Client if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
+        case SpanKind.Consumer if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
+        case SpanKind.Producer if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
+        case _ => spanName
+      }
 
     def toAttributesProto(process: TraceProcess, attributes: Map[String, AttributeValue]): Attributes =
-      (process.attributes.updated(ServiceNameAttributeKey, AttributeValue.StringValue(process.serviceName)) ++ attributes).toList
+      (process.attributes.updated(
+        ServiceNameAttributeKey,
+        AttributeValue.StringValue(process.serviceName)
+      ) ++ attributes).toList
         .foldLeft(Attributes.newBuilder()) {
           case (acc, (k, v)) =>
             acc.putAttributeMap(

@@ -33,7 +33,8 @@ trait LowPrioritySpanCompleterInstances {
       override def empty: SpanCompleter[F] = SpanCompleter.empty[F]
     }
 
-  def empty[F[_]: Applicative]: SpanCompleter[F] = new SpanCompleter[F] {
-    override def complete(span: CompletedSpan): F[Unit] = Applicative[F].unit
-  }
+  def empty[F[_]: Applicative]: SpanCompleter[F] =
+    new SpanCompleter[F] {
+      override def complete(span: CompletedSpan): F[Unit] = Applicative[F].unit
+    }
 }

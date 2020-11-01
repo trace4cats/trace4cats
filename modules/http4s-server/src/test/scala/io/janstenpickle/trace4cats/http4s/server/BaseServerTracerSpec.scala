@@ -139,9 +139,13 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
         case GET -> Root => Ok()
       }
 
-      evaluateTrace(app, app.orNotFound, Http4sRequestFilter.fullPaths(NEPaths.head, NEPaths.tail: _*), "/" :: NEPaths) {
-        spans =>
-          spans.size should be(1)
+      evaluateTrace(
+        app,
+        app.orNotFound,
+        Http4sRequestFilter.fullPaths(NEPaths.head, NEPaths.tail: _*),
+        "/" :: NEPaths
+      ) { spans =>
+        spans.size should be(1)
       }
   }
 

@@ -31,16 +31,15 @@ object QueuedSpanExporter {
         _ <- Resource.make(
           queue.dequeue.evalMap(exporter.exportBatch(_).guarantee(inFlight.update(_ - 1))).compile.drain.start
         )(fiber => Timer[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)
-      } yield
-        new StreamSpanExporter[F] {
-          override def exportBatch(batch: Batch): F[Unit] =
-            (queue.enqueue1(batch) >> inFlight.update { current =>
-              if (current == bufferSize) current
-              else current + 1
-            }).timeoutTo(enqueueTimeout, Logger[F].warn(s"Failed to enqueue span batch in $enqueueTimeout"))
+      } yield new StreamSpanExporter[F] {
+        override def exportBatch(batch: Batch): F[Unit] =
+          (queue.enqueue1(batch) >> inFlight.update { current =>
+            if (current == bufferSize) current
+            else current + 1
+          }).timeoutTo(enqueueTimeout, Logger[F].warn(s"Failed to enqueue span batch in $enqueueTimeout"))
 
-          override def pipe: Pipe[F, Batch, Unit] = _.evalMapChunk(exportBatch)
-        }
+        override def pipe: Pipe[F, Batch, Unit] = _.evalMapChunk(exportBatch)
+      }
 
     exporters
       .map {

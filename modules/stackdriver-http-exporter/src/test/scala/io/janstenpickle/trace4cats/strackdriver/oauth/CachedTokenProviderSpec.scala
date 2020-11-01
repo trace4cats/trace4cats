@@ -53,16 +53,17 @@ class CachedTokenProviderSpec extends AnyFlatSpec with Matchers with ScalaCheckD
       test.unsafeRunSync()
   }
 
-  def testTokenProvider(first: AccessToken, second: AccessToken): TokenProvider[IO] = new TokenProvider[IO] {
-    var invCount = 0
+  def testTokenProvider(first: AccessToken, second: AccessToken): TokenProvider[IO] =
+    new TokenProvider[IO] {
+      var invCount = 0
 
-    override val accessToken: IO[AccessToken] = IO {
-      val token =
-        if (invCount == 0) first
-        else second
+      override val accessToken: IO[AccessToken] = IO {
+        val token =
+          if (invCount == 0) first
+          else second
 
-      invCount = invCount + 1
-      token
+        invCount = invCount + 1
+        token
+      }
     }
-  }
 }
