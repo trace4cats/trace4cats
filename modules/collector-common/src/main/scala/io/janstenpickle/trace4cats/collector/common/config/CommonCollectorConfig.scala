@@ -1,12 +1,14 @@
 package io.janstenpickle.trace4cats.collector.common.config
 
-import cats.data.NonEmptyList
+import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
+import cats.syntax.functor._
 import io.circe.Decoder
 import io.jaegertracing.thrift.internal.senders.UdpSender
 import io.janstenpickle.trace4cats.avro._
 import io.janstenpickle.trace4cats.newrelic.Endpoint
 import io.circe.generic.extras.semiauto._
 import io.janstenpickle.trace4cats.avro.kafka.AvroKafkaConsumer.BatchConfig
+import io.janstenpickle.trace4cats.model.AttributeValue
 
 case class CommonCollectorConfig(
   listener: ListenerConfig = ListenerConfig(),
@@ -18,7 +20,8 @@ case class CommonCollectorConfig(
   stackdriverHttp: Option[StackdriverHttpConfig],
   datadog: Option[DatadogConfig],
   newRelic: Option[NewRelicConfig],
-  sampling: Option[SamplingConfig],
+  sampling: SamplingConfig = SamplingConfig(),
+  attributeFiltering: FilteringConfig = FilteringConfig(),
   logSpans: Boolean = false,
   bufferSize: Int = 500
 )
@@ -91,7 +94,32 @@ object NewRelicConfig {
   implicit val decoder: Decoder[NewRelicConfig] = deriveConfiguredDecoder
 }
 
-case class SamplingConfig(sampleProbability: Double, cacheTtlMinutes: Int = 2, maxCacheSize: Long = 1000000)
+case class SamplingConfig(
+  sampleProbability: Option[Double] = None,
+  spanNames: Option[NonEmptySet[String]] = None,
+  cacheTtlMinutes: Int = 2,
+  maxCacheSize: Long = 1000000
+)
 object SamplingConfig {
   implicit val decoder: Decoder[SamplingConfig] = deriveConfiguredDecoder
+}
+
+case class FilteringConfig(
+  names: Option[NonEmptySet[String]] = None,
+  values: Option[NonEmptySet[AttributeValue]] = None,
+  nameValues: Option[NonEmptyMap[String, AttributeValue]] = None
+)
+object FilteringConfig {
+  implicit val attributeValueDecoder: Decoder[AttributeValue] = List[Decoder[AttributeValue]](
+    Decoder.decodeBoolean.map(AttributeValue.BooleanValue).widen,
+    Decoder.decodeDouble.map(AttributeValue.DoubleValue).widen,
+    Decoder.decodeLong.map(AttributeValue.LongValue).widen,
+    Decoder.decodeString.map(AttributeValue.StringValue).widen,
+    Decoder[NonEmptyList[Boolean]].map(AttributeValue.BooleanList).widen,
+    Decoder[NonEmptyList[Double]].map(AttributeValue.DoubleList).widen,
+    Decoder[NonEmptyList[Long]].map(AttributeValue.LongList).widen,
+    Decoder[NonEmptyList[String]].map(AttributeValue.StringList).widen
+  ).reduceLeft(_.or(_))
+
+  implicit val decoder: Decoder[FilteringConfig] = deriveConfiguredDecoder
 }

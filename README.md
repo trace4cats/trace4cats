@@ -88,7 +88,7 @@ The following implementations are provided out of the box:
 - [Jaeger] agent via Thrift over UDP and Protobufs over GRPC
 - [OpenTelemetry] collector via Protobufs over GRPC and JSON over HTTP
 - Log using [Log4Cats]
-- Trace4Cats Avro over TCP or UDP
+- Trace4Cats Avro over TCP, UDP or Kafka
 - [Stackdriver Trace] over HTTP or GRPC
 - [Datadog] over HTTP
 - [NewRelic] over HTTP
@@ -163,11 +163,22 @@ log-spans: true # Log spans to the console, defaults to false
 
 buffer-size: 1000 # How many batches to buffer in case of a slow exporter, defaults to 500
 
-# Optionally configure probability sampling
+# Span sampling
 sampling:
-  sample-probability: 0.05 # Must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
+  sample-probability: 0.05 # Optional - must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
+  span-names: some-span-name # Optional - name of spans to sample (may be partial match)
   cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
   max-cache-size: 500000 # Max number of entries in the sample decision cache, defaults to 1000000
+
+# Optional attribute filtering
+attribute-filtering:
+  names:
+    - some.attribute.name
+    - another.attribute.name
+  values:
+    - prohibited
+  name-values:
+    some.attribute.name: prohibited
 
 # Listen for spans on a Kafka topic
 kafka-listener:
@@ -272,11 +283,22 @@ log-spans: true # Log spans to the console, defaults to false
 
 buffer-size: 1000 # How many batches to buffer in case of a slow exporter, defaults to 500
 
-# Optionally configure probability sampling
+# Span sampling
 sampling:
-  sample-probability: 0.05 # Must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
+  sample-probability: 0.05 # Optional - must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
+  span-names: some-span-name # Optional - name of spans to sample (may be partial match)
   cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
   max-cache-size: 500000 # Max number of entries in the sample decision cache, defaults to 1000000
+
+# Optional attribute filtering
+attribute-filtering:
+  names:
+    - some.attribute.name
+    - another.attribute.name
+  values:
+    - prohibited
+  name-values:
+    some.attribute.name: prohibited
 
 # Listen for spans on a Kafka topic
 kafka-listener:

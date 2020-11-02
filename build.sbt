@@ -117,8 +117,7 @@ lazy val root = (project in file("."))
     natchez,
     `tail-sampling`,
     `tail-sampling-cache-store`,
-    filtering,
-    benchmarks
+    filtering
   )
 
 lazy val model =
@@ -398,7 +397,7 @@ lazy val `avro-kafka-exporter` =
         Dependencies.kafka,
         Dependencies.log4cats
       ),
-      libraryDependencies ++= Dependencies.test ++ Seq(Dependencies.embeddedKafka % Test),
+      libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.embeddedKafka)).map(_ % Test),
       classLoaderLayeringStrategy in Test := ClassLoaderLayeringStrategy.ScalaLibrary,
       classLoaderLayeringStrategy in Test := ClassLoaderLayeringStrategy.Flat
     )
@@ -583,13 +582,8 @@ lazy val filtering = (project in file("modules/filtering"))
   .settings(publishSettings)
   .settings(
     name := "trace4cats-filtering",
-    libraryDependencies ++= Seq(
-      Dependencies.ahoCorasick,
-      Dependencies.catsEffect,
-      Dependencies.fs2,
-      Dependencies.log4cats
-    ),
-    libraryDependencies ++= Dependencies.test
+    libraryDependencies ++= Seq(Dependencies.cats, Dependencies.fs2),
+    libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
   .dependsOn(model, kernel, `exporter-stream`)
 
@@ -634,7 +628,8 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
     `avro-kafka-exporter`,
     `avro-kafka-consumer`,
     `tail-sampling`,
-    `tail-sampling-cache-store`
+    `tail-sampling-cache-store`,
+    filtering
   )
 
 lazy val collector = (project in file("modules/collector"))
@@ -701,9 +696,3 @@ lazy val `collector-lite` = (project in file("modules/collector-lite"))
     `graal-kafka`
   )
   .enablePlugins(GraalVMNativeImagePlugin)
-
-lazy val benchmarks = (project in file("modules/benchmarks"))
-  .settings(noPublishSettings)
-  .settings(name := "trace4cats-benchmarks")
-  .dependsOn(`filtering`)
-  .enablePlugins(JmhPlugin)

@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.sampling.tail
 
-import cats.data.NonEmptyList
+import cats.data.{NonEmptyList, NonEmptySet}
+import cats.kernel.Semigroup
 import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
@@ -116,10 +117,33 @@ object TailSpanSampler {
   ): TailSpanSampler[F] =
     storedIncrementalComputation[F](store, span => Applicative[F].pure(filter(span)))
 
+  def spanNameFilter[F[_]: Monad](store: SampleDecisionStore[F], filter: String => SampleDecision): TailSpanSampler[F] =
+    filtering(store, span => filter(span.name))
+
+  def spanNameFilter[F[_]: Monad](store: SampleDecisionStore[F], contains: NonEmptySet[String]): TailSpanSampler[F] =
+    spanNameFilter(store, name => SampleDecision(contains.exists(name.contains)))
+
   def probabilistic[F[_]: Monad](store: SampleDecisionStore[F], probability: Double): TailSpanSampler[F] = {
     val spanSampler: (TraceId, Option[SampleDecision]) => SampleDecision =
       SpanSampler.decideProbabilistic(probability, rootSpansOnly = false)
 
     filtering[F](store, span => spanSampler(span.context.traceId, None))
   }
+
+  def combined[F[_]: Monad](x: TailSpanSampler[F], y: TailSpanSampler[F]): TailSpanSampler[F] =
+    new TailSpanSampler[F] {
+      override def sampleBatch(batch: Batch): F[Option[Batch]] =
+        x.sampleBatch(batch).flatMap(_.flatTraverse(y.sampleBatch))
+
+      override def shouldSample(span: CompletedSpan): F[SampleDecision] =
+        x.shouldSample(span).flatMap {
+          case SampleDecision.Drop => Applicative[F].pure(SampleDecision.Drop)
+          case SampleDecision.Include => y.shouldSample(span)
+        }
+    }
+
+  implicit def semigroup[F[_]: Monad]: Semigroup[TailSpanSampler[F]] =
+    new Semigroup[TailSpanSampler[F]] {
+      override def combine(x: TailSpanSampler[F], y: TailSpanSampler[F]): TailSpanSampler[F] = combined(x, y)
+    }
 }
