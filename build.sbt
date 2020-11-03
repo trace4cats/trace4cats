@@ -164,7 +164,10 @@ lazy val example = (project in file("modules/example"))
     `opentelemetry-otlp-http-exporter`,
     `stackdriver-grpc-exporter`,
     `stackdriver-http-exporter`,
-    `sttp-client`
+    `sttp-client`,
+    `tail-sampling`,
+    `tail-sampling-cache-store`,
+    filtering
   )
 
 lazy val test = (project in file("modules/test"))

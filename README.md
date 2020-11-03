@@ -27,19 +27,7 @@ Compatible with [OpenTelemetry] and [Jaeger], based on, and interoperates wht [N
      * [Collector Lite](#collector-lite)
         * [Configuring](#configuring-1)
         * [Running](#running-3)
-  * [SBT Dependencies](#sbt-dependencies)
-  * [Code Examples](#code-examples)
-     * [Simple](#simple)
-     * [Simple ZIO](#simple-zio)
-     * [Advanced](#advanced)
-     * [Inject](#inject)
-     * [Inject ZIO](#inject-zio)
-     * [Natchez](#natchez)
-     * [FS2](#fs2)
-     * [Http4s](#http4s)
-     * [Http4s ZIO](#http4s-zio)
-     * [Sttp](#http4s)
-     * [Sttp ZIO](#http4s-zio)     
+  * [SBT Dependencies](#sbt-dependencies)  
   * [native-image Compatibility](#native-image-compatibility)
   * [Contributing](#contributing)
   * [TODO](#todo)
@@ -109,6 +97,12 @@ Convert a span context to and from message or http headers.
 The following implementations are provided out of the box:
 
 - [W3C Trace Context](https://www.w3.org/TR/trace-context/)
+- [B3](https://github.com/openzipkin/b3-propagation)
+- [B3 Single Header](https://github.com/openzipkin/b3-propagation)
+- [Envoy](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/observability/tracing)
+
+When using `ToHeaders.all` the span context will be encoded using all of these header types and decoded using each
+encoding as a fallback, allowing for maximum interoperability between tracing systems.
 
 ## Components
 
@@ -166,8 +160,8 @@ buffer-size: 1000 # How many batches to buffer in case of a slow exporter, defau
 # Span sampling
 sampling:
   sample-probability: 0.05 # Optional - must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
-  span-names: some-span-name # Optional - name of spans to sample (may be partial match)
-  cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
+  span-names: # Optional - name of spans to sample (may be partial match)
+    - some-span-name   cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
   max-cache-size: 500000 # Max number of entries in the sample decision cache, defaults to 1000000
 
 # Optional attribute filtering
@@ -286,7 +280,8 @@ buffer-size: 1000 # How many batches to buffer in case of a slow exporter, defau
 # Span sampling
 sampling:
   sample-probability: 0.05 # Optional - must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
-  span-names: some-span-name # Optional - name of spans to sample (may be partial match)
+  span-names: # Optional - name of spans to sample (may be partial match)
+    - some-span-name 
   cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
   max-cache-size: 500000 # Max number of entries in the sample decision cache, defaults to 1000000
 
@@ -388,212 +383,6 @@ To use Trace4Cats within your application add the dependencies listed below as n
 
 ```
 
-## Code Examples
-
-### [Simple](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/SimpleExample.scala)
-
-This example shows a simple example of how to use Trace4Cats without the need to 
-inject a root span via a Kleisli (see the Inject example below).
-
-Requires:
-
-```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
-
-```
-
-### [Simple ZIO](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/SimpleZioExample.scala)
-
-This example shows a simple example of how to use Trace4Cats with ZIO without the need to 
-inject a root span via the environment (see the Inject example below).
-
-Requires:
-
-```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
-
-```
-
-### [Advanced](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/AdvancedExample.scala)
-
-Demonstrates how spans may be used in a for comprehension along side other [`Resource`]s.
-Also shows how multiple completers may be combined using a monoid in the
-[`AllCompleters`](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/AllCompleters.scala)
-object.
-
-Requires:
-
-```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-log-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.6.0"
-
-```
-
-### [Inject](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/InjectExample.scala)
-
-Demonstrates how the callstack may be traced using the [`Trace`](modules/inject/src/main/scala/io/janstenpickle/trace4cats/inject/Trace.scala)
-typeclass. This functionality has been slightly adapted from [Natchez], but gives
-you the ability to set the span's kind on creation and status during execution.
-
-It also shows how via the `io.janstenpickle.trace4cats.natchez.conversions._` import
-you can implicitly convert to and from [Natchez]'s `Trace` typeclass so if
-you have imported some library that makes use of [Natchez] you can
-interoperate with Trace4Cats.
-
-Requires:
-
-
-```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-natchez" % "0.6.0" // required only for interop
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
-
-```
-
-### [Inject ZIO](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/InjectZioExample.scala)
-
-Demonstrates how to use the `Trace` typeclass with [ZIO] environment instead of a Kleisli. A `Trace` instance
-is provided with the following import:
-
-```
-io.janstenpickle.trace4cats.inject.zio._
-```
-
-Requires:
-
-```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-inject-zio" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-natchez" % "0.6.0" // required only for interop
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
-
-```
-
-### [Natchez](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/NatchezExample.scala)
-
-Demonstrates how the callstack may be traced with Trace4Cats using the [Natchez] `Trace`
-typeclass.
-
-It also shows how via the `io.janstenpickle.trace4cats.natchez.conversions._` import
-you can implicitly convert to and from Trace4Cats' `Trace` typeclass for
-interopability.
-
-Requires:
-
-
-```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.6.0" // required only for interop
-"io.janstenpickle" %% "trace4cats-natchez" % "0.6.0" 
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
-
-```
-
-
-### [FS2](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/Fs2Example.scala)
-
-Demonstrates how a span context can be propagated through an [FS2] stream. Uses the 
-[Writer monad](http://eed3si9n.com/herding-cats/Writer.html) to include an [FS2 `EntryPoint`] along side each element. 
-Implicit methods are provided with the import `io.janstenpickle.trace4cats.fs2.syntax.all._` to lift an 
-[FS2 `EntryPoint`] into the stream and use it to perform traced operations within the stream, propagating a span context
-between closures.  
-
-Requires:
-
-```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-fs2" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
-
-```
-
-### [Http4s](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/Http4sExample.scala)
-
-Demonstrates how to use Trace4Cats with [Http4s] routes and clients. Span contexts are propagated via HTTP headers, and 
-span status is derived from HTTP status codes. Implicit methods on `HttpRoutes` and `Client` are provided with the
-imports:
-
-```scala
-io.janstenpickle.trace4cats.http4s.server.syntax._
-io.janstenpickle.trace4cats.http4s.client.syntax._
-```
-
-Requires:
-
-```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-client" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-server" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
-
-```
-
-### [Http4s ZIO](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/Http4sZioExample.scala)
-
-Demonstrates how to use Trace4Cats with [Http4s] routes and clients. Span contexts are propagated via HTTP headers, and 
-span status is derived from HTTP status codes. Implicit methods on `HttpRoutes` and `Client` are provided with the
-imports:
-
-```scala
-io.janstenpickle.trace4cats.http4s.server.syntax._
-io.janstenpickle.trace4cats.http4s.client.syntax._
-io.janstenpickle.trace4cats.inject.zio._
-```
-
-Requires:
-
-```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-inject-zio" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-client" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-server" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
-
-```
-
-### [Sttp](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/SttpExample.scala)
-
-Demonstrates how to use Trace4Cats with an [Sttp] backend. Span contexts are propagated via HTTP headers, and 
-span status is derived from HTTP status codes.
-
-Requires:
-
-```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-sttp-client" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
-
-```
-
-### [Sttp ZIO](modules/example/src/main/scala/io/janstenpickle/trace4cats/example/SttpZioExample.scala)
-
-Demonstrates how to use Trace4Cats with an [Sttp] backend and [ZIO]. Span contexts are propagated via HTTP headers, and 
-span status is derived from HTTP status codes.
-
-Requires:
-
-```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-inject-zio" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-sttp-client" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
-
-```
-
 ## [`native-image`] Compatibility
 
 The following span completers have been found to be compatible with [`native-image`]:
@@ -611,15 +400,6 @@ The following span completers have been found to be compatible with [`native-ima
 This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-conduct.html) and aims that its channels
 (mailing list, Gitter, github, etc.) to be welcoming environments for everyone.
 
-## TODO
-
-- [x] Initial release
-- [x] Probabilistic span sampler 
-- [ ] Limit number of attributes
-- [x] Integration tests
-- [x] Detailed examples
-- [x] Jaeger protobuf exporter
-- [x] OTLP HTTP exporter
 
 [FS2]: https://fs2.io/
 [FS2 `EntryPoint`]: modules/fs2/src/main/scala/io/janstenpickle/trace4cats/fs2/Fs2EntryPoint.scala

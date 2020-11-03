@@ -10,7 +10,10 @@ import io.janstenpickle.trace4cats.sampling.tail.SampleDecisionStore
 import scala.concurrent.duration._
 
 object LocalCacheSampleDecisionStore {
-  def apply[F[_]: Sync: Clock](ttl: FiniteDuration = 5.minutes, maximumSize: Option[Long]): F[SampleDecisionStore[F]] =
+  def apply[F[_]: Sync: Clock](
+    ttl: FiniteDuration = 5.minutes,
+    maximumSize: Option[Long] = None
+  ): F[SampleDecisionStore[F]] =
     Sync[F]
       .delay {
         val builder = Scaffeine().expireAfterAccess(ttl)

@@ -19,7 +19,7 @@ object Sampling {
     def decisionStore(ttl: Int, maxSize: Long) =
       LocalCacheSampleDecisionStore[F](ttl.minutes, Some(maxSize))
 
-    val makeExporter = TailSamplingSpanExporter[F](underlying, _)
+    val makeExporter = TailSamplingSpanExporter[F](underlying, _: TailSpanSampler[F])
 
     config match {
       case SamplingConfig(None, None, _, _) => Applicative[F].pure(underlying)

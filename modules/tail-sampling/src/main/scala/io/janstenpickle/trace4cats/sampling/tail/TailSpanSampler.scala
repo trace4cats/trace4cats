@@ -118,7 +118,7 @@ object TailSpanSampler {
     storedIncrementalComputation[F](store, span => Applicative[F].pure(filter(span)))
 
   def spanNameFilter[F[_]: Monad](store: SampleDecisionStore[F], filter: String => SampleDecision): TailSpanSampler[F] =
-    filtering(store, span => filter(span.name))
+    filtering(store, span => if (span.context.parent.isEmpty) filter(span.name) else SampleDecision.Include)
 
   def spanNameFilter[F[_]: Monad](store: SampleDecisionStore[F], contains: NonEmptySet[String]): TailSpanSampler[F] =
     spanNameFilter(store, name => SampleDecision(contains.exists(name.contains)))
