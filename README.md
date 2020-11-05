@@ -17,20 +17,10 @@ Compatible with [OpenTelemetry] and [Jaeger], based on, and interoperates wht [N
         * [SpanSampler](#spansampler)
         * [ToHeaders](#toheaders)
   * [Components](#components)
-     * [Agent](#agent)
-        * [Running](#running)
-      * [Agent Kafka](#agent-kafka)
-         * [Running](#running-1)
-     * [Collector](#collector)
-        * [Configuring](#configuring)
-        * [Running](#running-2)
-     * [Collector Lite](#collector-lite)
-        * [Configuring](#configuring-1)
-        * [Running](#running-3)
+  * [Documentation](#documentation)
   * [SBT Dependencies](#sbt-dependencies)  
   * [native-image Compatibility](#native-image-compatibility)
   * [Contributing](#contributing)
-  * [TODO](#todo)
 
 ## Motivation
 
@@ -41,321 +31,21 @@ brings along lots of other dependencies. You may find *Trace4Cats* useful if you
 - Resolve a dependency conflict caused by a tracing implementation
 - Create a [`native-image`] using [Graalvm](https://www.graalvm.org/)
   
-## Design
-
-Trace 4 Cats partially implements [OpenTelemetry] tracing, just enough
-traces can be exported to [Jaeger] or the 
-[OpenTelemetry collector](https://opentelemetry.io/docs/collector/about/). 
-
-## Trace Injection
-
-Based heavily on [Natchez] but exposes the specific Trace4Cats functionality of setting the span
-kind and status. A `Trace` typeclass is used to propagate a span context throughout the callstack.
-
-See the [example](#inject) below for more information, usage, and interoperability with [Natchez].
-
-### Interfaces
-
-The following interfaces allow different backends to be plugged in and may adjust how traces
-are sampled.
-
-#### `SpanExporter` and `SpanCompleter`
-`SpanExporter`s are used to forward a batch of spans to as certain location in a certain format.
-Multiple implementations may be combined using the provided `Monoid` instance.
-
-`SpanCompleter`s are used when a spans is finished. They will usually delegate to a `SpanExporter`
-of the same format. Multiple implementations may be combined using the provided `Monoid` instance.
-
-`SpanCompleter`s should generally buffer spans in a circular buffer so that completing a span should
-be non-blocking for the hosting application. `SpanExporter`s may be blocking, however a buffering
-wrapper implementation is available, which is used in the Collectors to provide non-blocking behaviour 
-when accepting new spans. 
-
-The following implementations are provided out of the box:
-
-- [Jaeger] agent via Thrift over UDP and Protobufs over GRPC
-- [OpenTelemetry] collector via Protobufs over GRPC and JSON over HTTP
-- Log using [Log4Cats]
-- Trace4Cats Avro over TCP, UDP or Kafka
-- [Stackdriver Trace] over HTTP or GRPC
-- [Datadog] over HTTP
-- [NewRelic] over HTTP
-
-#### `SpanSampler`
-Used to decide whether or not a span should be sampled.
-
-The following implementations are provided out of the box:
-
-- Always
-- Never
-- Probabilistic
-
-#### `ToHeaders`
-
-Convert a span context to and from message or http headers.
-
-The following implementations are provided out of the box:
-
-- [W3C Trace Context](https://www.w3.org/TR/trace-context/)
-- [B3](https://github.com/openzipkin/b3-propagation)
-- [B3 Single Header](https://github.com/openzipkin/b3-propagation)
-- [Envoy](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/observability/tracing)
-
-When using `ToHeaders.all` the span context will be encoded using all of these header types and decoded using each
-encoding as a fallback, allowing for maximum interoperability between tracing systems.
 
 ## Components
 
-### Agent
+There are two main standalone components as part of Trace4cats, the agent and the collector. To see how they work
+together, see the [topologies documentation](docs/topologies.md), for information on configuring and running the agent
+and collector see the [components documentation](docs/components.md).
 
-A lightweight Avro UDP server, built with [`native-image`] designed to be co-located with a traced
-application. Forwards batches of spans onto the Collector over TCP.
+## Documentation 
 
-#### Running
-
-```bash
-docker run -it janstenpickle/trace4cats-agent:0.6.0
-```
-
-### Agent Kafka
-
-A lightweight Avro UDP server, built with [`native-image`] designed to be co-located with a traced
-application. Forwards batches of spans onto a supplied Kafka topic.
-
-#### Running
-
-```bash
-docker run -it janstenpickle/trace4cats-agent-kafka:0.6.0
-```
-
-### Collector
-
-A standalone server designed to forward spans via various `SpanExporter` implementations. Currently
-the Collector supports the following exporters:
-
-- [Jaeger] via Thrift over UDP and Protobufs over GRPC
-- [OpenTelemetry] via Protobufs over GRPC and JSON over HTTP
-- Log using [Log4Cats]
-- Trace4Cats Avro over TCP
-- Trace4Cats Avro over Kafka
-- [Stackdriver Trace] over HTTP and GRPC
-- [Datadog] over HTTP
-- [NewRelic] over HTTP
-
-#### Configuring
-
-The Collector is configured using YAML or JSON, all configuration is optional, however you should probably configure
-at least one exporter, set up forwarding or enable span logging.
-
-See Kafka documentation for additional [Kafka consumer config] and [Kafka producer config]
-
-```yaml
-listener:
-  port: 7779 # Change the default lister port
-
-log-spans: true # Log spans to the console, defaults to false
-
-buffer-size: 1000 # How many batches to buffer in case of a slow exporter, defaults to 500
-
-# Span sampling
-sampling:
-  sample-probability: 0.05 # Optional - must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
-  span-names: # Optional - name of spans to sample (may be partial match)
-    - some-span-name   cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
-  max-cache-size: 500000 # Max number of entries in the sample decision cache, defaults to 1000000
-
-# Optional attribute filtering
-attribute-filtering:
-  names:
-    - some.attribute.name
-    - another.attribute.name
-  values:
-    - prohibited
-  name-values:
-    some.attribute.name: prohibited
-
-# Listen for spans on a Kafka topic
-kafka-listener:
-  group: trace4cats-collector
-  topic: spans
-  bootstrap-servers:
-    - "localhost:9092"
-  # Optional Kafka batching within collector
-  batch:
-    size: 1000 # Maximum number of spans within a batch from kafka
-    timeout-seconds: 10 # How long to linger if batch is < configured size
-  # Optional additional Kafka consumer config
-  consumer-config:
-    key: value
-
-# Forward spans to another collector
-forwarder:
-  host: some-remote-host
-  port: 7777
-
-# Forward spans to a kafka topic
-kafka-forwarder:
-  topic: spans
-  bootstrap-servers:
-    - "localhost:9092"  
-  # Optional additional Kafka producer config
-  producer-config:
-    key: value
-
-# Export to Jaeger
-jaeger:
-  host: jaeger-host
-  port: 9999 # Defaults to 6831
-
-# Export to Jaeger via protbufs
-jaeger-proto:
-  host: jaeger-host
-  port: 9999 # Defaults to 14250
-
-# Export to OpenTelemetry Collector via HTTP
-otlp-http:
-  host: otlp-host
-  port: 9999 # Defaults to 55681
-
-# Export to OpenTelemetry Collector via GRPC
-otlp-grpc
-  host: otlp-host
-  port: 9999 # Defaults to 55680
-
-# Export to Stackdriver via HTTP
-# All config is optional, if running in GCP they will be obtained from the metadata endpoint
-stackdriver-http:
-  project-id: some-project-id
-  credentials-file: /path/to/credentials.json
-  service-account-name: svcacc2 # Defaults to 'default'
-
-# Export to Stackdriver via GRPC
-stackdriver-grpc:
-  project-id: some-project-id
-
-# Export to Datadog agent - All config is optional
-datadog:
-  host: agent-host # defaults to 'localhost'
-  port: 9999 # defaults to 8126
-
-# Export to NewRelic
-new-relic:
-  api-key: 7c1989d1-e019-46bc-a04e-824fdf33b237
-  endpoint: EU # defaults to US, may be a custom endpoint
-```
-
-#### Running
-
-```bash
-docker run -p7777:7777 -p7777:7777/udp -it -v /path/to/your/collector-config.yaml:/tmp/collector.yaml janstenpickle/trace4cats-collector:0.6.0 --config-file=/tmp/collector.yaml
-```
-
-### Collector Lite
-
-Similar implementation to the Collector, but compiled with [`native-image`] so does not support any
-GRPC based exporters. Currently Collector lite supports the following exporters:
-
-- [Jaeger] via Thrift over UDP
-- [OpenTelemetry] via JSON over HTTP
-- Log using [Log4Cats]
-- Trace4Cats Avro over TCP
-- Trace4Cats Avro over Kafka
-- [Stackdriver Trace] over HTTP
-- [Datadog] over HTTP
-- [NewRelic] over HTTP
-
-#### Configuring
-
-As with the [Collector](#collector), Collector Lite is configured using YAML or JSON, however not all exporters are
-supported
-
-```yaml
-listener:
-  port: 7779 # Change the default lister port
-
-log-spans: true # Log spans to the console, defaults to false
-
-buffer-size: 1000 # How many batches to buffer in case of a slow exporter, defaults to 500
-
-# Span sampling
-sampling:
-  sample-probability: 0.05 # Optional - must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
-  span-names: # Optional - name of spans to sample (may be partial match)
-    - some-span-name 
-  cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
-  max-cache-size: 500000 # Max number of entries in the sample decision cache, defaults to 1000000
-
-# Optional attribute filtering
-attribute-filtering:
-  names:
-    - some.attribute.name
-    - another.attribute.name
-  values:
-    - prohibited
-  name-values:
-    some.attribute.name: prohibited
-
-# Listen for spans on a Kafka topic
-kafka-listener:
-  group: trace4cats-collector
-  topic: spans
-  bootstrap-servers:
-    - "localhost:9092"
-  # Optional Kafka batching within collector
-  batch:
-    size: 1000 # Maximum number of spans within a batch from kafka
-    timeout-seconds: 10 # How long to linger if batch is < configured size
-  # Optional additional Kafka consumer config
-  consumer-config:
-    key: value
-
-# Forward spans to another collector
-forwarder:
-  host: some-remote-host
-  port: 7777
-
-# Forward spans to a kafka topic
-kafka-forwarder:
-  topic: spans
-  bootstrap-servers:
-    - "localhost:9092"  
-  # Optional additional Kafka producer config
-  producer-config:
-    key: value
-
-# Export to Jaeger
-jaeger:
-  host: jaeger-host
-  port: 9999 # Defaults to 6831
-
-# Export to OpenTelemetry Collector via HTTP
-otlp-http:
-  host: otlp-host
-  port: 9999 # Defaults to 55681
-
-# Export to Stackdriver via HTTP
-# All config is optional, if running in GCP they will be obtained from the metadata endpoint
-stackdriver-http:
-  project-id: some-project-id
-  credentials-file: /path/to/credentials.json
-  service-account-name: svcacc2 # Defaults to 'default'
-
-# Export to Datadog agent - All config is optional
-datadog:
-  host: agent-host # defaults to 'localhost'
-  port: 9999 # defaults to 8126
-
-# Export to NewRelic
-new-relic:
-  api-key: 7c1989d1-e019-46bc-a04e-824fdf33b237
-  endpoint: EU # defaults to US, may be a custom endpoint
-```
-
-#### Running
-
-```bash
-docker run -p7777:7777 -p7777:7777/udp -it -v /path/to/your/collector-config.yaml:/tmp/collector.yaml janstenpickle/trace4cats-collector-lite:0.6.0 --config-file=/tmp/collector.yaml
-```
+- [Design](docs/design.md) - Trace4cats design
+- [Components](docs/components.md) - running and configuring Trace4cats components
+- [Topologies](docs/topologies.md) - information on potential Trace4cats deployment topologies
+- [Sampling](docs/sampling.md) - trace sampling
+- [Filtering](docs/filtering.md) - span attribute filtering
+- [Examples](docs/examples.md) - code usage examples
 
 ## SBT Dependencies
 
@@ -371,6 +61,8 @@ To use Trace4Cats within your application add the dependencies listed below as n
 "io.janstenpickle" %% "trace4cats-sttp-client" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-natchez" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-avro-kafka-exporter" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-avro-kafka-consumer" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-log-exporter" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.6.0"
@@ -415,5 +107,3 @@ This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-
 [`Resource`]: https://typelevel.org/cats-effect/datatypes/resource.html
 [ZIO]: https://zio.dev
 [Sttp]: https://sttp.softwaremill.com
-[Kafka consumer config]: https://kafka.apache.org/26/javadoc/?org/apache/kafka/clients/consumer/ConsumerConfig.html
-[Kafka producer config]: https://kafka.apache.org/26/javadoc/?org/apache/kafka/clients/producer/ProducerConfig.html

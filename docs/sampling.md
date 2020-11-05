@@ -4,7 +4,7 @@ There are two types of sampling in tracing; head and tail.
 
 - Head sampling is performed at the source, the choice is made within the traced component as to whether the trace 
 should be sampled.
-- Tail sampling is performed in infrastructre downstream from the traced component. This could be in a collector or
+- Tail sampling is performed in infrastructure downstream from the traced component. This could be in a [collector] or
 the tracing system itself.
 
 ## Head Sampling
@@ -29,14 +29,18 @@ such as [Stackdriver Trace] or [Datadog] where you are charged by the number of 
 
 ### Sample Decision Store
 
-Your internal [topology](topologies.md) should influence the kind of decision store you use and whether it can be
-internal to the Collector, or external.
+Your internal [topology](topologies.md) and configuration will influence the kind of decision store you use and whether
+it can be internal to the Collector, or external.
 
-If you use [Kafka](topologies.md#kafka), you can guarantee all spans for a trace will end up at the same collector and
+If you just use a probability based sampler, decisions are based on the trace ID and will always result in the same
+decision for the same trace ID. So if you are just using the probability sampler you will not need a sample decision
+store.
+
+If you use [Kafka](topologies.md#kafka), you can guarantee all spans for a trace will end up at the same [collector] and
 use the default cache based decision store. This is because the trace ID is used as the message key and the producer is
 set up to send all spans for the same trace ID to the same partition.
 
-If you do not use Kafka, you should use an external sample store so that if you have more than one collector that
+If you do not use Kafka, you should use an external sample store so that if you have more than one [collector] that
 can receive spans for the same trace, the sample decision may be shared between all instances. If you enable sampling
 in this kind of [topology](topologies.md), then you could end up with incomplete traces in you tracing system. At
 present the only external sample store implementation available is Redis.
@@ -51,7 +55,7 @@ The configuration fragment below sets up the following:
   - A span name sampler, which filters traces whose name contain the configured strings
     - This sampler only applies to root spans, subsequent spans will look up decisions for the trace against the
       decision store
-    - *Note that the greater number of names, the more performance of the collector may be negatively impacted*
+    - *Note that the greater number of names, the more performance of the [collector] may be negatively impacted*
   - A local cache decision store with
     - TTL per trace of 10 minutes
     - Maximum number of trace sample decision entries of 500000
@@ -65,7 +69,22 @@ sampling:
     - metrics
   cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
   max-cache-size: 500000 # Max number of entries in the sample decision cache, defaults to 1000000
+  redis: # Optional - use redis as a sample decision store
+    host: redis-host
+    port: 6378 # defaults to 6379
+```
+
+Alternatively you can configure a connection to a Redis cluster
+
+```yaml
+sampling:
+  redis:
+    cluster:
+      - host: redis1
+        port: 6378
+      - host: redis2
 ```
 
 [Stackdriver Trace]: https://cloud.google.com/trace/docs/reference
 [Datadog]: https://docs.datadoghq.com/api/v1/tracing/
+[collector]: components.md#collector

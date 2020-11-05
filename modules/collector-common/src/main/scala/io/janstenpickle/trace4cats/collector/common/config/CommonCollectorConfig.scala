@@ -107,11 +107,11 @@ object SamplingConfig {
 
 sealed trait RedisStoreConfig
 object RedisStoreConfig {
-  case class RedisServer(host: String, port: Int) extends RedisStoreConfig
+  case class RedisServer(host: String, port: Int = 6379) extends RedisStoreConfig
   object RedisServer {
     implicit val decoder: Decoder[RedisServer] = deriveConfiguredDecoder
   }
-  case class RedisCluster(servers: NonEmptyList[RedisServer]) extends RedisStoreConfig
+  case class RedisCluster(cluster: NonEmptyList[RedisServer]) extends RedisStoreConfig
   object RedisCluster {
     implicit val decoder: Decoder[RedisCluster] = deriveConfiguredDecoder
   }

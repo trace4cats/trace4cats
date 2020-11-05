@@ -103,6 +103,6 @@ consumer groups. Each [collector] could forward to a different trace system, and
 
 [Kafka]: https://kafka.apache.org/
 [`native-image`]: https://www.graalvm.org/docs/reference-manual/native-image/ 
-[collector]: ../README.md#collector
-[agent]: ../README.md#agent
-[agent-kafka]: ../README.md#agent-kafka
+[collector]: ../components#collector
+[agent]: ../components#agent
+[agent-kafka]: ../components#agent-kafka
