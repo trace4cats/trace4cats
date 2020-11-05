@@ -98,10 +98,25 @@ case class SamplingConfig(
   sampleProbability: Option[Double] = None,
   spanNames: Option[NonEmptySet[String]] = None,
   cacheTtlMinutes: Int = 2,
-  maxCacheSize: Long = 1000000
+  maxCacheSize: Long = 1000000,
+  redis: Option[RedisStoreConfig] = None
 )
 object SamplingConfig {
   implicit val decoder: Decoder[SamplingConfig] = deriveConfiguredDecoder
+}
+
+sealed trait RedisStoreConfig
+object RedisStoreConfig {
+  case class RedisServer(host: String, port: Int) extends RedisStoreConfig
+  object RedisServer {
+    implicit val decoder: Decoder[RedisServer] = deriveConfiguredDecoder
+  }
+  case class RedisCluster(servers: NonEmptyList[RedisServer]) extends RedisStoreConfig
+  object RedisCluster {
+    implicit val decoder: Decoder[RedisCluster] = deriveConfiguredDecoder
+  }
+
+  implicit val decoder: Decoder[RedisStoreConfig] = RedisServer.decoder.widen.or(RedisCluster.decoder.widen)
 }
 
 case class FilteringConfig(

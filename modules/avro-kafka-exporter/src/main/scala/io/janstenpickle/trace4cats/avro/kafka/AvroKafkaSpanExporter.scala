@@ -18,6 +18,7 @@ import io.janstenpickle.trace4cats.model.{Batch, TraceId}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericDatumWriter
 import org.apache.avro.io.EncoderFactory
+import org.apache.kafka.clients.producer.ProducerConfig
 
 object AvroKafkaSpanExporter {
   implicit def keySerializer[F[_]: Sync]: Serializer[F, TraceId] = Serializer.string[F].contramap[TraceId](_.show)
@@ -67,6 +68,7 @@ object AvroKafkaSpanExporter {
               ProducerSettings[F, TraceId, KafkaSpan]
                 .withBlocker(blocker)
                 .withBootstrapServers(bootStrapServers.mkString_(","))
+                .withProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG, "gzip")
             )
           )
           .map(fromProducer[F](_, topic))

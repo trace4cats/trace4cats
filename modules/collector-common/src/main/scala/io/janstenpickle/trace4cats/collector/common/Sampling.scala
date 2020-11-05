@@ -1,36 +1,43 @@
 package io.janstenpickle.trace4cats.collector.common
 
-import cats.Applicative
-import cats.effect.{Clock, Sync}
-import cats.syntax.functor._
+import cats.Parallel
+import cats.effect.{Clock, Concurrent, ContextShift, Resource}
 import cats.syntax.semigroup._
+import io.chrisdavenport.log4cats.Logger
 import io.janstenpickle.trace4cats.`export`.StreamSpanExporter
-import io.janstenpickle.trace4cats.collector.common.config.SamplingConfig
+import io.janstenpickle.trace4cats.collector.common.config.{RedisStoreConfig, SamplingConfig}
 import io.janstenpickle.trace4cats.sampling.tail.cache.LocalCacheSampleDecisionStore
+import io.janstenpickle.trace4cats.sampling.tail.redis.RedisSampleDecisionStore
 import io.janstenpickle.trace4cats.sampling.tail.{TailSamplingSpanExporter, TailSpanSampler}
 
 import scala.concurrent.duration._
 
 object Sampling {
-  def exporter[F[_]: Sync: Clock](
+  def exporter[F[_]: Concurrent: ContextShift: Clock: Parallel: Logger](
     config: SamplingConfig,
     underlying: StreamSpanExporter[F]
-  ): F[StreamSpanExporter[F]] = {
-    def decisionStore(ttl: Int, maxSize: Long) =
-      LocalCacheSampleDecisionStore[F](ttl.minutes, Some(maxSize))
+  ): Resource[F, StreamSpanExporter[F]] = {
+    def decisionStore(ttl: Int, maxSize: Long, redis: Option[RedisStoreConfig]) =
+      redis match {
+        case None => Resource.liftF(LocalCacheSampleDecisionStore[F](ttl.minutes, Some(maxSize)))
+        case Some(RedisStoreConfig.RedisServer(host, port)) =>
+          RedisSampleDecisionStore[F](host, port, ttl.minutes, Some(maxSize))
+        case Some(RedisStoreConfig.RedisCluster(servers)) =>
+          RedisSampleDecisionStore.cluster[F](servers.map(s => s.host -> s.port), ttl.minutes, Some(maxSize))
+      }
 
     val makeExporter = TailSamplingSpanExporter[F](underlying, _: TailSpanSampler[F])
 
     config match {
-      case SamplingConfig(None, None, _, _) => Applicative[F].pure(underlying)
-      case SamplingConfig(Some(probability), None, ttl, maxSize) =>
-        decisionStore(ttl, maxSize).map(TailSpanSampler.probabilistic[F](_, probability)).map(makeExporter)
-      case SamplingConfig(None, Some(names), ttl, maxSize) =>
-        decisionStore(ttl, maxSize).map(TailSpanSampler.spanNameFilter[F](_, names)).map(makeExporter)
-      case SamplingConfig(Some(probability), Some(names), ttl, maxSize) =>
-        decisionStore(ttl, maxSize)
+      case SamplingConfig(None, None, _, _, _) => Resource.pure(underlying)
+      case SamplingConfig(Some(probability), None, _, _, _) =>
+        Resource.pure(makeExporter(TailSpanSampler.probabilistic[F](probability)))
+      case SamplingConfig(None, Some(names), ttl, maxSize, redis) =>
+        decisionStore(ttl, maxSize, redis).map(TailSpanSampler.spanNameFilter[F](_, names)).map(makeExporter)
+      case SamplingConfig(Some(probability), Some(names), ttl, maxSize, redis) =>
+        decisionStore(ttl, maxSize, redis)
           .map { store =>
-            TailSpanSampler.probabilistic[F](store, probability) |+| TailSpanSampler.spanNameFilter[F](store, names)
+            TailSpanSampler.probabilistic[F](probability) |+| TailSpanSampler.spanNameFilter[F](store, names)
           }
           .map(makeExporter)
     }

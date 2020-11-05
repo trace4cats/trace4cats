@@ -117,6 +117,7 @@ lazy val root = (project in file("."))
     natchez,
     `tail-sampling`,
     `tail-sampling-cache-store`,
+    `tail-sampling-redis-store`,
     filtering
   )
 
@@ -603,6 +604,14 @@ lazy val `tail-sampling-cache-store` = (project in file("modules/tail-sampling-c
   .settings(name := "trace4cats-tail-sampling-cache-store", libraryDependencies ++= Seq(Dependencies.scaffeine))
   .dependsOn(`tail-sampling`)
 
+lazy val `tail-sampling-redis-store` = (project in file("modules/tail-sampling-redis-store"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-tail-sampling-redis-store",
+    libraryDependencies ++= Seq(Dependencies.redis4cats, Dependencies.redis4catsLog4cats, Dependencies.scaffeine)
+  )
+  .dependsOn(`tail-sampling`)
+
 lazy val `collector-common` = (project in file("modules/collector-common"))
   .settings(publishSettings)
   .settings(
@@ -632,6 +641,7 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
     `avro-kafka-consumer`,
     `tail-sampling`,
     `tail-sampling-cache-store`,
+    `tail-sampling-redis-store`,
     filtering
   )
 

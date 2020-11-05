@@ -26,6 +26,7 @@ object Dependencies {
     val micronaut = "2.1.2"
     val natchez = "0.0.13"
     val openTelemetry = "0.9.1"
+    val redis4cats = "0.10.3"
     val scaffeine = "4.0.2"
     val scala212 = "2.12.12"
     val scala213 = "2.13.3"
@@ -83,6 +84,8 @@ object Dependencies {
   lazy val openTelemetryOtlpExporter = "io.opentelemetry"   % "opentelemetry-exporters-otlp"    % Versions.openTelemetry
   lazy val openTelemetryJaegerExporter = "io.opentelemetry" % "opentelemetry-exporters-jaeger"  % Versions.openTelemetry
   lazy val openTelemetryProto = "io.opentelemetry"          % "opentelemetry-proto"             % Versions.openTelemetry
+  lazy val redis4cats = "dev.profunktor"                   %% "redis4cats-effects"              % Versions.redis4cats
+  lazy val redis4catsLog4cats = "dev.profunktor"           %% "redis4cats-log4cats"             % Versions.redis4cats
   lazy val scaffeine = "com.github.blemale"                %% "scaffeine"                       % Versions.scaffeine
   lazy val scalapbJson = "com.thesamet.scalapb"            %% "scalapb-json4s"                  % Versions.scalapb
   lazy val sttpClient = "com.softwaremill.sttp.client"     %% "cats"                            % Versions.sttp

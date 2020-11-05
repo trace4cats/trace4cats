@@ -123,11 +123,46 @@ object TailSpanSampler {
   def spanNameFilter[F[_]: Monad](store: SampleDecisionStore[F], contains: NonEmptySet[String]): TailSpanSampler[F] =
     spanNameFilter(store, name => SampleDecision(contains.exists(name.contains)))
 
-  def probabilistic[F[_]: Monad](store: SampleDecisionStore[F], probability: Double): TailSpanSampler[F] = {
+  // Probabilistic sampler does not need a store, as decision is applied consistently based on trace ID
+  def probabilistic[F[_]: Applicative](probability: Double): TailSpanSampler[F] = {
     val spanSampler: (TraceId, Option[SampleDecision]) => SampleDecision =
       SpanSampler.decideProbabilistic(probability, rootSpansOnly = false)
 
-    filtering[F](store, span => spanSampler(span.context.traceId, None))
+    new TailSpanSampler[F] {
+      override def sampleBatch(batch: Batch): F[Option[Batch]] =
+        Applicative[F].pure(
+          NonEmptyList.fromList(batch.spans.filter(_.context.traceFlags.sampled == SampleDecision.Include)).flatMap {
+            spans =>
+              val (sampledSpans, _) =
+                spans
+                  .foldLeft((List.empty[CompletedSpan], Map.empty[TraceId, SampleDecision])) {
+                    case ((sampled, computedDecisions), span) =>
+                      val traceId = span.context.traceId
+
+                      computedDecisions.get(traceId) match {
+                        case None =>
+                          spanSampler(span.context.traceId, None) match {
+                            case SampleDecision.Drop =>
+                              sampled -> computedDecisions.updated(span.context.traceId, SampleDecision.Drop)
+                            case SampleDecision.Include =>
+                              (span :: sampled) -> computedDecisions
+                                .updated(span.context.traceId, SampleDecision.Include)
+                          }
+
+                        case Some(SampleDecision.Drop) => sampled -> computedDecisions
+                        case Some(SampleDecision.Include) =>
+                          (span :: sampled) -> computedDecisions
+                      }
+
+                  }
+
+              if (sampledSpans.isEmpty) None else Some(batch.copy(spans = sampledSpans))
+          }
+        )
+
+      override def shouldSample(span: CompletedSpan): F[SampleDecision] =
+        Applicative[F].pure(spanSampler(span.context.traceId, None))
+    }
   }
 
   def combined[F[_]: Monad](x: TailSpanSampler[F], y: TailSpanSampler[F]): TailSpanSampler[F] =

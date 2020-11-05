@@ -24,13 +24,13 @@ object TailSampling extends IOApp {
       sampleDecisionStore <-
         Resource.liftF(LocalCacheSampleDecisionStore[IO](ttl = 10.minutes, maximumSize = Some(200000)))
 
-      probSampler = TailSpanSampler.probabilistic(sampleDecisionStore, probability = 0.05)
+      probSampler = TailSpanSampler.probabilistic[IO](probability = 0.05)
       nameSampler =
         TailSpanSampler
           .spanNameFilter(sampleDecisionStore, NonEmptySet.of("/healthcheck", "/readiness", "/metrics"))
-      combinedSampler = TailSpanSampler.combined(probSampler, nameSampler)
+      combinedSampler = TailSpanSampler.combined(probSampler, nameSampler) // a semigroup instance is also available
 
-      samplingExporter = TailSamplingSpanExporter(exporter, combinedSampler) // a semigroup instance is also available
+      samplingExporter = TailSamplingSpanExporter(exporter, combinedSampler)
 
       completer <- QueuedSpanCompleter[IO](
         TraceProcess("trace4cats"),

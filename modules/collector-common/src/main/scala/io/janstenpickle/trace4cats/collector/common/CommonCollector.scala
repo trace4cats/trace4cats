@@ -107,7 +107,7 @@ object CommonCollector {
         ).flatten ++ others
       )
 
-      exporter <- Resource.liftF(Sampling.exporter[F](config.sampling, queuedExporter))
+      exporter <- Sampling.exporter[F](config.sampling, queuedExporter)
 
       exportPipe = AttributeFiltering.pipe[F](config.attributeFiltering).andThen(exporter.pipe)
 
