@@ -50,8 +50,8 @@ object QueuedSpanCompleter {
           .start
       )(fiber => Timer[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)
     } yield new SpanCompleter[F] {
-      override def complete(span: CompletedSpan): F[Unit] = {
-        val enqueue = queue.enqueue1(span) >> inFlight.update { current =>
+      override def complete(span: CompletedSpan.Builder): F[Unit] = {
+        val enqueue = queue.enqueue1(span.build(process)) >> inFlight.update { current =>
           if (current == realBufferSize) current
           else current + 1
         }

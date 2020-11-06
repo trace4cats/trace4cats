@@ -5,7 +5,7 @@ import cats.{Applicative, Apply, Parallel}
 import io.janstenpickle.trace4cats.model.CompletedSpan
 
 trait SpanCompleter[F[_]] {
-  def complete(span: CompletedSpan): F[Unit]
+  def complete(span: CompletedSpan.Builder): F[Unit]
 }
 
 object SpanCompleter extends LowPrioritySpanCompleterInstances {
@@ -13,7 +13,7 @@ object SpanCompleter extends LowPrioritySpanCompleterInstances {
     new Monoid[SpanCompleter[F]] {
       override def combine(x: SpanCompleter[F], y: SpanCompleter[F]): SpanCompleter[F] =
         new SpanCompleter[F] {
-          override def complete(span: CompletedSpan): F[Unit] =
+          override def complete(span: CompletedSpan.Builder): F[Unit] =
             Parallel.parMap2(x.complete(span), y.complete(span))((_, _) => ())
         }
 
@@ -26,7 +26,7 @@ trait LowPrioritySpanCompleterInstances {
     new Monoid[SpanCompleter[F]] {
       override def combine(x: SpanCompleter[F], y: SpanCompleter[F]): SpanCompleter[F] =
         new SpanCompleter[F] {
-          override def complete(span: CompletedSpan): F[Unit] =
+          override def complete(span: CompletedSpan.Builder): F[Unit] =
             Apply[F].map2(x.complete(span), y.complete(span))((_, _) => ())
         }
 
@@ -35,6 +35,6 @@ trait LowPrioritySpanCompleterInstances {
 
   def empty[F[_]: Applicative]: SpanCompleter[F] =
     new SpanCompleter[F] {
-      override def complete(span: CompletedSpan): F[Unit] = Applicative[F].unit
+      override def complete(span: CompletedSpan.Builder): F[Unit] = Applicative[F].unit
     }
 }

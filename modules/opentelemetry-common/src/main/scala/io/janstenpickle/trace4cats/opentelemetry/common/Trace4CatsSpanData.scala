@@ -54,7 +54,7 @@ object Trace4CatsSpanData {
 
       override lazy val getStartEpochNanos: Long = TimeUnit.MILLISECONDS.toNanos(span.start.toEpochMilli)
 
-      override val getAttributes: ReadableAttributes = Trace4CatsReadableAttributes(span.attributes)
+      override val getAttributes: ReadableAttributes = Trace4CatsReadableAttributes(span.allAttributes)
 
       override lazy val getEvents: util.List[SpanData.Event] = List.empty.asJava
 
@@ -78,7 +78,7 @@ object Trace4CatsSpanData {
       override def getTotalRecordedLinks: Int = 0
 
       override lazy val getTotalAttributeCount: Int =
-        span.attributes.size
+        span.allAttributes.size
     }
 
 }

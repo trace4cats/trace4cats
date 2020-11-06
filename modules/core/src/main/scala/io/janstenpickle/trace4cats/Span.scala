@@ -50,8 +50,15 @@ case class RefSpan[F[_]: Sync: Clock] private (
     for {
       now <- Clock[F].realTime(TimeUnit.MILLISECONDS)
       attrs <- attributes.get
-      completed =
-        CompletedSpan(context, name, kind, Instant.ofEpochMilli(start), Instant.ofEpochMilli(now), attrs, status)
+      completed = CompletedSpan.Builder(
+        context,
+        name,
+        kind,
+        Instant.ofEpochMilli(start),
+        Instant.ofEpochMilli(now),
+        attrs,
+        status
+      )
       _ <- completer.complete(completed)
     } yield ()
 

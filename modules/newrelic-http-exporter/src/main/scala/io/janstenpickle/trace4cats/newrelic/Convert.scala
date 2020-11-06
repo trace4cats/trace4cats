@@ -28,7 +28,7 @@ object Convert {
           "id" -> Json.fromString(span.context.spanId.show),
           "attributes" ->
             attributesJson(
-              span.attributes ++ SemanticTags.kindTags(span.kind) ++ SemanticTags
+              span.allAttributes ++ SemanticTags.kindTags(span.kind) ++ SemanticTags
                 .statusTags("")(span.status) ++ Map[String, AttributeValue](
                 "duration.ms" -> AttributeValue.LongValue(span.end.toEpochMilli - span.start.toEpochMilli),
                 "name" -> span.name
@@ -41,12 +41,5 @@ object Convert {
     )
 
   def toJson(batch: Batch): Json =
-    List(
-      JsonObject.fromMap(
-        Map(
-          "common" -> attributesJson(batch.process.attributes + ("service.name" -> batch.process.serviceName)),
-          "spans" -> Json.fromValues(batch.spans.map(spanJson))
-        )
-      )
-    ).asJson
+    List(JsonObject.fromMap(Map("spans" -> Json.fromValues(batch.spans.map(spanJson))))).asJson
 }

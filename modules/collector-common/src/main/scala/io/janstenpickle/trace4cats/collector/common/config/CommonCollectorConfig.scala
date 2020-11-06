@@ -7,12 +7,12 @@ import io.jaegertracing.thrift.internal.senders.UdpSender
 import io.janstenpickle.trace4cats.avro._
 import io.janstenpickle.trace4cats.newrelic.Endpoint
 import io.circe.generic.extras.semiauto._
-import io.janstenpickle.trace4cats.avro.kafka.AvroKafkaConsumer.BatchConfig
 import io.janstenpickle.trace4cats.model.AttributeValue
 
 case class CommonCollectorConfig(
   listener: ListenerConfig = ListenerConfig(),
   kafkaListener: Option[KafkaListenerConfig],
+  batch: Option[BatchConfig],
   forwarder: Option[ForwarderConfig],
   kafkaForwarder: Option[KafkaForwarderConfig],
   jaeger: Option[JaegerConfig],
@@ -39,11 +39,14 @@ case class KafkaListenerConfig(
   topic: String,
   group: String,
   consumerConfig: Map[String, String] = Map.empty,
-  batch: Option[BatchConfig] = None
 )
 object KafkaListenerConfig {
-  implicit val batchDecoder: Decoder[BatchConfig] = deriveConfiguredDecoder
   implicit val decoder: Decoder[KafkaListenerConfig] = deriveConfiguredDecoder
+}
+
+case class BatchConfig(size: Int, timeoutSeconds: Int)
+object BatchConfig {
+  implicit val decoder: Decoder[BatchConfig] = deriveConfiguredDecoder
 }
 
 case class ForwarderConfig(port: Int = DefaultPort, host: String)

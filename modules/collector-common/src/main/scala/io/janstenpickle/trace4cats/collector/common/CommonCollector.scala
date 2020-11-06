@@ -4,22 +4,29 @@ import cats.Parallel
 import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Timer}
 import cats.implicits._
 import com.monovore.decline._
-import fs2.Stream
 import fs2.kafka.ConsumerSettings
+import fs2.{Pipe, Stream}
 import io.chrisdavenport.log4cats.Logger
 import io.janstenpickle.trace4cats.`export`.QueuedSpanExporter
 import io.janstenpickle.trace4cats.avro._
-import io.janstenpickle.trace4cats.avro.kafka.{AvroKafkaConsumer, AvroKafkaSpanExporter, KafkaSpan}
+import io.janstenpickle.trace4cats.avro.kafka.{AvroKafkaConsumer, AvroKafkaSpanExporter}
 import io.janstenpickle.trace4cats.avro.server.AvroServer
-import io.janstenpickle.trace4cats.collector.common.config.{CommonCollectorConfig, ConfigParser, StackdriverHttpConfig}
+import io.janstenpickle.trace4cats.collector.common.config.{
+  BatchConfig,
+  CommonCollectorConfig,
+  ConfigParser,
+  StackdriverHttpConfig
+}
 import io.janstenpickle.trace4cats.datadog.DataDogSpanExporter
 import io.janstenpickle.trace4cats.jaeger.JaegerSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.log.LogSpanExporter
-import io.janstenpickle.trace4cats.model.TraceId
+import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceId}
 import io.janstenpickle.trace4cats.newrelic.NewRelicSpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpHttpSpanExporter
 import io.janstenpickle.trace4cats.strackdriver.StackdriverHttpSpanExporter
+
+import scala.concurrent.duration._
 
 object CommonCollector {
   val configFileOpt: Opts[String] =
@@ -45,7 +52,8 @@ object CommonCollector {
       }
 
       jaegerUdpExporter <- config.jaeger.traverse { jaeger =>
-        JaegerSpanExporter[F](blocker, host = jaeger.host, port = jaeger.port).map("Jaeger UDP" -> _)
+        JaegerSpanExporter[F](blocker, serviceName = None, host = jaeger.host, port = jaeger.port)
+          .map("Jaeger UDP" -> _)
       }
 
       logExporter <-
@@ -109,7 +117,19 @@ object CommonCollector {
 
       exporter <- Sampling.exporter[F](config.sampling, queuedExporter)
 
-      exportPipe = AttributeFiltering.pipe[F](config.attributeFiltering).andThen(exporter.pipe)
+      exportPipe: Pipe[F, CompletedSpan, Unit] =
+        AttributeFiltering
+          .pipe[F](config.attributeFiltering)
+          .andThen { stream =>
+            config.batch
+              .fold(stream.chunks) {
+                case BatchConfig(size, timeoutSeconds) =>
+                  stream.groupWithin(size, timeoutSeconds.seconds)
+              }
+              .map(spans => Batch(spans.toList))
+
+          }
+          .andThen(exporter.pipe)
 
       tcp <- AvroServer.tcp[F](blocker, exportPipe, config.listener.port)
       udp <- AvroServer.udp[F](blocker, exportPipe, config.listener.port)
@@ -121,10 +141,8 @@ object CommonCollector {
           kafka.bootstrapServers,
           kafka.group,
           kafka.topic,
-          exportPipe,
-          (s: ConsumerSettings[F, Option[TraceId], Option[KafkaSpan]]) => s.withProperties(kafka.consumerConfig),
-          kafka.batch
-        )
+          (s: ConsumerSettings[F, Option[TraceId], Option[CompletedSpan]]) => s.withProperties(kafka.consumerConfig)
+        ).through(exportPipe)
       }
     } yield kafka.fold(network)(network.concurrently(_))
 

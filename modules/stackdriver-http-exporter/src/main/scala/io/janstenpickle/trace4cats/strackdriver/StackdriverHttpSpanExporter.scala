@@ -69,7 +69,7 @@ object StackdriverHttpSpanExporter {
       exporter <- HttpSpanExporter[F, model.Batch](
         client,
         s"$base/$projectId/traces:batchWrite",
-        (batch: Batch) => model.Batch(batch.spans.map(model.Span.fromCompleted(projectId, batch.process, _))),
+        (batch: Batch) => model.Batch(batch.spans.map(model.Span.fromCompleted(projectId, _))),
         (uri: Uri) =>
           cachedTokenProvider.accessToken.map { token =>
             uri.withQueryParam("access_token", token.accessToken)

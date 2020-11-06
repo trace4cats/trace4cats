@@ -12,6 +12,7 @@ import io.janstenpickle.trace4cats.`export`.SemanticTags
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.AttributeValue._
 import io.janstenpickle.trace4cats.model.{AttributeValue, Batch, CompletedSpan, SampleDecision}
+import cats.syntax.traverse._
 
 import scala.jdk.CollectionConverters._
 import scala.util.Try
@@ -19,6 +20,7 @@ import scala.util.Try
 object JaegerSpanExporter {
   def apply[F[_]: Concurrent: ContextShift: Timer](
     blocker: Blocker,
+    serviceName: Option[String],
     host: String = Option(System.getenv("JAEGER_AGENT_HOST")).getOrElse(UdpSender.DEFAULT_AGENT_UDP_HOST),
     port: Int = Option(System.getenv("JAEGER_AGENT_PORT"))
       .flatMap(p => Try(p.toInt).toOption)
@@ -65,17 +67,28 @@ object JaegerSpanExporter {
         endMicros - startMicros
       )
 
-      thriftSpan.setTags(makeTags(span.attributes ++ statusTags(span.status) ++ SemanticTags.kindTags(span.kind)))
+      thriftSpan.setTags(makeTags(span.allAttributes ++ statusTags(span.status) ++ SemanticTags.kindTags(span.kind)))
     }
 
     Resource.make(Sync[F].delay(new UdpSender(host, port, 0)))(sender => Sync[F].delay(sender.close()).void).map {
       sender =>
         new SpanExporter[F] {
           override def exportBatch(batch: Batch): F[Unit] = {
-            val process = new Process(batch.process.serviceName).setTags(makeTags(batch.process.attributes))
-            val spans = batch.spans.map(convert).asJava
+            def send(service: String, spans: List[CompletedSpan]) =
+              blocker.delay(sender.send(new Process(service), spans.map(convert).asJava))
 
-            blocker.delay(sender.send(process, spans))
+            serviceName match {
+              case None =>
+                batch.spans
+                  .groupBy(_.serviceName)
+                  .foldLeft(List.empty[F[Unit]]) {
+                    case (acc, (service, spans)) => send(service, spans) :: acc
+                  }
+                  .sequence
+                  .void
+              case Some(service) => send(service, batch.spans)
+            }
+
           }
         }
     }

@@ -91,7 +91,6 @@ lazy val root = (project in file("."))
     `http4s-client`,
     `http4s-server`,
     `avro-exporter`,
-    `avro-kafka`,
     `avro-kafka-exporter`,
     `avro-server`,
     `avro-kafka-consumer`,
@@ -405,7 +404,7 @@ lazy val `avro-kafka-exporter` =
       classLoaderLayeringStrategy in Test := ClassLoaderLayeringStrategy.ScalaLibrary,
       classLoaderLayeringStrategy in Test := ClassLoaderLayeringStrategy.Flat
     )
-    .dependsOn(model, kernel, `exporter-common`, avro, `avro-kafka`, test % "test->compile")
+    .dependsOn(model, kernel, `exporter-common`, avro, test % "test->compile")
 
 lazy val `exporter-stream` =
   (project in file("modules/exporter-stream"))
@@ -452,12 +451,6 @@ lazy val `avro-server` =
     )
     .dependsOn(model, avro)
 
-lazy val `avro-kafka` =
-  (project in file("modules/avro-kafka"))
-    .settings(publishSettings)
-    .settings(name := "trace4cats-avro-kafka")
-    .dependsOn(model, kernel, avro)
-
 lazy val `avro-kafka-consumer` =
   (project in file("modules/avro-kafka-consumer"))
     .settings(publishSettings)
@@ -472,7 +465,7 @@ lazy val `avro-kafka-consumer` =
       ),
       libraryDependencies ++= Seq(Dependencies.embeddedKafka, Dependencies.logback).map(_ % Test)
     )
-    .dependsOn(model, avro, `avro-kafka`, test % "test->compile")
+    .dependsOn(model, avro, test % "test->compile")
 
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)

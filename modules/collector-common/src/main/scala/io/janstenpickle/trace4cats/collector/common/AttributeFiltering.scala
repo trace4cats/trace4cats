@@ -5,10 +5,10 @@ import fs2.Pipe
 import io.janstenpickle.trace4cats.collector.common.config.FilteringConfig
 import io.janstenpickle.trace4cats.filtering.AttributeFilter._
 import io.janstenpickle.trace4cats.filtering.PipeAttributeFilter
-import io.janstenpickle.trace4cats.model.Batch
+import io.janstenpickle.trace4cats.model.CompletedSpan
 
 object AttributeFiltering {
-  def pipe[F[_]](config: FilteringConfig): Pipe[F, Batch, Batch] = {
+  def pipe[F[_]](config: FilteringConfig): Pipe[F, CompletedSpan, CompletedSpan] = {
     val filter = config match {
       case FilteringConfig(Some(ns), Some(vs), Some(nvs)) => Some(names(ns) |+| values(vs) |+| nameValues(nvs))
       case FilteringConfig(Some(ns), Some(vs), None) => Some(names(ns) |+| values(vs))
@@ -20,6 +20,6 @@ object AttributeFiltering {
       case FilteringConfig(None, None, None) => None
     }
 
-    filter.fold[Pipe[F, Batch, Batch]](identity)(f => PipeAttributeFilter(f))
+    filter.fold[Pipe[F, CompletedSpan, CompletedSpan]](identity)(f => PipeAttributeFilter(f))
   }
 }

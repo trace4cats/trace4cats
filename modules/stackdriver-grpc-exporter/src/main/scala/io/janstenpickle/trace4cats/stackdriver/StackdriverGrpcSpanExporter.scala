@@ -10,7 +10,7 @@ import com.google.auth.Credentials
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.trace.v2.{TraceServiceClient, TraceServiceSettings}
 import com.google.devtools.cloudtrace.v2.Span.Attributes
-import com.google.devtools.cloudtrace.v2.{TruncatableString => GTruncatableString, AttributeValue => GAttributeValue, _}
+import com.google.devtools.cloudtrace.v2.{AttributeValue => GAttributeValue, TruncatableString => GTruncatableString, _}
 import com.google.protobuf.{BoolValue, Timestamp}
 import com.google.rpc.Status
 import io.janstenpickle.trace4cats.kernel.SpanExporter
@@ -63,11 +63,8 @@ object StackdriverGrpcSpanExporter {
         case _ => spanName
       }
 
-    def toAttributesProto(process: TraceProcess, attributes: Map[String, AttributeValue]): Attributes =
-      (process.attributes.updated(
-        ServiceNameAttributeKey,
-        AttributeValue.StringValue(process.serviceName)
-      ) ++ attributes).toList
+    def toAttributesProto(attributes: Map[String, AttributeValue]): Attributes =
+      attributes.toList
         .foldLeft(Attributes.newBuilder()) {
           case (acc, (k, v)) =>
             acc.putAttributeMap(
@@ -92,7 +89,7 @@ object StackdriverGrpcSpanExporter {
         .setCode(status.canonicalCode)
         .build()
 
-    def convert(process: TraceProcess, completedSpan: CompletedSpan): Span = {
+    def convert(completedSpan: CompletedSpan): Span = {
       val spanIdHex = completedSpan.context.spanId.show
 
       val spanName =
@@ -106,7 +103,7 @@ object StackdriverGrpcSpanExporter {
           .setDisplayName(toTruncatableStringProto(toDisplayName(completedSpan.name, completedSpan.kind)))
           .setStartTime(toTimestampProto(completedSpan.start))
           .setEndTime(toTimestampProto(completedSpan.end))
-          .setAttributes(toAttributesProto(process, completedSpan.attributes))
+          .setAttributes(toAttributesProto(completedSpan.allAttributes))
           .setStatus(toStatusProto(completedSpan.status))
 
       val builder = completedSpan.context.parent.fold(spanBuilder) { parent =>
@@ -116,12 +113,12 @@ object StackdriverGrpcSpanExporter {
       builder.build()
     }
 
-    def write(client: TraceServiceClient, process: TraceProcess, spans: List[CompletedSpan]) =
-      blocker.delay(client.batchWriteSpans(projectName, spans.map(convert(process, _)).asJava))
+    def write(client: TraceServiceClient, spans: List[CompletedSpan]) =
+      blocker.delay(client.batchWriteSpans(projectName, spans.map(convert).asJava))
 
     Resource.make(traceClient)(client => Sync[F].delay(client.shutdown())).map { client =>
       new SpanExporter[F] {
-        override def exportBatch(batch: Batch): F[Unit] = write(client, batch.process, batch.spans).void
+        override def exportBatch(batch: Batch): F[Unit] = write(client, batch.spans).void
       }
     }
   }

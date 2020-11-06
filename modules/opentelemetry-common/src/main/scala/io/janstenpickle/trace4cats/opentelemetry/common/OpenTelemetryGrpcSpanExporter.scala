@@ -45,7 +45,7 @@ object OpenTelemetryGrpcSpanExporter {
       override def exportBatch(batch: Batch): F[Unit] =
         handleResult(ExportFailure(host, port))(
           exporter
-            .`export`(batch.spans.map(Trace4CatsSpanData(Trace4CatsResource(batch.process), _)).asJavaCollection)
+            .`export`(batch.spans.map(Trace4CatsSpanData(Trace4CatsResource(), _)).asJavaCollection)
         )
     }
   }

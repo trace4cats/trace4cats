@@ -23,7 +23,7 @@ object TailSpanSampler {
       override def sampleBatch(batch: Batch): F[Option[Batch]] = {
         val spans = batch.spans.filter(_.context.traceFlags.sampled == SampleDecision.Include)
 
-        (if (spans.isEmpty) None else Some(Batch(batch.process, spans))).pure[F]
+        (if (spans.isEmpty) None else Some(Batch(spans))).pure[F]
       }
     }
 
@@ -74,7 +74,7 @@ object TailSpanSampler {
                     }
 
                 _ <- store.storeDecisions(newDecisions)
-              } yield if (sampledSpans.isEmpty) None else Some(Batch(batch.process, sampledSpans))
+              } yield if (sampledSpans.isEmpty) None else Some(Batch(sampledSpans))
             }
         }
     }
@@ -106,7 +106,7 @@ object TailSpanSampler {
               _ <- store.storeDecisions(computedDecisions)
             } yield
               if (sampled.isEmpty && computedSampled.isEmpty) None
-              else Some(Batch(batch.process, sampled ++ computedSampled))
+              else Some(Batch(sampled ++ computedSampled))
         }
     }
   }

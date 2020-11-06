@@ -159,7 +159,7 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
       fkId.apply(
         (for {
           blocker <- Blocker[F]
-          completer <- Resource.liftF(RefSpanCompleter[F])
+          completer <- Resource.liftF(RefSpanCompleter[F]("test"))
           ep = EntryPoint[F](SpanSampler.always[F], completer)
           _ <- BlazeServerBuilder[F](blocker.blockingContext)
             .bindHttp(port, "localhost")

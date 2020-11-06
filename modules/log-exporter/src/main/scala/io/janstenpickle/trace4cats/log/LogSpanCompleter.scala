@@ -6,16 +6,16 @@ import cats.syntax.show._
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
-import io.janstenpickle.trace4cats.model.CompletedSpan
+import io.janstenpickle.trace4cats.model.{CompletedSpan, TraceProcess}
 
 object LogSpanCompleter {
-  def apply[F[_]: Logger]: SpanCompleter[F] =
+  def apply[F[_]: Logger](process: TraceProcess): SpanCompleter[F] =
     new SpanCompleter[F] {
-      override def complete(span: CompletedSpan): F[Unit] = Logger[F].info(span.show)
+      override def complete(span: CompletedSpan.Builder): F[Unit] = Logger[F].info(span.build(process).show)
     }
 
-  def create[F[_]: Sync]: F[SpanCompleter[F]] =
+  def create[F[_]: Sync](process: TraceProcess): F[SpanCompleter[F]] =
     Slf4jLogger.create[F].map { implicit logger =>
-      apply[F]
+      apply[F](process)
     }
 }

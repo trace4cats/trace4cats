@@ -39,7 +39,7 @@ object DataDogSpan {
           new BigInteger(1, parent.spanId.value)
         }
 
-        val allAttributes = span.attributes ++ batch.process.attributes ++ SemanticTags
+        val allAttributes = span.allAttributes ++ SemanticTags
           .kindTags(span.kind) ++ SemanticTags.statusTags("")(span.status)
 
         val startNanos = TimeUnit.MILLISECONDS.toNanos(span.start.toEpochMilli)
@@ -49,8 +49,8 @@ object DataDogSpan {
           spanId,
           parentId,
           span.name,
-          batch.process.serviceName,
-          allAttributes.get("resource.name").fold(batch.process.serviceName)(_.toString),
+          span.serviceName,
+          allAttributes.get("resource.name").fold(span.serviceName)(_.toString),
           allAttributes.collect {
             case (k, AttributeValue.StringValue(value)) => k -> value
             case (k, AttributeValue.BooleanValue(value)) if k != "error" => k -> value.toString

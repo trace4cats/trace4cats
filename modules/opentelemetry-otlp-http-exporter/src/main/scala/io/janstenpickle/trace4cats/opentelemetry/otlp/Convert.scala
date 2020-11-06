@@ -34,9 +34,6 @@ object Convert {
         KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.StringValue(v.show))))
     }
 
-  def toResource(process: TraceProcess): Resource =
-    Resource(attributes = toAttributes(process.attributes + ("service.name" -> process.serviceName)))
-
   def toSpan(span: CompletedSpan): Span =
     Span(
       traceId = ByteString.copyFrom(span.context.traceId.value),
@@ -52,7 +49,7 @@ object Convert {
       },
       startTimeUnixNano = TimeUnit.MILLISECONDS.toNanos(span.start.toEpochMilli),
       endTimeUnixNano = TimeUnit.MILLISECONDS.toNanos(span.end.toEpochMilli),
-      attributes = toAttributes(span.attributes),
+      attributes = toAttributes(span.allAttributes),
       status = Some(
         Status(
           span.status match {
@@ -90,7 +87,7 @@ object Convert {
 
   def toResourceSpans(batch: Batch): ResourceSpans =
     ResourceSpans(
-      resource = Some(toResource(batch.process)),
+      resource = Some(Resource()),
       instrumentationLibrarySpans = List(toInstrumentationLibrarySpans(batch.spans))
     )
 

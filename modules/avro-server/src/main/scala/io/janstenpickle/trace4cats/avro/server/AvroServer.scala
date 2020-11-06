@@ -10,7 +10,7 @@ import fs2.io.tcp.{SocketGroup => TCPSocketGroup}
 import fs2.io.udp.{SocketGroup => UDPSocketGroup}
 import fs2.{Chunk, Pipe, Pull, Stream}
 import io.janstenpickle.trace4cats.avro.{agentPort, AvroInstances}
-import io.janstenpickle.trace4cats.model.Batch
+import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.io.DecoderFactory
@@ -53,7 +53,7 @@ object AvroServer {
 
   def tcp[F[_]: Concurrent: ContextShift: Logger](
     blocker: Blocker,
-    sink: Pipe[F, Batch, Unit],
+    sink: Pipe[F, CompletedSpan, Unit],
     port: Int = agentPort,
   ): Resource[F, Stream[F, Unit]] =
     for {
@@ -69,6 +69,7 @@ object AvroServer {
             .through(buffer[F])
             .evalMap(decode[F](avroSchema))
             .unNone
+            .flatMap(batch => Stream.chunk(Chunk.seq(batch.spans)))
             .through(sink)
         }
       }
@@ -76,7 +77,7 @@ object AvroServer {
 
   def udp[F[_]: Concurrent: ContextShift: Logger](
     blocker: Blocker,
-    sink: Pipe[F, Batch, Unit],
+    sink: Pipe[F, CompletedSpan, Unit],
     port: Int = agentPort,
   ): Resource[F, Stream[F, Unit]] =
     for {
@@ -84,5 +85,11 @@ object AvroServer {
       address <- Resource.liftF(Sync[F].delay(new InetSocketAddress(port)))
       socketGroup <- UDPSocketGroup[F](blocker)
       socket <- socketGroup.open(address)
-    } yield socket.reads().map(_.bytes).evalMap(decode[F](avroSchema)).unNone.through(sink)
+    } yield socket
+      .reads()
+      .map(_.bytes)
+      .evalMap(decode[F](avroSchema))
+      .unNone
+      .flatMap(batch => Stream.chunk(Chunk.seq(batch.spans)))
+      .through(sink)
 }

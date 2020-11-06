@@ -10,11 +10,11 @@ import io.janstenpickle.trace4cats.test.jaeger.BaseJaegerSpec
 import scala.concurrent.duration._
 
 class OpenTelemetryJaegerSpanCompleterSpec extends BaseJaegerSpec {
-  it should "Send a span to jaeger" in forAll { (span: CompletedSpan, serviceName: String) =>
+  it should "Send a span to jaeger" in forAll { (span: CompletedSpan.Builder, serviceName: String) =>
     val process = TraceProcess(serviceName)
 
     val updatedSpan = span.copy(start = Instant.now(), end = Instant.now())
-    val batch = Batch(process, List(updatedSpan))
+    val batch = Batch(List(updatedSpan.build(process)))
 
     testCompleter(
       OpenTelemetryJaegerSpanCompleter[IO](process, "localhost", 14250, batchTimeout = 50.millis),
@@ -22,6 +22,7 @@ class OpenTelemetryJaegerSpanCompleterSpec extends BaseJaegerSpec {
       process,
       batchToJaegerResponse(
         batch,
+        process,
         SemanticTags.kindTags,
         SemanticTags.statusTags("span.", statusCode),
         Map("otel.library.name" -> "trace4cats")

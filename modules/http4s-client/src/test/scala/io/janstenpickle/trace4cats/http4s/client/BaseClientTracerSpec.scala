@@ -73,49 +73,51 @@ abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace](
       val (httpApp, headersRef) = makeHttpApp(response)
 
       fkId(withRunningHttpServer(httpApp) { port =>
-        RefSpanCompleter[F].flatMap { completer =>
-          withClient { client =>
-            def req(body: String): G[Unit] =
-              runReq(client, GET(body, Uri.unsafeFromString(s"http://localhost:$port")))
+        RefSpanCompleter[F]("test").flatMap {
+          completer =>
+            withClient {
+              client =>
+                def req(body: String): G[Unit] =
+                  runReq(client, GET(body, Uri.unsafeFromString(s"http://localhost:$port")))
 
-            for {
-              _ <- entryPoint(completer)
-                .root(rootSpanName)
-                .use(
-                  provide(
-                    Trace[G]
-                      .span(req1SpanName)(req(req1SpanName))
-                      .handleError(_ => ()) >> Trace[G].span(req2SpanName)(req(req2SpanName)).handleError(_ => ())
+                for {
+                  _ <- entryPoint(completer)
+                    .root(rootSpanName)
+                    .use(
+                      provide(
+                        Trace[G]
+                          .span(req1SpanName)(req(req1SpanName))
+                          .handleError(_ => ()) >> Trace[G].span(req2SpanName)(req(req2SpanName)).handleError(_ => ())
+                      )
+                    )
+                  spans <- completer.get
+                  headersMap <- headersRef.get
+                } yield {
+                  (spans.toList.map(_.name) should contain)
+                    .theSameElementsAs(List("GET ", "GET ", rootSpanName, req1SpanName, req2SpanName))
+                  (headersMap.keys should contain).theSameElementsAs(Set(req1SpanName, req2SpanName))
+
+                  assert(
+                    Eq.eqv(
+                      ToHeaders.w3c.toContext(headersMap(req1SpanName)).get.spanId,
+                      spans.toList.sortBy(_.`end`.toEpochMilli).find(_.name == "GET ").get.context.spanId
+                    )
                   )
-                )
-              spans <- completer.get
-              headersMap <- headersRef.get
-            } yield {
-              (spans.toList.map(_.name) should contain)
-                .theSameElementsAs(List("GET ", "GET ", rootSpanName, req1SpanName, req2SpanName))
-              (headersMap.keys should contain).theSameElementsAs(Set(req1SpanName, req2SpanName))
 
-              assert(
-                Eq.eqv(
-                  ToHeaders.w3c.toContext(headersMap(req1SpanName)).get.spanId,
-                  spans.toList.sortBy(_.`end`.toEpochMilli).find(_.name == "GET ").get.context.spanId
-                )
-              )
+                  assert(
+                    Eq.eqv(
+                      ToHeaders.w3c.toContext(headersMap(req2SpanName)).get.spanId,
+                      spans.toList.sortBy(_.`end`.toEpochMilli).reverse.find(_.name == "GET ").get.context.spanId
+                    )
+                  )
 
-              assert(
-                Eq.eqv(
-                  ToHeaders.w3c.toContext(headersMap(req2SpanName)).get.spanId,
-                  spans.toList.sortBy(_.`end`.toEpochMilli).reverse.find(_.name == "GET ").get.context.spanId
-                )
-              )
+                  val expectedStatus = Http4sStatusMapping.toSpanStatus(response.status)
+                  (spans.toList.collect {
+                    case span if span.name == "GET " => span.status
+                  } should contain).theSameElementsAs(List.fill(2)(expectedStatus))
 
-              val expectedStatus = Http4sStatusMapping.toSpanStatus(response.status)
-              (spans.toList.collect {
-                case span if span.name == "GET " => span.status
-              } should contain).theSameElementsAs(List.fill(2)(expectedStatus))
-
+                }
             }
-          }
         }
 
       })
