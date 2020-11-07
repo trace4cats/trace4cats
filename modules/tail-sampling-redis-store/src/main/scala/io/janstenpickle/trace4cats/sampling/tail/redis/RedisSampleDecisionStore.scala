@@ -9,11 +9,11 @@ import cats.syntax.functor._
 import cats.syntax.parallel._
 import cats.{Applicative, Parallel}
 import com.github.blemale.scaffeine.Scaffeine
-import dev.profunktor.redis4cats.{Redis, RedisCommands}
 import dev.profunktor.redis4cats.codecs.Codecs
 import dev.profunktor.redis4cats.codecs.splits.SplitEpi
 import dev.profunktor.redis4cats.data.RedisCodec
 import dev.profunktor.redis4cats.log4cats._
+import dev.profunktor.redis4cats.{Redis, RedisCommands}
 import io.chrisdavenport.log4cats.Logger
 import io.janstenpickle.trace4cats.model.{SampleDecision, TraceId}
 import io.janstenpickle.trace4cats.sampling.tail.SampleDecisionStore
@@ -61,11 +61,10 @@ object RedisSampleDecisionStore {
               case None => cacheDecision(traceId, cmd.get(traceId))
             }
 
-          override def batch(traceIds: NonEmptyList[TraceId]): F[Map[TraceId, SampleDecision]] = {
-            val traceIdSet = traceIds.toList.toSet
+          override def batch(traceIds: Set[TraceId]): F[Map[TraceId, SampleDecision]] = {
             for {
-              local <- Sync[F].delay(cache.getAllPresent(traceIdSet))
-              remainder = traceIdSet.diff(local.keySet)
+              local <- Sync[F].delay(cache.getAllPresent(traceIds))
+              remainder = traceIds.diff(local.keySet)
               remote <- cmd.mGet(remainder)
               _ <- Sync[F].delay(cache.putAll(remote))
             } yield local ++ remote

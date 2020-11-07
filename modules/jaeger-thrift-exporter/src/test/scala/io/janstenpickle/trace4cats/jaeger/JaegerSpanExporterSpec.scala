@@ -3,12 +3,13 @@ package io.janstenpickle.trace4cats.jaeger
 import java.time.Instant
 
 import cats.effect.IO
+import fs2.Chunk
 import io.janstenpickle.trace4cats.`export`.SemanticTags
 import io.janstenpickle.trace4cats.model.{Batch, TraceProcess}
 import io.janstenpickle.trace4cats.test.jaeger.BaseJaegerSpec
 
 class JaegerSpanExporterSpec extends BaseJaegerSpec {
-  it should "Send a batch of spans to jaeger" in forAll { (batch: Batch, process: TraceProcess) =>
+  it should "Send a batch of spans to jaeger" in forAll { (batch: Batch[Chunk], process: TraceProcess) =>
     val updatedBatch =
       Batch(
         batch.spans.map(
@@ -23,7 +24,7 @@ class JaegerSpanExporterSpec extends BaseJaegerSpec {
       )
 
     testExporter(
-      JaegerSpanExporter[IO](blocker, Some(process.serviceName), "localhost", 6831),
+      JaegerSpanExporter[IO, Chunk](blocker, Some(process.serviceName), "localhost", 6831),
       updatedBatch,
       batchToJaegerResponse(updatedBatch, process, SemanticTags.kindTags, SemanticTags.statusTags("span."))
     )

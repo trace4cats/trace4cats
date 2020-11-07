@@ -2,6 +2,7 @@ package io.janstenpickle.trace4cats.avro.kafka
 
 import cats.data.NonEmptyList
 import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Timer}
+import fs2.Chunk
 import fs2.kafka.{KafkaProducer, ProducerSettings}
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
@@ -25,7 +26,7 @@ object AvroKafkaSpanCompleter {
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- AvroKafkaSpanExporter[F](blocker, bootStrapServers, topic, modifySettings)
+      exporter <- AvroKafkaSpanExporter[F, Chunk](blocker, bootStrapServers, topic, modifySettings)
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
 
@@ -39,7 +40,7 @@ object AvroKafkaSpanCompleter {
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter = AvroKafkaSpanExporter.fromProducer[F](producer, topic)
+      exporter = AvroKafkaSpanExporter.fromProducer[F, Chunk](producer, topic)
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
 }

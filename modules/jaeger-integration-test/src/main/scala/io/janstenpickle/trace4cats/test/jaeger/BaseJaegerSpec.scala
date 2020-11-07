@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 import cats.data.NonEmptyList
 import cats.effect.{Blocker, IO, Resource}
 import cats.implicits._
+import fs2.Chunk
 import io.circe.generic.auto._
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanExporter}
 import io.janstenpickle.trace4cats.model._
@@ -36,7 +37,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
   val dummyProcess = Map("p1" -> JaegerProcess("", List.empty))
 
   def batchToJaegerResponse(
-    batch: Batch,
+    batch: Batch[Chunk],
     process: TraceProcess,
     kindToAttributes: SpanKind => Map[String, AttributeValue],
     statusToAttributes: SpanStatus => Map[String, AttributeValue],
@@ -51,7 +52,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
         case (k, v: AttributeValue.AttributeList) => JaegerTag.StringTag(k, v.show)
       }
 
-    batch.spans
+    batch.spans.toList
       .groupBy(_.context.traceId)
       .toList
       .map {
@@ -93,8 +94,8 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
     JaegerTraceResponse(resp.data.map(_.copy(processes = dummyProcess)))
 
   def testExporter(
-    exporter: Resource[IO, SpanExporter[IO]],
-    batch: Batch,
+    exporter: Resource[IO, SpanExporter[IO, Chunk]],
+    batch: Batch[Chunk],
     expectedResponse: List[JaegerTraceResponse],
     checkProcess: Boolean = true
   ): Assertion = {
@@ -104,6 +105,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
           exporter.use(_.exportBatch(batch)) >> timer
             .sleep(1.second) >> batch.spans
             .map(_.context.traceId)
+            .toList
             .distinct
             .traverse { traceId =>
               client.expect[JaegerTraceResponse](s"http://localhost:16686/api/traces/${traceId.show}")

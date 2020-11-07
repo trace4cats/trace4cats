@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.datadog
 
 import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
+import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.QueuedSpanCompleter
@@ -35,7 +36,7 @@ object DataDogSpanCompleter {
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- Resource.liftF(DataDogSpanExporter[F](client, host, port))
+      exporter <- Resource.liftF(DataDogSpanExporter[F, Chunk](client, host, port))
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
 }

@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.avro.kafka
 
 import java.io.ByteArrayOutputStream
 
-import cats.ApplicativeError
+import cats.{ApplicativeError, Foldable, Functor, Traverse}
 import cats.data.NonEmptyList
 import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Sync}
 import cats.syntax.applicativeError._
@@ -54,13 +54,13 @@ object AvroKafkaSpanExporter {
       } yield ba
     }
 
-  def apply[F[_]: ConcurrentEffect: ContextShift: Logger](
+  def apply[F[_]: ConcurrentEffect: ContextShift: Logger, G[+_]: Functor: Traverse: Foldable](
     blocker: Blocker,
     bootStrapServers: NonEmptyList[String],
     topic: String,
     modifySettings: ProducerSettings[F, TraceId, CompletedSpan] => ProducerSettings[F, TraceId, CompletedSpan] =
       (x: ProducerSettings[F, TraceId, CompletedSpan]) => x
-  ): Resource[F, SpanExporter[F]] =
+  ): Resource[F, SpanExporter[F, G]] =
     Resource
       .liftF(AvroInstances.completedSpanCodec.schema.leftMap(_.throwable).map(valueSerializer[F]).liftTo[F])
       .flatMap { implicit ser =>
@@ -73,17 +73,17 @@ object AvroKafkaSpanExporter {
                 .withProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG, "gzip")
             )
           )
-          .map(fromProducer[F](_, topic))
+          .map(fromProducer[F, G](_, topic))
       }
 
-  def fromProducer[F[_]: ApplicativeError[*[_], Throwable]: Logger](
+  def fromProducer[F[_]: ApplicativeError[*[_], Throwable]: Logger, G[+_]: Functor: Traverse: Foldable](
     producer: KafkaProducer[F, TraceId, CompletedSpan],
     topic: String
-  ): SpanExporter[F] =
-    new SpanExporter[F] {
-      override def exportBatch(batch: Batch): F[Unit] =
+  ): SpanExporter[F, G] =
+    new SpanExporter[F, G] {
+      override def exportBatch(batch: Batch[G]): F[Unit] =
         producer
-          .produce(ProducerRecords[List, TraceId, CompletedSpan](batch.spans.map { span =>
+          .produce(ProducerRecords[G, TraceId, CompletedSpan](batch.spans.map { span =>
             ProducerRecord(topic, span.context.traceId, span)
           }))
           .map(_.onError {

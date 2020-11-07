@@ -1,10 +1,14 @@
 package io.janstenpickle.trace4cats.newrelic
 
-import io.circe.{Encoder, Json, JsonObject}
-import io.janstenpickle.trace4cats.model.{AttributeValue, Batch, CompletedSpan}
-import io.circe.syntax._
+import cats.Foldable
+import cats.syntax.foldable._
 import cats.syntax.show._
+import io.circe.syntax._
+import io.circe.{Encoder, Json, JsonObject}
 import io.janstenpickle.trace4cats.`export`.SemanticTags
+import io.janstenpickle.trace4cats.model.{AttributeValue, Batch, CompletedSpan}
+
+import scala.collection.mutable.ListBuffer
 
 // Based on API docs found here:
 // https://docs.newrelic.com/docs/understand-dependencies/distributed-tracing/trace-api/report-new-relic-format-traces-trace-api
@@ -40,6 +44,8 @@ object Convert {
       )
     )
 
-  def toJson(batch: Batch): Json =
-    List(JsonObject.fromMap(Map("spans" -> Json.fromValues(batch.spans.map(spanJson))))).asJson
+  def toJson[G[_]: Foldable](batch: Batch[G]): Json =
+    List(JsonObject.fromMap(Map("spans" -> Json.fromValues(batch.spans.foldLeft(ListBuffer.empty[Json]) { (buf, span) =>
+      buf += spanJson(span)
+    })))).asJson
 }

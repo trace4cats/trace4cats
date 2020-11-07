@@ -1,23 +1,20 @@
 package io.janstenpickle.trace4cats.model
 
 import cats.kernel.Monoid
-import cats.{Eq, Show}
 import cats.syntax.all._
+import cats.{Eq, Foldable, Functor, Show}
 
-case class Batch(spans: List[CompletedSpan])
+case class Batch[F[_]](spans: F[CompletedSpan]) extends AnyVal
 
 object Batch {
-  def apply(process: TraceProcess, spans: List[CompletedSpan]): Batch =
-    Batch(spans.map { span =>
-      span.copy(attributes = span.attributes ++ process.attributes)
-    })
+  implicit def show[F[_]: Functor: Foldable]: Show[Batch[F]] =
+    Show.show { batch =>
+      show"""spans:
+          |${batch.spans.map(_.show).map(s => s"  $s").mkString_("")}""".stripMargin
+    }
 
-  implicit val show: Show[Batch] = Show.show { batch =>
-    show"""spans:
-          |${batch.spans.map(_.show).map(s => s"  $s").mkString("")}""".stripMargin
-  }
+  implicit def eq[F[_]](implicit e: Eq[F[CompletedSpan]]): Eq[Batch[F]] = cats.derived.semiauto.eq[Batch[F]]
 
-  implicit val eq: Eq[Batch] = cats.derived.semiauto.eq[Batch]
-
-  implicit val monoid: Monoid[Batch] = cats.derived.semiauto.monoid[Batch]
+  implicit def monoid[F[_]](implicit m: Monoid[F[CompletedSpan]]): Monoid[Batch[F]] =
+    cats.derived.semiauto.monoid[Batch[F]]
 }

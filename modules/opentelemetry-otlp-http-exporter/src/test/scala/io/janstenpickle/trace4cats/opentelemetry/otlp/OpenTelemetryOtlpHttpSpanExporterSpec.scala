@@ -3,12 +3,13 @@ package io.janstenpickle.trace4cats.opentelemetry.otlp
 import java.time.Instant
 
 import cats.effect.IO
+import fs2.Chunk
 import io.janstenpickle.trace4cats.`export`.SemanticTags
 import io.janstenpickle.trace4cats.model.{Batch, TraceProcess}
 import io.janstenpickle.trace4cats.test.jaeger.BaseJaegerSpec
 
 class OpenTelemetryOtlpHttpSpanExporterSpec extends BaseJaegerSpec {
-  it should "Send a batch of spans to jaeger" in forAll { (batch: Batch, process: TraceProcess) =>
+  it should "Send a batch of spans to jaeger" in forAll { (batch: Batch[Chunk], process: TraceProcess) =>
     val updatedBatch =
       Batch(
         batch.spans.map(
@@ -23,7 +24,7 @@ class OpenTelemetryOtlpHttpSpanExporterSpec extends BaseJaegerSpec {
       )
 
     testExporter(
-      OpenTelemetryOtlpHttpSpanExporter.blazeClient[IO](blocker, "localhost", 55681),
+      OpenTelemetryOtlpHttpSpanExporter.blazeClient[IO, Chunk](blocker, "localhost", 55681),
       updatedBatch,
       batchToJaegerResponse(
         updatedBatch,

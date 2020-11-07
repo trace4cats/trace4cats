@@ -5,8 +5,9 @@ import cats.effect.{Blocker, ConcurrentEffect, ContextShift, ExitCode, IO, Resou
 import cats.implicits._
 import com.monovore.decline._
 import com.monovore.decline.effect._
+import fs2.Chunk
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import io.janstenpickle.trace4cats.`export`.SpanExporter
+import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.collector.common.CommonCollector
 import io.janstenpickle.trace4cats.collector.common.config.ConfigParser
 import io.janstenpickle.trace4cats.collector.config.CollectorConfig
@@ -33,19 +34,19 @@ object Collector
   def others[F[_]: ConcurrentEffect: Parallel: ContextShift: Timer](
     blocker: Blocker,
     configFile: String
-  ): Resource[F, List[(String, SpanExporter[F])]] =
+  ): Resource[F, List[(String, SpanExporter[F, Chunk])]] =
     for {
       config <- Resource.liftF(ConfigParser.parse[F, CollectorConfig](configFile))
       jaegerProtoExporter <- config.jaegerProto.traverse { jaeger =>
-        OpenTelemetryJaegerSpanExporter[F](jaeger.host, jaeger.port).map("Jaeger Proto" -> _)
+        OpenTelemetryJaegerSpanExporter[F, Chunk](jaeger.host, jaeger.port).map("Jaeger Proto" -> _)
       }
 
       otGrpcExporter <- config.otlpGrpc.traverse { otlp =>
-        OpenTelemetryOtlpGrpcSpanExporter[F](host = otlp.host, port = otlp.port).map("OpenTelemetry GRPC" -> _)
+        OpenTelemetryOtlpGrpcSpanExporter[F, Chunk](host = otlp.host, port = otlp.port).map("OpenTelemetry GRPC" -> _)
       }
 
       stackdriverExporter <- config.stackdriverGrpc.traverse { stackdriver =>
-        StackdriverGrpcSpanExporter[F](blocker, projectId = stackdriver.projectId).map("Stackdriver GRPC" -> _)
+        StackdriverGrpcSpanExporter[F, Chunk](blocker, projectId = stackdriver.projectId).map("Stackdriver GRPC" -> _)
       }
     } yield List(jaegerProtoExporter, otGrpcExporter, stackdriverExporter).flatten
 

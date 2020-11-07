@@ -172,7 +172,7 @@ lazy val example = (project in file("modules/example"))
 
 lazy val test = (project in file("modules/test"))
   .settings(noPublishSettings)
-  .settings(name := "trace4cats-test", libraryDependencies ++= Dependencies.test)
+  .settings(name := "trace4cats-test", libraryDependencies ++= Dependencies.test ++ Seq(Dependencies.fs2))
   .dependsOn(model)
 
 lazy val `avro-test` = (project in file("modules/avro-test"))

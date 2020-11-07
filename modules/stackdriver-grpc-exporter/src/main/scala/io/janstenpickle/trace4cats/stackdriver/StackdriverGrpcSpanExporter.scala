@@ -2,9 +2,11 @@ package io.janstenpickle.trace4cats.stackdriver
 
 import java.time.Instant
 
+import cats.Foldable
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
 import cats.syntax.functor._
 import cats.syntax.show._
+import cats.syntax.foldable._
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.auth.Credentials
 import com.google.auth.oauth2.GoogleCredentials
@@ -22,12 +24,12 @@ import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
 object StackdriverGrpcSpanExporter {
-  def apply[F[_]: Concurrent: ContextShift: Timer](
+  def apply[F[_]: Concurrent: ContextShift: Timer, G[_]: Foldable](
     blocker: Blocker,
     projectId: String,
     credentials: Option[Credentials] = None,
     requestTimeout: FiniteDuration = 5.seconds
-  ): Resource[F, SpanExporter[F]] = {
+  ): Resource[F, SpanExporter[F, G]] = {
     val projectName = ProjectName.of(projectId)
 
     val traceClient: F[TraceServiceClient] = Sync[F].delay {
@@ -113,12 +115,21 @@ object StackdriverGrpcSpanExporter {
       builder.build()
     }
 
-    def write(client: TraceServiceClient, spans: List[CompletedSpan]) =
-      blocker.delay(client.batchWriteSpans(projectName, spans.map(convert).asJava))
+    def write(client: TraceServiceClient, spans: G[CompletedSpan]) =
+      blocker.delay(
+        client.batchWriteSpans(
+          projectName,
+          spans
+            .foldLeft(scala.collection.mutable.ListBuffer.empty[Span]) { (buf, span) =>
+              buf += convert(span)
+            }
+            .asJava
+        )
+      )
 
     Resource.make(traceClient)(client => Sync[F].delay(client.shutdown())).map { client =>
-      new SpanExporter[F] {
-        override def exportBatch(batch: Batch): F[Unit] = write(client, batch.spans).void
+      new SpanExporter[F, G] {
+        override def exportBatch(batch: Batch[G]): F[Unit] = write(client, batch.spans).void
       }
     }
   }

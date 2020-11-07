@@ -8,7 +8,7 @@ import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.monad._
-import fs2.Stream
+import fs2.{Chunk, Stream}
 import fs2.concurrent.Queue
 import io.chrisdavenport.log4cats.Logger
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanExporter}
@@ -19,17 +19,17 @@ import scala.concurrent.duration._
 object QueuedSpanCompleter {
   def apply[F[_]: Concurrent: Timer: Logger](
     process: TraceProcess,
-    exporter: SpanExporter[F],
+    exporter: SpanExporter[F, Chunk],
     bufferSize: Int,
     batchSize: Int,
     batchTimeout: FiniteDuration,
   ): Resource[F, SpanCompleter[F]] = {
     val realBufferSize = if (bufferSize < batchSize * 5) batchSize * 5 else bufferSize
 
-    def write(inFlight: Ref[F, Int], queue: Queue[F, CompletedSpan], exporter: SpanExporter[F]): F[Unit] =
+    def write(inFlight: Ref[F, Int], queue: Queue[F, CompletedSpan], exporter: SpanExporter[F, Chunk]): F[Unit] =
       queue.dequeue
         .groupWithin(batchSize, batchTimeout)
-        .map(spans => Batch(process, spans.toList))
+        .map(spans => Batch(spans))
         .evalMap { batch =>
           exporter.exportBatch(batch).guarantee(inFlight.update(_ - batch.spans.size))
         }

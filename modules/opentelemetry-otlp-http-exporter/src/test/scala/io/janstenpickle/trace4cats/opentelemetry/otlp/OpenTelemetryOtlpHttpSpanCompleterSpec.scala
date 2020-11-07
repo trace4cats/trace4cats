@@ -3,6 +3,7 @@ package io.janstenpickle.trace4cats.opentelemetry.otlp
 import java.time.Instant
 
 import cats.effect.IO
+import fs2.Chunk
 import io.janstenpickle.trace4cats.`export`.SemanticTags
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceProcess}
 import io.janstenpickle.trace4cats.test.jaeger.BaseJaegerSpec
@@ -14,7 +15,7 @@ class OpenTelemetryOtlpHttpSpanCompleterSpec extends BaseJaegerSpec {
     val process = TraceProcess(serviceName)
 
     val updatedSpan = span.copy(start = Instant.now(), end = Instant.now())
-    val batch = Batch(List(updatedSpan.build(process)))
+    val batch = Batch(Chunk(updatedSpan.build(process)))
 
     testCompleter(
       OpenTelemetryOtlpHttpSpanCompleter

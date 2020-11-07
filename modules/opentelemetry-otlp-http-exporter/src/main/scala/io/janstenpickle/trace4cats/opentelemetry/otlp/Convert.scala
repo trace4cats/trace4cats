@@ -2,6 +2,7 @@ package io.janstenpickle.trace4cats.opentelemetry.otlp
 
 import java.util.concurrent.TimeUnit
 
+import cats.Foldable
 import cats.syntax.show._
 import com.google.protobuf.ByteString
 import io.circe.generic.extras.Configuration
@@ -18,7 +19,9 @@ import io.opentelemetry.proto.trace.v1.trace.Status.StatusCode._
 import io.opentelemetry.proto.trace.v1.trace.{InstrumentationLibrarySpans, ResourceSpans, Span, Status}
 import org.apache.commons.codec.binary.Hex
 import scalapb.UnknownFieldSet
+import cats.syntax.foldable._
 
+import scala.collection.mutable.ListBuffer
 object Convert {
   def toAttributes(attributes: Map[String, AttributeValue]): List[KeyValue] =
     attributes.toList.map {
@@ -79,13 +82,17 @@ object Convert {
       )
     )
 
-  def toInstrumentationLibrarySpans(spans: List[CompletedSpan]): InstrumentationLibrarySpans =
+  def toInstrumentationLibrarySpans[G[_]: Foldable](spans: G[CompletedSpan]): InstrumentationLibrarySpans =
     InstrumentationLibrarySpans(
       instrumentationLibrary = Some(InstrumentationLibrary("trace4cats")),
-      spans = spans.map(toSpan)
+      spans = spans
+        .foldLeft(ListBuffer.empty[Span]) { (buf, span) =>
+          buf += toSpan(span)
+        }
+        .toList
     )
 
-  def toResourceSpans(batch: Batch): ResourceSpans =
+  def toResourceSpans[G[_]: Foldable](batch: Batch[G]): ResourceSpans =
     ResourceSpans(
       resource = Some(Resource()),
       instrumentationLibrarySpans = List(toInstrumentationLibrarySpans(batch.spans))
@@ -139,5 +146,5 @@ object Convert {
       )
   }
 
-  def toJsonString(batch: Batch): String = resourceSpansEncoder(toResourceSpans(batch)).spaces2
+  def toJsonString[G[_]: Foldable](batch: Batch[G]): String = resourceSpansEncoder(toResourceSpans(batch)).spaces2
 }

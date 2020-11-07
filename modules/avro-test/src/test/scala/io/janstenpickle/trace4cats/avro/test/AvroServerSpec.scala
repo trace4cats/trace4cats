@@ -34,7 +34,7 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
   behavior.of("Avro TCP")
 
   it should "send batches" in {
-    forAll { batch: Batch =>
+    forAll { batch: Batch[List] =>
       Queue
         .unbounded[IO, CompletedSpan]
         .flatMap { queue =>
@@ -42,7 +42,7 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
             server <- AvroServer.tcp[IO](blocker, queue.enqueue)
             _ <- server.compile.drain.background
             _ <- Resource.liftF(timer.sleep(2.seconds))
-            completer <- AvroSpanExporter.tcp[IO](blocker)
+            completer <- AvroSpanExporter.tcp[IO, List](blocker)
           } yield completer).use(_.exportBatch(batch) >> timer.sleep(3.seconds)) >> queue.dequeue
             .take(batch.spans.size.toLong)
             .compile
@@ -81,7 +81,7 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
   behavior.of("Avro UDP")
 
   it should "send batches" in {
-    forAll { batch: Batch =>
+    forAll { batch: Batch[List] =>
       Queue
         .unbounded[IO, CompletedSpan]
         .flatMap { queue =>
@@ -89,7 +89,7 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
             server <- AvroServer.udp[IO](blocker, queue.enqueue, port = 7779)
             _ <- server.compile.drain.background
             _ <- Resource.liftF(timer.sleep(2.seconds))
-            completer <- AvroSpanExporter.udp[IO](blocker, port = 7779)
+            completer <- AvroSpanExporter.udp[IO, List](blocker, port = 7779)
           } yield completer).use(_.exportBatch(batch) >> timer.sleep(3.seconds)) >> queue.dequeue
             .take(batch.spans.size.toLong)
             .compile

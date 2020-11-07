@@ -3,6 +3,8 @@ package io.janstenpickle.trace4cats.datadog
 import java.math.BigInteger
 import java.util.concurrent.TimeUnit
 
+import cats.Foldable
+import cats.syntax.foldable._
 import cats.syntax.show._
 import io.circe.Encoder
 import io.circe.generic.extras.Configuration
@@ -26,8 +28,8 @@ case class DataDogSpan(
 )
 
 object DataDogSpan {
-  def fromBatch(batch: Batch): List[List[DataDogSpan]] =
-    batch.spans
+  def fromBatch[F[_]: Foldable](batch: Batch[F]): List[List[DataDogSpan]] =
+    batch.spans.toList
       .groupBy(_.context.traceId)
       .values
       .toList

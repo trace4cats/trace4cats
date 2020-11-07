@@ -26,9 +26,9 @@ object HttpSpanExporter {
          |""".stripMargin
   }
 
-  def apply[F[_]: Sync: Timer, A](client: Client[F], uri: String, makePayload: Batch => A)(implicit
+  def apply[F[_]: Sync: Timer, G[_], A](client: Client[F], uri: String, makePayload: Batch[G] => A)(implicit
     encoder: EntityEncoder[F, A]
-  ): F[SpanExporter[F]] =
+  ): F[SpanExporter[F, G]] =
     apply(
       client,
       uri,
@@ -39,9 +39,12 @@ object HttpSpanExporter {
       List(`Content-Type`(MediaType.application.json))
     )
 
-  def apply[F[_]: Sync: Timer, A](client: Client[F], uri: String, makePayload: Batch => A, staticHeaders: List[Header])(
-    implicit encoder: EntityEncoder[F, A]
-  ): F[SpanExporter[F]] =
+  def apply[F[_]: Sync: Timer, G[_], A](
+    client: Client[F],
+    uri: String,
+    makePayload: Batch[G] => A,
+    staticHeaders: List[Header]
+  )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F, G]] =
     apply(
       client,
       uri,
@@ -52,9 +55,12 @@ object HttpSpanExporter {
       staticHeaders
     )
 
-  def apply[F[_]: Sync: Timer, A](client: Client[F], uri: String, makePayload: Batch => A, updatedUri: Uri => F[Uri])(
-    implicit encoder: EntityEncoder[F, A]
-  ): F[SpanExporter[F]] =
+  def apply[F[_]: Sync: Timer, G[_], A](
+    client: Client[F],
+    uri: String,
+    makePayload: Batch[G] => A,
+    updatedUri: Uri => F[Uri]
+  )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F, G]] =
     apply(
       client,
       uri,
@@ -65,12 +71,12 @@ object HttpSpanExporter {
       List(`Content-Type`(MediaType.application.json))
     )
 
-  def apply[F[_]: Sync: Timer, A](
+  def apply[F[_]: Sync: Timer, G[_], A](
     client: Client[F],
     uri: String,
-    makePayload: Batch => A,
+    makePayload: Batch[G] => A,
     method: Method with PermitsBody
-  )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F]] =
+  )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F, G]] =
     apply(
       client,
       uri,
@@ -81,12 +87,12 @@ object HttpSpanExporter {
       List(`Content-Type`(MediaType.application.json))
     )
 
-  def apply[F[_]: Sync: Timer, A](
+  def apply[F[_]: Sync: Timer, G[_], A](
     client: Client[F],
     uri: String,
-    makePayload: Batch => A,
+    makePayload: Batch[G] => A,
     dynamicHeaders: F[List[Header]]
-  )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F]] =
+  )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F, G]] =
     apply(
       client,
       uri,
@@ -97,18 +103,18 @@ object HttpSpanExporter {
       List(`Content-Type`(MediaType.application.json))
     )
 
-  def apply[F[_]: Sync: Timer, A](
+  def apply[F[_]: Sync: Timer, G[_], A](
     client: Client[F],
     uri: String,
-    makePayload: Batch => A,
+    makePayload: Batch[G] => A,
     updatedUri: Uri => F[Uri],
     dynamicHeaders: F[List[Header]],
     method: Method with PermitsBody,
     staticHeaders: List[Header]
-  )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F]] =
+  )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F, G]] =
     Uri.fromString(uri).liftTo[F].map { parsedUri =>
-      new SpanExporter[F] with Http4sClientDsl[F] {
-        override def exportBatch(batch: Batch): F[Unit] =
+      new SpanExporter[F, G] with Http4sClientDsl[F] {
+        override def exportBatch(batch: Batch[G]): F[Unit] =
           for {
             u <- updatedUri(parsedUri)
             dynHeaders <- dynamicHeaders

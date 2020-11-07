@@ -3,19 +3,19 @@ package io.janstenpickle.trace4cats.avro.server
 import java.net.InetSocketAddress
 
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync}
+import cats.syntax.applicativeError._
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.io.tcp.{SocketGroup => TCPSocketGroup}
 import fs2.io.udp.{SocketGroup => UDPSocketGroup}
 import fs2.{Chunk, Pipe, Pull, Stream}
+import io.chrisdavenport.log4cats.Logger
 import io.janstenpickle.trace4cats.avro.{agentPort, AvroInstances}
-import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan}
+import io.janstenpickle.trace4cats.model.CompletedSpan
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.io.DecoderFactory
-import cats.syntax.applicativeError._
-import io.chrisdavenport.log4cats.Logger
 
 object AvroServer {
 
@@ -37,7 +37,7 @@ object AvroServer {
       go((0, 0), List.empty, bytes).stream
     }
 
-  private def decode[F[_]: Sync: Logger](schema: Schema)(bytes: Chunk[Byte]): F[Option[Batch]] =
+  private def decode[F[_]: Sync: Logger](schema: Schema)(bytes: Chunk[Byte]): F[Option[CompletedSpan]] =
     Sync[F]
       .delay {
         val reader = new GenericDatumReader[Any](schema)
@@ -46,10 +46,10 @@ object AvroServer {
 
         record
       }
-      .flatMap[Option[Batch]] { record =>
-        Sync[F].fromEither(AvroInstances.batchCodec.decode(record, schema).bimap(_.throwable, Some(_)))
+      .flatMap[Option[CompletedSpan]] { record =>
+        Sync[F].fromEither(AvroInstances.completedSpanCodec.decode(record, schema).bimap(_.throwable, Some(_)))
       }
-      .handleErrorWith(th => Logger[F].warn(th)("Failed to decode span batch").as(Option.empty[Batch]))
+      .handleErrorWith(th => Logger[F].warn(th)("Failed to decode span batch").as(Option.empty[CompletedSpan]))
 
   def tcp[F[_]: Concurrent: ContextShift: Logger](
     blocker: Blocker,
@@ -57,7 +57,7 @@ object AvroServer {
     port: Int = agentPort,
   ): Resource[F, Stream[F, Unit]] =
     for {
-      avroSchema <- Resource.liftF(AvroInstances.batchSchema[F])
+      avroSchema <- Resource.liftF(AvroInstances.completedSpanSchema[F])
       socketGroup <- TCPSocketGroup(blocker)
       address <- Resource.liftF(Sync[F].delay(new InetSocketAddress(port)))
     } yield socketGroup
@@ -69,7 +69,6 @@ object AvroServer {
             .through(buffer[F])
             .evalMap(decode[F](avroSchema))
             .unNone
-            .flatMap(batch => Stream.chunk(Chunk.seq(batch.spans)))
             .through(sink)
         }
       }
@@ -81,7 +80,7 @@ object AvroServer {
     port: Int = agentPort,
   ): Resource[F, Stream[F, Unit]] =
     for {
-      avroSchema <- Resource.liftF(AvroInstances.batchSchema[F])
+      avroSchema <- Resource.liftF(AvroInstances.completedSpanSchema[F])
       address <- Resource.liftF(Sync[F].delay(new InetSocketAddress(port)))
       socketGroup <- UDPSocketGroup[F](blocker)
       socket <- socketGroup.open(address)
@@ -90,6 +89,5 @@ object AvroServer {
       .map(_.bytes)
       .evalMap(decode[F](avroSchema))
       .unNone
-      .flatMap(batch => Stream.chunk(Chunk.seq(batch.spans)))
       .through(sink)
 }

@@ -1,12 +1,13 @@
 package io.janstenpickle.trace4cats.filtering
 
-import io.janstenpickle.trace4cats.model.{AttributeValue, Batch}
+import cats.Functor
+import cats.syntax.functor._
+import io.janstenpickle.trace4cats.model.Batch
 
 object BatchAttributeFilter {
-  def apply(filter: AttributeFilter): Batch => Batch = { batch =>
-    def filterAttributes(attributes: Map[String, AttributeValue]): Map[String, AttributeValue] =
-      attributes.filterNot(filter.tupled)
+  def apply[G[_]: Functor](filter: AttributeFilter): Batch[G] => Batch[G] = {
+    val spanFilter = filterSpanAttributes(filter)
 
-    Batch(batch.spans.map(span => span.copy(attributes = filterAttributes(span.attributes))))
+    batch => Batch(batch.spans.map(spanFilter))
   }
 }

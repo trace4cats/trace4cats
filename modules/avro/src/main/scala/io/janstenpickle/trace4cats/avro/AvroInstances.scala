@@ -46,11 +46,6 @@ object AvroInstances {
 
   implicit val processCodec: Codec[TraceProcess] = Codec.derive
 
-  implicit val batchCodec: Codec[Batch] = Codec.derive
-
   def completedSpanSchema[F[_]: ApplicativeError[*[_], Throwable]]: F[Schema] =
     ApplicativeError[F, Throwable].fromEither(completedSpanCodec.schema.leftMap(_.throwable))
-
-  def batchSchema[F[_]: ApplicativeError[*[_], Throwable]]: F[Schema] =
-    ApplicativeError[F, Throwable].fromEither(batchCodec.schema.leftMap(_.throwable))
 }

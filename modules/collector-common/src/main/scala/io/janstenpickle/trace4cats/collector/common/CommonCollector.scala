@@ -5,7 +5,7 @@ import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Timer}
 import cats.implicits._
 import com.monovore.decline._
 import fs2.kafka.ConsumerSettings
-import fs2.{Pipe, Stream}
+import fs2.{Chunk, Pipe, Stream}
 import io.chrisdavenport.log4cats.Logger
 import io.janstenpickle.trace4cats.`export`.QueuedSpanExporter
 import io.janstenpickle.trace4cats.avro._
@@ -21,7 +21,7 @@ import io.janstenpickle.trace4cats.datadog.DataDogSpanExporter
 import io.janstenpickle.trace4cats.jaeger.JaegerSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.log.LogSpanExporter
-import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceId}
+import io.janstenpickle.trace4cats.model.{CompletedSpan, TraceId}
 import io.janstenpickle.trace4cats.newrelic.NewRelicSpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpHttpSpanExporter
 import io.janstenpickle.trace4cats.strackdriver.StackdriverHttpSpanExporter
@@ -35,7 +35,7 @@ object CommonCollector {
   def apply[F[_]: ConcurrentEffect: Parallel: ContextShift: Timer: Logger](
     blocker: Blocker,
     configFile: String,
-    others: List[(String, SpanExporter[F])]
+    others: List[(String, SpanExporter[F, Chunk])]
   ): Resource[F, Stream[F, Unit]] =
     for {
       config <- Resource.liftF(ConfigParser.parse[F, CommonCollectorConfig](configFile))
@@ -48,44 +48,46 @@ object CommonCollector {
       client <- Resource.liftF(Http4sJdkClient[F](blocker))
 
       collectorExporter <- config.forwarder.traverse { forwarder =>
-        AvroSpanExporter.tcp[F](blocker, host = forwarder.host, port = forwarder.port).map("Trace4Cats Avro TCP" -> _)
+        AvroSpanExporter
+          .tcp[F, Chunk](blocker, host = forwarder.host, port = forwarder.port)
+          .map("Trace4Cats Avro TCP" -> _)
       }
 
       jaegerUdpExporter <- config.jaeger.traverse { jaeger =>
-        JaegerSpanExporter[F](blocker, serviceName = None, host = jaeger.host, port = jaeger.port)
+        JaegerSpanExporter[F, Chunk](blocker, serviceName = None, host = jaeger.host, port = jaeger.port)
           .map("Jaeger UDP" -> _)
       }
 
       logExporter <-
         if (config.logSpans)
-          Resource.pure[F, SpanExporter[F]](LogSpanExporter[F]).map(e => Some("Log" -> e))
-        else Resource.pure[F, Option[(String, SpanExporter[F])]](None)
+          Resource.pure[F, SpanExporter[F, Chunk]](LogSpanExporter[F, Chunk]).map(e => Some("Log" -> e))
+        else Resource.pure[F, Option[(String, SpanExporter[F, Chunk])]](None)
 
       otHttpExporter <- config.otlpHttp.traverse { otlp =>
         Resource.liftF(
-          OpenTelemetryOtlpHttpSpanExporter[F](client, host = otlp.host, port = otlp.port)
+          OpenTelemetryOtlpHttpSpanExporter[F, Chunk](client, host = otlp.host, port = otlp.port)
             .map("OpenTelemetry HTTP" -> _)
         )
       }
 
       stackdriverExporter <- Resource.liftF(config.stackdriverHttp.traverse {
         case StackdriverHttpConfig(Some(projectId), Some(credsFile), _) =>
-          StackdriverHttpSpanExporter[F](projectId, credsFile, client).map("Stackdriver HTTP" -> _)
+          StackdriverHttpSpanExporter[F, Chunk](projectId, credsFile, client).map("Stackdriver HTTP" -> _)
         case StackdriverHttpConfig(_, _, None) =>
-          StackdriverHttpSpanExporter[F](client).map("Stackdriver HTTP" -> _)
+          StackdriverHttpSpanExporter[F, Chunk](client).map("Stackdriver HTTP" -> _)
         case StackdriverHttpConfig(_, _, Some(serviceAccount)) =>
-          StackdriverHttpSpanExporter[F](client, serviceAccount).map("Stackdriver HTTP" -> _)
+          StackdriverHttpSpanExporter[F, Chunk](client, serviceAccount).map("Stackdriver HTTP" -> _)
       })
 
       ddExporter <- config.datadog.traverse { datadog =>
         Resource.liftF(
-          DataDogSpanExporter[F](client, host = datadog.host, port = datadog.port).map("DataDog Agent" -> _)
+          DataDogSpanExporter[F, Chunk](client, host = datadog.host, port = datadog.port).map("DataDog Agent" -> _)
         )
       }
 
       newRelicExporter <- config.newRelic.traverse { newRelic =>
         Resource.liftF(
-          NewRelicSpanExporter[F](client, apiKey = newRelic.apiKey, endpoint = newRelic.endpoint)
+          NewRelicSpanExporter[F, Chunk](client, apiKey = newRelic.apiKey, endpoint = newRelic.endpoint)
             .map("NewRelic HTTP" -> _)
         )
       }
@@ -93,7 +95,7 @@ object CommonCollector {
       kafkaExporter <-
         config.kafkaForwarder
           .traverse { kafka =>
-            AvroKafkaSpanExporter[F](
+            AvroKafkaSpanExporter[F, Chunk](
               blocker,
               kafka.bootstrapServers,
               kafka.topic,
@@ -122,12 +124,10 @@ object CommonCollector {
           .pipe[F](config.attributeFiltering)
           .andThen { stream =>
             config.batch
-              .fold(stream.chunks) {
+              .fold(stream) {
                 case BatchConfig(size, timeoutSeconds) =>
-                  stream.groupWithin(size, timeoutSeconds.seconds)
+                  stream.groupWithin(size, timeoutSeconds.seconds).flatMap(Stream.chunk)
               }
-              .map(spans => Batch(spans.toList))
-
           }
           .andThen(exporter.pipe)
 
