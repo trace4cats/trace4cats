@@ -16,9 +16,8 @@ object SttpZioExample extends CatsApp {
       blocker <- Blocker[Task]
       client <- BlazeClientBuilder[Task](blocker.blockingContext).resource
       sttpBackend = Http4sBackend.usingClient(client, blocker)
-      tracedBackend: SttpBackend[ZIOTrace, Nothing, NothingT] = TracedBackend[Task, ZIOTrace, Nothing, NothingT](
-        sttpBackend
-      )
+      tracedBackend: SttpBackend[ZIOTrace, Nothing, NothingT] =
+        TracedBackend[Task, ZIOTrace, Nothing, NothingT](sttpBackend)
     } yield tracedBackend)
       .use { _ =>
         ZIO.never

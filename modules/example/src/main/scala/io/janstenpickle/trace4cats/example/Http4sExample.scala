@@ -38,10 +38,13 @@ object Http4sExample extends IOApp {
 
       routes = makeRoutes[IO](client.liftTrace()) // use implicit syntax to lift http client to the trace context
 
-      server <- BlazeServerBuilder[IO](blocker.blockingContext)
-        .bindHttp(8080, "0.0.0.0")
-        .withHttpApp(routes.inject(ep, requestFilter = Http4sRequestFilter.kubernetesPrometheus).orNotFound) // use implicit syntax to inject an entry point to http routes
-        .resource
+      server <-
+        BlazeServerBuilder[IO](blocker.blockingContext)
+          .bindHttp(8080, "0.0.0.0")
+          .withHttpApp(
+            routes.inject(ep, requestFilter = Http4sRequestFilter.kubernetesPrometheus).orNotFound
+          ) // use implicit syntax to inject an entry point to http routes
+          .resource
     } yield server).use { _ =>
       IO(ExitCode.Success)
     }
