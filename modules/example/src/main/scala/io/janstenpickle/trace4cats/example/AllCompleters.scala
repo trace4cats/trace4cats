@@ -40,7 +40,7 @@ object AllCompleters {
       StackdriverGrpcSpanCompleter[F](blocker, process, "gcp-project-id-123"),
       StackdriverHttpSpanCompleter.blazeClient[F](blocker, process)
     ).parSequence.map { completers =>
-      (LogSpanCompleter[F] :: completers).combineAll
+      (LogSpanCompleter[F](process) :: completers).combineAll
     }
 
 }

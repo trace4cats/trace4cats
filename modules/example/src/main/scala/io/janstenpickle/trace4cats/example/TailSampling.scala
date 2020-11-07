@@ -2,6 +2,7 @@ package io.janstenpickle.trace4cats.example
 
 import cats.data.NonEmptySet
 import cats.effect.{Blocker, ExitCode, IO, IOApp, Resource}
+import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.Span
@@ -19,15 +20,15 @@ object TailSampling extends IOApp {
     (for {
       blocker <- Blocker[IO]
       implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
-      exporter <- AvroSpanExporter.udp[IO](blocker)
+      exporter <- AvroSpanExporter.udp[IO, Chunk](blocker)
 
       sampleDecisionStore <-
         Resource.liftF(LocalCacheSampleDecisionStore[IO](ttl = 10.minutes, maximumSize = Some(200000)))
 
-      probSampler = TailSpanSampler.probabilistic[IO](probability = 0.05)
+      probSampler = TailSpanSampler.probabilistic[IO, Chunk](probability = 0.05)
       nameSampler =
         TailSpanSampler
-          .spanNameFilter(sampleDecisionStore, NonEmptySet.of("/healthcheck", "/readiness", "/metrics"))
+          .spanNameFilter[IO, Chunk](sampleDecisionStore, NonEmptySet.of("/healthcheck", "/readiness", "/metrics"))
       combinedSampler = TailSpanSampler.combined(probSampler, nameSampler) // a semigroup instance is also available
 
       samplingExporter = TailSamplingSpanExporter(exporter, combinedSampler)
