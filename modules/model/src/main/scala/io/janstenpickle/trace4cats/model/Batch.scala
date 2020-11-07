@@ -13,8 +13,8 @@ object Batch {
           |${batch.spans.map(_.show).map(s => s"  $s").mkString_("")}""".stripMargin
     }
 
-  implicit def eq[F[_]](implicit e: Eq[F[CompletedSpan]]): Eq[Batch[F]] = cats.derived.semiauto.eq[Batch[F]]
+  implicit def eq[F[_]](implicit e: Eq[F[CompletedSpan]]): Eq[Batch[F]] = Eq.by(_.spans)
 
   implicit def monoid[F[_]](implicit m: Monoid[F[CompletedSpan]]): Monoid[Batch[F]] =
-    cats.derived.semiauto.monoid[Batch[F]]
+    Monoid.instance(Batch(m.empty), (x, y) => Batch(m.combine(x.spans, y.spans)))
 }
