@@ -35,8 +35,8 @@ case class JaegerProcess(serviceName: String, tags: List[JaegerTag])
 
 object JaegerProcess {
   implicit val decoder: Decoder[JaegerProcess] = deriveDecoder[JaegerProcess].map { proc =>
-    proc.copy(
-      tags = proc.tags
+    proc.copy(tags =
+      proc.tags
         .filterNot(tag => tag.key == "hostname" || tag.key == "ip" || tag.key == "jaeger.version")
         .sortBy(_.key)
     )

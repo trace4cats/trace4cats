@@ -39,10 +39,13 @@ object Http4sZioExample extends CatsApp {
 
       routes = makeRoutes(client.liftTrace()) // use implicit syntax to lift http client to the trace context
 
-      server <- BlazeServerBuilder[Task](blocker.blockingContext)
-        .bindHttp(8080, "0.0.0.0")
-        .withHttpApp(routes.inject(ep, requestFilter = Http4sRequestFilter.kubernetesPrometheus).orNotFound) // use implicit syntax to inject an entry point to http routes
-        .resource
+      server <-
+        BlazeServerBuilder[Task](blocker.blockingContext)
+          .bindHttp(8080, "0.0.0.0")
+          .withHttpApp(
+            routes.inject(ep, requestFilter = Http4sRequestFilter.kubernetesPrometheus).orNotFound
+          ) // use implicit syntax to inject an entry point to http routes
+          .resource
     } yield server)
       .use { _ =>
         ZIO.never
