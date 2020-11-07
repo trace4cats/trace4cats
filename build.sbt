@@ -541,7 +541,6 @@ lazy val `graal-kafka` = (project in file("modules/graal-kafka"))
   .settings(publishSettings)
   .settings(
     name := "trace4cats-graal-kafka",
-    publishArtifact in (Compile, packageDoc) := false,
     libraryDependencies ++= Seq(Dependencies.svm, Dependencies.kafka, Dependencies.micronautCore)
   )
 
