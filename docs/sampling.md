@@ -9,8 +9,8 @@ the tracing system itself.
 
 ## Head Sampling
 
-As mentioned in the [readme](../README.md), there are three kinds of head sampler provided out of the box, although you
-are welcome to create other implementations of the `SpanSampler` interface:
+As mentioned in the [design document](design.md), there are three kinds of head sampler provided out of the box, 
+although you are welcome to create other implementations of the `SpanSampler` interface:
 
 - Always
 - Never
@@ -81,7 +81,7 @@ sampling:
   redis:
     cluster:
       - host: redis1
-        port: 6378
+        port: 6378  # defaults to 6379
       - host: redis2
 ```
 

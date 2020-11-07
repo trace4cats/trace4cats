@@ -216,6 +216,34 @@ Requires:
 
 ```
 
+## [Attribute Filtering](../modules/example/src/main/scala/io/janstenpickle/trace4cats/example/AttributeFiltering.scala)
+
+Demonstrates how to use the [attribute filter](filtering.md) with an exporter in order to remove sensitive attributes 
+from spans. Note that this would more commonly be configured on the [collector].
+
+Requires:
+
+```scala
+"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-filtering" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
+
+```
+
+## [Tail Sampling](../modules/example/src/main/scala/io/janstenpickle/trace4cats/example/TailSampling.scala)
+
+Demonstrates how to use [tail samplers](sampling.md#tail-sampling) with an exporter in order to sample spans after they
+have been created. Note that this would more commonly be configured on the [collector].
+
+Requires:
+
+```scala
+"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-filtering" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
+
+```
+
 [FS2]: https://fs2.io/
 [FS2 `EntryPoint`]: ../modules/fs2/src/main/scala/io/janstenpickle/trace4cats/fs2/Fs2EntryPoint.scala
 [Http4s]: https://http4s.org/
@@ -232,3 +260,4 @@ Requires:
 [Sttp]: https://sttp.softwaremill.com
 [Kafka consumer config]: https://kafka.apache.org/26/javadoc/?org/apache/kafka/clients/consumer/ConsumerConfig.html
 [Kafka producer config]: https://kafka.apache.org/26/javadoc/?org/apache/kafka/clients/producer/ProducerConfig.html
+[collector]: components.md#collectors

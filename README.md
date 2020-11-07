@@ -10,12 +10,6 @@ Compatible with [OpenTelemetry] and [Jaeger], based on, and interoperates wht [N
 #### For release information and changes see [the changelog](CHANGELOG.md)
 
   * [Motivation](#motivation)
-  * [Design](#design)
-     * [Trace Injection](#trace-injection)
-     * [Interfaces](#interfaces)
-        * [SpanExporter and SpanCompleter](#spanexporter-and-spancompleter)
-        * [SpanSampler](#spansampler)
-        * [ToHeaders](#toheaders)
   * [Components](#components)
   * [Documentation](#documentation)
   * [SBT Dependencies](#sbt-dependencies)  
@@ -34,15 +28,18 @@ brings along lots of other dependencies. You may find *Trace4Cats* useful if you
 
 ## Components
 
-There are two main standalone components as part of Trace4cats, the agent and the collector. To see how they work
-together, see the [topologies documentation](docs/topologies.md), for information on configuring and running the agent
-and collector see the [components documentation](docs/components.md).
+Trace4Cats is made up as both a set of libraries for integration in applications and standalone processes. For
+information on the libraries and interfaces see the [design documentation](docs/design.md).
+
+The standalone components are the agent and the collector. To see how they work together, see the 
+[topologies documentation](docs/topologies.md), for information on configuring and running the agent and collector see 
+the [components documentation](docs/components.md).
 
 ## Documentation 
 
-- [Design](docs/design.md) - Trace4cats design
-- [Components](docs/components.md) - running and configuring Trace4cats components
-- [Topologies](docs/topologies.md) - information on potential Trace4cats deployment topologies
+- [Design](docs/design.md) - Trace4Cats design
+- [Components](docs/components.md) - running and configuring Trace4Cats components
+- [Topologies](docs/topologies.md) - information on potential Trace4Cats deployment topologies
 - [Sampling](docs/sampling.md) - trace sampling
 - [Filtering](docs/filtering.md) - span attribute filtering
 - [Examples](docs/examples.md) - code usage examples
