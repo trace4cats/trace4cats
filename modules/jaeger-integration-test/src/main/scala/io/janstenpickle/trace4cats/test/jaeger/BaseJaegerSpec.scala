@@ -55,37 +55,36 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
     batch.spans.toList
       .groupBy(_.context.traceId)
       .toList
-      .map {
-        case (traceId, spans) =>
-          JaegerTraceResponse(
-            NonEmptyList
-              .one(
-                JaegerTrace(
-                  traceID = traceId.show,
-                  spans = spans
-                    .map { span =>
-                      JaegerSpan(
-                        traceID = traceId.show,
-                        spanID = span.context.spanId.show,
-                        operationName = span.name,
-                        startTime = TimeUnit.MILLISECONDS.toMicros(span.start.toEpochMilli),
-                        duration = TimeUnit.MILLISECONDS.toMicros(span.end.toEpochMilli) - TimeUnit.MILLISECONDS
-                          .toMicros(span.start.toEpochMilli),
-                        tags = (JaegerTag.StringTag("internal.span.format", "proto") :: convertAttributes(
-                          span.allAttributes ++ kindToAttributes(span.kind) ++ statusToAttributes(
-                            span.status
-                          ) ++ additionalAttributes
-                        )).sortBy(_.key),
-                        references = span.context.parent.toList.map { parent =>
-                          JaegerReference("CHILD_OF", traceId.show, parent.spanId.show)
-                        }
-                      )
-                    }
-                    .sortBy(_.operationName),
-                  processes = Map("p1" -> JaegerProcess(process.serviceName, List.empty))
-                )
+      .map { case (traceId, spans) =>
+        JaegerTraceResponse(
+          NonEmptyList
+            .one(
+              JaegerTrace(
+                traceID = traceId.show,
+                spans = spans
+                  .map { span =>
+                    JaegerSpan(
+                      traceID = traceId.show,
+                      spanID = span.context.spanId.show,
+                      operationName = span.name,
+                      startTime = TimeUnit.MILLISECONDS.toMicros(span.start.toEpochMilli),
+                      duration = TimeUnit.MILLISECONDS.toMicros(span.end.toEpochMilli) - TimeUnit.MILLISECONDS
+                        .toMicros(span.start.toEpochMilli),
+                      tags = (JaegerTag.StringTag("internal.span.format", "proto") :: convertAttributes(
+                        span.allAttributes ++ kindToAttributes(span.kind) ++ statusToAttributes(
+                          span.status
+                        ) ++ additionalAttributes
+                      )).sortBy(_.key),
+                      references = span.context.parent.toList.map { parent =>
+                        JaegerReference("CHILD_OF", traceId.show, parent.spanId.show)
+                      }
+                    )
+                  }
+                  .sortBy(_.operationName),
+                processes = Map("p1" -> JaegerProcess(process.serviceName, List.empty))
               )
-          )
+            )
+        )
       }
       .sortBy(_.data.head.traceID)
   }

@@ -42,11 +42,10 @@ object QueuedSpanExporter {
       }
 
     exporters
-      .map {
-        case (name, exporter) =>
-          SpanExporter.handleErrors[F, Chunk, Throwable](exporter) {
-            case th => Logger[F].warn(th)(s"Failed to export span batch with $name")
-          }
+      .map { case (name, exporter) =>
+        SpanExporter.handleErrors[F, Chunk, Throwable](exporter) { case th =>
+          Logger[F].warn(th)(s"Failed to export span batch with $name")
+        }
       }
       .parTraverse(buffer)
       .map(_.combineAll)

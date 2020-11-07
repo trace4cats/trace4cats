@@ -35,8 +35,8 @@ object QueuedSpanCompleter {
         }
         .compile
         .drain
-        .onError {
-          case th => Logger[F].warn(th)("Failed to export spans")
+        .onError { case th =>
+          Logger[F].warn(th)("Failed to export spans")
         }
 
     for {

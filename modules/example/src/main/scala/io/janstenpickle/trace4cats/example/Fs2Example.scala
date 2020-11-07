@@ -65,7 +65,7 @@ object Fs2Example extends IOApp {
     stream: EntryPointStream[F, FiniteDuration]
   ): TracedStream[F, Long] =
     stream
-    // eval some effect within a span
+      // eval some effect within a span
       .evalMap("this is the root span", SpanKind.Consumer, "optional-attribute" -> true) { dur =>
         Clock[F].realTime(TimeUnit.MILLISECONDS).map(_ + dur.toMillis)
       }

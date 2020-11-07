@@ -29,25 +29,24 @@ trait Fs2StreamSyntax {
       f: A => G[B]
     )(implicit F: Bracket[F, Throwable], provide: Provide[F, G]): (L, A) => F[((Fs2EntryPoint[F], SpanContext), B)] = {
       case (l, a) =>
-        makeSpan(name, kind, l).use {
-          case (ep, span) => provide(f(a))(span).map((ep, span.context) -> _)
+        makeSpan(name, kind, l).use { case (ep, span) =>
+          provide(f(a))(span).map((ep, span.context) -> _)
         }
     }
 
-    private def eval[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(
-      f: A => F[B]
-    )(implicit F: Bracket[F, Throwable]): (L, A) => F[((Fs2EntryPoint[F], SpanContext), B)] = {
-      case (l, a) =>
-        makeSpan(name, kind, l).use {
-          case (ep, span) => span.putAll(attributes: _*) *> f(a).map((ep, span.context) -> _)
-        }
+    private def eval[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
+      F: Bracket[F, Throwable]
+    ): (L, A) => F[((Fs2EntryPoint[F], SpanContext), B)] = { case (l, a) =>
+      makeSpan(name, kind, l).use { case (ep, span) =>
+        span.putAll(attributes: _*) *> f(a).map((ep, span.context) -> _)
+      }
     }
 
     def through[B](f: WriterT[Stream[F, *], L, A] => TracedStream[F, B]): TracedStream[F, B] = f(stream)
 
-    def evalMapTrace[B](
-      name: String
-    )(f: A => G[B])(implicit F: Bracket[F, Throwable], provide: Provide[F, G]): TracedStream[F, B] =
+    def evalMapTrace[B](name: String)(
+      f: A => G[B]
+    )(implicit F: Bracket[F, Throwable], provide: Provide[F, G]): TracedStream[F, B] =
       evalMapTrace(name, SpanKind.Internal)(f)
 
     def evalMapTrace[B](name: String, kind: SpanKind)(
@@ -55,9 +54,9 @@ trait Fs2StreamSyntax {
     )(implicit F: Bracket[F, Throwable], provide: Provide[F, G]): TracedStream[F, B] =
       WriterT(stream.run.evalMap(evalTrace(name, kind)(f).tupled))
 
-    def evalMapChunkTrace[B](
-      name: String
-    )(f: A => G[B])(implicit F: Bracket[F, Throwable], provide: Provide[F, G]): TracedStream[F, B] =
+    def evalMapChunkTrace[B](name: String)(
+      f: A => G[B]
+    )(implicit F: Bracket[F, Throwable], provide: Provide[F, G]): TracedStream[F, B] =
       evalMapChunkTrace(name, SpanKind.Internal)(f)
 
     def evalMapChunkTrace[B](name: String, kind: SpanKind)(
@@ -69,29 +68,29 @@ trait Fs2StreamSyntax {
       F: Bracket[F, Throwable]
     ): TracedStream[F, B] = evalMap(name, SpanKind.Internal, attributes: _*)(f)
 
-    def evalMap[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(
-      f: A => F[B]
-    )(implicit F: Bracket[F, Throwable]): TracedStream[F, B] =
+    def evalMap[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
+      F: Bracket[F, Throwable]
+    ): TracedStream[F, B] =
       WriterT(stream.run.evalMap(eval(name, kind, attributes: _*)(f).tupled))
 
-    def evalMapChunk[B](name: String, attributes: (String, AttributeValue)*)(
-      f: A => F[B]
-    )(implicit F: Bracket[F, Throwable]): TracedStream[F, B] =
+    def evalMapChunk[B](name: String, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
+      F: Bracket[F, Throwable]
+    ): TracedStream[F, B] =
       evalMapChunk(name, SpanKind.Internal, attributes: _*)(f)
 
-    def evalMapChunk[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(
-      f: A => F[B]
-    )(implicit F: Bracket[F, Throwable]): TracedStream[F, B] =
+    def evalMapChunk[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
+      F: Bracket[F, Throwable]
+    ): TracedStream[F, B] =
       WriterT(stream.run.evalMapChunk(eval(name, kind, attributes: _*)(f).tupled))
 
-    def traceMapChunk[B](name: String, attributes: (String, AttributeValue)*)(
-      f: A => B
-    )(implicit F: Bracket[F, Throwable]): TracedStream[F, B] =
+    def traceMapChunk[B](name: String, attributes: (String, AttributeValue)*)(f: A => B)(implicit
+      F: Bracket[F, Throwable]
+    ): TracedStream[F, B] =
       traceMapChunk[B](name, SpanKind.Internal, attributes: _*)(f)
 
-    def traceMapChunk[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(
-      f: A => B
-    )(implicit F: Bracket[F, Throwable]): TracedStream[F, B] =
+    def traceMapChunk[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(f: A => B)(implicit
+      F: Bracket[F, Throwable]
+    ): TracedStream[F, B] =
       WriterT(stream.run.evalMapChunk(eval(name, kind, attributes: _*)(a => Applicative[F].pure(f(a))).tupled))
 
     def dropTrace: Stream[F, A] = stream.run.map(_._2)
@@ -136,24 +135,23 @@ trait Fs2StreamSyntax {
 
     def traceHeaders: Stream[F, (Map[String, String], A)] = traceHeaders(ToHeaders.all)
     def traceHeaders(toHeaders: ToHeaders): Stream[F, (Map[String, String], A)] =
-      stream.run.map {
-        case ((_, context), a) => toHeaders.fromContext(context) -> a
+      stream.run.map { case ((_, context), a) =>
+        toHeaders.fromContext(context) -> a
       }
 
     def mapTraceHeaders[B](f: (Map[String, String], A) => B): Stream[F, B] = mapTraceHeaders[B](ToHeaders.all)(f)
     def mapTraceHeaders[B](toHeaders: ToHeaders)(f: (Map[String, String], A) => B): Stream[F, B] =
-      stream.run.map {
-        case ((_, context), a) => f(toHeaders.fromContext(context), a)
+      stream.run.map { case ((_, context), a) =>
+        f(toHeaders.fromContext(context), a)
       }
 
     def evalMapTraceHeaders[B](f: (Map[String, String], A) => F[B])(implicit F: Bracket[F, Throwable]): Stream[F, B] =
       evalMapTraceHeaders(ToHeaders.all)(f)
-    def evalMapTraceHeaders[B](
-      toHeaders: ToHeaders
-    )(f: (Map[String, String], A) => F[B])(implicit F: Bracket[F, Throwable]): Stream[F, B] =
-      stream.run.evalMap {
-        case ((ep, context), a) =>
-          ep.continue("propagate", SpanKind.Producer, context).use(_ => f(toHeaders.fromContext(context), a))
+    def evalMapTraceHeaders[B](toHeaders: ToHeaders)(f: (Map[String, String], A) => F[B])(implicit
+      F: Bracket[F, Throwable]
+    ): Stream[F, B] =
+      stream.run.evalMap { case ((ep, context), a) =>
+        ep.continue("propagate", SpanKind.Producer, context).use(_ => f(toHeaders.fromContext(context), a))
       }
   }
 }

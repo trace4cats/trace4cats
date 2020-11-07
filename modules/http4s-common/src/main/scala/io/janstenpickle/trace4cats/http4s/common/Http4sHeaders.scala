@@ -39,7 +39,7 @@ object Http4sHeaders {
     }.toMap
 
   def traceHeadersToHttp(headers: Map[String, String]): List[Header] =
-    headers.toList.map {
-      case (k, v) => Header(k, v)
+    headers.toList.map { case (k, v) =>
+      Header(k, v)
     }
 }

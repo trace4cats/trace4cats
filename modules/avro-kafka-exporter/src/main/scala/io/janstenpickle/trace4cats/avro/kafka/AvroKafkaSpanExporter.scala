@@ -39,17 +39,15 @@ object AvroKafkaSpanExporter {
 
                   (writer, out, encoder)
                 }
-            ) {
-              case (_, out, _) =>
-                Sync[F].delay(out.close())
+            ) { case (_, out, _) =>
+              Sync[F].delay(out.close())
             }
-            .use {
-              case (writer, out, encoder) =>
-                Sync[F].delay {
-                  writer.write(record, encoder)
-                  encoder.flush()
-                  out.toByteArray
-                }
+            .use { case (writer, out, encoder) =>
+              Sync[F].delay {
+                writer.write(record, encoder)
+                encoder.flush()
+                out.toByteArray
+              }
             }
       } yield ba
     }
@@ -86,9 +84,8 @@ object AvroKafkaSpanExporter {
           .produce(ProducerRecords[G, TraceId, CompletedSpan](batch.spans.map { span =>
             ProducerRecord(topic, span.context.traceId, span)
           }))
-          .map(_.onError {
-            case e =>
-              Logger[F].warn(e)("Failed to export record batch to Kafka")
+          .map(_.onError { case e =>
+            Logger[F].warn(e)("Failed to export record batch to Kafka")
           })
           .void
     }

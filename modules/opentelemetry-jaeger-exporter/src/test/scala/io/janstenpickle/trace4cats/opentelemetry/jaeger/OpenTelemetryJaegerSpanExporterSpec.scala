@@ -12,14 +12,13 @@ class OpenTelemetryJaegerSpanExporterSpec extends BaseJaegerSpec {
   it should "Send a batch of spans to jaeger" in forAll { (batch: Batch[Chunk], process: TraceProcess) =>
     val updatedBatch =
       Batch(
-        batch.spans.map(
-          span =>
-            span.copy(
-              serviceName = process.serviceName,
-              attributes = process.attributes ++ span.attributes,
-              start = Instant.now(),
-              end = Instant.now()
-            )
+        batch.spans.map(span =>
+          span.copy(
+            serviceName = process.serviceName,
+            attributes = process.attributes ++ span.attributes,
+            start = Instant.now(),
+            end = Instant.now()
+          )
         )
       )
 

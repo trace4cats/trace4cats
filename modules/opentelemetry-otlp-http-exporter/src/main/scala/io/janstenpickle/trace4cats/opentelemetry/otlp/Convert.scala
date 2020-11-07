@@ -112,13 +112,12 @@ object Convert {
 
   implicit def valueEncoder: Encoder[AnyValue.Value] =
     io.circe.generic.semiauto.deriveEncoder[AnyValue.Value].mapJsonObject { obj =>
-      val updatedKeys = obj.toMap.map {
-        case (k, v) =>
-          val chars = k.toCharArray
+      val updatedKeys = obj.toMap.map { case (k, v) =>
+        val chars = k.toCharArray
 
-          chars(0) = Character.toLowerCase(chars(0))
+        chars(0) = Character.toLowerCase(chars(0))
 
-          new String(chars) -> v.hcursor.downField("value").focus.get
+        new String(chars) -> v.hcursor.downField("value").focus.get
       }
 
       JsonObject.fromMap(updatedKeys)

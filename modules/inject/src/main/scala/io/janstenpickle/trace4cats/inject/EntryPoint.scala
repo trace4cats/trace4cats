@@ -12,8 +12,7 @@ import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.model.SpanKind
 
-/**
-  * An entry point, for creating root spans or continuing traces that were started on another
+/** An entry point, for creating root spans or continuing traces that were started on another
   * system.
   */
 trait EntryPoint[F[_]] {
@@ -22,8 +21,7 @@ trait EntryPoint[F[_]] {
   def root(name: String): Resource[F, Span[F]] = root(name, SpanKind.Internal)
   def root(name: String, kind: SpanKind): Resource[F, Span[F]]
 
-  /**
-    * Resource that attempts to creates a new child span but falls back to a new root
+  /** Resource that attempts to creates a new child span but falls back to a new root
     * span as with `root` if the headers do not contain the required values. In other words, we
     * continue the existing span if we can, otherwise we start a new one.
     */

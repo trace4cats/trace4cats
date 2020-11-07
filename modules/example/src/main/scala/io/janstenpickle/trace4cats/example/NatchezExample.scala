@@ -27,11 +27,10 @@ import natchez.{EntryPoint, Trace, Span => NatchezSpan}
 import scala.concurrent.duration._
 import scala.util.Random
 
-/**
- Adapted from https://github.com/tpolecat/natchez/blob/b995b0ebf7b180666810f4edef46dce959596ace/modules/examples/src/main/scala/Example.scala
-
- This example demonstrates how to use Natchez to implicitly pass spans around the callstack.
- **/
+/** Adapted from https://github.com/tpolecat/natchez/blob/b995b0ebf7b180666810f4edef46dce959596ace/modules/examples/src/main/scala/Example.scala
+  *
+  * This example demonstrates how to use Natchez to implicitly pass spans around the callstack.
+  */
 object NatchezExample extends IOApp {
   def entryPoint[F[_]: Concurrent: ContextShift: Timer: Parallel: Logger](
     blocker: Blocker,

@@ -92,18 +92,16 @@ object JaegerSpanExporter {
             serviceName match {
               case None =>
                 val grouped: Iterable[(String, ListBuffer[Span])] =
-                  batch.spans.foldLeft(Map.empty[String, ListBuffer[Span]]) {
-                    case (acc, span) =>
-                      acc.updated(
-                        span.serviceName,
-                        acc
-                          .getOrElse(span.serviceName, scala.collection.mutable.ListBuffer.empty[Span]) += convert(span)
-                      )
+                  batch.spans.foldLeft(Map.empty[String, ListBuffer[Span]]) { case (acc, span) =>
+                    acc.updated(
+                      span.serviceName,
+                      acc
+                        .getOrElse(span.serviceName, scala.collection.mutable.ListBuffer.empty[Span]) += convert(span)
+                    )
                   }
 
-                grouped.foldM(()) {
-                  case (_, (service, spans)) =>
-                    blocker.delay(sender.send(new Process(service), spans.asJava))
+                grouped.foldM(()) { case (_, (service, spans)) =>
+                  blocker.delay(sender.send(new Process(service), spans.asJava))
                 }
 
               case Some(service) => send(service, batch.spans)

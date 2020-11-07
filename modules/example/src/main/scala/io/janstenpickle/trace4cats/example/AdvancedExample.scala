@@ -7,10 +7,9 @@ import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{SpanKind, SpanStatus, TraceProcess}
 
-/**
- This example is similar the to the simple exmample, however multiple completers are used in parallel and
- span resources are flatmapped rather than the `use` method being called - this has essentially the effect
- as the simple example call tree.
+/** This example is similar the to the simple exmample, however multiple completers are used in parallel and
+  * span resources are flatmapped rather than the `use` method being called - this has essentially the effect
+  * as the simple example call tree.
   */
 object AdvancedExample extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =

@@ -23,20 +23,19 @@ object ClientTracer {
           _.child(
             spanNamer(request.covary),
             SpanKind.Client,
-            {
-              case UnexpectedStatus(status) => Http4sStatusMapping.toSpanStatus(status)
+            { case UnexpectedStatus(status) =>
+              Http4sStatusMapping.toSpanStatus(status)
             }
           ).flatMap { span =>
-              val headers = toHeaders.fromContext(span.context)
-              val req = request.putHeaders(Http4sHeaders.traceHeadersToHttp(headers): _*)
+            val headers = toHeaders.fromContext(span.context)
+            val req = request.putHeaders(Http4sHeaders.traceHeadersToHttp(headers): _*)
 
-              client
-                .run(req.mapK(provide.fk(span)))
-                .evalTap { resp =>
-                  span.setStatus(Http4sStatusMapping.toSpanStatus(resp.status))
-                }
-            }
-            .mapK(lift.fk)
+            client
+              .run(req.mapK(provide.fk(span)))
+              .evalTap { resp =>
+                span.setStatus(Http4sStatusMapping.toSpanStatus(resp.status))
+              }
+          }.mapK(lift.fk)
             .map(_.mapK(lift.fk))
         )
     }

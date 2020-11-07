@@ -34,34 +34,33 @@ object Trace4CatsReadableAttributes {
       override val isEmpty: Boolean = map.isEmpty
 
       override def forEach(consumer: AttributeConsumer): Unit =
-        map.foreach {
-          case (k, v) =>
-            v match {
-              case StringValue(value) => consumer.consume[java.lang.String](AttributeKey.stringKey(k), value)
-              case BooleanValue(value) => consumer.consume[java.lang.Boolean](AttributeKey.booleanKey(k), value)
-              case DoubleValue(value) => consumer.consume[java.lang.Double](AttributeKey.doubleKey(k), value)
-              case LongValue(value) => consumer.consume[java.lang.Long](AttributeKey.longKey(k), value)
-              case StringList(value) =>
-                consumer.consume[java.util.List[java.lang.String]](
-                  AttributeKey.stringArrayKey(k),
-                  value.toList.asJava.asInstanceOf[java.util.List[java.lang.String]]
-                )
-              case BooleanList(value) =>
-                consumer.consume[java.util.List[java.lang.Boolean]](
-                  AttributeKey.booleanArrayKey(k),
-                  value.toList.asJava.asInstanceOf[java.util.List[java.lang.Boolean]]
-                )
-              case DoubleList(value) =>
-                consumer.consume[java.util.List[java.lang.Double]](
-                  AttributeKey.doubleArrayKey(k),
-                  value.toList.asJava.asInstanceOf[java.util.List[java.lang.Double]]
-                )
-              case LongList(value) =>
-                consumer.consume[java.util.List[java.lang.Long]](
-                  AttributeKey.longArrayKey(k),
-                  value.toList.asJava.asInstanceOf[java.util.List[java.lang.Long]]
-                )
-            }
+        map.foreach { case (k, v) =>
+          v match {
+            case StringValue(value) => consumer.consume[java.lang.String](AttributeKey.stringKey(k), value)
+            case BooleanValue(value) => consumer.consume[java.lang.Boolean](AttributeKey.booleanKey(k), value)
+            case DoubleValue(value) => consumer.consume[java.lang.Double](AttributeKey.doubleKey(k), value)
+            case LongValue(value) => consumer.consume[java.lang.Long](AttributeKey.longKey(k), value)
+            case StringList(value) =>
+              consumer.consume[java.util.List[java.lang.String]](
+                AttributeKey.stringArrayKey(k),
+                value.toList.asJava.asInstanceOf[java.util.List[java.lang.String]]
+              )
+            case BooleanList(value) =>
+              consumer.consume[java.util.List[java.lang.Boolean]](
+                AttributeKey.booleanArrayKey(k),
+                value.toList.asJava.asInstanceOf[java.util.List[java.lang.Boolean]]
+              )
+            case DoubleList(value) =>
+              consumer.consume[java.util.List[java.lang.Double]](
+                AttributeKey.doubleArrayKey(k),
+                value.toList.asJava.asInstanceOf[java.util.List[java.lang.Double]]
+              )
+            case LongList(value) =>
+              consumer.consume[java.util.List[java.lang.Long]](
+                AttributeKey.longArrayKey(k),
+                value.toList.asJava.asInstanceOf[java.util.List[java.lang.Long]]
+              )
+          }
         }
     }
 }

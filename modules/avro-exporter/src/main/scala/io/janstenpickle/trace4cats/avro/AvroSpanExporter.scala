@@ -42,17 +42,15 @@ object AvroSpanExporter {
 
                 (writer, out, encoder)
               }
-          ) {
-            case (_, out, _) =>
-              Sync[F].delay(out.close())
+          ) { case (_, out, _) =>
+            Sync[F].delay(out.close())
           }
-          .use {
-            case (writer, out, encoder) =>
-              Sync[F].delay {
-                writer.write(record, encoder)
-                encoder.flush()
-                out.toByteArray
-              }
+          .use { case (writer, out, encoder) =>
+            Sync[F].delay {
+              writer.write(record, encoder)
+              encoder.flush()
+              out.toByteArray
+            }
           }
       }
 
@@ -98,13 +96,12 @@ object AvroSpanExporter {
           .compile
           .drain
           .start
-      )(
-        fiber =>
-          Applicative[F].unit.whileM_(for {
-            queueNonEmpty <- queue.getSize.map(_ != 0)
-            semaphoreSet <- semaphore.count.map(_ == 0)
-            _ <- Timer[F].sleep(50.millis)
-          } yield queueNonEmpty || semaphoreSet) >> fiber.cancel
+      )(fiber =>
+        Applicative[F].unit.whileM_(for {
+          queueNonEmpty <- queue.getSize.map(_ != 0)
+          semaphoreSet <- semaphore.count.map(_ == 0)
+          _ <- Timer[F].sleep(50.millis)
+        } yield queueNonEmpty || semaphoreSet) >> fiber.cancel
       )
     } yield new SpanExporter[F, G] {
       override def exportBatch(batch: Batch[G]): F[Unit] = queue.enqueue1(batch)
@@ -119,12 +116,11 @@ object AvroSpanExporter {
     def connect(socketGroup: TCPSocketGroup, address: InetSocketAddress): Stream[F, TCPSocket[F]] =
       Stream
         .resource(socketGroup.client(address))
-        .handleErrorWith {
-          case _: ConnectException =>
-            Stream.eval(Logger[F].warn(s"Failed to connect to tcp://$host:$port, retrying in 5s")) >> connect(
-              socketGroup,
-              address
-            ).delayBy(5.seconds)
+        .handleErrorWith { case _: ConnectException =>
+          Stream.eval(Logger[F].warn(s"Failed to connect to tcp://$host:$port, retrying in 5s")) >> connect(
+            socketGroup,
+            address
+          ).delayBy(5.seconds)
         }
 
     def write(
@@ -166,14 +162,13 @@ object AvroSpanExporter {
           .compile
           .drain
           .start
-      )(
-        fiber =>
-          Timer[F]
-            .sleep(50.millis)
-            .whileM_(for {
-              queueNonEmpty <- queue.getSize.map(_ != 0)
-              semaphoreSet <- semaphore.count.map(_ == 0)
-            } yield queueNonEmpty || semaphoreSet) >> fiber.cancel
+      )(fiber =>
+        Timer[F]
+          .sleep(50.millis)
+          .whileM_(for {
+            queueNonEmpty <- queue.getSize.map(_ != 0)
+            semaphoreSet <- semaphore.count.map(_ == 0)
+          } yield queueNonEmpty || semaphoreSet) >> fiber.cancel
       )
     } yield new SpanExporter[F, G] {
       override def exportBatch(batch: Batch[G]): F[Unit] = queue.enqueue1(batch)

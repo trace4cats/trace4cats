@@ -24,8 +24,8 @@ object ConfigParser {
   }
 
   private def loadFile[F[_]: Sync](file: String): F[String] =
-    Sync[F].adaptError(Sync[F].delay(Files.readString(Paths.get(file)))) {
-      case _: NoSuchFileException => FileNotFound(file)
+    Sync[F].adaptError(Sync[F].delay(Files.readString(Paths.get(file)))) { case _: NoSuchFileException =>
+      FileNotFound(file)
     }
 
   def parseJson[F[_]: Sync, A: Decoder](file: String): F[A] =

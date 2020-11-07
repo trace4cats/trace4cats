@@ -67,20 +67,19 @@ object StackdriverGrpcSpanExporter {
 
     def toAttributesProto(attributes: Map[String, AttributeValue]): Attributes =
       attributes.toList
-        .foldLeft(Attributes.newBuilder()) {
-          case (acc, (k, v)) =>
-            acc.putAttributeMap(
-              k,
-              (v match {
-                case AttributeValue.StringValue(value) =>
-                  GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(value))
-                case AttributeValue.BooleanValue(value) => GAttributeValue.newBuilder().setBoolValue(value)
-                case AttributeValue.DoubleValue(value) => GAttributeValue.newBuilder().setIntValue(value.toLong)
-                case AttributeValue.LongValue(value) => GAttributeValue.newBuilder().setIntValue(value)
-                case vs: AttributeValue.AttributeList =>
-                  GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(vs.show))
-              }).build()
-            )
+        .foldLeft(Attributes.newBuilder()) { case (acc, (k, v)) =>
+          acc.putAttributeMap(
+            k,
+            (v match {
+              case AttributeValue.StringValue(value) =>
+                GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(value))
+              case AttributeValue.BooleanValue(value) => GAttributeValue.newBuilder().setBoolValue(value)
+              case AttributeValue.DoubleValue(value) => GAttributeValue.newBuilder().setIntValue(value.toLong)
+              case AttributeValue.LongValue(value) => GAttributeValue.newBuilder().setIntValue(value)
+              case vs: AttributeValue.AttributeList =>
+                GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(vs.show))
+            }).build()
+          )
 
         }
         .build()
