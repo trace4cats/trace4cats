@@ -11,8 +11,7 @@ object TruncatableString {
     if (bytesLength > maxLen) {
       val newString = new String(bytes, 0, maxLen, utf8)
       TruncatableString(newString, bytesLength - newString.getBytes(utf8).length)
-    } else {
+    } else
       TruncatableString(string, 0)
-    }
   }
 }

@@ -1,8 +1,8 @@
 package io.janstenpickle.trace4cats.strackdriver.oauth
 
 /**
-Code adapted from https://github.com/permutive/fs2-google-pubsub
- **/
+  * Code adapted from https://github.com/permutive/fs2-google-pubsub
+  */
 import io.circe.Codec
 import io.circe.generic.extras.semiauto._
 

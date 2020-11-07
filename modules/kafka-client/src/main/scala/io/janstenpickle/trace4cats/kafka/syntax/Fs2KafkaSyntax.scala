@@ -18,8 +18,8 @@ trait Fs2KafkaSyntax {
   }
 
   implicit class ConsumerSyntax[F[_], G[_], K, V](consumerStream: Stream[F, CommittableConsumerRecord[F, K, V]]) {
-    def inject(ep: Fs2EntryPoint[F])(
-      implicit F: Bracket[F, Throwable],
+    def inject(ep: Fs2EntryPoint[F])(implicit
+      F: Bracket[F, Throwable],
       G: Functor[G],
       trace: Trace[G],
       provide: Provide[F, G]

@@ -66,9 +66,10 @@ object Trace {
     */
   class KleisliTrace[F[_]: Bracket[*[_], Throwable]] extends Trace[Kleisli[F, Span[F], *]] {
 
-    override def headers(toHeaders: ToHeaders): Kleisli[F, Span[F], Map[String, String]] = Kleisli { span =>
-      toHeaders.fromContext(span.context).pure[F]
-    }
+    override def headers(toHeaders: ToHeaders): Kleisli[F, Span[F], Map[String, String]] =
+      Kleisli { span =>
+        toHeaders.fromContext(span.context).pure[F]
+      }
 
     override def put(key: String, value: AttributeValue): Kleisli[F, Span[F], Unit] =
       Kleisli(_.put(key, value))

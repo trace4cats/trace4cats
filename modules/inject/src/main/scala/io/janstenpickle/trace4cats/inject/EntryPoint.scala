@@ -39,19 +39,29 @@ object EntryPoint {
     sampler: SpanSampler[F],
     completer: SpanCompleter[F],
     toHeaders: ToHeaders = ToHeaders.all
-  ): EntryPoint[F] = new EntryPoint[F] {
-    override def root(name: String, kind: SpanKind): Resource[F, Span[F]] =
-      Span.root[F](name, kind, sampler, completer)
+  ): EntryPoint[F] =
+    new EntryPoint[F] {
+      override def root(name: String, kind: SpanKind): Resource[F, Span[F]] =
+        Span.root[F](name, kind, sampler, completer)
 
-    override def continueOrElseRoot(name: String, kind: SpanKind, headers: Map[String, String]): Resource[F, Span[F]] =
-      toHeaders.toContext(headers).fold(root(name, kind)) { parent =>
-        Span.child[F](name, parent, kind, sampler, completer)
-      }
-  }
+      override def continueOrElseRoot(
+        name: String,
+        kind: SpanKind,
+        headers: Map[String, String]
+      ): Resource[F, Span[F]] =
+        toHeaders.toContext(headers).fold(root(name, kind)) { parent =>
+          Span.child[F](name, parent, kind, sampler, completer)
+        }
+    }
 
-  def noop[F[_]: Applicative]: EntryPoint[F] = new EntryPoint[F] {
-    override def root(name: String, kind: SpanKind): Resource[F, Span[F]] = Span.noop[F]
-    override def continueOrElseRoot(name: String, kind: SpanKind, headers: Map[String, String]): Resource[F, Span[F]] =
-      Span.noop[F]
-  }
+  def noop[F[_]: Applicative]: EntryPoint[F] =
+    new EntryPoint[F] {
+      override def root(name: String, kind: SpanKind): Resource[F, Span[F]] = Span.noop[F]
+      override def continueOrElseRoot(
+        name: String,
+        kind: SpanKind,
+        headers: Map[String, String]
+      ): Resource[F, Span[F]] =
+        Span.noop[F]
+    }
 }

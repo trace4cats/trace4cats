@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.opentelemetry.jaeger
 
 import cats.effect.{Concurrent, ContextShift, Resource, Timer}
+import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.QueuedSpanCompleter
@@ -20,7 +21,7 @@ object OpenTelemetryJaegerSpanCompleter {
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- OpenTelemetryJaegerSpanExporter[F](host, port, process.serviceName)
+      exporter <- OpenTelemetryJaegerSpanExporter[F, Chunk](host, port, process.serviceName)
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
 }

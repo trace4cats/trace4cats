@@ -1,8 +1,8 @@
 package io.janstenpickle.trace4cats.strackdriver.oauth
 
 /**
-Code adapted from https://github.com/permutive/fs2-google-pubsub
- **/
+  * Code adapted from https://github.com/permutive/fs2-google-pubsub
+  */
 import java.security.interfaces.{RSAPrivateKey, RSAPublicKey}
 import java.time.Instant
 import java.util.Date
@@ -21,10 +21,8 @@ import org.http4s.circe.CirceEntityCodec._
 import scala.concurrent.duration._
 import scala.util.control.NoStackTrace
 
-class GoogleOAuth[F[_]: Logger](key: RSAPrivateKey, httpClient: Client[F])(
-  implicit
-  F: Sync[F]
-) extends OAuth[F]
+class GoogleOAuth[F[_]: Logger](key: RSAPrivateKey, httpClient: Client[F])(implicit F: Sync[F])
+    extends OAuth[F]
     with Http4sClientDsl[F] {
   import GoogleOAuth._
 

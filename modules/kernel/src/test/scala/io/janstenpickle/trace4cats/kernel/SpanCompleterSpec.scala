@@ -10,7 +10,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 
 class SpanCompleterSpec extends AnyFunSuite with ScalaCheckDrivenPropertyChecks with FunSuiteDiscipline {
-  val completedSpan: CompletedSpan = null
+  val completedSpan: CompletedSpan.Builder = null
 
   def spanCompleterArb[F[_]: Applicative]: Arbitrary[SpanCompleter[F]] =
     Arbitrary(Gen.const(SpanCompleter.empty[F]))

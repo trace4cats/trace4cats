@@ -36,15 +36,14 @@ class EnvoyToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks
       traceId <- TraceId.fromHexString("80f198ee56343ba864fe8b2a57d3eff7")
       spanId <- SpanId.fromHexString("e457b5a2e4d86bd1")
       parentSpanId <- SpanId.fromHexString("05e3ac9a4f6e3b90")
-    } yield
-      SpanContext(
-        traceId,
-        spanId,
-        Some(Parent(parentSpanId, isRemote = true)),
-        TraceFlags(sampled = SampleDecision.Include),
-        TraceState.empty,
-        isRemote = true
-      )
+    } yield SpanContext(
+      traceId,
+      spanId,
+      Some(Parent(parentSpanId, isRemote = true)),
+      TraceFlags(sampled = SampleDecision.Include),
+      TraceState.empty,
+      isRemote = true
+    )
 
     assert(Eq.eqv(envoy.toContext(headers), expected))
   }
@@ -55,15 +54,14 @@ class EnvoyToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks
     val expected = for {
       traceId <- TraceId.fromHexString("80f198ee56343ba864fe8b2a57d3eff7")
       spanId <- SpanId.fromHexString("e457b5a2e4d86bd1")
-    } yield
-      SpanContext(
-        traceId,
-        spanId,
-        None,
-        TraceFlags(sampled = SampleDecision.Include),
-        TraceState.empty,
-        isRemote = true
-      )
+    } yield SpanContext(
+      traceId,
+      spanId,
+      None,
+      TraceFlags(sampled = SampleDecision.Include),
+      TraceState.empty,
+      isRemote = true
+    )
 
     assert(Eq.eqv(envoy.toContext(headers), expected))
   }
@@ -78,15 +76,14 @@ class EnvoyToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks
     val expected = for {
       traceId <- TraceId.fromHexString("80f198ee56343ba864fe8b2a57d3eff7")
       spanId <- SpanId.fromHexString("e457b5a2e4d86bd1")
-    } yield
-      SpanContext(
-        traceId,
-        spanId,
-        None,
-        TraceFlags(sampled = SampleDecision.Include),
-        TraceState(Map(TraceState.Key.unsafe("envoy-request-id") -> TraceState.Value.unsafe(reqId))).get,
-        isRemote = true
-      )
+    } yield SpanContext(
+      traceId,
+      spanId,
+      None,
+      TraceFlags(sampled = SampleDecision.Include),
+      TraceState(Map(TraceState.Key.unsafe("envoy-request-id") -> TraceState.Value.unsafe(reqId))).get,
+      isRemote = true
+    )
 
     assert(Eq.eqv(envoy.toContext(headers), expected))
     assert(Eq.eqv(envoy.fromContext(expected.get), headers))

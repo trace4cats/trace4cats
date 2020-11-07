@@ -1,6 +1,5 @@
 package io.janstenpickle.trace4cats.sampling.tail.cache
 
-import cats.data.NonEmptyList
 import cats.effect.{Clock, Sync}
 import cats.syntax.functor._
 import com.github.blemale.scaffeine.Scaffeine
@@ -10,7 +9,10 @@ import io.janstenpickle.trace4cats.sampling.tail.SampleDecisionStore
 import scala.concurrent.duration._
 
 object LocalCacheSampleDecisionStore {
-  def apply[F[_]: Sync: Clock](ttl: FiniteDuration = 5.minutes, maximumSize: Option[Long]): F[SampleDecisionStore[F]] =
+  def apply[F[_]: Sync: Clock](
+    ttl: FiniteDuration = 5.minutes,
+    maximumSize: Option[Long] = None
+  ): F[SampleDecisionStore[F]] =
     Sync[F]
       .delay {
         val builder = Scaffeine().expireAfterAccess(ttl)
@@ -25,8 +27,8 @@ object LocalCacheSampleDecisionStore {
           override def storeDecision(traceId: TraceId, sampleDecision: SampleDecision): F[Unit] =
             Sync[F].delay(cache.put(traceId, sampleDecision))
 
-          override def batch(traceIds: NonEmptyList[TraceId]): F[Map[TraceId, SampleDecision]] =
-            Sync[F].delay(cache.getAllPresent(traceIds.toList))
+          override def batch(traceIds: Set[TraceId]): F[Map[TraceId, SampleDecision]] =
+            Sync[F].delay(cache.getAllPresent(traceIds))
 
           override def storeDecisions(decisions: Map[TraceId, SampleDecision]): F[Unit] =
             Sync[F].delay(cache.putAll(decisions))

@@ -73,7 +73,7 @@ abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace](
       val (httpApp, headersRef) = makeHttpApp(response)
 
       fkId(withRunningHttpServer(httpApp) { port =>
-        RefSpanCompleter[F].flatMap {
+        RefSpanCompleter[F]("test").flatMap {
           completer =>
             withClient {
               client =>
@@ -134,9 +134,14 @@ abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace](
           req
             .as[String]
             .flatMap { key =>
-              headersRef.update(_.updated(key, req.headers.toList.map { header =>
-                header.name.value -> header.value
-              }.toMap))
+              headersRef.update(
+                _.updated(
+                  key,
+                  req.headers.toList.map { header =>
+                    header.name.value -> header.value
+                  }.toMap
+                )
+              )
             }
             .as(resp)
       }

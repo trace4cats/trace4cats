@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.datadog
 
 import cats.effect.{Blocker, IO}
+import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.model.Batch
@@ -26,7 +27,7 @@ class DataDogSpanExporterSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyC
 
   behavior.of("DataDogSpanExporter")
 
-  it should "send spans to datadog agent without error" in forAll { batch: Batch =>
-    assertResult(())(DataDogSpanExporter.blazeClient[IO](blocker).use(_.exportBatch(batch)).unsafeRunSync())
+  it should "send spans to datadog agent without error" in forAll { batch: Batch[Chunk] =>
+    assertResult(())(DataDogSpanExporter.blazeClient[IO, Chunk](blocker).use(_.exportBatch(batch)).unsafeRunSync())
   }
 }

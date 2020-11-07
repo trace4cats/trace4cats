@@ -33,15 +33,14 @@ class B3SingleToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChe
       traceId <- TraceId.fromHexString("80f198ee56343ba864fe8b2a57d3eff7")
       spanId <- SpanId.fromHexString("e457b5a2e4d86bd1")
       parentSpanId <- SpanId.fromHexString("05e3ac9a4f6e3b90")
-    } yield
-      SpanContext(
-        traceId,
-        spanId,
-        Some(Parent(parentSpanId, isRemote = true)),
-        TraceFlags(sampled = SampleDecision.Include),
-        TraceState.empty,
-        isRemote = true
-      )
+    } yield SpanContext(
+      traceId,
+      spanId,
+      Some(Parent(parentSpanId, isRemote = true)),
+      TraceFlags(sampled = SampleDecision.Include),
+      TraceState.empty,
+      isRemote = true
+    )
 
     assert(Eq.eqv(b3Single.toContext(headers), expected))
   }

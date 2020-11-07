@@ -5,6 +5,7 @@ import cats.effect.{Blocker, ExitCode, IO, Resource}
 import cats.implicits._
 import com.monovore.decline._
 import com.monovore.decline.effect._
+import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.QueuedSpanExporter
@@ -54,10 +55,10 @@ object AgentKafka
           .info(s"Starting Trace 4 Cats Kafka Agent on udp://::$port. Forwarding to Kafka topic '$kafkaTopic'")
       )(_ => logger.info("Shutting down Trace 4 Cats Kafka Agent"))
 
-      kafkaExporter <- AvroKafkaSpanExporter[IO](blocker, kafkaBootstrapServers, kafkaTopic)
+      kafkaExporter <- AvroKafkaSpanExporter[IO, Chunk](blocker, kafkaBootstrapServers, kafkaTopic)
 
       queuedExporter <- QueuedSpanExporter(bufferSize, List("Avro Kafka" -> kafkaExporter))
 
-      udpServer <- AvroServer.udp[IO](blocker, _.evalMap(queuedExporter.exportBatch), port)
+      udpServer <- AvroServer.udp[IO](blocker, queuedExporter.pipe, port)
     } yield udpServer).use(_.compile.drain.as(ExitCode.Success))
 }

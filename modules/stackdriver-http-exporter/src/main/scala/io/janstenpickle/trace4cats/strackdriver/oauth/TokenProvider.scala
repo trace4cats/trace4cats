@@ -1,8 +1,8 @@
 package io.janstenpickle.trace4cats.strackdriver.oauth
 
 /**
-Code adapted from https://github.com/permutive/fs2-google-pubsub
- **/
+  * Code adapted from https://github.com/permutive/fs2-google-pubsub
+  */
 import scala.util.control.NoStackTrace
 
 trait TokenProvider[F[_]] {

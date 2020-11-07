@@ -10,9 +10,10 @@ trait ZIOTraceInstances {
   implicit val zioTrace: ZIOTracer = new ZIOTracer
 
   implicit val zioProvide: Provide[Task, ZIOTrace] = new Provide[Task, ZIOTrace] {
-    override def fk(span: Span[Task]): ZIOTrace ~> Task = new (ZIOTrace ~> Task) {
-      override def apply[A](fa: ZIOTrace[A]): Task[A] = fa.provide(span)
-    }
+    override def fk(span: Span[Task]): ZIOTrace ~> Task =
+      new (ZIOTrace ~> Task) {
+        override def apply[A](fa: ZIOTrace[A]): Task[A] = fa.provide(span)
+      }
 
     override val noopFk: ZIOTrace ~> Task = new (ZIOTrace ~> Task) {
       override def apply[A](fa: ZIOTrace[A]): Task[A] = Span.noop[Task].use(fa.provide)

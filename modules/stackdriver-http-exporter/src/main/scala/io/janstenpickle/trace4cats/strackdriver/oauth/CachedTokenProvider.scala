@@ -17,21 +17,24 @@ object CachedTokenProvider {
   ): F[TokenProvider[F]] =
     Ref.of[F, Option[(Long, AccessToken)]](None).map { ref =>
       new TokenProvider[F] {
-        private def refreshToken = underlying.accessToken.flatTap { token =>
-          Clock[F].realTime(TimeUnit.SECONDS).flatMap { now =>
-            ref.set(Some((now + token.expiresIn - expiryOffset.toSeconds, token)))
+        private def refreshToken =
+          underlying.accessToken.flatTap { token =>
+            Clock[F].realTime(TimeUnit.SECONDS).flatMap { now =>
+              ref.set(Some((now + token.expiresIn - expiryOffset.toSeconds, token)))
+            }
           }
-        }
 
-        override def accessToken: F[AccessToken] = ref.get.flatMap {
-          case None => refreshToken
-          case Some((expiresAt, token)) =>
-            for {
-              now <- Clock[F].realTime(TimeUnit.SECONDS)
-              t <- if (now < expiresAt) token.copy(expiresIn = expiresAt - now).pure[F]
-              else refreshToken
-            } yield t
-        }
+        override def accessToken: F[AccessToken] =
+          ref.get.flatMap {
+            case None => refreshToken
+            case Some((expiresAt, token)) =>
+              for {
+                now <- Clock[F].realTime(TimeUnit.SECONDS)
+                t <-
+                  if (now < expiresAt) token.copy(expiresIn = expiresAt - now).pure[F]
+                  else refreshToken
+              } yield t
+          }
       }
     }
 }

@@ -17,10 +17,14 @@ object Trace4CatsTracer {
         Trace4CatsSpan(io.janstenpickle.trace4cats.Span.root(name, SpanKind.Internal, sampler, completer), toHeaders)
 
       override def continue(name: String, kernel: Kernel): Resource[F, Span[F]] =
-        Trace4CatsSpan(toHeaders.toContext(kernel.toHeaders) match {
-          case None => io.janstenpickle.trace4cats.Span.root(name, SpanKind.Server, sampler, completer)
-          case Some(parent) => io.janstenpickle.trace4cats.Span.child(name, parent, SpanKind.Server, sampler, completer)
-        }, toHeaders)
+        Trace4CatsSpan(
+          toHeaders.toContext(kernel.toHeaders) match {
+            case None => io.janstenpickle.trace4cats.Span.root(name, SpanKind.Server, sampler, completer)
+            case Some(parent) =>
+              io.janstenpickle.trace4cats.Span.child(name, parent, SpanKind.Server, sampler, completer)
+          },
+          toHeaders
+        )
 
       override def continueOrElseRoot(name: String, kernel: Kernel): Resource[F, Span[F]] = continue(name, kernel)
     }

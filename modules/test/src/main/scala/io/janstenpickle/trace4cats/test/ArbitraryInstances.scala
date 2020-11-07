@@ -2,15 +2,8 @@ package io.janstenpickle.trace4cats.test
 
 import java.time.Instant
 
-import io.janstenpickle.trace4cats.model.{
-  Batch,
-  CompletedSpan,
-  SampleDecision,
-  SpanId,
-  TraceId,
-  TraceProcess,
-  TraceState
-}
+import fs2.Chunk
+import io.janstenpickle.trace4cats.model._
 import org.scalacheck.{Arbitrary, Gen, ScalacheckShapeless}
 
 trait ArbitraryInstances extends ScalacheckShapeless {
@@ -48,11 +41,10 @@ trait ArbitraryInstances extends ScalacheckShapeless {
       }
   )
 
-  implicit val batchArb: Arbitrary[Batch] = Arbitrary(for {
+  implicit val batchArb: Arbitrary[Batch[Chunk]] = Arbitrary(for {
     size <- Gen.choose(1, 3)
-    process <- Arbitrary.arbitrary[TraceProcess]
     spans <- Gen.listOfN(size, Arbitrary.arbitrary[CompletedSpan])
-  } yield Batch(process, spans))
+  } yield Batch(Chunk.seq(spans)))
 }
 
 object ArbitraryInstances extends ArbitraryInstances

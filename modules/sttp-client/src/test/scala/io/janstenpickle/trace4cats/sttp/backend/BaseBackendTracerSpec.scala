@@ -68,7 +68,7 @@ abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift, G[_]:
       val (httpApp, headersRef) = makeHttpApp(response)
 
       fkId(withRunningHttpServer(httpApp) { port =>
-        RefSpanCompleter[F].flatMap {
+        RefSpanCompleter[F]("test").flatMap {
           completer =>
             withBackend {
               backend =>
@@ -130,9 +130,14 @@ abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift, G[_]:
           req
             .as[String]
             .flatMap { key =>
-              headersRef.update(_.updated(key, req.headers.toList.map { header =>
-                header.name.value -> header.value
-              }.toMap))
+              headersRef.update(
+                _.updated(
+                  key,
+                  req.headers.toList.map { header =>
+                    header.name.value -> header.value
+                  }.toMap
+                )
+              )
             }
             .as(resp)
       }
