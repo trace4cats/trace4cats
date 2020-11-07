@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.newrelic
 
 import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
+import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.QueuedSpanCompleter
@@ -35,7 +36,7 @@ object NewRelicSpanCompleter {
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- Resource.liftF(NewRelicSpanExporter[F](client, apiKey, endpoint))
+      exporter <- Resource.liftF(NewRelicSpanExporter[F, Chunk](client, apiKey, endpoint))
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
 }

@@ -25,15 +25,14 @@ private[trace4cats] class EnvoyToHeaders extends ToHeaders {
           spanId <- SpanId.fromHexString(spanIdHex)
           parentSpanId <- SpanId.fromHexString(parentSpanIdHex)
           parent = if (Eq.eqv(parentSpanId, SpanId.invalid)) None else Some(Parent(parentSpanId, isRemote = true))
-        } yield
-          SpanContext(
-            traceId,
-            spanId,
-            parent,
-            TraceFlags(sampled = SampleDecision.Include),
-            traceState,
-            isRemote = true
-          )
+        } yield SpanContext(
+          traceId,
+          spanId,
+          parent,
+          TraceFlags(sampled = SampleDecision.Include),
+          traceState,
+          isRemote = true
+        )
       case _ => None
     }
   }

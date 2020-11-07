@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.jaeger
 
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Timer}
+import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.jaegertracing.thrift.internal.senders.UdpSender
@@ -25,7 +26,7 @@ object JaegerSpanCompleter {
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- JaegerSpanExporter[F](blocker, host, port)
+      exporter <- JaegerSpanExporter[F, Chunk](blocker, Some(process.serviceName), host, port)
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
 }

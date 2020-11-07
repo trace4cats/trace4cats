@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 import cats.syntax.show._
 import io.circe.generic.semiauto._
 import io.circe.{Encoder, JsonObject}
-import io.janstenpickle.trace4cats.model.{AttributeValue, CompletedSpan, SpanKind, TraceProcess}
+import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind}
 import io.janstenpickle.trace4cats.stackdriver.common.StackdriverConstants._
 import io.janstenpickle.trace4cats.stackdriver.common.TruncatableString
 
@@ -29,17 +29,18 @@ case class Span(
 
 object Span {
 
-  def toDisplayName(spanName: String, spanKind: SpanKind) = spanKind match {
-    case SpanKind.Server if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
-    case SpanKind.Client if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
-    case SpanKind.Consumer if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
-    case SpanKind.Producer if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
-    case _ => spanName
-  }
+  def toDisplayName(spanName: String, spanKind: SpanKind) =
+    spanKind match {
+      case SpanKind.Server if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
+      case SpanKind.Client if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
+      case SpanKind.Consumer if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
+      case SpanKind.Producer if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
+      case _ => spanName
+    }
 
   def toInstant(time: Long) = Instant.ofEpochMilli(TimeUnit.MICROSECONDS.toMillis(time))
 
-  def fromCompleted(projectId: String, process: TraceProcess, completed: CompletedSpan): Span =
+  def fromCompleted(projectId: String, completed: CompletedSpan): Span =
     Span(
       name = s"projects/$projectId/traces/${completed.context.traceId.show}/spans/${completed.context.spanId.show}",
       spanId = completed.context.spanId.show,
@@ -47,10 +48,7 @@ object Span {
       displayName = TruncatableString(toDisplayName(completed.name, completed.kind)),
       startTime = completed.start,
       endTime = completed.end,
-      attributes = Attributes.fromCompleted(
-        completed.attributes ++ process.attributes + (ServiceNameAttributeKey -> AttributeValue
-          .StringValue(process.serviceName))
-      ),
+      attributes = Attributes.fromCompleted(completed.allAttributes),
       status = Status(completed.status.canonicalCode),
       sameProcessAsParentSpan = completed.context.parent.map(!_.isRemote),
       spanKind = completed.kind

@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 import cats.data.NonEmptyList
 import cats.effect.{Blocker, IO, Resource}
 import cats.implicits._
+import fs2.Chunk
 import io.circe.generic.auto._
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanExporter}
 import io.janstenpickle.trace4cats.model._
@@ -33,21 +34,25 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
 
   behavior.of("JaegerSpanExport")
 
+  val dummyProcess = Map("p1" -> JaegerProcess("", List.empty))
+
   def batchToJaegerResponse(
-    batch: Batch,
+    batch: Batch[Chunk],
+    process: TraceProcess,
     kindToAttributes: SpanKind => Map[String, AttributeValue],
     statusToAttributes: SpanStatus => Map[String, AttributeValue],
     additionalAttributes: Map[String, AttributeValue] = Map.empty
   ): List[JaegerTraceResponse] = {
-    def convertAttributes(attributes: Map[String, AttributeValue]): List[JaegerTag] = attributes.toList.map {
-      case (k, AttributeValue.StringValue(value)) => JaegerTag.StringTag(k, value)
-      case (k, AttributeValue.BooleanValue(value)) => JaegerTag.BoolTag(k, value)
-      case (k, AttributeValue.DoubleValue(value)) => JaegerTag.FloatTag(k, value)
-      case (k, AttributeValue.LongValue(value)) => JaegerTag.LongTag(k, value)
-      case (k, v: AttributeValue.AttributeList) => JaegerTag.StringTag(k, v.show)
-    }
+    def convertAttributes(attributes: Map[String, AttributeValue]): List[JaegerTag] =
+      attributes.toList.map {
+        case (k, AttributeValue.StringValue(value)) => JaegerTag.StringTag(k, value)
+        case (k, AttributeValue.BooleanValue(value)) => JaegerTag.BoolTag(k, value)
+        case (k, AttributeValue.DoubleValue(value)) => JaegerTag.FloatTag(k, value)
+        case (k, AttributeValue.LongValue(value)) => JaegerTag.LongTag(k, value)
+        case (k, v: AttributeValue.AttributeList) => JaegerTag.StringTag(k, v.show)
+      }
 
-    batch.spans
+    batch.spans.toList
       .groupBy(_.context.traceId)
       .toList
       .map {
@@ -67,7 +72,9 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
                         duration = TimeUnit.MILLISECONDS.toMicros(span.end.toEpochMilli) - TimeUnit.MILLISECONDS
                           .toMicros(span.start.toEpochMilli),
                         tags = (JaegerTag.StringTag("internal.span.format", "proto") :: convertAttributes(
-                          span.attributes ++ kindToAttributes(span.kind) ++ statusToAttributes(span.status) ++ additionalAttributes
+                          span.allAttributes ++ kindToAttributes(span.kind) ++ statusToAttributes(
+                            span.status
+                          ) ++ additionalAttributes
                         )).sortBy(_.key),
                         references = span.context.parent.toList.map { parent =>
                           JaegerReference("CHILD_OF", traceId.show, parent.spanId.show)
@@ -75,12 +82,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
                       )
                     }
                     .sortBy(_.operationName),
-                  processes = Map(
-                    "p1" -> JaegerProcess(
-                      batch.process.serviceName,
-                      convertAttributes(batch.process.attributes).sortBy(_.key)
-                    )
-                  )
+                  processes = Map("p1" -> JaegerProcess(process.serviceName, List.empty))
                 )
               )
           )
@@ -88,10 +90,14 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
       .sortBy(_.data.head.traceID)
   }
 
+  private def updateProcess(resp: JaegerTraceResponse) =
+    JaegerTraceResponse(resp.data.map(_.copy(processes = dummyProcess)))
+
   def testExporter(
-    exporter: Resource[IO, SpanExporter[IO]],
-    batch: Batch,
-    expectedResponse: List[JaegerTraceResponse]
+    exporter: Resource[IO, SpanExporter[IO, Chunk]],
+    batch: Batch[Chunk],
+    expectedResponse: List[JaegerTraceResponse],
+    checkProcess: Boolean = true
   ): Assertion = {
     val res =
       BlazeClientBuilder[IO](blocker.blockingContext).resource
@@ -99,6 +105,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
           exporter.use(_.exportBatch(batch)) >> timer
             .sleep(1.second) >> batch.spans
             .map(_.context.traceId)
+            .toList
             .distinct
             .traverse { traceId =>
               client.expect[JaegerTraceResponse](s"http://localhost:16686/api/traces/${traceId.show}")
@@ -108,16 +115,18 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
         .unsafeRunSync()
         .sortBy(_.data.head.traceID)
 
-    assert(res === expectedResponse)
+    if (checkProcess) assert(res === expectedResponse)
+    else assert(res.map(updateProcess) === expectedResponse.map(updateProcess))
   }
 
   def testCompleter(
     completer: Resource[IO, SpanCompleter[IO]],
-    span: CompletedSpan,
+    span: CompletedSpan.Builder,
     process: TraceProcess,
-    expectedResponse: List[JaegerTraceResponse]
+    expectedResponse: List[JaegerTraceResponse],
+    checkProcess: Boolean = true
   ) = {
-    val batch = Batch(process, List(span))
+    val batch = Batch(List(span.build(process)))
 
     val res =
       BlazeClientBuilder[IO](blocker.blockingContext).resource
@@ -134,6 +143,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
         .unsafeRunSync()
         .sortBy(_.data.head.traceID)
 
-    assert(res === expectedResponse)
+    if (checkProcess) assert(res === expectedResponse)
+    else assert(res.map(updateProcess) === expectedResponse.map(updateProcess))
   }
 }

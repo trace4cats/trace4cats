@@ -19,11 +19,12 @@ object SttpSpanNamer {
     *
     * Note that regex matching should generally be preferred over try-catching conversion failures.
     */
-  def methodWithPartiallyTransformedPath(transform: PartialFunction[String, String]): SttpSpanNamer = req => {
-    val method = req.method.method
-    val path = req.uri.path
-      .map(s => transform.applyOrElse(s, identity[String]))
-      .mkString("/")
-    if (path.isEmpty) method else s"$method $path"
-  }
+  def methodWithPartiallyTransformedPath(transform: PartialFunction[String, String]): SttpSpanNamer =
+    req => {
+      val method = req.method.method
+      val path = req.uri.path
+        .map(s => transform.applyOrElse(s, identity[String]))
+        .mkString("/")
+      if (path.isEmpty) method else s"$method $path"
+    }
 }

@@ -18,25 +18,35 @@ object Fs2EntryPoint {
     sampler: SpanSampler[F],
     completer: SpanCompleter[F],
     toHeaders: ToHeaders = ToHeaders.all
-  ): Fs2EntryPoint[F] = new Fs2EntryPoint[F] {
-    override def root(name: String, kind: SpanKind): Resource[F, Span[F]] =
-      Span.root[F](name, kind, sampler, completer)
+  ): Fs2EntryPoint[F] =
+    new Fs2EntryPoint[F] {
+      override def root(name: String, kind: SpanKind): Resource[F, Span[F]] =
+        Span.root[F](name, kind, sampler, completer)
 
-    override def continueOrElseRoot(name: String, kind: SpanKind, headers: Map[String, String]): Resource[F, Span[F]] =
-      toHeaders.toContext(headers).fold(root(name, kind)) { parent =>
-        Span.child[F](name, parent, kind, sampler, completer)
-      }
+      override def continueOrElseRoot(
+        name: String,
+        kind: SpanKind,
+        headers: Map[String, String]
+      ): Resource[F, Span[F]] =
+        toHeaders.toContext(headers).fold(root(name, kind)) { parent =>
+          Span.child[F](name, parent, kind, sampler, completer)
+        }
 
-    override def continue(name: String, kind: SpanKind, context: SpanContext): Resource[F, Span[F]] =
-      Span.child[F](name, context, kind, sampler, completer)
-  }
+      override def continue(name: String, kind: SpanKind, context: SpanContext): Resource[F, Span[F]] =
+        Span.child[F](name, context, kind, sampler, completer)
+    }
 
-  def noop[F[_]: Applicative]: EntryPoint[F] = new Fs2EntryPoint[F] {
-    override def root(name: String, kind: SpanKind): Resource[F, Span[F]] = Span.noop[F]
-    override def continueOrElseRoot(name: String, kind: SpanKind, headers: Map[String, String]): Resource[F, Span[F]] =
-      Span.noop[F]
-    override def continue(name: String, kind: SpanKind, context: SpanContext): Resource[F, Span[F]] = Span.noop[F]
-  }
+  def noop[F[_]: Applicative]: EntryPoint[F] =
+    new Fs2EntryPoint[F] {
+      override def root(name: String, kind: SpanKind): Resource[F, Span[F]] = Span.noop[F]
+      override def continueOrElseRoot(
+        name: String,
+        kind: SpanKind,
+        headers: Map[String, String]
+      ): Resource[F, Span[F]] =
+        Span.noop[F]
+      override def continue(name: String, kind: SpanKind, context: SpanContext): Resource[F, Span[F]] = Span.noop[F]
+    }
 
   private def mapK[F[_], G[_]: Defer: Applicative](fk: F ~> G)(ep: Fs2EntryPoint[F]): Fs2EntryPoint[G] =
     new Fs2EntryPoint[G] {

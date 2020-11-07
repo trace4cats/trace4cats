@@ -9,9 +9,10 @@ object Http4sHeaders {
     headers: Headers,
     `type`: String,
     dropWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
-  ): List[(String, AttributeValue)] = headers.toList.collect {
-    case h if !dropWhen(h.name) => s"${`type`}.header.${h.name.value}" -> AttributeValue.stringToTraceValue(h.value)
-  }
+  ): List[(String, AttributeValue)] =
+    headers.toList.collect {
+      case h if !dropWhen(h.name) => s"${`type`}.header.${h.name.value}" -> AttributeValue.stringToTraceValue(h.value)
+    }
 
   def requestFields[F[_]](
     req: Request[F],
@@ -27,11 +28,10 @@ object Http4sHeaders {
     resp: Response[F],
     dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
   ): List[(String, AttributeValue)] =
-    List[(String, AttributeValue)]("http.status_code" -> resp.status.code, "http.status_message" -> resp.status.reason) ++ headerMap(
-      resp.headers,
-      "resp",
-      dropHeadersWhen
-    )
+    List[(String, AttributeValue)](
+      "http.status_code" -> resp.status.code,
+      "http.status_message" -> resp.status.reason
+    ) ++ headerMap(resp.headers, "resp", dropHeadersWhen)
 
   def reqHeaders[F[_]](req: Request[F]): Map[String, String] =
     req.headers.toList.map { h =>

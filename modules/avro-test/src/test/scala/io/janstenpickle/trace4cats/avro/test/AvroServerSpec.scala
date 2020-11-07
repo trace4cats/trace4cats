@@ -1,14 +1,14 @@
 package io.janstenpickle.trace4cats.avro.test
 
 import cats.data.NonEmptyList
-import cats.effect.concurrent.Ref
 import cats.effect.{Blocker, IO, Resource}
-import cats.syntax.all._
 import cats.kernel.Eq
+import cats.syntax.all._
+import fs2.concurrent.Queue
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import io.janstenpickle.trace4cats.avro.server.AvroServer
 import io.janstenpickle.trace4cats.avro.{AvroSpanCompleter, AvroSpanExporter}
+import io.janstenpickle.trace4cats.avro.server.AvroServer
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceProcess}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalacheck.Shrink
@@ -34,72 +34,93 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
   behavior.of("Avro TCP")
 
   it should "send batches" in {
-    forAll { batch: Batch =>
-      val ref = Ref.unsafe[IO, Option[Batch]](None)
-
-      (for {
-        server <- AvroServer.tcp[IO](blocker, _.evalMap { b =>
-          ref.set(Some(b))
-        })
-        _ <- server.compile.drain.background
-        _ <- Resource.liftF(timer.sleep(2.seconds))
-        completer <- AvroSpanExporter.tcp[IO](blocker)
-      } yield completer).use(_.exportBatch(batch) >> timer.sleep(3.seconds)).unsafeRunSync()
-
-      assert(Eq[Option[Batch]].eqv(ref.get.unsafeRunSync(), Some(batch)))
+    forAll { batch: Batch[List] =>
+      Queue
+        .unbounded[IO, CompletedSpan]
+        .flatMap { queue =>
+          (for {
+            server <- AvroServer.tcp[IO](blocker, queue.enqueue)
+            _ <- server.compile.drain.background
+            _ <- Resource.liftF(timer.sleep(2.seconds))
+            completer <- AvroSpanExporter.tcp[IO, List](blocker)
+          } yield completer).use(_.exportBatch(batch) >> timer.sleep(3.seconds)) >> queue.dequeue
+            .take(batch.spans.size.toLong)
+            .compile
+            .toList
+            .map { spans =>
+              Eq.eqv(spans, batch.spans)
+            }
+        }
+        .unsafeRunSync()
     }
   }
 
   it should "send individual spans in batches" in {
-    forAll { (process: TraceProcess, spans: NonEmptyList[CompletedSpan]) =>
-      val ref = Ref.unsafe[IO, Option[Batch]](None)
+    forAll { (process: TraceProcess, spans: NonEmptyList[CompletedSpan.Builder]) =>
+      Queue
+        .unbounded[IO, CompletedSpan]
+        .flatMap { queue =>
+          (for {
+            server <- AvroServer.tcp[IO](blocker, queue.enqueue, port = 7778)
+            _ <- server.compile.drain.background
+            _ <- Resource.liftF(timer.sleep(2.seconds))
+            completer <- AvroSpanCompleter.tcp[IO](blocker, process, port = 7778, batchTimeout = 1.second)
+          } yield completer).use(c => spans.traverse(c.complete) >> timer.sleep(3.seconds)) >> queue.dequeue
+            .take(spans.size.toLong)
+            .compile
+            .toList
+            .map { s =>
+              assert(Eq.eqv(s, spans.toList.map(_.build(process))))
+            }
+        }
+        .unsafeRunSync()
 
-      (for {
-        server <- AvroServer.tcp[IO](blocker, _.evalMap { b =>
-          ref.set(Some(b))
-        }, port = 7778)
-        _ <- server.compile.drain.background
-        _ <- Resource.liftF(timer.sleep(2.seconds))
-        completer <- AvroSpanCompleter.tcp[IO](blocker, process, port = 7778, batchTimeout = 1.second)
-      } yield completer).use(c => spans.traverse(c.complete) >> timer.sleep(3.seconds)).unsafeRunSync()
-
-      assert(Eq[Option[Batch]].eqv(ref.get.unsafeRunSync(), Some(Batch(process, spans.toList))))
     }
   }
 
   behavior.of("Avro UDP")
 
   it should "send batches" in {
-    forAll { batch: Batch =>
-      val ref = Ref.unsafe[IO, Option[Batch]](None)
-
-      (for {
-        server <- AvroServer.udp[IO](blocker, _.evalMap { b =>
-          ref.set(Some(b))
-        }, port = 7779)
-        _ <- server.compile.drain.background
-        _ <- Resource.liftF(timer.sleep(2.seconds))
-        completer <- AvroSpanExporter.udp[IO](blocker, port = 7779)
-      } yield completer).use(_.exportBatch(batch) >> timer.sleep(3.seconds)).unsafeRunSync()
-
-      assert(Eq[Option[Batch]].eqv(ref.get.unsafeRunSync(), Some(batch)))
+    forAll { batch: Batch[List] =>
+      Queue
+        .unbounded[IO, CompletedSpan]
+        .flatMap { queue =>
+          (for {
+            server <- AvroServer.udp[IO](blocker, queue.enqueue, port = 7779)
+            _ <- server.compile.drain.background
+            _ <- Resource.liftF(timer.sleep(2.seconds))
+            completer <- AvroSpanExporter.udp[IO, List](blocker, port = 7779)
+          } yield completer).use(_.exportBatch(batch) >> timer.sleep(3.seconds)) >> queue.dequeue
+            .take(batch.spans.size.toLong)
+            .compile
+            .toList
+            .map { spans =>
+              Eq.eqv(spans, batch.spans)
+            }
+        }
+        .unsafeRunSync()
     }
   }
 
   it should "send individual spans in batches" in {
-    forAll { (process: TraceProcess, spans: NonEmptyList[CompletedSpan]) =>
-      val ref = Ref.unsafe[IO, Option[Batch]](None)
-
-      (for {
-        server <- AvroServer.udp[IO](blocker, _.evalMap { b =>
-          ref.set(Some(b))
-        }, port = 7780)
-        _ <- server.compile.drain.background
-        _ <- Resource.liftF(timer.sleep(2.seconds))
-        completer <- AvroSpanCompleter.udp[IO](blocker, process, port = 7780, batchTimeout = 1.second)
-      } yield completer).use(c => spans.traverse(c.complete) >> timer.sleep(3.seconds)).unsafeRunSync()
-
-      assert(Eq[Option[Batch]].eqv(ref.get.unsafeRunSync(), Some(Batch(process, spans.toList))))
+    forAll { (process: TraceProcess, spans: NonEmptyList[CompletedSpan.Builder]) =>
+      Queue
+        .unbounded[IO, CompletedSpan]
+        .flatMap { queue =>
+          (for {
+            server <- AvroServer.udp[IO](blocker, queue.enqueue, port = 7780)
+            _ <- server.compile.drain.background
+            _ <- Resource.liftF(timer.sleep(2.seconds))
+            completer <- AvroSpanCompleter.udp[IO](blocker, process, port = 7780, batchTimeout = 1.second)
+          } yield completer).use(c => spans.traverse(c.complete) >> timer.sleep(3.seconds)) >> queue.dequeue
+            .take(spans.size.toLong)
+            .compile
+            .toList
+            .map { s =>
+              assert(Eq.eqv(s, spans.toList.map(_.build(process))))
+            }
+        }
+        .unsafeRunSync()
     }
   }
 }

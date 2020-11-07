@@ -28,12 +28,13 @@ class DataDogSpanCompleterSpec extends AnyFlatSpec with ScalaCheckDrivenProperty
 
   behavior.of("DataDogSpanCompleter")
 
-  it should "send a span to datadog agent without error" in forAll { (process: TraceProcess, span: CompletedSpan) =>
-    assertResult(())(
-      DataDogSpanCompleter
-        .blazeClient[IO](blocker, process, batchTimeout = 100.millis)
-        .use(_.complete(span))
-        .unsafeRunSync()
-    )
+  it should "send a span to datadog agent without error" in forAll {
+    (process: TraceProcess, span: CompletedSpan.Builder) =>
+      assertResult(())(
+        DataDogSpanCompleter
+          .blazeClient[IO](blocker, process, batchTimeout = 100.millis)
+          .use(_.complete(span))
+          .unsafeRunSync()
+      )
   }
 }

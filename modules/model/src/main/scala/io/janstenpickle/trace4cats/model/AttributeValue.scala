@@ -6,13 +6,18 @@
 package io.janstenpickle.trace4cats.model
 
 import cats.data.NonEmptyList
-import cats.{Eq, Show}
+import cats.{Eq, Order, Show}
 import cats.syntax.foldable._
 import cats.syntax.show._
 
 sealed trait AttributeValue extends Product with Serializable {
   def value: Any
   override def toString: String = value.toString
+  override def equals(obj: Any): Boolean =
+    obj match {
+      case other: AttributeValue => Eq.eqv(other, this)
+      case _ => false
+    }
 }
 
 object AttributeValue {
@@ -67,4 +72,18 @@ object AttributeValue {
     case (LongList(x), LongList(y)) => Eq[NonEmptyList[Long]].eqv(x, y)
     case (_, _) => false
   }
+
+  implicit val order: Order[AttributeValue] = Order.from {
+    case (StringValue(x), StringValue(y)) => Order.compare(x, y)
+    case (BooleanValue(x), BooleanValue(y)) => Order.compare(x, y)
+    case (DoubleValue(x), DoubleValue(y)) => Order.compare(x, y)
+    case (LongValue(x), LongValue(y)) => Order.compare(x, y)
+    case (StringList(x), StringList(y)) => Order.compare(x, y)
+    case (BooleanList(x), BooleanList(y)) => Order.compare(x, y)
+    case (DoubleList(x), DoubleList(y)) => Order.compare(x, y)
+    case (LongList(x), LongList(y)) => Order.compare(x, y)
+    case (x, y) => Order.compare(x.show, y.show)
+  }
+
+  implicit val ordering: Ordering[AttributeValue] = order.toOrdering
 }

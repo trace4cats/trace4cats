@@ -2,6 +2,7 @@ package io.janstenpickle.trace4cats.stackdriver
 
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Timer}
 import com.google.auth.Credentials
+import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.QueuedSpanCompleter
@@ -23,7 +24,7 @@ object StackdriverGrpcSpanCompleter {
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- StackdriverGrpcSpanExporter[F](blocker, projectId, credentials, requestTimeout)
+      exporter <- StackdriverGrpcSpanExporter[F, Chunk](blocker, projectId, credentials, requestTimeout)
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
 }

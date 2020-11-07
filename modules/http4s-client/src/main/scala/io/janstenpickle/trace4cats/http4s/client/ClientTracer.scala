@@ -20,9 +20,13 @@ object ClientTracer {
       Resource
         .liftF(ask.ask[Span[F]])
         .flatMap(
-          _.child(spanNamer(request.covary), SpanKind.Client, {
-            case UnexpectedStatus(status) => Http4sStatusMapping.toSpanStatus(status)
-          }).flatMap { span =>
+          _.child(
+            spanNamer(request.covary),
+            SpanKind.Client,
+            {
+              case UnexpectedStatus(status) => Http4sStatusMapping.toSpanStatus(status)
+            }
+          ).flatMap { span =>
               val headers = toHeaders.fromContext(span.context)
               val req = request.putHeaders(Http4sHeaders.traceHeadersToHttp(headers): _*)
 
