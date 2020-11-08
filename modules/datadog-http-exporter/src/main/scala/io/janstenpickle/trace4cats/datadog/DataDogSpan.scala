@@ -3,6 +3,8 @@ package io.janstenpickle.trace4cats.datadog
 import java.math.BigInteger
 import java.util.concurrent.TimeUnit
 
+import cats.Foldable
+import cats.syntax.foldable._
 import cats.syntax.show._
 import io.circe.Encoder
 import io.circe.generic.extras.Configuration
@@ -26,8 +28,8 @@ case class DataDogSpan(
 )
 
 object DataDogSpan {
-  def fromBatch(batch: Batch): List[List[DataDogSpan]] =
-    batch.spans
+  def fromBatch[F[_]: Foldable](batch: Batch[F]): List[List[DataDogSpan]] =
+    batch.spans.toList
       .groupBy(_.context.traceId)
       .values
       .toList
@@ -39,7 +41,7 @@ object DataDogSpan {
           new BigInteger(1, parent.spanId.value)
         }
 
-        val allAttributes = span.attributes ++ batch.process.attributes ++ SemanticTags
+        val allAttributes = span.allAttributes ++ SemanticTags
           .kindTags(span.kind) ++ SemanticTags.statusTags("")(span.status)
 
         val startNanos = TimeUnit.MILLISECONDS.toNanos(span.start.toEpochMilli)
@@ -49,8 +51,8 @@ object DataDogSpan {
           spanId,
           parentId,
           span.name,
-          batch.process.serviceName,
-          allAttributes.get("resource.name").fold(batch.process.serviceName)(_.toString),
+          span.serviceName,
+          allAttributes.get("resource.name").fold(span.serviceName)(_.toString),
           allAttributes.collect {
             case (k, AttributeValue.StringValue(value)) => k -> value
             case (k, AttributeValue.BooleanValue(value)) if k != "error" => k -> value.toString

@@ -13,7 +13,8 @@ trait LiftTrace[F[_], G[_]] {
 object LiftTrace {
   def apply[F[_], G[_]](implicit raise: LiftTrace[F, G]): LiftTrace[F, G] = raise
 
-  implicit def kleisliRaise[F[_]]: LiftTrace[F, Kleisli[F, Span[F], *]] = new LiftTrace[F, Kleisli[F, Span[F], *]] {
-    override val fk: F ~> Kleisli[F, Span[F], *] = Kleisli.liftK
-  }
+  implicit def kleisliRaise[F[_]]: LiftTrace[F, Kleisli[F, Span[F], *]] =
+    new LiftTrace[F, Kleisli[F, Span[F], *]] {
+      override val fk: F ~> Kleisli[F, Span[F], *] = Kleisli.liftK
+    }
 }

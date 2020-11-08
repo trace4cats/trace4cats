@@ -2,15 +2,17 @@ package io.janstenpickle.trace4cats.stackdriver
 
 import java.time.Instant
 
+import cats.Foldable
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
 import cats.syntax.functor._
 import cats.syntax.show._
+import cats.syntax.foldable._
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.auth.Credentials
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.trace.v2.{TraceServiceClient, TraceServiceSettings}
 import com.google.devtools.cloudtrace.v2.Span.Attributes
-import com.google.devtools.cloudtrace.v2.{TruncatableString => GTruncatableString, AttributeValue => GAttributeValue, _}
+import com.google.devtools.cloudtrace.v2.{AttributeValue => GAttributeValue, TruncatableString => GTruncatableString, _}
 import com.google.protobuf.{BoolValue, Timestamp}
 import com.google.rpc.Status
 import io.janstenpickle.trace4cats.kernel.SpanExporter
@@ -22,12 +24,12 @@ import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
 object StackdriverGrpcSpanExporter {
-  def apply[F[_]: Concurrent: ContextShift: Timer](
+  def apply[F[_]: Concurrent: ContextShift: Timer, G[_]: Foldable](
     blocker: Blocker,
     projectId: String,
     credentials: Option[Credentials] = None,
     requestTimeout: FiniteDuration = 5.seconds
-  ): Resource[F, SpanExporter[F]] = {
+  ): Resource[F, SpanExporter[F, G]] = {
     val projectName = ProjectName.of(projectId)
 
     val traceClient: F[TraceServiceClient] = Sync[F].delay {
@@ -54,30 +56,30 @@ object StackdriverGrpcSpanExporter {
     def toTimestampProto(timestamp: Instant): Timestamp =
       Timestamp.newBuilder.setSeconds(timestamp.getEpochSecond).setNanos(timestamp.getNano).build
 
-    def toDisplayName(spanName: String, spanKind: SpanKind) = spanKind match {
-      case SpanKind.Server if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
-      case SpanKind.Client if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
-      case SpanKind.Consumer if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
-      case SpanKind.Producer if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
-      case _ => spanName
-    }
+    def toDisplayName(spanName: String, spanKind: SpanKind) =
+      spanKind match {
+        case SpanKind.Server if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
+        case SpanKind.Client if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
+        case SpanKind.Consumer if !spanName.startsWith(ServerPrefix) => ServerPrefix + spanName
+        case SpanKind.Producer if !spanName.startsWith(ClientPrefix) => ClientPrefix + spanName
+        case _ => spanName
+      }
 
-    def toAttributesProto(process: TraceProcess, attributes: Map[String, AttributeValue]): Attributes =
-      (process.attributes.updated(ServiceNameAttributeKey, AttributeValue.StringValue(process.serviceName)) ++ attributes).toList
-        .foldLeft(Attributes.newBuilder()) {
-          case (acc, (k, v)) =>
-            acc.putAttributeMap(
-              k,
-              (v match {
-                case AttributeValue.StringValue(value) =>
-                  GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(value))
-                case AttributeValue.BooleanValue(value) => GAttributeValue.newBuilder().setBoolValue(value)
-                case AttributeValue.DoubleValue(value) => GAttributeValue.newBuilder().setIntValue(value.toLong)
-                case AttributeValue.LongValue(value) => GAttributeValue.newBuilder().setIntValue(value)
-                case vs: AttributeValue.AttributeList =>
-                  GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(vs.show))
-              }).build()
-            )
+    def toAttributesProto(attributes: Map[String, AttributeValue]): Attributes =
+      attributes.toList
+        .foldLeft(Attributes.newBuilder()) { case (acc, (k, v)) =>
+          acc.putAttributeMap(
+            k,
+            (v match {
+              case AttributeValue.StringValue(value) =>
+                GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(value))
+              case AttributeValue.BooleanValue(value) => GAttributeValue.newBuilder().setBoolValue(value)
+              case AttributeValue.DoubleValue(value) => GAttributeValue.newBuilder().setIntValue(value.toLong)
+              case AttributeValue.LongValue(value) => GAttributeValue.newBuilder().setIntValue(value)
+              case vs: AttributeValue.AttributeList =>
+                GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(vs.show))
+            }).build()
+          )
 
         }
         .build()
@@ -88,7 +90,7 @@ object StackdriverGrpcSpanExporter {
         .setCode(status.canonicalCode)
         .build()
 
-    def convert(process: TraceProcess, completedSpan: CompletedSpan): Span = {
+    def convert(completedSpan: CompletedSpan): Span = {
       val spanIdHex = completedSpan.context.spanId.show
 
       val spanName =
@@ -102,7 +104,7 @@ object StackdriverGrpcSpanExporter {
           .setDisplayName(toTruncatableStringProto(toDisplayName(completedSpan.name, completedSpan.kind)))
           .setStartTime(toTimestampProto(completedSpan.start))
           .setEndTime(toTimestampProto(completedSpan.end))
-          .setAttributes(toAttributesProto(process, completedSpan.attributes))
+          .setAttributes(toAttributesProto(completedSpan.allAttributes))
           .setStatus(toStatusProto(completedSpan.status))
 
       val builder = completedSpan.context.parent.fold(spanBuilder) { parent =>
@@ -112,12 +114,21 @@ object StackdriverGrpcSpanExporter {
       builder.build()
     }
 
-    def write(client: TraceServiceClient, process: TraceProcess, spans: List[CompletedSpan]) =
-      blocker.delay(client.batchWriteSpans(projectName, spans.map(convert(process, _)).asJava))
+    def write(client: TraceServiceClient, spans: G[CompletedSpan]) =
+      blocker.delay(
+        client.batchWriteSpans(
+          projectName,
+          spans
+            .foldLeft(scala.collection.mutable.ListBuffer.empty[Span]) { (buf, span) =>
+              buf += convert(span)
+            }
+            .asJava
+        )
+      )
 
     Resource.make(traceClient)(client => Sync[F].delay(client.shutdown())).map { client =>
-      new SpanExporter[F] {
-        override def exportBatch(batch: Batch): F[Unit] = write(client, batch.process, batch.spans).void
+      new SpanExporter[F, G] {
+        override def exportBatch(batch: Batch[G]): F[Unit] = write(client, batch.spans).void
       }
     }
   }

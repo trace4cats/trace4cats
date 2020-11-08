@@ -22,8 +22,8 @@ object AvroInstances {
 
   implicit val traceStateCodec: Codec[TraceState] = Codec
     .map[TraceState.Value]
-    .imap(_.flatMap { case (k, v) => TraceState.Key(k).map(_ -> v) })(_.map {
-      case (k, v) => k.k -> v
+    .imap(_.flatMap { case (k, v) => TraceState.Key(k).map(_ -> v) })(_.map { case (k, v) =>
+      k.k -> v
     })
     .imapError[TraceState](TraceState(_).toRight(AvroError("Invalid trace state size")))(_.values)
 
@@ -46,11 +46,6 @@ object AvroInstances {
 
   implicit val processCodec: Codec[TraceProcess] = Codec.derive
 
-  implicit val batchCodec: Codec[Batch] = Codec.derive
-
   def completedSpanSchema[F[_]: ApplicativeError[*[_], Throwable]]: F[Schema] =
     ApplicativeError[F, Throwable].fromEither(completedSpanCodec.schema.leftMap(_.throwable))
-
-  def batchSchema[F[_]: ApplicativeError[*[_], Throwable]]: F[Schema] =
-    ApplicativeError[F, Throwable].fromEither(batchCodec.schema.leftMap(_.throwable))
 }

@@ -18,66 +18,67 @@ import scala.jdk.CollectionConverters._
 
 object Trace4CatsSpanData {
 
-  def apply(resource: Resource, span: CompletedSpan): SpanData = new SpanData {
-    override lazy val getTraceId: String = span.context.traceId.show
+  def apply(resource: Resource, span: CompletedSpan): SpanData =
+    new SpanData {
+      override lazy val getTraceId: String = span.context.traceId.show
 
-    override lazy val getSpanId: String = span.context.spanId.show
+      override lazy val getSpanId: String = span.context.spanId.show
 
-    override lazy val isSampled: Boolean = span.context.traceFlags.sampled.toBoolean
+      override lazy val isSampled: Boolean = span.context.traceFlags.sampled.toBoolean
 
-    override lazy val getTraceState: TraceState =
-      span.context.traceState.values
-        .foldLeft(TraceState.builder()) {
-          case (builder, (Key(k), Value(v))) => builder.set(k, v)
+      override lazy val getTraceState: TraceState =
+        span.context.traceState.values
+          .foldLeft(TraceState.builder()) { case (builder, (Key(k), Value(v))) =>
+            builder.set(k, v)
+          }
+          .build()
+
+      override lazy val getParentSpanId: String =
+        span.context.parent.fold(SpanId.getInvalid)(_.spanId.show)
+
+      override def getResource: Resource = resource
+
+      override lazy val getInstrumentationLibraryInfo: InstrumentationLibraryInfo =
+        InstrumentationLibraryInfo.create("trace4cats", null)
+
+      override def getName: String = span.name
+
+      override lazy val getKind: Span.Kind =
+        span.kind match {
+          case SpanKind.Client => Span.Kind.CLIENT
+          case SpanKind.Server => Span.Kind.SERVER
+          case SpanKind.Internal => Span.Kind.INTERNAL
+          case SpanKind.Producer => Span.Kind.PRODUCER
+          case SpanKind.Consumer => Span.Kind.CONSUMER
         }
-        .build()
 
-    override lazy val getParentSpanId: String =
-      span.context.parent.fold(SpanId.getInvalid)(_.spanId.show)
+      override lazy val getStartEpochNanos: Long = TimeUnit.MILLISECONDS.toNanos(span.start.toEpochMilli)
 
-    override def getResource: Resource = resource
+      override val getAttributes: ReadableAttributes = Trace4CatsReadableAttributes(span.allAttributes)
 
-    override lazy val getInstrumentationLibraryInfo: InstrumentationLibraryInfo =
-      InstrumentationLibraryInfo.create("trace4cats", null)
+      override lazy val getEvents: util.List[SpanData.Event] = List.empty.asJava
 
-    override def getName: String = span.name
+      override lazy val getLinks: util.List[SpanData.Link] = List.empty.asJava
 
-    override lazy val getKind: Span.Kind =
-      span.kind match {
-        case SpanKind.Client => Span.Kind.CLIENT
-        case SpanKind.Server => Span.Kind.SERVER
-        case SpanKind.Internal => Span.Kind.INTERNAL
-        case SpanKind.Producer => Span.Kind.PRODUCER
-        case SpanKind.Consumer => Span.Kind.CONSUMER
-      }
+      override lazy val getStatus: Status =
+        span.status match {
+          case Ok => ImmutableStatus.OK
+          case Internal(message) => ImmutableStatus.create(StatusCanonicalCode.ERROR, message)
+          case _ => ImmutableStatus.ERROR
+        }
 
-    override lazy val getStartEpochNanos: Long = TimeUnit.MILLISECONDS.toNanos(span.start.toEpochMilli)
+      override lazy val getEndEpochNanos: Long = TimeUnit.MILLISECONDS.toNanos(span.end.toEpochMilli)
 
-    override val getAttributes: ReadableAttributes = Trace4CatsReadableAttributes(span.attributes)
+      override lazy val getHasRemoteParent: Boolean = span.context.parent.fold(false)(_.isRemote)
 
-    override lazy val getEvents: util.List[SpanData.Event] = List.empty.asJava
+      override lazy val getHasEnded: Boolean = true
 
-    override lazy val getLinks: util.List[SpanData.Link] = List.empty.asJava
+      override def getTotalRecordedEvents: Int = 0
 
-    override lazy val getStatus: Status =
-      span.status match {
-        case Ok => ImmutableStatus.OK
-        case Internal(message) => ImmutableStatus.create(StatusCanonicalCode.ERROR, message)
-        case _ => ImmutableStatus.ERROR
-      }
+      override def getTotalRecordedLinks: Int = 0
 
-    override lazy val getEndEpochNanos: Long = TimeUnit.MILLISECONDS.toNanos(span.end.toEpochMilli)
-
-    override lazy val getHasRemoteParent: Boolean = span.context.parent.fold(false)(_.isRemote)
-
-    override lazy val getHasEnded: Boolean = true
-
-    override def getTotalRecordedEvents: Int = 0
-
-    override def getTotalRecordedLinks: Int = 0
-
-    override lazy val getTotalAttributeCount: Int =
-      span.attributes.size
-  }
+      override lazy val getTotalAttributeCount: Int =
+        span.allAttributes.size
+    }
 
 }

@@ -24,9 +24,13 @@ class BackendTracer[F[_]: Bracket[*[_], Throwable], G[_]: MonadError[*[_], Throw
       .flatMap { parent =>
         liftTrace(
           parent
-            .child(spanNamer(request), SpanKind.Client, {
-              case err @ HttpError(_, _) => SttpStatusMapping.errorToSpanStatus(err)
-            })
+            .child(
+              spanNamer(request),
+              SpanKind.Client,
+              { case err @ HttpError(_, _) =>
+                SttpStatusMapping.errorToSpanStatus(err)
+              }
+            )
             .use { span =>
               val headers = toHeaders.fromContext(span.context)
               val req = request.headers(headers)

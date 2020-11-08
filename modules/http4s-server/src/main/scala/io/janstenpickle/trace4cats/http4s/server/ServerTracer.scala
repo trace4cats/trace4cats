@@ -57,24 +57,25 @@ object ServerTracer {
     spanNamer: Http4sSpanNamer,
     requestFilter: Http4sRequestFilter,
     dropHeadersWhen: CaseInsensitiveString => Boolean
-  )(implicit provide: Provide[F, G], lift: LiftTrace[F, G]): HttpApp[F] = Kleisli[F, Request[F], Response[F]] { req =>
-    val filter = requestFilter.lift(req.covary).getOrElse(true)
-    val headers = req.headers.toList.map(h => h.name.value -> h.value).toMap
-    val spanR =
-      if (filter) entryPoint.continueOrElseRoot(spanNamer(req.covary), SpanKind.Server, headers) else Span.noop[F]
+  )(implicit provide: Provide[F, G], lift: LiftTrace[F, G]): HttpApp[F] =
+    Kleisli[F, Request[F], Response[F]] { req =>
+      val filter = requestFilter.lift(req.covary).getOrElse(true)
+      val headers = req.headers.toList.map(h => h.name.value -> h.value).toMap
+      val spanR =
+        if (filter) entryPoint.continueOrElseRoot(spanNamer(req.covary), SpanKind.Server, headers) else Span.noop[F]
 
-    spanR.use { span =>
-      val low = provide.fk(span)
-      span.putAll(Http4sHeaders.requestFields(req, dropHeadersWhen): _*) *> low(
-        app
-          .run(req.mapK(lift.fk))
-          .map(_.mapK(low))
-      ).flatMap { resp =>
-        span.setStatus(Http4sStatusMapping.toSpanStatus(resp.status)) *>
-          span
-            .putAll(Http4sHeaders.responseFields(resp, dropHeadersWhen): _*)
-            .as(resp)
+      spanR.use { span =>
+        val low = provide.fk(span)
+        span.putAll(Http4sHeaders.requestFields(req, dropHeadersWhen): _*) *> low(
+          app
+            .run(req.mapK(lift.fk))
+            .map(_.mapK(low))
+        ).flatMap { resp =>
+          span.setStatus(Http4sStatusMapping.toSpanStatus(resp.status)) *>
+            span
+              .putAll(Http4sHeaders.responseFields(resp, dropHeadersWhen): _*)
+              .as(resp)
+        }
       }
     }
-  }
 }

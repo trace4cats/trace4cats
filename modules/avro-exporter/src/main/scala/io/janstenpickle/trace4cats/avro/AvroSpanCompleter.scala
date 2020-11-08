@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.avro
 
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Timer}
+import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.QueuedSpanCompleter
@@ -21,7 +22,7 @@ object AvroSpanCompleter {
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- AvroSpanExporter.udp[F](blocker, host, port)
+      exporter <- AvroSpanExporter.udp[F, Chunk](blocker, host, port)
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
 
@@ -36,7 +37,7 @@ object AvroSpanCompleter {
   ): Resource[F, SpanCompleter[F]] = {
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- AvroSpanExporter.tcp[F](blocker, host, port)
+      exporter <- AvroSpanExporter.tcp[F, Chunk](blocker, host, port)
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
   }

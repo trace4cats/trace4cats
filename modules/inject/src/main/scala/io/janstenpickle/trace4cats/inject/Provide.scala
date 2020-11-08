@@ -18,9 +18,10 @@ object Provide {
 
   implicit def kleisliProvide[F[_]: Bracket[*[_], Throwable]]: Provide[F, Kleisli[F, Span[F], *]] =
     new Provide[F, Kleisli[F, Span[F], *]] {
-      override def fk(span: Span[F]): Kleisli[F, Span[F], *] ~> F = new (Kleisli[F, Span[F], *] ~> F) {
-        override def apply[A](fa: Kleisli[F, Span[F], A]): F[A] = fa.run(span)
-      }
+      override def fk(span: Span[F]): Kleisli[F, Span[F], *] ~> F =
+        new (Kleisli[F, Span[F], *] ~> F) {
+          override def apply[A](fa: Kleisli[F, Span[F], A]): F[A] = fa.run(span)
+        }
 
       override val noopFk: Kleisli[F, Span[F], *] ~> F = new (Kleisli[F, Span[F], *] ~> F) {
         override def apply[A](fa: Kleisli[F, Span[F], A]): F[A] = Span.noop[F].use(fa.run)

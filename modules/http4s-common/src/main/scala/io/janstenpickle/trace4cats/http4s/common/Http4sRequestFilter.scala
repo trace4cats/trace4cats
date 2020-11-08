@@ -7,8 +7,8 @@ object Http4sRequestFilter {
   private object dsl extends Http4sDsl[AnyK]
   import dsl._
 
-  val allowAll: Http4sRequestFilter = {
-    case _ => true
+  val allowAll: Http4sRequestFilter = { case _ =>
+    true
   }
 
   val kubernetes: Http4sRequestFilter = {
@@ -17,8 +17,8 @@ object Http4sRequestFilter {
     case GET -> Root / "healthcheck" => false
   }
 
-  val prometheus: Http4sRequestFilter = {
-    case GET -> Root / "metrics" => false
+  val prometheus: Http4sRequestFilter = { case GET -> Root / "metrics" =>
+    false
   }
 
   val kubernetesPrometheus: Http4sRequestFilter = kubernetes.orElse(prometheus)
@@ -26,8 +26,8 @@ object Http4sRequestFilter {
   def fullPaths(first: String, others: String*): Http4sRequestFilter = {
     val paths: Set[String] = Set(first) ++ others
 
-    {
-      case req => !paths.contains(Uri.decode(req.uri.path))
+    { case req =>
+      !paths.contains(Uri.decode(req.uri.path))
     }
   }
 }

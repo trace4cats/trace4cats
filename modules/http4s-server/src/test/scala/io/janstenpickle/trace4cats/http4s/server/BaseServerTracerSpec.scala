@@ -60,8 +60,8 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
     )
 
   it should "record a span when the response is OK" in {
-    val app = HttpRoutes.of[G] {
-      case GET -> Root => Ok()
+    val app = HttpRoutes.of[G] { case GET -> Root =>
+      Ok()
     }
 
     evaluateTrace(app, app.orNotFound) { spans =>
@@ -73,8 +73,8 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
   }
 
   it should "correctly set span status when the server throws an exception" in forAll { errorMsg: String =>
-    val app = HttpRoutes.of[G] {
-      case GET -> Root => ApplicativeError[G, Throwable].raiseError(new RuntimeException(errorMsg))
+    val app = HttpRoutes.of[G] { case GET -> Root =>
+      ApplicativeError[G, Throwable].raiseError(new RuntimeException(errorMsg))
     }
 
     evaluateTrace(app, app.orNotFound) { spans =>
@@ -86,8 +86,8 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
   }
 
   it should "correctly set the span status from the http response" in forAll { response: G[Response[G]] =>
-    val app = HttpRoutes.of[G] {
-      case GET -> Root => response
+    val app = HttpRoutes.of[G] { case GET -> Root =>
+      response
     }
 
     val expectedStatus =
@@ -102,8 +102,8 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
   }
 
   it should "should filter all requests" in forAll { response: G[Response[G]] =>
-    val app = HttpRoutes.of[G] {
-      case GET -> Root => response
+    val app = HttpRoutes.of[G] { case GET -> Root =>
+      response
     }
 
     evaluateTrace(app, app.orNotFound, { case _ => false }) { spans =>
@@ -139,9 +139,13 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
         case GET -> Root => Ok()
       }
 
-      evaluateTrace(app, app.orNotFound, Http4sRequestFilter.fullPaths(NEPaths.head, NEPaths.tail: _*), "/" :: NEPaths) {
-        spans =>
-          spans.size should be(1)
+      evaluateTrace(
+        app,
+        app.orNotFound,
+        Http4sRequestFilter.fullPaths(NEPaths.head, NEPaths.tail: _*),
+        "/" :: NEPaths
+      ) { spans =>
+        spans.size should be(1)
       }
   }
 
@@ -155,7 +159,7 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
       fkId.apply(
         (for {
           blocker <- Blocker[F]
-          completer <- Resource.liftF(RefSpanCompleter[F])
+          completer <- Resource.liftF(RefSpanCompleter[F]("test"))
           ep = EntryPoint[F](SpanSampler.always[F], completer)
           _ <- BlazeServerBuilder[F](blocker.blockingContext)
             .bindHttp(port, "localhost")
@@ -163,13 +167,12 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
             .resource
           client <- BlazeClientBuilder[F](blocker.blockingContext).resource
         } yield (client, completer))
-          .use {
-            case (client, completer) =>
-              for {
-                _ <- paths.traverse(path => client.expect[String](s"http://localhost:$port$path").attempt)
-                spans <- completer.get
-                _ <- timer.sleep(100.millis)
-              } yield fa(spans)
+          .use { case (client, completer) =>
+            for {
+              _ <- paths.traverse(path => client.expect[String](s"http://localhost:$port$path").attempt)
+              spans <- completer.get
+              _ <- timer.sleep(100.millis)
+            } yield fa(spans)
           }
       )
 

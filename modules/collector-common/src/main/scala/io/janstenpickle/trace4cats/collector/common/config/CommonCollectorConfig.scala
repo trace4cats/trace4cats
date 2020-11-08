@@ -1,16 +1,18 @@
 package io.janstenpickle.trace4cats.collector.common.config
 
-import cats.data.NonEmptyList
+import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
+import cats.syntax.functor._
 import io.circe.Decoder
 import io.jaegertracing.thrift.internal.senders.UdpSender
 import io.janstenpickle.trace4cats.avro._
 import io.janstenpickle.trace4cats.newrelic.Endpoint
 import io.circe.generic.extras.semiauto._
-import io.janstenpickle.trace4cats.avro.kafka.AvroKafkaConsumer.BatchConfig
+import io.janstenpickle.trace4cats.model.AttributeValue
 
 case class CommonCollectorConfig(
   listener: ListenerConfig = ListenerConfig(),
   kafkaListener: Option[KafkaListenerConfig],
+  batch: Option[BatchConfig],
   forwarder: Option[ForwarderConfig],
   kafkaForwarder: Option[KafkaForwarderConfig],
   jaeger: Option[JaegerConfig],
@@ -18,7 +20,8 @@ case class CommonCollectorConfig(
   stackdriverHttp: Option[StackdriverHttpConfig],
   datadog: Option[DatadogConfig],
   newRelic: Option[NewRelicConfig],
-  sampling: Option[SamplingConfig],
+  sampling: SamplingConfig = SamplingConfig(),
+  attributeFiltering: FilteringConfig = FilteringConfig(),
   logSpans: Boolean = false,
   bufferSize: Int = 500
 )
@@ -36,11 +39,14 @@ case class KafkaListenerConfig(
   topic: String,
   group: String,
   consumerConfig: Map[String, String] = Map.empty,
-  batch: Option[BatchConfig] = None
 )
 object KafkaListenerConfig {
-  implicit val batchDecoder: Decoder[BatchConfig] = deriveConfiguredDecoder
   implicit val decoder: Decoder[KafkaListenerConfig] = deriveConfiguredDecoder
+}
+
+case class BatchConfig(size: Int, timeoutSeconds: Int)
+object BatchConfig {
+  implicit val decoder: Decoder[BatchConfig] = deriveConfiguredDecoder
 }
 
 case class ForwarderConfig(port: Int = DefaultPort, host: String)
@@ -91,7 +97,53 @@ object NewRelicConfig {
   implicit val decoder: Decoder[NewRelicConfig] = deriveConfiguredDecoder
 }
 
-case class SamplingConfig(sampleProbability: Double, cacheTtlMinutes: Int = 2, maxCacheSize: Long = 1000000)
+case class SamplingConfig(
+  sampleProbability: Option[Double] = None,
+  spanNames: Option[NonEmptySet[String]] = None,
+  rate: Option[RateSamplingConfig] = None,
+  cacheTtlMinutes: Int = 2,
+  maxCacheSize: Long = 1000000,
+  redis: Option[RedisStoreConfig] = None
+)
 object SamplingConfig {
   implicit val decoder: Decoder[SamplingConfig] = deriveConfiguredDecoder
+}
+
+case class RateSamplingConfig(maxBatchSize: Int, tokenRateMillis: Int)
+object RateSamplingConfig {
+  implicit val decoder: Decoder[RateSamplingConfig] = deriveConfiguredDecoder
+}
+
+sealed trait RedisStoreConfig
+object RedisStoreConfig {
+  case class RedisServer(host: String, port: Int = 6379) extends RedisStoreConfig
+  object RedisServer {
+    implicit val decoder: Decoder[RedisServer] = deriveConfiguredDecoder
+  }
+  case class RedisCluster(cluster: NonEmptyList[RedisServer]) extends RedisStoreConfig
+  object RedisCluster {
+    implicit val decoder: Decoder[RedisCluster] = deriveConfiguredDecoder
+  }
+
+  implicit val decoder: Decoder[RedisStoreConfig] = RedisServer.decoder.widen.or(RedisCluster.decoder.widen)
+}
+
+case class FilteringConfig(
+  names: Option[NonEmptySet[String]] = None,
+  values: Option[NonEmptySet[AttributeValue]] = None,
+  nameValues: Option[NonEmptyMap[String, AttributeValue]] = None
+)
+object FilteringConfig {
+  implicit val attributeValueDecoder: Decoder[AttributeValue] = List[Decoder[AttributeValue]](
+    Decoder.decodeBoolean.map(AttributeValue.BooleanValue).widen,
+    Decoder.decodeDouble.map(AttributeValue.DoubleValue).widen,
+    Decoder.decodeLong.map(AttributeValue.LongValue).widen,
+    Decoder.decodeString.map(AttributeValue.StringValue).widen,
+    Decoder[NonEmptyList[Boolean]].map(AttributeValue.BooleanList).widen,
+    Decoder[NonEmptyList[Double]].map(AttributeValue.DoubleList).widen,
+    Decoder[NonEmptyList[Long]].map(AttributeValue.LongList).widen,
+    Decoder[NonEmptyList[String]].map(AttributeValue.StringList).widen
+  ).reduceLeft(_.or(_))
+
+  implicit val decoder: Decoder[FilteringConfig] = deriveConfiguredDecoder
 }

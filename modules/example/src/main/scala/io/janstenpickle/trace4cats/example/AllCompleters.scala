@@ -19,12 +19,11 @@ import io.janstenpickle.trace4cats.opentelemetry.otlp.{
 import io.janstenpickle.trace4cats.stackdriver.StackdriverGrpcSpanCompleter
 import io.janstenpickle.trace4cats.strackdriver.StackdriverHttpSpanCompleter
 
-/**
- This example shows how many different completers may be combined into a single completer using
- the provided monoid instance.
-
- Note that both `Parallel` and `Applicative` instances of the monoid are available, if you don't
- provide a `Parallel` typeclass then completers will be executed in sequence
+/** This example shows how many different completers may be combined into a single completer using
+  * the provided monoid instance.
+  *
+  * Note that both `Parallel` and `Applicative` instances of the monoid are available, if you don't
+  * provide a `Parallel` typeclass then completers will be executed in sequence
   */
 object AllCompleters {
   def apply[F[_]: ConcurrentEffect: ContextShift: Timer: Parallel: Logger](
@@ -40,7 +39,7 @@ object AllCompleters {
       StackdriverGrpcSpanCompleter[F](blocker, process, "gcp-project-id-123"),
       StackdriverHttpSpanCompleter.blazeClient[F](blocker, process)
     ).parSequence.map { completers =>
-      (LogSpanCompleter[F] :: completers).combineAll
+      (LogSpanCompleter[F](process) :: completers).combineAll
     }
 
 }

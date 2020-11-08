@@ -32,8 +32,7 @@ object Trace {
 
   object Implicits {
 
-    /**
-      * A no-op `Trace` implementation is freely available for any applicative effect. This lets us add
+    /** A no-op `Trace` implementation is freely available for any applicative effect. This lets us add
       * a `Trace` constraint to most existing code without demanding anything new from the concrete
       * effect type.
       */
@@ -52,23 +51,22 @@ object Trace {
 
   }
 
-  /**
-    * `Kleisli[F, Span[F], *]` is a `Trace` given `Bracket[F, Throwable]`. The instance can be
+  /** `Kleisli[F, Span[F], *]` is a `Trace` given `Bracket[F, Throwable]`. The instance can be
     * widened to an environment that *contains* a `Span[F]` via the `lens` method.
     */
   implicit def kleisliInstance[F[_]: Bracket[*[_], Throwable]]: KleisliTrace[F] =
     new KleisliTrace[F]
 
-  /**
-    * A trace instance for `Kleisli[F, Span[F], *]`, which is the mechanism we use to introduce
+  /** A trace instance for `Kleisli[F, Span[F], *]`, which is the mechanism we use to introduce
     * context into our computations. We can also "lensMap" out to `Kleisli[F, E, *]` given a lens
     * from `E` to `Span[F]`.
     */
   class KleisliTrace[F[_]: Bracket[*[_], Throwable]] extends Trace[Kleisli[F, Span[F], *]] {
 
-    override def headers(toHeaders: ToHeaders): Kleisli[F, Span[F], Map[String, String]] = Kleisli { span =>
-      toHeaders.fromContext(span.context).pure[F]
-    }
+    override def headers(toHeaders: ToHeaders): Kleisli[F, Span[F], Map[String, String]] =
+      Kleisli { span =>
+        toHeaders.fromContext(span.context).pure[F]
+      }
 
     override def put(key: String, value: AttributeValue): Kleisli[F, Span[F], Unit] =
       Kleisli(_.put(key, value))

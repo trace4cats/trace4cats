@@ -30,9 +30,10 @@ private[trace4cats] class W3cToHeaders extends ToHeaders {
     val parseState: TraceState = (for {
       state <- headers.get(stateHeader)
       split = state.split(',')
-      traceState <- if (split.length <= 32)
-        TraceState(split.flatMap(stateKv).toMap)
-      else None
+      traceState <-
+        if (split.length <= 32)
+          TraceState(split.flatMap(stateKv).toMap)
+        else None
     } yield traceState).getOrElse(TraceState.empty)
 
     for {

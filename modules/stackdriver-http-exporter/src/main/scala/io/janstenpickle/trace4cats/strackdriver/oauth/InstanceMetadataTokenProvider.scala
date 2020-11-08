@@ -25,9 +25,8 @@ object InstanceMetadataTokenProvider {
           .expectOr[AccessToken](GET(tokenMetadataUri, metadataHeader)) { resp =>
             resp.as[String].map(FailedRequest.apply)
           }
-          .onError {
-            case e =>
-              Logger[F].warn(e)("Failed to retrieve Access Token from Instance Metadata")
+          .onError { case e =>
+            Logger[F].warn(e)("Failed to retrieve Access Token from Instance Metadata")
           }
       }
     }

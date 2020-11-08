@@ -1,8 +1,7 @@
 package io.janstenpickle.trace4cats.strackdriver.util
 
-/**
-Code copied from https://github.com/permutive/fs2-google-pubsub
- **/
+/** Code copied from https://github.com/permutive/fs2-google-pubsub
+  */
 import cats.MonadError
 import cats.effect.concurrent.Ref
 import cats.effect.syntax.concurrent._
@@ -14,20 +13,17 @@ import fs2.Stream
 
 import scala.concurrent.duration.FiniteDuration
 
-/**
-  * Represents a value of type `A` with effects in `F` which is refreshed.
+/** Represents a value of type `A` with effects in `F` which is refreshed.
   *
   * Refreshing can be cancelled by evaluating `cancelToken`.
   *
   * Implementation is backed by a `cats-effect` `Ref` so evaluating the value is fast.
-  *
   */
 final class RefreshableEffect[F[_], A] private (val value: F[A], val cancelToken: CancelToken[F])
 
 object RefreshableEffect {
 
-  /**
-    * Create a refreshable effect which exposes the result of `refresh`, retries
+  /** Create a refreshable effect which exposes the result of `refresh`, retries
     * if refreshing the value fails.
     *
     * @param refreshInterval    how frequently to refresh the value
@@ -81,8 +77,7 @@ object RefreshableEffect {
       .compile
       .drain
 
-  private def updateUnhandled[F[_], A](refresh: F[A], ref: Ref[F, A], onRefreshSuccess: F[Unit])(
-    implicit
+  private def updateUnhandled[F[_], A](refresh: F[A], ref: Ref[F, A], onRefreshSuccess: F[Unit])(implicit
     ME: MonadError[F, Throwable]
   ): F[Unit] =
     for {

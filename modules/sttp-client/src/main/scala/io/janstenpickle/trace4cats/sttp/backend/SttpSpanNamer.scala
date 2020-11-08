@@ -7,8 +7,7 @@ object SttpSpanNamer {
 
   def methodWithPath: SttpSpanNamer = req => s"${req.method.method} ${req.uri.path.mkString("/")}"
 
-  /**
-    * Similar to `methodWithPath`, but allows one to reduce the cardinality of the operation name by applying
+  /** Similar to `methodWithPath`, but allows one to reduce the cardinality of the operation name by applying
     * a transformation to each path segment, e.g.:
     * {{{
     *   methodWithPartiallyTransformedPath {
@@ -19,11 +18,12 @@ object SttpSpanNamer {
     *
     * Note that regex matching should generally be preferred over try-catching conversion failures.
     */
-  def methodWithPartiallyTransformedPath(transform: PartialFunction[String, String]): SttpSpanNamer = req => {
-    val method = req.method.method
-    val path = req.uri.path
-      .map(s => transform.applyOrElse(s, identity[String]))
-      .mkString("/")
-    if (path.isEmpty) method else s"$method $path"
-  }
+  def methodWithPartiallyTransformedPath(transform: PartialFunction[String, String]): SttpSpanNamer =
+    req => {
+      val method = req.method.method
+      val path = req.uri.path
+        .map(s => transform.applyOrElse(s, identity[String]))
+        .mkString("/")
+      if (path.isEmpty) method else s"$method $path"
+    }
 }
