@@ -8,6 +8,7 @@ object Dependencies {
     val collectionCompat = "2.2.0"
     val commonsCodec = "1.15"
     val circe = "0.13.0"
+    val circeYaml = "0.13.1"
     val decline = "1.3.0"
     val enumeratum = "1.6.1"
     val fs2 = "2.4.4"
@@ -51,7 +52,7 @@ object Dependencies {
   lazy val collectionCompat = "org.scala-lang.modules"     %% "scala-collection-compat"         % Versions.collectionCompat
   lazy val circeGeneric = "io.circe"                       %% "circe-generic-extras"            % Versions.circe
   lazy val circeParser = "io.circe"                        %% "circe-parser"                    % Versions.circe
-  lazy val circeYaml = "io.circe"                          %% "circe-yaml"                      % Versions.circe
+  lazy val circeYaml = "io.circe"                          %% "circe-yaml"                      % Versions.circeYaml
   lazy val embeddedKafka = "io.github.embeddedkafka"       %% "embedded-kafka"                  % Versions.kafka
   lazy val enumeratum = "com.beachape"                     %% "enumeratum"                      % Versions.enumeratum
   lazy val enumeratumCats = "com.beachape"                 %% "enumeratum-cats"                 % Versions.enumeratum
