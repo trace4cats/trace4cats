@@ -54,7 +54,7 @@ object CommonCollector {
       }
 
       jaegerUdpExporters <- config.jaeger.traverse { jaeger =>
-        JaegerSpanExporter[F, Chunk](blocker, serviceName = None, host = jaeger.host, port = jaeger.port)
+        JaegerSpanExporter[F, Chunk](blocker, process = None, host = jaeger.host, port = jaeger.port)
           .map("Jaeger UDP" -> _)
       }
 
