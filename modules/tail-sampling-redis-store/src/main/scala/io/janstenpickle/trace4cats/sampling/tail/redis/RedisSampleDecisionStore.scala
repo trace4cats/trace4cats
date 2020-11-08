@@ -1,7 +1,6 @@
 package io.janstenpickle.trace4cats.sampling.tail.redis
 
 import cats.data.NonEmptyList
-import cats.effect.syntax.bracket._
 import cats.effect.syntax.concurrent._
 import cats.effect.{Concurrent, ContextShift, Fiber, Resource, Sync}
 import cats.syntax.flatMap._
@@ -68,28 +67,36 @@ object RedisSampleDecisionStore {
               case None => cacheDecision(traceId, cmd.get(keyPrefix -> traceId))
             }
 
-          override def batch(traceIds: Set[TraceId]): F[Map[TraceId, SampleDecision]] = {
-            for {
-              local <- Sync[F].delay(cache.getAllPresent(traceIds))
-              remainder = traceIds.diff(local.keySet).map(keyPrefix -> _)
-              remote <- cmd.mGet(remainder)
+          override def batch(traceIds: Set[TraceId]): F[Map[TraceId, SampleDecision]] = if (traceIds.isEmpty)
+            Applicative[F].pure(Map.empty)
+          else {
+            def getRemote(remainder: Set[TraceId]) = for {
+              remote <- cmd.mGet(remainder.map(keyPrefix -> _))
               remoteMapped = remote.map { case ((_, traceId), decision) => traceId -> decision }
               _ <- Sync[F].delay(cache.putAll(remoteMapped))
-            } yield local ++ remoteMapped
+            } yield remoteMapped
+
+            for {
+              local <- Sync[F].delay(cache.getAllPresent(traceIds))
+              remainder = traceIds.diff(local.keySet)
+              remote <- if (remainder.isEmpty) Applicative[F].pure(Map.empty) else getRemote(remainder)
+            } yield local ++ remote
           }
 
           override def storeDecision(traceId: TraceId, sampleDecision: SampleDecision): F[Unit] =
             cmd.setEx(keyPrefix -> traceId, sampleDecision, ttl) >> Sync[F].delay(cache.put(traceId, sampleDecision))
 
-          override def storeDecisions(decisions: Map[TraceId, SampleDecision]): F[Unit] =
-            (cmd.disableAutoFlush >> (for {
+          override def storeDecisions(decisions: Map[TraceId, SampleDecision]): F[Unit] = if (decisions.isEmpty)
+            Applicative[F].unit
+          else
+            for {
               results <- decisions.foldLeft(Applicative[F].pure(List.empty[Fiber[F, Unit]])) {
                 case (acc, (traceId, decision)) =>
                   cmd.setEx(keyPrefix -> traceId, decision, ttl).start.flatMap(fiber => acc.map(fiber :: _))
               }
-              _ <- cmd.flushCommands
               _ <- results.parTraverse_(_.join)
-            } yield ()).guarantee(cmd.enableAutoFlush)) >> Sync[F].delay(cache.putAll(decisions))
+              _ <- Sync[F].delay(cache.putAll(decisions))
+            } yield ()
         }
 
       }

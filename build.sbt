@@ -611,9 +611,10 @@ lazy val `tail-sampling-redis-store` = (project in file("modules/tail-sampling-r
   .settings(publishSettings)
   .settings(
     name := "trace4cats-tail-sampling-redis-store",
-    libraryDependencies ++= Seq(Dependencies.redis4cats, Dependencies.redis4catsLog4cats, Dependencies.scaffeine)
+    libraryDependencies ++= Seq(Dependencies.redis4cats, Dependencies.redis4catsLog4cats, Dependencies.scaffeine),
+    libraryDependencies ++= (Dependencies.test :+ Dependencies.embeddedRedis).map(_ % Test)
   )
-  .dependsOn(`tail-sampling`)
+  .dependsOn(`tail-sampling`, test % "test->compile")
 
 lazy val `collector-common` = (project in file("modules/collector-common"))
   .settings(publishSettings)

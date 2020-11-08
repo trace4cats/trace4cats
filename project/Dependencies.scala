@@ -10,6 +10,7 @@ object Dependencies {
     val circe = "0.13.0"
     val circeYaml = "0.13.1"
     val decline = "1.3.0"
+    val embeddedRedis = "0.7.3"
     val enumeratum = "1.6.1"
     val fs2 = "2.4.4"
     val fs2Kafka = "1.1.0"
@@ -54,6 +55,7 @@ object Dependencies {
   lazy val circeParser = "io.circe"                        %% "circe-parser"                    % Versions.circe
   lazy val circeYaml = "io.circe"                          %% "circe-yaml"                      % Versions.circeYaml
   lazy val embeddedKafka = "io.github.embeddedkafka"       %% "embedded-kafka"                  % Versions.kafka
+  lazy val embeddedRedis = "it.ozimov"                      % "embedded-redis"                  % Versions.embeddedRedis
   lazy val enumeratum = "com.beachape"                     %% "enumeratum"                      % Versions.enumeratum
   lazy val enumeratumCats = "com.beachape"                 %% "enumeratum-cats"                 % Versions.enumeratum
   lazy val enumeratumCirce = "com.beachape"                %% "enumeratum-circe"                % Versions.enumeratum
