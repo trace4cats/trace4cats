@@ -5,9 +5,9 @@ import io.janstenpickle.trace4cats.collector.common.config._
 import io.circe.generic.extras.semiauto._
 
 case class CollectorConfig(
-  otlpGrpc: Option[OtlpGrpcConfig],
-  jaegerProto: Option[JaegerProtoConfig],
-  stackdriverGrpc: Option[StackdriverGrpcConfig]
+  otlpGrpc: List[OtlpGrpcConfig] = List.empty,
+  jaegerProto: List[JaegerProtoConfig] = List.empty,
+  stackdriverGrpc: List[StackdriverGrpcConfig] = List.empty
 )
 object CollectorConfig {
   implicit val decoder: Decoder[CollectorConfig] = deriveConfiguredDecoder
