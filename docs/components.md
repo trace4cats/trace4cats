@@ -81,10 +81,11 @@ buffer-size: 1000 # How many batches to buffer in case of a slow exporter, defau
 sampling:
   sample-probability: 0.05 # Optional - must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
   span-names: # Optional - name of spans to sample (may be partial match)
-    - some-span-name   cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
+    - some-span-name   
   rate: # Optional - rate sampling
     max-batch-size: 1000
     token-rate-millis: 10
+  cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
   max-cache-size: 500000 # Max number of entries in the sample decision cache, defaults to 1000000
   redis: # Optional - use redis as a sample decision store
     host: redis-host
@@ -115,59 +116,59 @@ kafka-listener:
     key: value
 
 # Forward spans to another collector
-forwarder:
-  host: some-remote-host
-  port: 7777
+forwarders:
+  - host: some-remote-host
+    port: 7777
 
 # Forward spans to a kafka topic
-kafka-forwarder:
-  topic: spans
-  bootstrap-servers:
-    - "localhost:9092"  
-  # Optional additional Kafka producer config
-  producer-config:
-    key: value
+kafka-forwarders:
+  - topic: spans
+    bootstrap-servers:
+      - "localhost:9092"  
+    # Optional additional Kafka producer config
+    producer-config:
+      key: value
 
 # Export to Jaeger
 jaeger:
-  host: jaeger-host
-  port: 9999 # Defaults to 6831
+  - host: jaeger-host
+    port: 9999 # Defaults to 6831
 
 # Export to Jaeger via protbufs
 jaeger-proto:
-  host: jaeger-host
-  port: 9999 # Defaults to 14250
+  - host: jaeger-host
+    port: 9999 # Defaults to 14250
 
 # Export to OpenTelemetry Collector via HTTP
 otlp-http:
-  host: otlp-host
-  port: 9999 # Defaults to 55681
+  - host: otlp-host
+    port: 9999 # Defaults to 55681
 
 # Export to OpenTelemetry Collector via GRPC
-otlp-grpc
-  host: otlp-host
-  port: 9999 # Defaults to 55680
+otlp-grpc:
+  - host: otlp-host
+    port: 9999 # Defaults to 55680
 
 # Export to Stackdriver via HTTP
 # All config is optional, if running in GCP they will be obtained from the metadata endpoint
 stackdriver-http:
-  project-id: some-project-id
-  credentials-file: /path/to/credentials.json
-  service-account-name: svcacc2 # Defaults to 'default'
+  - project-id: some-project-id
+    credentials-file: /path/to/credentials.json
+    service-account-name: svcacc2 # Defaults to 'default'
 
 # Export to Stackdriver via GRPC
 stackdriver-grpc:
-  project-id: some-project-id
+  - project-id: some-project-id
 
 # Export to Datadog agent - All config is optional
 datadog:
-  host: agent-host # defaults to 'localhost'
-  port: 9999 # defaults to 8126
+  - host: agent-host # defaults to 'localhost'
+    port: 9999 # defaults to 8126
 
 # Export to NewRelic
 new-relic:
-  api-key: 7c1989d1-e019-46bc-a04e-824fdf33b237
-  endpoint: EU # defaults to US, may be a custom endpoint
+  - api-key: 7c1989d1-e019-46bc-a04e-824fdf33b237
+    endpoint: EU # defaults to US, may be a custom endpoint
 ```
 
 #### Running
@@ -245,44 +246,44 @@ kafka-listener:
 
 # Forward spans to another collector
 forwarder:
-  host: some-remote-host
-  port: 7777
+  - host: some-remote-host
+    port: 7777
 
 # Forward spans to a kafka topic
 kafka-forwarder:
-  topic: spans
-  bootstrap-servers:
-    - "localhost:9092"  
-  # Optional additional Kafka producer config
-  producer-config:
-    key: value
+  - topic: spans
+    bootstrap-servers:
+     - "localhost:9092"  
+    # Optional additional Kafka producer config
+    producer-config:
+      key: value
 
 # Export to Jaeger
 jaeger:
-  host: jaeger-host
-  port: 9999 # Defaults to 6831
+  - host: jaeger-host
+    port: 9999 # Defaults to 6831
 
 # Export to OpenTelemetry Collector via HTTP
 otlp-http:
-  host: otlp-host
-  port: 9999 # Defaults to 55681
+  - host: otlp-host
+    port: 9999 # Defaults to 55681
 
 # Export to Stackdriver via HTTP
 # All config is optional, if running in GCP they will be obtained from the metadata endpoint
 stackdriver-http:
-  project-id: some-project-id
-  credentials-file: /path/to/credentials.json
-  service-account-name: svcacc2 # Defaults to 'default'
+  - project-id: some-project-id
+    credentials-file: /path/to/credentials.json
+    service-account-name: svcacc2 # Defaults to 'default'
 
 # Export to Datadog agent - All config is optional
 datadog:
-  host: agent-host # defaults to 'localhost'
-  port: 9999 # defaults to 8126
+  - host: agent-host # defaults to 'localhost'
+    port: 9999 # defaults to 8126
 
 # Export to NewRelic
 new-relic:
-  api-key: 7c1989d1-e019-46bc-a04e-824fdf33b237
-  endpoint: EU # defaults to US, may be a custom endpoint
+  - api-key: 7c1989d1-e019-46bc-a04e-824fdf33b237
+    endpoint: EU # defaults to US, may be a custom endpoint
 ```
 
 #### Running

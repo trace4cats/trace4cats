@@ -47,13 +47,13 @@ object CommonCollector {
 
       client <- Resource.liftF(Http4sJdkClient[F](blocker))
 
-      collectorExporter <- config.forwarder.traverse { forwarder =>
+      collectorExporters <- config.forwarders.traverse { forwarder =>
         AvroSpanExporter
           .tcp[F, Chunk](blocker, host = forwarder.host, port = forwarder.port)
           .map("Trace4Cats Avro TCP" -> _)
       }
 
-      jaegerUdpExporter <- config.jaeger.traverse { jaeger =>
+      jaegerUdpExporters <- config.jaeger.traverse { jaeger =>
         JaegerSpanExporter[F, Chunk](blocker, serviceName = None, host = jaeger.host, port = jaeger.port)
           .map("Jaeger UDP" -> _)
       }
@@ -63,14 +63,14 @@ object CommonCollector {
           Resource.pure[F, SpanExporter[F, Chunk]](LogSpanExporter[F, Chunk]).map(e => Some("Log" -> e))
         else Resource.pure[F, Option[(String, SpanExporter[F, Chunk])]](None)
 
-      otHttpExporter <- config.otlpHttp.traverse { otlp =>
+      otHttpExporters <- config.otlpHttp.traverse { otlp =>
         Resource.liftF(
           OpenTelemetryOtlpHttpSpanExporter[F, Chunk](client, host = otlp.host, port = otlp.port)
             .map("OpenTelemetry HTTP" -> _)
         )
       }
 
-      stackdriverExporter <- Resource.liftF(config.stackdriverHttp.traverse {
+      stackdriverExporters <- Resource.liftF(config.stackdriverHttp.traverse {
         case StackdriverHttpConfig(Some(projectId), Some(credsFile), _) =>
           StackdriverHttpSpanExporter[F, Chunk](projectId, credsFile, client).map("Stackdriver HTTP" -> _)
         case StackdriverHttpConfig(_, _, None) =>
@@ -79,21 +79,21 @@ object CommonCollector {
           StackdriverHttpSpanExporter[F, Chunk](client, serviceAccount).map("Stackdriver HTTP" -> _)
       })
 
-      ddExporter <- config.datadog.traverse { datadog =>
+      ddExporters <- config.datadog.traverse { datadog =>
         Resource.liftF(
           DataDogSpanExporter[F, Chunk](client, host = datadog.host, port = datadog.port).map("DataDog Agent" -> _)
         )
       }
 
-      newRelicExporter <- config.newRelic.traverse { newRelic =>
+      newRelicExporters <- config.newRelic.traverse { newRelic =>
         Resource.liftF(
           NewRelicSpanExporter[F, Chunk](client, apiKey = newRelic.apiKey, endpoint = newRelic.endpoint)
             .map("NewRelic HTTP" -> _)
         )
       }
 
-      kafkaExporter <-
-        config.kafkaForwarder
+      kafkaExporters <-
+        config.kafkaForwarders
           .traverse { kafka =>
             AvroKafkaSpanExporter[F, Chunk](
               blocker,
@@ -106,14 +106,14 @@ object CommonCollector {
       exporter <- QueuedSpanExporter(
         config.bufferSize,
         List(
-          collectorExporter,
-          jaegerUdpExporter,
-          logExporter,
-          otHttpExporter,
-          stackdriverExporter,
-          ddExporter,
-          newRelicExporter,
-          kafkaExporter
+          collectorExporters,
+          jaegerUdpExporters,
+          logExporter.toList,
+          otHttpExporters,
+          stackdriverExporters,
+          ddExporters,
+          newRelicExporters,
+          kafkaExporters
         ).flatten ++ others
       )
 

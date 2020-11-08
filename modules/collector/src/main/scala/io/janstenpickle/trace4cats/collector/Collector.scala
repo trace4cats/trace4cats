@@ -37,17 +37,17 @@ object Collector
   ): Resource[F, List[(String, SpanExporter[F, Chunk])]] =
     for {
       config <- Resource.liftF(ConfigParser.parse[F, CollectorConfig](configFile))
-      jaegerProtoExporter <- config.jaegerProto.traverse { jaeger =>
+      jaegerProtoExporters <- config.jaegerProto.traverse { jaeger =>
         OpenTelemetryJaegerSpanExporter[F, Chunk](jaeger.host, jaeger.port).map("Jaeger Proto" -> _)
       }
 
-      otGrpcExporter <- config.otlpGrpc.traverse { otlp =>
+      otGrpcExporters <- config.otlpGrpc.traverse { otlp =>
         OpenTelemetryOtlpGrpcSpanExporter[F, Chunk](host = otlp.host, port = otlp.port).map("OpenTelemetry GRPC" -> _)
       }
 
-      stackdriverExporter <- config.stackdriverGrpc.traverse { stackdriver =>
+      stackdriverExporters <- config.stackdriverGrpc.traverse { stackdriver =>
         StackdriverGrpcSpanExporter[F, Chunk](blocker, projectId = stackdriver.projectId).map("Stackdriver GRPC" -> _)
       }
-    } yield List(jaegerProtoExporter, otGrpcExporter, stackdriverExporter).flatten
+    } yield List(jaegerProtoExporters, otGrpcExporters, stackdriverExporters).flatten
 
 }
