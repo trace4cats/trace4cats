@@ -9,8 +9,7 @@ object Http4sSpanNamer {
 
   def methodWithPath: Http4sSpanNamer = req => s"${req.method.name} ${Uri.decode(req.pathInfo)}"
 
-  /**
-    * Similar to `methodWithPath`, but allows one to reduce the cardinality of the operation name by applying
+  /** Similar to `methodWithPath`, but allows one to reduce the cardinality of the operation name by applying
     * a transformation to each path segment, e.g.:
     * {{{
     *   methodWithPartiallyTransformedPath {

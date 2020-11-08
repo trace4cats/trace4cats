@@ -8,8 +8,7 @@ import io.janstenpickle.trace4cats.model.CompletedSpan
 
 import scala.collection.immutable.Queue
 
-/**
-  * RefSpanCompleter collects all spans in a queue within an atomic reference
+/** RefSpanCompleter collects all spans in a queue within an atomic reference
   * Best used for testing purposes
   */
 class RefSpanCompleter[F[_]](serviceName: String, ref: Ref[F, Queue[CompletedSpan]]) extends SpanCompleter[F] {

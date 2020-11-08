@@ -24,8 +24,8 @@ object Http4sZioExample extends CatsApp {
     object dsl extends Http4sDsl[ZIOTrace]
     import dsl._
 
-    HttpRoutes.of {
-      case req @ GET -> Root / "forward" => client.expect[String](req).flatMap(Ok(_))
+    HttpRoutes.of { case req @ GET -> Root / "forward" =>
+      client.expect[String](req).flatMap(Ok(_))
     }
   }
 

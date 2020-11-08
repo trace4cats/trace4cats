@@ -23,8 +23,8 @@ object Http4sExample extends IOApp {
     object dsl extends Http4sDsl[Kleisli[F, Span[F], *]]
     import dsl._
 
-    HttpRoutes.of {
-      case req @ GET -> Root / "forward" => client.expect[String](req).flatMap(Ok(_))
+    HttpRoutes.of { case req @ GET -> Root / "forward" =>
+      client.expect[String](req).flatMap(Ok(_))
     }
   }
 

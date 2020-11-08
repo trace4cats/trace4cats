@@ -304,8 +304,8 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
               kind,
               SpanSampler.always,
               completer,
-              {
-                case TestException(_) => overrideStatus
+              { case TestException(_) =>
+                overrideStatus
               }
             )
             .use(_.setStatus(status) >> IO.raiseError[Unit](TestException(errorMsg)))

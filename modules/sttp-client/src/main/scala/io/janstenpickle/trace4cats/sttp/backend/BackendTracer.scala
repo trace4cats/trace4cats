@@ -27,8 +27,8 @@ class BackendTracer[F[_]: Bracket[*[_], Throwable], G[_]: MonadError[*[_], Throw
             .child(
               spanNamer(request),
               SpanKind.Client,
-              {
-                case err @ HttpError(_, _) => SttpStatusMapping.errorToSpanStatus(err)
+              { case err @ HttpError(_, _) =>
+                SttpStatusMapping.errorToSpanStatus(err)
               }
             )
             .use { span =>

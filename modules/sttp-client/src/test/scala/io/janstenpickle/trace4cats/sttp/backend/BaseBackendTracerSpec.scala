@@ -68,52 +68,50 @@ abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift, G[_]:
       val (httpApp, headersRef) = makeHttpApp(response)
 
       fkId(withRunningHttpServer(httpApp) { port =>
-        RefSpanCompleter[F]("test").flatMap {
-          completer =>
-            withBackend {
-              backend =>
-                def req(body: String): G[Unit] =
-                  runReq(backend, basicRequest.get(uri"http://localhost:$port").body(body))
+        RefSpanCompleter[F]("test").flatMap { completer =>
+          withBackend { backend =>
+            def req(body: String): G[Unit] =
+              runReq(backend, basicRequest.get(uri"http://localhost:$port").body(body))
 
-                for {
-                  _ <- entryPoint(completer)
-                    .root(rootSpanName)
-                    .use(
-                      provide(
-                        Trace[G]
-                          .span(req1SpanName)(req(req1SpanName))
-                          .handleError(_ => ()) >> Trace[G].span(req2SpanName)(req(req2SpanName)).handleError(_ => ())
-                      )
-                    )
-                  spans <- completer.get
-                  headersMap <- headersRef.get
-                } yield {
-                  (spans.toList.map(_.name) should contain)
-                    .theSameElementsAs(List("GET ", "GET ", rootSpanName, req1SpanName, req2SpanName))
-                  (headersMap.keys should contain).theSameElementsAs(Set(req1SpanName, req2SpanName))
-
-                  assert(
-                    Eq.eqv(
-                      ToHeaders.w3c.toContext(headersMap(req1SpanName)).get.spanId,
-                      spans.toList.sortBy(_.`end`.toEpochMilli).find(_.name == "GET ").get.context.spanId
-                    )
+            for {
+              _ <- entryPoint(completer)
+                .root(rootSpanName)
+                .use(
+                  provide(
+                    Trace[G]
+                      .span(req1SpanName)(req(req1SpanName))
+                      .handleError(_ => ()) >> Trace[G].span(req2SpanName)(req(req2SpanName)).handleError(_ => ())
                   )
+                )
+              spans <- completer.get
+              headersMap <- headersRef.get
+            } yield {
+              (spans.toList.map(_.name) should contain)
+                .theSameElementsAs(List("GET ", "GET ", rootSpanName, req1SpanName, req2SpanName))
+              (headersMap.keys should contain).theSameElementsAs(Set(req1SpanName, req2SpanName))
 
-                  assert(
-                    Eq.eqv(
-                      ToHeaders.w3c.toContext(headersMap(req2SpanName)).get.spanId,
-                      spans.toList.sortBy(_.`end`.toEpochMilli).reverse.find(_.name == "GET ").get.context.spanId
-                    )
-                  )
+              assert(
+                Eq.eqv(
+                  ToHeaders.w3c.toContext(headersMap(req1SpanName)).get.spanId,
+                  spans.toList.sortBy(_.`end`.toEpochMilli).find(_.name == "GET ").get.context.spanId
+                )
+              )
 
-                  val expectedStatus =
-                    SttpStatusMapping.statusToSpanStatus(response.status.reason, StatusCode(response.status.code))
-                  (spans.toList.collect {
-                    case span if span.name == "GET " => span.status
-                  } should contain).theSameElementsAs(List.fill(2)(expectedStatus))
+              assert(
+                Eq.eqv(
+                  ToHeaders.w3c.toContext(headersMap(req2SpanName)).get.spanId,
+                  spans.toList.sortBy(_.`end`.toEpochMilli).reverse.find(_.name == "GET ").get.context.spanId
+                )
+              )
 
-                }
+              val expectedStatus =
+                SttpStatusMapping.statusToSpanStatus(response.status.reason, StatusCode(response.status.code))
+              (spans.toList.collect {
+                case span if span.name == "GET " => span.status
+              } should contain).theSameElementsAs(List.fill(2)(expectedStatus))
+
             }
+          }
         }
 
       })
@@ -125,21 +123,20 @@ abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift, G[_]:
     val headersRef = Ref.unsafe[F, Map[String, Map[String, String]]](Map.empty)
 
     HttpRoutes
-      .of[F] {
-        case req @ GET -> Root =>
-          req
-            .as[String]
-            .flatMap { key =>
-              headersRef.update(
-                _.updated(
-                  key,
-                  req.headers.toList.map { header =>
-                    header.name.value -> header.value
-                  }.toMap
-                )
+      .of[F] { case req @ GET -> Root =>
+        req
+          .as[String]
+          .flatMap { key =>
+            headersRef.update(
+              _.updated(
+                key,
+                req.headers.toList.map { header =>
+                  header.name.value -> header.value
+                }.toMap
               )
-            }
-            .as(resp)
+            )
+          }
+          .as(resp)
       }
       .orNotFound -> headersRef
   }

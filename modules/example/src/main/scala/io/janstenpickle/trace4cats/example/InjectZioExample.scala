@@ -29,11 +29,10 @@ import zio._
 import scala.concurrent.duration._
 import scala.util.Random
 
-/**
-  * Adapted from https://github.com/tpolecat/natchez/blob/b995b0ebf7b180666810f4edef46dce959596ace/modules/examples/src/main/scala/Example.scala
+/** Adapted from https://github.com/tpolecat/natchez/blob/b995b0ebf7b180666810f4edef46dce959596ace/modules/examples/src/main/scala/Example.scala
   *
-  *This example demonstrates how to use Trace4Cats inject to implicitly pass spans around the callstack.
- **/
+  * This example demonstrates how to use Trace4Cats inject to implicitly pass spans around the callstack.
+  */
 object InjectZioExample extends CatsApp {
   def entryPoint[F[_]: Concurrent: ContextShift: Timer: Parallel: Logger](
     blocker: Blocker,

@@ -124,9 +124,8 @@ object CommonCollector {
           .pipe[F](config.attributeFiltering)
           .andThen { stream =>
             config.batch
-              .fold(stream) {
-                case BatchConfig(size, timeoutSeconds) =>
-                  stream.groupWithin(size, timeoutSeconds.seconds).flatMap(Stream.chunk)
+              .fold(stream) { case BatchConfig(size, timeoutSeconds) =>
+                stream.groupWithin(size, timeoutSeconds.seconds).flatMap(Stream.chunk)
               }
           }
           .andThen(exporter.pipe)
