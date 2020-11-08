@@ -39,13 +39,14 @@ The following implementations are provided out of the box:
 
 #### `SpanSampler`
 Used to decide whether or not a span should be sampled. For more information on sampling see the 
-[associated documentation](docs/sampling.md)
+[associated documentation](sampling.md)
 
 The following implementations are provided out of the box:
 
 - Always
 - Never
 - Probabilistic
+- Rate
 
 #### `ToHeaders`
 

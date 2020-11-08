@@ -103,7 +103,7 @@ object CommonCollector {
             ).map("Kafka" -> _)
           }
 
-      queuedExporter <- QueuedSpanExporter(
+      exporter <- QueuedSpanExporter(
         config.bufferSize,
         List(
           collectorExporter,
@@ -117,18 +117,19 @@ object CommonCollector {
         ).flatten ++ others
       )
 
-      exporter <- Sampling.exporter[F](config.sampling, queuedExporter)
+      samplingPipe: Pipe[F, CompletedSpan, CompletedSpan] <- Sampling.pipe[F](config.sampling)
 
-      exportPipe: Pipe[F, CompletedSpan, Unit] =
-        AttributeFiltering
-          .pipe[F](config.attributeFiltering)
-          .andThen { stream =>
-            config.batch
-              .fold(stream) { case BatchConfig(size, timeoutSeconds) =>
-                stream.groupWithin(size, timeoutSeconds.seconds).flatMap(Stream.chunk)
-              }
+      exportPipe: Pipe[F, CompletedSpan, Unit] = { stream: Stream[F, CompletedSpan] =>
+        config.batch
+          .fold(stream) { case BatchConfig(size, timeoutSeconds) =>
+            stream.groupWithin(size, timeoutSeconds.seconds).flatMap(Stream.chunk)
           }
-          .andThen(exporter.pipe)
+      }.andThen(samplingPipe)
+        .andThen(
+          AttributeFiltering
+            .pipe[F](config.attributeFiltering)
+        )
+        .andThen(exporter.pipe)
 
       tcp <- AvroServer.tcp[F](blocker, exportPipe, config.listener.port)
       udp <- AvroServer.udp[F](blocker, exportPipe, config.listener.port)

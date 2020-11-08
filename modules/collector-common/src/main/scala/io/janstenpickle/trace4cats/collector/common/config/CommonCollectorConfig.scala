@@ -100,12 +100,18 @@ object NewRelicConfig {
 case class SamplingConfig(
   sampleProbability: Option[Double] = None,
   spanNames: Option[NonEmptySet[String]] = None,
+  rate: Option[RateSamplingConfig] = None,
   cacheTtlMinutes: Int = 2,
   maxCacheSize: Long = 1000000,
   redis: Option[RedisStoreConfig] = None
 )
 object SamplingConfig {
   implicit val decoder: Decoder[SamplingConfig] = deriveConfiguredDecoder
+}
+
+case class RateSamplingConfig(maxBatchSize: Int, tokenRateMillis: Int)
+object RateSamplingConfig {
+  implicit val decoder: Decoder[RateSamplingConfig] = deriveConfiguredDecoder
 }
 
 sealed trait RedisStoreConfig
