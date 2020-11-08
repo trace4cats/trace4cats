@@ -31,7 +31,8 @@ class OpenTelemetryJaegerSpanExporterSpec extends BaseJaegerSpec {
         SemanticTags.kindTags,
         SemanticTags.statusTags("span.", statusCode),
         Map("otel.library.name" -> "trace4cats")
-      )
+      ),
+      checkProcess = false
     )
   }
 }

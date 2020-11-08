@@ -14,7 +14,7 @@ import io.jaegertracing.thriftjava.{Process, Span, Tag, TagType}
 import io.janstenpickle.trace4cats.`export`.SemanticTags
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.AttributeValue._
-import io.janstenpickle.trace4cats.model.{AttributeValue, Batch, CompletedSpan, SampleDecision}
+import io.janstenpickle.trace4cats.model.{AttributeValue, Batch, CompletedSpan, SampleDecision, TraceProcess}
 
 import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters._
@@ -23,7 +23,7 @@ import scala.util.Try
 object JaegerSpanExporter {
   def apply[F[_]: Concurrent: ContextShift: Timer, G[_]: Foldable](
     blocker: Blocker,
-    serviceName: Option[String],
+    process: Option[TraceProcess],
     host: String = Option(System.getenv("JAEGER_AGENT_HOST")).getOrElse(UdpSender.DEFAULT_AGENT_UDP_HOST),
     port: Int = Option(System.getenv("JAEGER_AGENT_PORT"))
       .flatMap(p => Try(p.toInt).toOption)
@@ -77,10 +77,10 @@ object JaegerSpanExporter {
       sender =>
         new SpanExporter[F, G] {
           override def exportBatch(batch: Batch[G]): F[Unit] = {
-            def send(service: String, spans: G[CompletedSpan]) =
+            def send(process: TraceProcess, spans: G[CompletedSpan]) =
               blocker.delay(
                 sender.send(
-                  new Process(service),
+                  new Process(process.serviceName).setTags(makeTags(process.attributes)),
                   spans
                     .foldLeft(ListBuffer.empty[Span]) { (buf, span) =>
                       buf += convert(span)
@@ -89,7 +89,7 @@ object JaegerSpanExporter {
                 )
               )
 
-            serviceName match {
+            process match {
               case None =>
                 val grouped: Iterable[(String, ListBuffer[Span])] =
                   batch.spans.foldLeft(Map.empty[String, ListBuffer[Span]]) { case (acc, span) =>

@@ -26,7 +26,7 @@ object JaegerSpanCompleter {
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- JaegerSpanExporter[F, Chunk](blocker, Some(process.serviceName), host, port)
+      exporter <- JaegerSpanExporter[F, Chunk](blocker, Some(process), host, port)
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
 }
