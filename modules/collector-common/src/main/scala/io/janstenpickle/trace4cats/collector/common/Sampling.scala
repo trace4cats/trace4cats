@@ -1,48 +1,56 @@
 package io.janstenpickle.trace4cats.collector.common
 
-import cats.Parallel
-import cats.effect.{Clock, Concurrent, ContextShift, Resource}
-import cats.syntax.semigroup._
-import fs2.Chunk
+import cats.effect.{Concurrent, ContextShift, Resource, Timer}
+import cats.syntax.traverse._
+import cats.{Parallel, Semigroup}
+import fs2.{Chunk, Pipe}
 import io.chrisdavenport.log4cats.Logger
-import io.janstenpickle.trace4cats.`export`.StreamSpanExporter
 import io.janstenpickle.trace4cats.collector.common.config.{RedisStoreConfig, SamplingConfig}
+import io.janstenpickle.trace4cats.model.CompletedSpan
+import io.janstenpickle.trace4cats.rate.sampling.RateTailSpanSampler
 import io.janstenpickle.trace4cats.sampling.tail.cache.LocalCacheSampleDecisionStore
 import io.janstenpickle.trace4cats.sampling.tail.redis.RedisSampleDecisionStore
-import io.janstenpickle.trace4cats.sampling.tail.{TailSamplingSpanExporter, TailSpanSampler}
+import io.janstenpickle.trace4cats.sampling.tail.{TailSamplingPipe, TailSpanSampler}
 
 import scala.concurrent.duration._
 
 object Sampling {
-  def exporter[F[_]: Concurrent: ContextShift: Clock: Parallel: Logger](
+  def pipe[F[_]: Concurrent: ContextShift: Timer: Parallel: Logger](
     config: SamplingConfig,
-    underlying: StreamSpanExporter[F]
-  ): Resource[F, StreamSpanExporter[F]] = {
-    def decisionStore(ttl: Int, maxSize: Long, redis: Option[RedisStoreConfig]) =
-      redis match {
-        case None => Resource.liftF(LocalCacheSampleDecisionStore[F](ttl.minutes, Some(maxSize)))
+  ): Resource[F, Pipe[F, CompletedSpan, CompletedSpan]] = {
+    def makeDecisionStore(keyPrefix: Short) =
+      config.redis match {
+        case None =>
+          Resource.liftF(LocalCacheSampleDecisionStore[F](config.cacheTtlMinutes.minutes, Some(config.maxCacheSize)))
         case Some(RedisStoreConfig.RedisServer(host, port)) =>
-          RedisSampleDecisionStore[F](host, port, ttl.minutes, Some(maxSize))
+          RedisSampleDecisionStore[F](host, port, keyPrefix, config.cacheTtlMinutes.minutes, Some(config.maxCacheSize))
         case Some(RedisStoreConfig.RedisCluster(servers)) =>
-          RedisSampleDecisionStore.cluster[F](servers.map(s => s.host -> s.port), ttl.minutes, Some(maxSize))
+          RedisSampleDecisionStore
+            .cluster[F](
+              servers.map(s => s.host -> s.port),
+              keyPrefix,
+              config.cacheTtlMinutes.minutes,
+              Some(config.maxCacheSize)
+            )
       }
 
-    val makeExporter = TailSamplingSpanExporter[F](underlying, _: TailSpanSampler[F, Chunk])
-
-    config match {
-      case SamplingConfig(None, None, _, _, _) => Resource.pure(underlying)
-      case SamplingConfig(Some(probability), None, _, _, _) =>
-        Resource.pure(makeExporter(TailSpanSampler.probabilistic[F, Chunk](probability)))
-      case SamplingConfig(None, Some(names), ttl, maxSize, redis) =>
-        decisionStore(ttl, maxSize, redis).map(TailSpanSampler.spanNameFilter[F, Chunk](_, names)).map(makeExporter)
-      case SamplingConfig(Some(probability), Some(names), ttl, maxSize, redis) =>
-        decisionStore(ttl, maxSize, redis)
-          .map { store =>
-            TailSpanSampler.probabilistic[F, Chunk](probability) |+| TailSpanSampler
-              .spanNameFilter[F, Chunk](store, names)
-          }
-          .map(makeExporter)
+    val prob: Option[TailSpanSampler[F, Chunk]] = config.sampleProbability.map { probability =>
+      TailSpanSampler.probabilistic[F, Chunk](probability)
     }
+
+    for {
+      name <- config.spanNames.traverse { names =>
+        makeDecisionStore(0).map(TailSpanSampler.spanNameFilter[F, Chunk](_, names))
+      }
+
+      rate <- config.rate.traverse { rate =>
+        makeDecisionStore(1)
+          .evalMap(RateTailSpanSampler.create[F, Chunk](_, rate.maxBatchSize, rate.tokenRateMillis.millis))
+      }
+    } yield Semigroup[TailSpanSampler[F, Chunk]]
+      .combineAllOption(List(prob, name, rate).flatten)
+      .fold[Pipe[F, CompletedSpan, CompletedSpan]](identity)(TailSamplingPipe[F])
+
   }
 
 }

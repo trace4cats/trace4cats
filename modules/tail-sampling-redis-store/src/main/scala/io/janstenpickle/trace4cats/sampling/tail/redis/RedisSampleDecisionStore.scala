@@ -22,7 +22,12 @@ import io.lettuce.core.ClientOptions
 import scala.concurrent.duration.FiniteDuration
 
 object RedisSampleDecisionStore {
-  private val traceIdSplit: SplitEpi[Array[Byte], TraceId] = SplitEpi(TraceId(_).getOrElse(TraceId.invalid), _.value)
+  private val traceIdSplit: SplitEpi[Array[Byte], (Short, TraceId)] = SplitEpi(
+    ba => (0, TraceId(ba.drop(1)).getOrElse(TraceId.invalid)),
+    { case (prefix, traceId) =>
+      traceId.value.+:(prefix.byteValue)
+    }
+  )
   private val booleanSplit: SplitEpi[Array[Byte], SampleDecision] = SplitEpi(
     {
       case Array(1) => SampleDecision.Drop
@@ -34,10 +39,12 @@ object RedisSampleDecisionStore {
     }
   )
 
-  private val codec: RedisCodec[TraceId, SampleDecision] = Codecs.derive(RedisCodec.Bytes, traceIdSplit, booleanSplit)
+  private val codec: RedisCodec[(Short, TraceId), SampleDecision] =
+    Codecs.derive(RedisCodec.Bytes, traceIdSplit, booleanSplit)
 
   def apply[F[_]: Concurrent: Parallel](
-    cmd: RedisCommands[F, TraceId, SampleDecision],
+    cmd: RedisCommands[F, (Short, TraceId), SampleDecision],
+    keyPrefix: Short,
     ttl: FiniteDuration,
     maximumLocalCacheSize: Option[Long]
   ): F[SampleDecisionStore[F]] =
@@ -58,26 +65,27 @@ object RedisSampleDecisionStore {
           override def getDecision(traceId: TraceId): F[Option[SampleDecision]] =
             Sync[F].delay(cache.getIfPresent(traceId)).flatMap {
               case v @ Some(_) => Applicative[F].pure(v)
-              case None => cacheDecision(traceId, cmd.get(traceId))
+              case None => cacheDecision(traceId, cmd.get(keyPrefix -> traceId))
             }
 
           override def batch(traceIds: Set[TraceId]): F[Map[TraceId, SampleDecision]] = {
             for {
               local <- Sync[F].delay(cache.getAllPresent(traceIds))
-              remainder = traceIds.diff(local.keySet)
+              remainder = traceIds.diff(local.keySet).map(keyPrefix -> _)
               remote <- cmd.mGet(remainder)
-              _ <- Sync[F].delay(cache.putAll(remote))
-            } yield local ++ remote
+              remoteMapped = remote.map { case ((_, traceId), decision) => traceId -> decision }
+              _ <- Sync[F].delay(cache.putAll(remoteMapped))
+            } yield local ++ remoteMapped
           }
 
           override def storeDecision(traceId: TraceId, sampleDecision: SampleDecision): F[Unit] =
-            cmd.setEx(traceId, sampleDecision, ttl) >> Sync[F].delay(cache.put(traceId, sampleDecision))
+            cmd.setEx(keyPrefix -> traceId, sampleDecision, ttl) >> Sync[F].delay(cache.put(traceId, sampleDecision))
 
           override def storeDecisions(decisions: Map[TraceId, SampleDecision]): F[Unit] =
             (cmd.disableAutoFlush >> (for {
               results <- decisions.foldLeft(Applicative[F].pure(List.empty[Fiber[F, Unit]])) {
                 case (acc, (traceId, decision)) =>
-                  cmd.setEx(traceId, decision, ttl).start.flatMap(fiber => acc.map(fiber :: _))
+                  cmd.setEx(keyPrefix -> traceId, decision, ttl).start.flatMap(fiber => acc.map(fiber :: _))
               }
               _ <- cmd.flushCommands
               _ <- results.parTraverse_(_.join)
@@ -91,6 +99,7 @@ object RedisSampleDecisionStore {
   def apply[F[_]: Concurrent: ContextShift: Parallel: Logger](
     host: String,
     port: Int,
+    keyPrefix: Short,
     ttl: FiniteDuration,
     maximumLocalCacheSize: Option[Long],
     modifyOptions: ClientOptions => ClientOptions = identity
@@ -98,16 +107,17 @@ object RedisSampleDecisionStore {
     for {
       opts <- Resource.liftF(Sync[F].delay(modifyOptions(ClientOptions.create())))
       cmd <- Redis[F].withOptions(redisUrl(host, port), opts, codec)
-      sampler <- Resource.liftF(apply[F](cmd, ttl, maximumLocalCacheSize))
+      sampler <- Resource.liftF(apply[F](cmd, keyPrefix, ttl, maximumLocalCacheSize))
     } yield sampler
 
   def cluster[F[_]: Concurrent: ContextShift: Parallel: Logger](
     servers: NonEmptyList[(String, Int)],
+    keyPrefix: Short,
     ttl: FiniteDuration,
     maximumLocalCacheSize: Option[Long],
   ): Resource[F, SampleDecisionStore[F]] =
     for {
       cmd <- Redis[F].cluster(codec, servers.map((redisUrl _).tupled).toList: _*)
-      sampler <- Resource.liftF(apply[F](cmd, ttl, maximumLocalCacheSize))
+      sampler <- Resource.liftF(apply[F](cmd, keyPrefix, ttl, maximumLocalCacheSize))
     } yield sampler
 }

@@ -52,6 +52,7 @@ To use Trace4Cats within your application add the dependencies listed below as n
 "io.janstenpickle" %% "trace4cats-core" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-inject" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-inject-zio" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-rate-sampling" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-fs2" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-http4s-client" % "0.6.0"
 "io.janstenpickle" %% "trace4cats-http4s-server" % "0.6.0"

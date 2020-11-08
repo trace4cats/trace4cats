@@ -117,7 +117,8 @@ lazy val root = (project in file("."))
     `tail-sampling`,
     `tail-sampling-cache-store`,
     `tail-sampling-redis-store`,
-    filtering
+    filtering,
+    `rate-sampling`
   )
 
 lazy val model =
@@ -167,7 +168,8 @@ lazy val example = (project in file("modules/example"))
     `sttp-client`,
     `tail-sampling`,
     `tail-sampling-cache-store`,
-    filtering
+    filtering,
+    `rate-sampling`
   )
 
 lazy val test = (project in file("modules/test"))
@@ -583,6 +585,15 @@ lazy val filtering = (project in file("modules/filtering"))
   )
   .dependsOn(model, kernel, `exporter-stream`)
 
+lazy val `rate-sampling` = (project in file("modules/rate-sampling"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-rate-sampling",
+    libraryDependencies ++= Seq(Dependencies.cats, Dependencies.fs2),
+    libraryDependencies ++= Dependencies.test.map(_ % Test)
+  )
+  .dependsOn(model, kernel, `tail-sampling`)
+
 lazy val `tail-sampling` = (project in file("modules/tail-sampling"))
   .settings(publishSettings)
   .settings(
@@ -634,7 +645,8 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
     `tail-sampling`,
     `tail-sampling-cache-store`,
     `tail-sampling-redis-store`,
-    filtering
+    filtering,
+    `rate-sampling`
   )
 
 lazy val collector = (project in file("modules/collector"))

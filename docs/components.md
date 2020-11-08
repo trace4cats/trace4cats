@@ -82,6 +82,9 @@ sampling:
   sample-probability: 0.05 # Optional - must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
   span-names: # Optional - name of spans to sample (may be partial match)
     - some-span-name   cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
+  rate: # Optional - rate sampling
+    max-batch-size: 1000
+    token-rate-millis: 10
   max-cache-size: 500000 # Max number of entries in the sample decision cache, defaults to 1000000
   redis: # Optional - use redis as a sample decision store
     host: redis-host
@@ -207,6 +210,9 @@ sampling:
   sample-probability: 0.05 # Optional - must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
   span-names: # Optional - name of spans to sample (may be partial match)
     - some-span-name 
+  rate: # Optional - rate sampling
+    max-batch-size: 1000
+    token-rate-millis: 10
   cache-ttl-minutes: 10 # Cache duration for sample decision, defaults to 2 mins
   max-cache-size: 500000 # Max number of entries in the sample decision cache, defaults to 1000000
   redis: # Optional - use redis as a sample decision store

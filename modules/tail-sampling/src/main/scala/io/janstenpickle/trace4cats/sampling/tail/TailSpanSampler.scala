@@ -41,7 +41,7 @@ object TailSpanSampler {
     }
   }
 
-  private def combine[G[_]: Applicative: MonoidK](span: CompletedSpan, spans: G[CompletedSpan]): G[CompletedSpan] =
+  def combine[G[_]: Applicative: MonoidK](span: CompletedSpan, spans: G[CompletedSpan]): G[CompletedSpan] =
     MonoidK[G].combineK(spans, Applicative[G].pure(span))
 
   private def traceIds[G[_]: Foldable](spans: G[CompletedSpan]): Set[TraceId] =
@@ -96,14 +96,15 @@ object TailSpanSampler {
   def storedBatchComputation[F[_]: Monad, G[_]: Applicative: Foldable: MonoidK](
     store: SampleDecisionStore[F],
     decider: CompletedSpan => F[SampleDecision],
-    batchDecider: G[CompletedSpan] => F[(G[CompletedSpan], Map[TraceId, SampleDecision])]
+    batchDecider: (G[CompletedSpan], Set[TraceId]) => F[(G[CompletedSpan], Map[TraceId, SampleDecision])]
   ): TailSpanSampler[F, G] = {
     new TailSpanSampler[F, G] {
       override def shouldSample(span: CompletedSpan): F[SampleDecision] = storedShouldSample[F, G](decider, store)(span)
 
-      override def sampleBatch(batch: Batch[G]): F[Batch[G]] =
+      override def sampleBatch(batch: Batch[G]): F[Batch[G]] = {
+        val batchTraces = traceIds(batch.spans)
         for {
-          decisions <- store.batch(traceIds(batch.spans))
+          decisions <- store.batch(batchTraces)
           (missing, sampled) =
             batch.spans.foldLeft((MonoidK[G].empty[CompletedSpan], MonoidK[G].empty[CompletedSpan])) {
               case (acc @ (missing, sampled), span) =>
@@ -115,9 +116,10 @@ object TailSpanSampler {
                     case Some(SampleDecision.Include) => missing -> combine(span, sampled)
                   }
             }
-          (computedSampled, computedDecisions) <- batchDecider(missing)
+          (computedSampled, computedDecisions) <- batchDecider(missing, batchTraces)
           _ <- store.storeDecisions(computedDecisions)
         } yield Batch(MonoidK[G].combineK(sampled, computedSampled))
+      }
     }
   }
 
