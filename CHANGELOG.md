@@ -1,9 +1,65 @@
+## [0.7.0] - 2020-11-09
+
+The biggest release since [0.1.0], most notably this includes:
+
+ - More detailed [documentation](README.md#documentation)
+ - Support for sending spans via [Kafka]
+ - Span context propagation via [Kafka] message headers
+ - [Tail sampling](docs/sampling.md#tail-sampling) in the [Collector](docs/components.md#collectors)
+ - [Rate based samplers](docs/sampling.md#rate)
+ 
+**Please note that this release is not backward compatible with any previous versions**
+
+### Added
+
+* [`kafka-client`]
+  - Support for trace context propagation via [Kafka] message headers ([#89](../../pull/89))
+* [`kafka-graal`]
+  - Class replacements which allow the [Kafka] client to work with Graal native-image ([#89](../../pull/89))
+* [`avro-kafka-exporter`], [`avro-kafka-server`] and [`agent-kafka`]
+  - Support for sending avro encoded spans via [Kafka] ([#89](../../pull/89))
+* [`tail-sampling`], [`tail-sampling-cache-store`] and [`tail-sampling-redis-store`]
+  - Tail sampling implementation for use in the collector ([#89](../../pull/89))
+* [`filtering`]
+  - Add ability to filter out sensitive span attributes within the collector ([#103](../../pull/103))
+* [`rate-sampling`]
+  - Token bucket based rate sampler ([#107](../../pull/107))
+
+### Changed
+
+* [`core`]
+  - Add support for more span context propagation header types ([#85](../../pull/85))
+* [`http4s-common`] and [`http4s-server`]
+  - Add support for excluding certain requests from starting traces ([#86](../../pull/86))
+* [`opentelemetry-otlp-http-exporter`]
+  - Add the ability to load a service account token from the instance metadata service in GCP ([#84](../../pull/84))
+* [`collector`] and [`collector-lite`]
+  - Configure collectors using YAML or JSON ([#89](../../pull/89))
+  - Allow multiple instances of exporters to be configured ([#109](../../pull/109))
+  
+### Removed
+
+* [`http4s-server-zio`] and  [`http4s-client-zio`]
+  - No longer required thanks to new typeclasses introduced as part of ([#89](../../pull/89))
+
+### Housekeeping
+
+  - `google-cloud-trace` to `1.2.6`
+  - `kittens` to `2.2.0`
+  - `sbt-bintray` to `0.6.1`
+  - `grpc-api` and `grpc-okhttp` to `1.33.1`
+  - `sbt` to `1.4.2`
+  - `discipline-core` to `1.1.1`
+  - `micronaut-core` to `2.1.3`
+  - `scalacheck` to `1.15.1`
+  - `scalafmt-core` to `2.7.5`
+
 ## [0.6.0] - 2020-10-21
 
 ### Added
 
 * [`sttp-client`],  [`sttp-client-zio`]
-  - Add [Sttp] client support ([#82](../../pull/82)
+  - Add [Sttp] client support ([#82](../../pull/82))
  
 ## [0.5.2] - 2020-10-21
 
@@ -28,7 +84,7 @@
 ### Added
 
 * [`inject-zio`], [`http4s-server-zio`],  [`http4s-client-zio`]
-  - Add [ZIO] support as a substitute for a Kleisli monad transformer ([#72](../../pull/72)
+  - Add [ZIO] support as a substitute for a Kleisli monad transformer ([#72](../../pull/72))
   
 
 ### Changed
@@ -40,10 +96,10 @@
   - Fix channel resource leak in OT GRPC span exporter by [@catostrophe] ([#63](../../pull/63))
 
 * [`http4s-server`] and  [`http4s-client`]
-  - Abstract away server and client tracers ([#72](../../pull/72)
+  - Abstract away server and client tracers ([#72](../../pull/72))
   
 * [`example`]
-  - Update examples to show how to use [ZIO] as an effect type ([#72](../../pull/72)
+  - Update examples to show how to use [ZIO] as an effect type ([#72](../../pull/72))
 
 ### Housekeeping
 
@@ -198,10 +254,14 @@ Initial Release
 [`test`]: modules/avro
 [`avro`]: modules/avro
 [`avro-exporter`]: modules/avro-exporter
+[`avro-kafka-exporter`]: modules/avro-kafka-exporter
 [`avro-server`]: modules/avro-exporter
+[`avro-kafka-server`]: modules/avro-kafka-exporter
 [`exporter-common`]: modules/exporter-common
 [`exporter-http`]: modules/exporter-http
 [`jaeger-thrift-exporter`]: modules/jaeger-thrift-exporter
+[`kafka-client`]: modules/kafka-client
+[`graal-kafka`]: modules/kafka-client
 [`log-exporter`]: modules/log-exporter
 [`opentelemetry-jaeger-exporter`]: modules/opentelemetry-jaeger-export
 [`opentelemetry-otlp-grpc-exporter`]: modules/opentelemetry-otlp-grpc-exporter
@@ -212,15 +272,23 @@ Initial Release
 [`newrelic-http-exporter`]: modules/newrelic-http-exporter
 [`natchez`]: modules/natchez
 [`agent`]: modules/agent
+[`agent-kafka`]: modules/agent-kafka
 [`collector`]: modules/collector
 [`collector-lite`]: modules/collector-lite
+[`filtering`]: modules/filtering
+[`tail-sampling`]: modules/tail-sampling
+[`tail-sampling-cache-store`]: modules/tail-sampling-cache-store
+[`tail-sampling-redis-store`]: modules/tail-sampling-redis-store
+[`rate-sampling`]: modules/rate-sampling
 
 [Natchez]: https://github.com/tpolecat/natchez
 [FS2]: https://fs2.io
 [Http4s]: https://http4s.org
 [ZIO]: https://zio.dev
 [Sttp]: https://sttp.softwaremill.com
+[Kafka]: https://kafka.apache.org
 
+[0.7.0]: https://github.com/janstenpickle/trace4cats/compare/v0.6.0..v0.7.0
 [0.6.0]: https://github.com/janstenpickle/trace4cats/compare/v0.5.2..v0.6.0
 [0.5.2]: https://github.com/janstenpickle/trace4cats/compare/v0.5.1..v0.5.2
 [0.5.1]: https://github.com/janstenpickle/trace4cats/compare/v0.5.0..v0.5.1

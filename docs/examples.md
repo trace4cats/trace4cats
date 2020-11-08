@@ -20,8 +20,8 @@ inject a root span via a Kleisli (see the Inject example below).
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
 
 ```
 
@@ -33,12 +33,12 @@ inject a root span via the environment (see the Inject example below).
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
 
 ```
 
-## [Advanced](../modules/example/src/main/scala/io/janstenpickle/trace4cats/example/AdvancedExample.scala)
+## [Advanced](0.7.0)
 
 Demonstrates how spans may be used in a for comprehension along side other [`Resource`]s.
 Also shows how multiple completers may be combined using a monoid in the
@@ -48,17 +48,17 @@ object.
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-log-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-log-exporter" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.7.0"
 
 ```
 
@@ -77,10 +77,10 @@ Requires:
 
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-natchez" % "0.6.0" // required only for interop
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-natchez" % "0.7.0" // required only for interop
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
 
 ```
 
@@ -96,10 +96,10 @@ io.janstenpickle.trace4cats.inject.zio._
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-inject-zio" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-natchez" % "0.6.0" // required only for interop
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-inject-zio" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-natchez" % "0.7.0" // required only for interop
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
 
 ```
 
@@ -116,10 +116,10 @@ Requires:
 
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.6.0" // required only for interop
-"io.janstenpickle" %% "trace4cats-natchez" % "0.6.0" 
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.7.0" // required only for interop
+"io.janstenpickle" %% "trace4cats-natchez" % "0.7.0" 
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
 
 ```
 
@@ -135,9 +135,9 @@ between closures.
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-fs2" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-fs2" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
 
 ```
 
@@ -155,11 +155,11 @@ io.janstenpickle.trace4cats.http4s.client.syntax._
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-client" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-server" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-http4s-client" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-http4s-server" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
 
 ```
 
@@ -178,11 +178,11 @@ io.janstenpickle.trace4cats.inject.zio._
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-inject-zio" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-client" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-http4s-server" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-inject-zio" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-http4s-client" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-http4s-server" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
 
 ```
 
@@ -194,10 +194,10 @@ span status is derived from HTTP status codes.
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-sttp-client" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-sttp-client" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
 
 ```
 
@@ -209,10 +209,10 @@ span status is derived from HTTP status codes.
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-inject-zio" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-sttp-client" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-inject-zio" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-sttp-client" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
 
 ```
 
@@ -224,9 +224,9 @@ from spans. Note that this would more commonly be configured on the [collector].
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-filtering" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-filtering" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
 
 ```
 
@@ -238,9 +238,9 @@ have been created. Note that this would more commonly be configured on the [coll
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-filtering" % "0.6.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.6.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-filtering" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
 
 ```
 
