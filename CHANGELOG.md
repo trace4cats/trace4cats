@@ -8,18 +8,19 @@ The biggest release since [0.1.0], most notably this includes:
  - [Tail sampling](docs/sampling.md#tail-sampling) in the [Collector](docs/components.md#collectors)
  - [Rate based samplers](docs/sampling.md#rate)
  
-**Please note that this release is not backward compatible with any previous versions**
+**⚠️ Please note that this release is not backward compatible with any previous versions ⚠️**
 
 ### Added
 
 * [`kafka-client`]
   - Support for trace context propagation via [Kafka] message headers ([#89](../../pull/89))
-* [`kafka-graal`]
+* [`graal-kafka`]
   - Class replacements which allow the [Kafka] client to work with Graal native-image ([#89](../../pull/89))
 * [`avro-kafka-exporter`], [`avro-kafka-server`] and [`agent-kafka`]
   - Support for sending avro encoded spans via [Kafka] ([#89](../../pull/89))
 * [`tail-sampling`], [`tail-sampling-cache-store`] and [`tail-sampling-redis-store`]
   - Tail sampling implementation for use in the collector ([#89](../../pull/89))
+  - Add redis span decision store ([#103](../../pull/103))
 * [`filtering`]
   - Add ability to filter out sensitive span attributes within the collector ([#103](../../pull/103))
 * [`rate-sampling`]
@@ -36,6 +37,11 @@ The biggest release since [0.1.0], most notably this includes:
 * [`collector`] and [`collector-lite`]
   - Configure collectors using YAML or JSON ([#89](../../pull/89))
   - Allow multiple instances of exporters to be configured ([#109](../../pull/109))
+* [`model`], [`kernel`] and [`core`]
+  - Change `Batch` to take a collection type param in order to cut down on transformations and traversals
+    ([#103](../../pull/103))
+  - Remove `TraceProcess` from `Batch` so that it may be flattened into `CompletedSpans`s and made into larger or
+    smaller batches within a stream or exporter ([#103](../../pull/103))
   
 ### Removed
 
@@ -53,6 +59,7 @@ The biggest release since [0.1.0], most notably this includes:
   - `micronaut-core` to `2.1.3`
   - `scalacheck` to `1.15.1`
   - `scalafmt-core` to `2.7.5`
+  - `scalatest` to `3.2.3`
 
 ## [0.6.0] - 2020-10-21
 
