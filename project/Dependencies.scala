@@ -39,7 +39,7 @@ object Dependencies {
     val zioInterop = "2.2.0.1"
 
     val disciplineScalatest = "2.0.1"
-    val discipline = "1.1.1"
+    val discipline = "1.1.2"
     val scalaCheck = "1.15.1"
     val scalaCheckShapeless = "1.2.5"
     val scalaTest = "3.2.3"
