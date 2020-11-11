@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.avro.kafka
 
 import cats.Eq
 import cats.data.NonEmptyList
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.model.Batch

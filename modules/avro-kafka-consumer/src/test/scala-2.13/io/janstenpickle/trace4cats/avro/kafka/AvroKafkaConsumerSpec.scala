@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream
 
 import cats.Eq
 import cats.data.NonEmptyList
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import fs2.concurrent.Queue
 import fs2.kafka.{AutoOffsetReset, ConsumerSettings}
 import io.chrisdavenport.log4cats.Logger
@@ -30,8 +30,6 @@ class AvroKafkaConsumerSpec
     with ArbitraryInstances {
   implicit val contextShift = IO.contextShift(ExecutionContext.global)
   implicit val timer = IO.timer(ExecutionContext.global)
-
-  val blocker = Blocker.liftExecutionContext(ExecutionContext.global)
 
   implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
@@ -75,7 +73,6 @@ class AvroKafkaConsumerSpec
         queue <- Queue.unbounded[IO, Batch]
 
         _ <- AvroKafkaConsumer[IO](
-          blocker,
           NonEmptyList.one(s"localhost:${actualConfig.kafkaPort}"),
           group,
           topic,

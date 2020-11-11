@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import cats.data.Kleisli
 import cats.effect.{Blocker, Bracket, Clock, Concurrent, ContextShift, ExitCode, IO, IOApp, Resource, Sync, Timer}
 import cats.implicits._
-import cats.{Applicative, Functor, Monad, Order, Parallel}
+import cats.{Applicative, Apply, Defer, Functor, Monad, Order, Parallel}
 import fs2.Stream
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
@@ -13,7 +13,7 @@ import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.fs2.TracedStream
 import io.janstenpickle.trace4cats.fs2.syntax.all._
-import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
+import io.janstenpickle.trace4cats.inject.{EntryPoint, LiftTrace, Provide, Trace}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.AttributeValue.LongValue
 import io.janstenpickle.trace4cats.model.{SpanKind, TraceProcess}
@@ -21,7 +21,7 @@ import io.janstenpickle.trace4cats.model.{SpanKind, TraceProcess}
 import scala.concurrent.duration._
 import scala.util.Random
 
-object Fs2Example extends IOApp {
+object Fs2AdvancedExample extends IOApp {
 
   def entryPoint[F[_]: Concurrent: ContextShift: Timer: Parallel: Logger](
     blocker: Blocker,
@@ -61,41 +61,48 @@ object Fs2Example extends IOApp {
     sourceStream[F].inject(ep, "this is injected root span", SpanKind.Producer)
 
   // after the first call to `evalMap` a `Span` is propagated alongside the entry point
-  def doWork[F[_]: Bracket[*[_], Throwable]: Clock](stream: TracedStream[F, FiniteDuration]): TracedStream[F, Long] =
+  def doWork[F[_]: Functor: Apply: Clock: Trace](stream: TracedStream[F, FiniteDuration]): TracedStream[F, Long] =
     stream
-      // eval some effect within a span
-      .evalMap("this is child of the initial injected root span", SpanKind.Internal, "optional-attribute" -> true) {
-        dur =>
-          Clock[F].realTime(TimeUnit.MILLISECONDS).map(_ + dur.toMillis)
+      // eval some traced effect
+      .evalMap { dur =>
+        Trace[F].span("this is child of the initial injected root span", SpanKind.Internal) {
+          Trace[F].put("optional-attribute", true) *> Clock[F].realTime(TimeUnit.MILLISECONDS).map(_ + dur.toMillis)
+        }
       }
 
   // perform a map operation on the underlying stream where each element is traced
-  def map[F[_]: Bracket[*[_], Throwable]: Clock](stream: TracedStream[F, Long]): TracedStream[F, String] =
-    stream.traceMapChunk("map", "opt-attr-2" -> LongValue(1))(_.toString)
+  def map[F[_]: Functor: Clock: Trace](stream: TracedStream[F, Long]): TracedStream[F, String] =
+    stream.evalMap { long =>
+      Trace[F].span("map") {
+        Trace[F].put("opt-attr-2", LongValue(long)).as(long.toString)
+      }
+    }
 
   // `evalMapTrace` takes a function which transforms A => Kleisli[F, Span[F], B] and injects a root or child span
   // to the evaluation. This allows implicit resolution of the `Trace` typeclass in any methods accessed within the
   // evaluation
-  def doTracedWork[F[_]: Sync: Parallel: Timer](stream: TracedStream[F, String]): TracedStream[F, Unit] =
-    stream.evalMapTrace { time =>
-      runF[Kleisli[F, Span[F], *]](time)
+  def doTracedWork[F[_]: Sync: Parallel: Timer: Trace](stream: TracedStream[F, String]): TracedStream[F, Unit] =
+    stream.evalMap { time =>
+      runF[F](time)
     }
 
   // gets the trace headers from the span context so that they may be propagated across service boundaries
   def getHeaders[F[_]: Bracket[*[_], Throwable]](
     stream: TracedStream[F, Unit]
-  ): Stream[F, (Map[String, String], Unit)] =
-    stream.traceHeaders.endTrace
+  ): TracedStream[F, (Map[String, String], Unit)] =
+    stream.traceHeaders
 
-  def continue[F[_]: Bracket[*[_], Throwable]](
+  def continue[F[_]: Bracket[*[_], Throwable]: Defer, G[_]: Applicative: Defer: Trace](
     ep: EntryPoint[F],
     stream: Stream[F, (Map[String, String], Unit)]
-  ): TracedStream[F, Unit] =
+  )(implicit provide: Provide[F, G], lift: LiftTrace[F, G]): TracedStream[G, Unit] =
     // inject the entry point and extract headers from the stream element
     stream
       .injectContinue(ep, "this is the root span in a new service", SpanKind.Consumer)(_._1)
-      .evalMap("child span in new service", SpanKind.Consumer) { _ =>
-        Applicative[F].unit
+      .liftTrace[G] // lift the stream into the traced effect "G"
+      .evalMap { _ =>
+        // Perform a traced operation within the stream
+        Trace[G].span("child span in new service", SpanKind.Consumer)(Applicative[G].unit)
       }
 
   override def run(args: List[String]): IO[ExitCode] =
@@ -107,17 +114,21 @@ object Fs2Example extends IOApp {
       .use { ep =>
         // inject the entry point into an infinite stream, do some work,
         // then export the trace context as message headers
-        val headersStream = getHeaders(
+        val headersStream: TracedStream[Kleisli[IO, Span[IO], *], (Map[String, String], Unit)] =
           inject(ep)
-            .through(doWork[IO])
-            .through(map[IO])
-            .through(doTracedWork[IO])
-        )
+            .liftTrace[Kleisli[IO, Span[IO], *]] // lift the stream effect to the traced type
+            .through(doWork[Kleisli[IO, Span[IO], *]])
+            .through(map[Kleisli[IO, Span[IO], *]])
+            .through(doTracedWork[Kleisli[IO, Span[IO], *]])
+            .through(getHeaders[Kleisli[IO, Span[IO], *]])
+
+        val headers: Stream[IO, (Map[String, String], Unit)] =
+          headersStream.endTrace[IO] // `endTrace[IO]` returns the stream's effect to IO by providing a "noop" span
 
         // simulate going across service boundaries by using the message headers
-        val continuedStream = continue(ep, headersStream)
+        val continuedStream = continue[IO, Kleisli[IO, Span[IO], *]](ep, headers)
 
-        continuedStream.run.compile.drain
+        continuedStream.endTrace[IO].compile.drain
       }
       .as(ExitCode.Success)
 }

@@ -1,72 +1,89 @@
 package io.janstenpickle.trace4cats.fs2.syntax
 
 import cats.data.WriterT
-import cats.effect.{Bracket, Resource}
+import cats.effect.Bracket
+import cats.syntax.applicative._
 import cats.syntax.apply._
 import cats.syntax.functor._
-import cats.{~>, Applicative, Defer}
+import cats.{~>, Applicative, Defer, Functor}
 import fs2.Stream
-import io.janstenpickle.trace4cats.fs2.{EntryPointStream, Fs2EntryPoint, TraceHeadersStream, TracedStream}
-import io.janstenpickle.trace4cats.inject.Provide
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanContext, SpanKind}
+import io.janstenpickle.trace4cats.fs2.{ContinuationSpan, TracedStream}
+import io.janstenpickle.trace4cats.inject.{EntryPoint, LiftTrace, Provide}
+import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 
 trait Fs2StreamSyntax {
-  implicit class InjectEntryPoint[F[_], A](stream: Stream[F, A]) {
-    def inject(ep: Fs2EntryPoint[F]): EntryPointStream[F, A] = WriterT(stream.map(ep -> _))
-    def injectContinue(ep: Fs2EntryPoint[F])(f: A => Map[String, String]): TraceHeadersStream[F, A] =
-      WriterT(stream.map(a => (ep, f(a)) -> a))
+  implicit class InjectEntryPoint[F[_]: Bracket[*[_], Throwable], A](stream: Stream[F, A]) {
+    def inject(ep: EntryPoint[F], name: String): TracedStream[F, A] =
+      inject(ep, _ => name, SpanKind.Internal)
+
+    def inject(ep: EntryPoint[F], name: A => String): TracedStream[F, A] =
+      inject(ep, name, SpanKind.Internal)
+
+    def inject(ep: EntryPoint[F], name: String, kind: SpanKind): TracedStream[F, A] =
+      inject(ep, _ => name, kind)
+
+    def inject(ep: EntryPoint[F], name: A => String, kind: SpanKind): TracedStream[F, A] =
+      WriterT(stream.evalMapChunk(a => ep.root(name(a), kind).use(s => (s -> a).pure)))
+
+    def injectContinue(ep: EntryPoint[F], name: String)(f: A => Map[String, String]): TracedStream[F, A] =
+      injectContinue(ep, name, SpanKind.Internal)(f)
+
+    def injectContinue(ep: EntryPoint[F], name: String, kind: SpanKind)(
+      f: A => Map[String, String]
+    ): TracedStream[F, A] =
+      injectContinue(ep, _ => name, kind)(f)
+
+    def injectContinue(ep: EntryPoint[F], name: A => String)(f: A => Map[String, String]): TracedStream[F, A] =
+      injectContinue(ep, name, SpanKind.Internal)(f)
+
+    def injectContinue(ep: EntryPoint[F], name: A => String, kind: SpanKind)(
+      f: A => Map[String, String]
+    ): TracedStream[F, A] =
+      WriterT(stream.evalMapChunk(a => ep.continueOrElseRoot(name(a), kind, f(a)).use(s => (s -> a).pure)))
   }
 
-  trait EvalOps[F[_], G[_], L, A] {
-    protected def stream: WriterT[Stream[F, *], L, A]
+  implicit class TracedStreamOps[F[_], A](stream: TracedStream[F, A]) {
 
-    protected def makeSpan[B](name: String, kind: SpanKind, l: L)(implicit
-      F: Applicative[F]
-    ): Resource[F, (Fs2EntryPoint[F], Span[F])]
-
-    private def evalTrace[B](name: String, kind: SpanKind)(
-      f: A => G[B]
-    )(implicit F: Bracket[F, Throwable], provide: Provide[F, G]): (L, A) => F[((Fs2EntryPoint[F], SpanContext), B)] = {
-      case (l, a) =>
-        makeSpan(name, kind, l).use { case (ep, span) =>
-          provide(f(a))(span).map((ep, span.context) -> _)
-        }
+    private def eval[B](f: A => F[B])(implicit F: Functor[F]): (Span[F], A) => F[(Span[F], B)] = { case (span, a) =>
+      span match {
+        case s: ContinuationSpan[F] => s.run(f(a)).map(span -> _)
+        case _ => f(a).map(span -> _)
+      }
     }
 
     private def eval[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
       F: Bracket[F, Throwable]
-    ): (L, A) => F[((Fs2EntryPoint[F], SpanContext), B)] = { case (l, a) =>
-      makeSpan(name, kind, l).use { case (ep, span) =>
-        span.putAll(attributes: _*) *> f(a).map((ep, span.context) -> _)
+    ): (Span[F], A) => F[(Span[F], B)] = { case (span, a) =>
+      span.child(name, kind).use { child =>
+        child.putAll(attributes: _*) *> eval(f).apply(span, a)
       }
     }
 
-    def through[B](f: WriterT[Stream[F, *], L, A] => TracedStream[F, B]): TracedStream[F, B] = f(stream)
-
-    def evalMapTrace[B](name: String)(
+    private def evalTrace[G[_], B](
       f: A => G[B]
-    )(implicit F: Bracket[F, Throwable], provide: Provide[F, G]): TracedStream[F, B] =
-      evalMapTrace(name, SpanKind.Internal)(f)
+    )(implicit F: Functor[F], provide: Provide[F, G]): (Span[F], A) => F[(Span[F], B)] = { case (span, a) =>
+      provide(f(a))(span).map(span -> _)
+    }
 
-    def evalMapTrace[B](name: String, kind: SpanKind)(
-      f: A => G[B]
-    )(implicit F: Bracket[F, Throwable], provide: Provide[F, G]): TracedStream[F, B] =
-      WriterT(stream.run.evalMap(evalTrace(name, kind)(f).tupled))
+    def evalMapTrace[G[_], B](f: A => G[B])(implicit F: Functor[F], provide: Provide[F, G]): TracedStream[F, B] =
+      WriterT(stream.run.evalMap(evalTrace(f).tupled))
 
-    def evalMapChunkTrace[B](name: String)(
+    def evalMapChunkTrace[G[_], B](
       f: A => G[B]
-    )(implicit F: Bracket[F, Throwable], provide: Provide[F, G]): TracedStream[F, B] =
-      evalMapChunkTrace(name, SpanKind.Internal)(f)
+    )(implicit F: Applicative[F], provide: Provide[F, G]): TracedStream[F, B] =
+      WriterT(stream.run.evalMapChunk(evalTrace(f).tupled))
 
-    def evalMapChunkTrace[B](name: String, kind: SpanKind)(
-      f: A => G[B]
-    )(implicit F: Bracket[F, Throwable], provide: Provide[F, G]): TracedStream[F, B] =
-      WriterT(stream.run.evalMapChunk(evalTrace(name, kind)(f).tupled))
+    def evalMap[B](f: A => F[B])(implicit F: Functor[F]): TracedStream[F, B] =
+      WriterT(stream.run.evalMap(eval(f).tupled))
+
+    def evalMapChunk[B](f: A => F[B])(implicit F: Applicative[F]): TracedStream[F, B] =
+      WriterT(stream.run.evalMapChunk(eval(f).tupled))
 
     def evalMap[B](name: String, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
       F: Bracket[F, Throwable]
-    ): TracedStream[F, B] = evalMap(name, SpanKind.Internal, attributes: _*)(f)
+    ): TracedStream[F, B] =
+      evalMap(name, SpanKind.Internal, attributes: _*)(f)
 
     def evalMap[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
       F: Bracket[F, Throwable]
@@ -93,65 +110,57 @@ trait Fs2StreamSyntax {
     ): TracedStream[F, B] =
       WriterT(stream.run.evalMapChunk(eval(name, kind, attributes: _*)(a => Applicative[F].pure(f(a))).tupled))
 
-    def dropTrace: Stream[F, A] = stream.run.map(_._2)
-  }
+    def endTrace: Stream[F, A] =
+      stream.value
 
-  implicit class RootTrace[F[_], G[_], A](override val stream: EntryPointStream[F, A])
-      extends EvalOps[F, G, Fs2EntryPoint[F], A] {
-    override protected def makeSpan[B](name: String, kind: SpanKind, l: Fs2EntryPoint[F])(implicit
-      F: Applicative[F]
-    ): Resource[F, (Fs2EntryPoint[F], Span[F])] = l.root(name, kind).map(l -> _)
+    def endTrace[G[_]: Applicative: Defer](implicit provide: Provide[G, F]): Stream[G, A] = translate(
+      provide.noopFk
+    ).value
 
-    def translate[H[_], M](fk: F ~> H)(implicit G: Applicative[H], defer: Defer[H]): EntryPointStream[H, A] =
-      WriterT(stream.run.translate(fk).map { case (ep, a) => ep.mapK(fk) -> a })
-  }
+    def endTrace[G[_]: Applicative: Defer](span: Span[G])(implicit provide: Provide[G, F]): Stream[G, A] = translate(
+      provide.fk(span)
+    ).value
 
-  implicit class ContinueOrElseRoot[F[_], G[_], A](override val stream: TraceHeadersStream[F, A])
-      extends EvalOps[F, G, (Fs2EntryPoint[F], Map[String, String]), A] {
-    override protected def makeSpan[B](name: String, kind: SpanKind, l: (Fs2EntryPoint[F], Map[String, String]))(
-      implicit F: Applicative[F]
-    ): Resource[F, (Fs2EntryPoint[F], Span[F])] =
-      l match {
-        case (ep, headers) => ep.continueOrElseRoot(name, kind, headers).map(ep -> _)
-      }
+    def through[B](f: TracedStream[F, A] => TracedStream[F, B]): TracedStream[F, B] = f(stream)
 
-    def translate[H[_], M](
-      fk: F ~> H
-    )(implicit G: Applicative[H], defer: Defer[H]): WriterT[Stream[H, *], (Fs2EntryPoint[H], Map[String, String]), A] =
-      WriterT(stream.run.translate(fk).map { case ((ep, headers), a) => (ep.mapK(fk), headers) -> a })
-  }
+    def liftTrace[G[_]: Applicative: Defer](implicit
+      F: Applicative[F],
+      defer: Defer[F],
+      provide: Provide[F, G],
+      lift: LiftTrace[F, G]
+    ): TracedStream[G, A] =
+      WriterT(stream.run.translate(lift.fk).map { case (span, a) =>
+        ContinuationSpan.fromSpan[F, G](span) -> a
+      })
 
-  implicit class Continue[F[_], G[_], A](override val stream: TracedStream[F, A])
-      extends EvalOps[F, G, (Fs2EntryPoint[F], SpanContext), A] {
-    override protected def makeSpan[B](name: String, kind: SpanKind, l: (Fs2EntryPoint[F], SpanContext))(implicit
-      F: Applicative[F]
-    ): Resource[F, (Fs2EntryPoint[F], Span[F])] =
-      l match {
-        case (ep, context) => ep.continue(name, kind, context).map(ep -> _)
-      }
+    def translate[G[_]: Applicative: Defer](fk: F ~> G): TracedStream[G, A] =
+      WriterT(stream.run.translate(fk).map { case (span, a) =>
+        span.mapK(fk) -> a
+      })
 
-    def translate[H[_], M](fk: F ~> H)(implicit G: Applicative[H], defer: Defer[H]): TracedStream[H, A] =
-      WriterT(stream.run.translate(fk).map { case ((ep, context), a) => (ep.mapK(fk), context) -> a })
+    def traceHeaders: TracedStream[F, (Map[String, String], A)] = traceHeaders(ToHeaders.all)
 
-    def traceHeaders: Stream[F, (Map[String, String], A)] = traceHeaders(ToHeaders.all)
-    def traceHeaders(toHeaders: ToHeaders): Stream[F, (Map[String, String], A)] =
-      stream.run.map { case ((_, context), a) =>
-        toHeaders.fromContext(context) -> a
-      }
+    def traceHeaders(toHeaders: ToHeaders): TracedStream[F, (Map[String, String], A)] =
+      WriterT(stream.run.map { case (span, a) =>
+        (span, (toHeaders.fromContext(span.context), a))
+      })
 
-    def mapTraceHeaders[B](f: (Map[String, String], A) => B): Stream[F, B] = mapTraceHeaders[B](ToHeaders.all)(f)
-    def mapTraceHeaders[B](toHeaders: ToHeaders)(f: (Map[String, String], A) => B): Stream[F, B] =
-      stream.run.map { case ((_, context), a) =>
-        f(toHeaders.fromContext(context), a)
-      }
+    def mapTraceHeaders[B](f: (Map[String, String], A) => B): TracedStream[F, B] =
+      mapTraceHeaders[B](ToHeaders.all)(f)
 
-    def evalMapTraceHeaders[B](f: (Map[String, String], A) => F[B])(implicit F: Bracket[F, Throwable]): Stream[F, B] =
+    def mapTraceHeaders[B](toHeaders: ToHeaders)(f: (Map[String, String], A) => B): TracedStream[F, B] =
+      WriterT(stream.run.map { case (span, a) =>
+        span -> f(toHeaders.fromContext(span.context), a)
+      })
+
+    def evalMapTraceHeaders[B](f: (Map[String, String], A) => F[B])(implicit F: Functor[F]): TracedStream[F, B] =
       evalMapTraceHeaders(ToHeaders.all)(f)
+
     def evalMapTraceHeaders[B](toHeaders: ToHeaders)(f: (Map[String, String], A) => F[B])(implicit
-      F: Bracket[F, Throwable]
-    ): Stream[F, B] =
-      stream.run.evalMap { case ((ep, context), a) =>
-        ep.continue("propagate", SpanKind.Producer, context).use(_ => f(toHeaders.fromContext(context), a))
-      }
+      F: Functor[F]
+    ): TracedStream[F, B] =
+      WriterT(stream.run.evalMap { case (span, a) => f(toHeaders.fromContext(span.context), a).map(span -> _) })
+
   }
+
 }
