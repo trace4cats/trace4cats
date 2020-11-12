@@ -5,11 +5,11 @@ import java.io.ByteArrayOutputStream
 import cats.Eq
 import cats.data.NonEmptyList
 import cats.effect.IO
-import fs2.concurrent.Queue
 import fs2.kafka.{AutoOffsetReset, ConsumerSettings}
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import io.janstenpickle.trace4cats.model.{Batch, TraceId}
+import io.janstenpickle.trace4cats.avro.AvroInstances
+import io.janstenpickle.trace4cats.model.{CompletedSpan, TraceId}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import net.manub.embeddedkafka.{EmbeddedKafka, EmbeddedKafkaConfig}
 import org.apache.avro.generic.GenericDatumWriter
@@ -40,20 +40,20 @@ class AvroKafkaConsumerSpec
 
   val userDefinedConfig = EmbeddedKafkaConfig(kafkaPort = 0, zooKeeperPort = 0)
 
-  val schema = KafkaSpan.kafkaSpanCodec.schema.toOption.get
+  val schema = AvroInstances.completedSpanCodec.schema.toOption.get
 
   implicit val keySerializer: Serializer[TraceId] = new Serializer[TraceId] {
     override def serialize(topic: String, data: TraceId): Array[Byte] = data.value
   }
 
-  implicit val serializer: Serializer[KafkaSpan] = new Serializer[KafkaSpan] {
-    override def serialize(topic: String, data: KafkaSpan): Array[Byte] = {
+  implicit val serializer: Serializer[CompletedSpan] = new Serializer[CompletedSpan] {
+    override def serialize(topic: String, data: CompletedSpan): Array[Byte] = {
       val writer = new GenericDatumWriter[Any](schema)
       val out = new ByteArrayOutputStream
 
       val encoder = EncoderFactory.get.binaryEncoder(out, null)
 
-      val record = KafkaSpan.kafkaSpanCodec.encode(data).toOption.get
+      val record = AvroInstances.completedSpanCodec.encode(data).toOption.get
 
       writer.write(record, encoder)
       encoder.flush()
@@ -66,26 +66,18 @@ class AvroKafkaConsumerSpec
   }
 
   it should "read spans from kafka" in withRunningKafkaOnFoundPort(userDefinedConfig) { implicit actualConfig =>
-    forAll { (span: KafkaSpan, topic: String, group: String) =>
-      publishToKafka(topic, span.span.context.traceId, span)
+    forAll { (span: CompletedSpan, topic: String, group: String) =>
+      publishToKafka(topic, span.context.traceId, span)
 
-      val ret = (for {
-        queue <- Queue.unbounded[IO, Batch]
+      val ret = AvroKafkaConsumer[IO](
+        NonEmptyList.one(s"localhost:${actualConfig.kafkaPort}"),
+        group,
+        topic,
+        (s: ConsumerSettings[IO, Option[TraceId], Option[CompletedSpan]]) =>
+          s.withAutoOffsetReset(AutoOffsetReset.Earliest)
+      ).take(1).compile.toList.unsafeRunSync()
 
-        _ <- AvroKafkaConsumer[IO](
-          NonEmptyList.one(s"localhost:${actualConfig.kafkaPort}"),
-          group,
-          topic,
-          queue.enqueue,
-          (s: ConsumerSettings[IO, Option[TraceId], Option[KafkaSpan]]) =>
-            s.withAutoOffsetReset(AutoOffsetReset.Earliest)
-        ).compile.drain.start
-        ret <- queue.dequeue1
-      } yield ret).unsafeRunSync()
-
-      ret.spans.size should be(1)
-      ret.process should be(span.process)
-      assert(Eq.eqv(ret.spans.head, span.span))
+      assert(Eq.eqv(ret.head, span))
 
     }
   }
