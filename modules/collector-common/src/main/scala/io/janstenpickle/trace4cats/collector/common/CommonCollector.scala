@@ -95,12 +95,8 @@ object CommonCollector {
       kafkaExporters <-
         config.kafkaForwarders
           .traverse { kafka =>
-            AvroKafkaSpanExporter[F, Chunk](
-              blocker,
-              kafka.bootstrapServers,
-              kafka.topic,
-              _.withProperties(kafka.producerConfig)
-            ).map("Kafka" -> _)
+            AvroKafkaSpanExporter[F, Chunk](kafka.bootstrapServers, kafka.topic, _.withProperties(kafka.producerConfig))
+              .map("Kafka" -> _)
           }
 
       exporter <- QueuedSpanExporter(
@@ -137,7 +133,6 @@ object CommonCollector {
 
       kafka = config.kafkaListener.map { kafka =>
         AvroKafkaConsumer[F](
-          blocker,
           kafka.bootstrapServers,
           kafka.group,
           kafka.topic,

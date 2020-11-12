@@ -7,6 +7,7 @@
  * [Inject ZIO](#inject-zio)
  * [Natchez](#natchez)
  * [FS2](#fs2)
+ * [FS2 Advanced](#fs2-advanced) 
  * [Http4s](#http4s)
  * [Http4s ZIO](#http4s-zio)
  * [Sttp](#http4s)
@@ -126,11 +127,27 @@ Requires:
 
 ## [FS2](../modules/example/src/main/scala/io/janstenpickle/trace4cats/example/Fs2Example.scala)
 
-Demonstrates how a span context can be propagated through an [FS2] stream. Uses the 
-[Writer monad](http://eed3si9n.com/herding-cats/Writer.html) to include an [FS2 `EntryPoint`] along side each element. 
+Demonstrates how a span can be propagated through an [FS2] stream. Uses the 
+[Writer monad](http://eed3si9n.com/herding-cats/Writer.html) to include an [`Span`] along side each element. 
 Implicit methods are provided with the import `io.janstenpickle.trace4cats.fs2.syntax.all._` to lift an 
-[FS2 `EntryPoint`] into the stream and use it to perform traced operations within the stream, propagating a span context
+[`EntryPoint`] into the stream and use it to perform traced operations within the stream, propagating a span
 between closures.  
+
+Requires:
+
+```scala
+"io.janstenpickle" %% "trace4cats-core" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-fs2" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
+
+```
+
+## [FS2 Advanced](../modules/example/src/main/scala/io/janstenpickle/trace4cats/example/Fs2AdvancedExample.scala)
+
+
+Very similar to the [FS2 example above](#fs2), however the effect type on the stream is lifted to the traced effect type
+allowing for traced operations with the same effect type to be performed within the stream. This avoids the need for
+having to use two type parameters when passing around a `TracedStream`.
 
 Requires:
 

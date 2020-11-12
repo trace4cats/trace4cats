@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.avro.kafka
 
 import cats.data.NonEmptyList
-import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Sync, Timer}
+import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Sync, Timer}
 import cats.syntax.applicativeError._
 import cats.syntax.either._
 import cats.syntax.flatMap._
@@ -44,7 +44,6 @@ object AvroKafkaConsumer {
     }
 
   def apply[F[_]: ConcurrentEffect: ContextShift: Timer](
-    blocker: Blocker,
     bootStrapServers: NonEmptyList[String],
     consumerGroup: String,
     topic: String,
@@ -61,7 +60,6 @@ object AvroKafkaConsumer {
           consumerStream(
             modifySettings(
               ConsumerSettings[F, Option[TraceId], Option[CompletedSpan]]
-                .withBlocker(blocker)
                 .withBootstrapServers(bootStrapServers.mkString_(","))
                 .withGroupId(consumerGroup)
                 .withAutoOffsetReset(AutoOffsetReset.Latest)

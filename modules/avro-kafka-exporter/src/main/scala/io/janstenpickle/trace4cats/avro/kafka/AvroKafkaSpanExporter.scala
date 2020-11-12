@@ -2,19 +2,19 @@ package io.janstenpickle.trace4cats.avro.kafka
 
 import java.io.ByteArrayOutputStream
 
-import cats.{ApplicativeError, Foldable, Functor, Traverse}
 import cats.data.NonEmptyList
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Sync}
+import cats.effect.{ConcurrentEffect, ContextShift, Resource, Sync}
 import cats.syntax.applicativeError._
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.show._
+import cats.{ApplicativeError, Foldable, Functor, Traverse}
 import fs2.kafka._
 import io.chrisdavenport.log4cats.Logger
-import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.avro.AvroInstances
+import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceId}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericDatumWriter
@@ -53,7 +53,6 @@ object AvroKafkaSpanExporter {
     }
 
   def apply[F[_]: ConcurrentEffect: ContextShift: Logger, G[+_]: Functor: Traverse: Foldable](
-    blocker: Blocker,
     bootStrapServers: NonEmptyList[String],
     topic: String,
     modifySettings: ProducerSettings[F, TraceId, CompletedSpan] => ProducerSettings[F, TraceId, CompletedSpan] =
@@ -66,7 +65,6 @@ object AvroKafkaSpanExporter {
           .using(
             modifySettings(
               ProducerSettings[F, TraceId, CompletedSpan]
-                .withBlocker(blocker)
                 .withBootstrapServers(bootStrapServers.mkString_(","))
                 .withProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG, "gzip")
             )

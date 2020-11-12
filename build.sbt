@@ -481,8 +481,12 @@ lazy val `inject-zio` = (project in file("modules/inject-zio"))
 
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-fs2", libraryDependencies ++= Seq(Dependencies.fs2))
-  .dependsOn(model, kernel, core, inject)
+  .settings(
+    name := "trace4cats-fs2",
+    libraryDependencies ++= Seq(Dependencies.fs2, Dependencies.catsMtl),
+    libraryDependencies ++= Dependencies.test.map(_ % Test)
+  )
+  .dependsOn(model, kernel, core, inject, `exporter-common` % "test->compile", test % "test->compile")
 
 lazy val `kafka-client` = (project in file("modules/kafka-client"))
   .settings(publishSettings)

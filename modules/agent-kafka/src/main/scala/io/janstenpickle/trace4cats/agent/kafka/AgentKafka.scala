@@ -55,7 +55,7 @@ object AgentKafka
           .info(s"Starting Trace 4 Cats Kafka Agent on udp://::$port. Forwarding to Kafka topic '$kafkaTopic'")
       )(_ => logger.info("Shutting down Trace 4 Cats Kafka Agent"))
 
-      kafkaExporter <- AvroKafkaSpanExporter[IO, Chunk](blocker, kafkaBootstrapServers, kafkaTopic)
+      kafkaExporter <- AvroKafkaSpanExporter[IO, Chunk](kafkaBootstrapServers, kafkaTopic)
 
       queuedExporter <- QueuedSpanExporter(bufferSize, List("Avro Kafka" -> kafkaExporter))
 

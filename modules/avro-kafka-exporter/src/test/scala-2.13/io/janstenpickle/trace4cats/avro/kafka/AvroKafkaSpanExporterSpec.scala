@@ -2,10 +2,12 @@ package io.janstenpickle.trace4cats.avro.kafka
 
 import cats.Eq
 import cats.data.NonEmptyList
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
+import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import io.janstenpickle.trace4cats.model.Batch
+import io.janstenpickle.trace4cats.avro.AvroInstances
+import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import net.manub.embeddedkafka.{EmbeddedKafka, EmbeddedKafkaConfig}
 import org.apache.avro.generic.GenericDatumReader
@@ -27,8 +29,6 @@ class AvroKafkaSpanExporterSpec
   implicit val contextShift = IO.contextShift(ExecutionContext.global)
   implicit val timer = IO.timer(ExecutionContext.global)
 
-  val blocker = Blocker.liftExecutionContext(ExecutionContext.global)
-
   implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
@@ -38,33 +38,31 @@ class AvroKafkaSpanExporterSpec
 
   val userDefinedConfig = EmbeddedKafkaConfig(kafkaPort = 0, zooKeeperPort = 0)
 
-  val schema = KafkaSpan.kafkaSpanCodec.schema.toOption.get
+  val schema = AvroInstances.completedSpanCodec.schema.toOption.get
 
-  implicit val deserializer: Deserializer[KafkaSpan] = new Deserializer[KafkaSpan] {
-    override def deserialize(topic: String, data: Array[Byte]): KafkaSpan = {
+  implicit val deserializer: Deserializer[CompletedSpan] = new Deserializer[CompletedSpan] {
+    override def deserialize(topic: String, data: Array[Byte]): CompletedSpan = {
       val reader = new GenericDatumReader[Any](schema)
       val decoder = DecoderFactory.get.binaryDecoder(data, null)
       val record = reader.read(null, decoder)
 
-      KafkaSpan.kafkaSpanCodec.decode(record, schema).toOption.get
+      AvroInstances.completedSpanCodec.decode(record, schema).toOption.get
     }
   }
 
   it should "serialize a batch of spans to kafka" in withRunningKafkaOnFoundPort(userDefinedConfig) {
     implicit actualConfig =>
-      forAll { (batch: Batch) =>
-        AvroKafkaSpanExporter[IO](blocker, NonEmptyList.one(s"localhost:${actualConfig.kafkaPort}"), "test")
+      forAll { (batch: Batch[Chunk]) =>
+        AvroKafkaSpanExporter[IO, Chunk](NonEmptyList.one(s"localhost:${actualConfig.kafkaPort}"), "test")
           .use { exporter =>
             exporter.exportBatch(batch)
           }
           .unsafeRunSync()
 
-        val messages = consumeNumberMessagesFrom[KafkaSpan]("test", batch.spans.size)
-        val res = messages.groupBy(_.process)
+        val res = consumeNumberMessagesFrom[CompletedSpan]("test", batch.spans.size)
 
-        res.size should be(1)
-        res.head._1 should be(batch.process)
-        assert(Eq.eqv(res.head._2.map(_.span), batch.spans))
+        res.size should be(batch.spans.size)
+        assert(Eq.eqv(res, batch.spans.toList))
       }
 
   }
