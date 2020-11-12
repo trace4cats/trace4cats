@@ -10,6 +10,8 @@ Compatible with [OpenTelemetry] and [Jaeger], based on, and interoperates wht [N
 #### For release information and changes see [the changelog](CHANGELOG.md)
 
   * [Motivation](#motivation)
+  * [Highlights](#highlights)
+  * [Quickstart](#quickstart)
   * [Components](#components)
   * [Documentation](#documentation)
   * [SBT Dependencies](#sbt-dependencies)  
@@ -25,6 +27,98 @@ brings along lots of other dependencies. You may find *Trace4Cats* useful if you
 - Resolve a dependency conflict caused by a tracing implementation
 - Create a [`native-image`] using [Graalvm](https://www.graalvm.org/)
   
+## Highlights
+
+Trace4Cats supports publishing spans to the following systems:
+
+- [Jaeger] via Thrift over UDP and Protobufs over GRPC
+- [OpenTelemetry] via Protobufs over GRPC and JSON over HTTP
+- Log using [Log4Cats]
+- Trace4Cats Avro over UDP, TCP and Kafka
+- [Stackdriver Trace] over HTTP and GRPC
+- [Datadog] over HTTP
+- [NewRelic] over HTTP
+
+Instrumentation for trace propagation and continuation is available for the following libraries
+
+- [Http4s] client and server
+- [Sttp] client
+- [FS2 Kafka] consumer and producer
+- [FS2]
+
+For more information on how to use these can be found in the [examples documentation](docs/examples.md)
+
+## Quickstart
+
+** For more see the [documentation](#documentation) for more advanced [examples](docs/examples.md) **
+
+Add the following dependencies to your `build.sbt`:
+
+```scala
+"io.janstenpickle" %% "trace4cats-core" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
+```
+
+Then run the [collector](docs/components.md#collectors) in span logging mode:
+
+```bash
+echo "log-spans: true" > /tmp/collector.yaml
+docker run -p7777:7777 -p7777:7777/udp -it \
+  -v /tmp/collector.yaml:/tmp/collector.yaml \
+  janstenpickle/trace4cats-collector-lite:0.7.0 \
+  --config-file=/tmp/collector.yaml
+```
+
+Finally, run the following code to export some spans to the collector:
+
+```scala
+import cats.data.Kleisli
+import cats.effect._
+import cats.implicits._
+import io.chrisdavenport.log4cats.Logger
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
+import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
+import io.janstenpickle.trace4cats.kernel.SpanSampler
+import io.janstenpickle.trace4cats.model.{SpanKind, SpanStatus, TraceProcess}
+import scala.concurrent.duration._
+
+object Trace4CatsQuickStart extends IOApp {
+  def entryPoint[F[_]: Concurrent: ContextShift: Timer: Logger](
+    blocker: Blocker,
+    process: TraceProcess
+  ): Resource[F, EntryPoint[F]] =
+    AvroSpanCompleter.udp[F](blocker, process, batchTimeout = 50.millis).map { completer =>
+      EntryPoint[F](SpanSampler.always[F], completer)
+    }
+
+  def runF[F[_]: Sync: Trace]: F[Unit] =
+    for {
+      _ <- Trace[F].span("span1")(Sync[F].delay(println("trace this operation")))
+      _ <- Trace[F].span("span2", SpanKind.Client)(Sync[F].delay(println("send some request")))
+      _ <- Trace[F].span("span3", SpanKind.Client)(
+        Trace[F].putAll("attribute1" -> "test", "attribute2" -> 200).flatMap { _ =>
+          Trace[F].setStatus(SpanStatus.Cancelled)
+        }
+      )
+    } yield ()
+
+  override def run(args: List[String]): IO[ExitCode] =
+    (for {
+      blocker <- Blocker[IO]
+      implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
+      ep <- entryPoint[IO](blocker, TraceProcess("trace4cats"))
+    } yield ep)
+      .use { ep =>
+        ep.root("this is the root span").use { span =>
+          runF[Kleisli[IO, Span[IO], *]].run(span)
+        }
+      }
+      .as(ExitCode.Success)
+}
+```
 
 ## Components
 
@@ -92,7 +186,6 @@ This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-
 
 
 [FS2]: https://fs2.io/
-[FS2 `EntryPoint`]: modules/fs2/src/main/scala/io/janstenpickle/trace4cats/fs2/Fs2EntryPoint.scala
 [Http4s]: https://http4s.org/
 [Jaeger]: https://www.jaegertracing.io/
 [Log4Cats]: https://github.com/ChristopherDavenport/log4cats
@@ -105,3 +198,4 @@ This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-
 [`Resource`]: https://typelevel.org/cats-effect/datatypes/resource.html
 [ZIO]: https://zio.dev
 [Sttp]: https://sttp.softwaremill.com
+[FS2 Kafka]: https://fd4s.github.io/fs2-kafka/
