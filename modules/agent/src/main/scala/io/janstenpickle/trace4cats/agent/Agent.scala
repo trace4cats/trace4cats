@@ -7,17 +7,13 @@ import com.monovore.decline.effect._
 import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import io.janstenpickle.trace4cats.agent.common.CommonAgent
+import io.janstenpickle.trace4cats.agent.common.CommonAgent._
 import io.janstenpickle.trace4cats.avro._
-import io.janstenpickle.trace4cats.avro.server.AvroServer
-import io.janstenpickle.trace4cats.`export`.QueuedSpanExporter
+import io.janstenpickle.trace4cats.kernel.BuildInfo
 
-object Agent extends CommandIOApp(name = "trace4cats-agent", header = "Trace 4 Cats Agent", version = "0.1.0") {
-
-  val portOpt: Opts[Int] =
-    Opts
-      .env[Int](AgentPortEnv, help = "The port to run on.")
-      .orElse(Opts.option[Int]("port", "The port to run on"))
-      .withDefault(DefaultPort)
+object Agent
+    extends CommandIOApp(name = "trace4cats-agent", header = "Trace 4 Cats Agent", version = BuildInfo.version) {
 
   val collectorHostOpt: Opts[String] =
     Opts
@@ -30,29 +26,34 @@ object Agent extends CommandIOApp(name = "trace4cats-agent", header = "Trace 4 C
       .orElse(Opts.option[Int]("collector-port", "Collector port"))
       .withDefault(DefaultPort)
 
-  val bufferSizeOpt: Opts[Int] =
-    Opts
-      .env[Int]("T4C_AGENT_BUFFER_SIZE", "Number of batches to buffer in case of network issues")
-      .orElse(Opts.option[Int]("buffer-size", "Number of batches to buffer in case of network issues"))
-      .withDefault(500)
+  override def main: Opts[IO[ExitCode]] =
+    (portOpt, collectorHostOpt, collectorPortOpt, bufferSizeOpt, traceOpt, traceSampleOpt).mapN(run)
 
-  override def main: Opts[IO[ExitCode]] = (portOpt, collectorHostOpt, collectorPortOpt, bufferSizeOpt).mapN(run)
-
-  def run(port: Int, collectorHost: String, collectorPort: Int, bufferSize: Int): IO[ExitCode] =
+  def run(
+    port: Int,
+    collectorHost: String,
+    collectorPort: Int,
+    bufferSize: Int,
+    trace: Boolean,
+    traceRate: Option[Double]
+  ): IO[ExitCode] =
     (for {
       blocker <- Blocker[IO]
       implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
-      _ <- Resource.make(
-        logger
-          .info(s"Starting Trace 4 Cats Agent on udp://::$port. Forwarding to tcp://$collectorHost:$collectorPort")
-      )(_ => logger.info("Shutting down Trace 4 Cats Agent"))
 
       avroExporter <-
         AvroSpanExporter
           .tcp[IO, Chunk](blocker, host = collectorHost, port = collectorPort)
+    } yield CommonAgent.run[IO](
+      blocker,
+      port,
+      bufferSize,
+      "Avro TCP",
+      List("forward.host" -> collectorHost, "forward.port" -> collectorPort),
+      avroExporter,
+      s"tcp://$collectorHost:$collectorPort",
+      trace,
+      traceRate
+    )).use(identity)
 
-      queuedExporter <- QueuedSpanExporter(bufferSize, List("Avro TCP" -> avroExporter))
-
-      udpServer <- AvroServer.udp[IO](blocker, queuedExporter.pipe, port)
-    } yield udpServer).use(_.compile.drain.as(ExitCode.Success))
 }

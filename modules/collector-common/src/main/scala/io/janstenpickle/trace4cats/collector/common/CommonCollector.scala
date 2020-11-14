@@ -19,7 +19,7 @@ import io.janstenpickle.trace4cats.collector.common.config.{
 }
 import io.janstenpickle.trace4cats.datadog.DataDogSpanExporter
 import io.janstenpickle.trace4cats.jaeger.JaegerSpanExporter
-import io.janstenpickle.trace4cats.kernel.SpanExporter
+import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanExporter}
 import io.janstenpickle.trace4cats.log.LogSpanExporter
 import io.janstenpickle.trace4cats.model.{CompletedSpan, TraceId}
 import io.janstenpickle.trace4cats.newrelic.NewRelicSpanExporter
@@ -41,7 +41,7 @@ object CommonCollector {
       config <- Resource.liftF(ConfigParser.parse[F, CommonCollectorConfig](configFile))
       _ <- Resource.make(
         Logger[F].info(
-          s"Starting Trace 4 Cats Collector listening on tcp://::${config.listener.port} and udp://::${config.listener.port}"
+          s"Starting Trace 4 Cats Collector v${BuildInfo.version} listening on tcp://::${config.listener.port} and udp://::${config.listener.port}"
         )
       )(_ => Logger[F].info("Shutting down Trace 4 Cats Collector"))
 

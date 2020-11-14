@@ -8,19 +8,18 @@ import com.monovore.decline.effect._
 import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import io.janstenpickle.trace4cats.`export`.QueuedSpanExporter
-import io.janstenpickle.trace4cats.avro._
+import io.janstenpickle.trace4cats.agent.common.CommonAgent
+import io.janstenpickle.trace4cats.agent.common.CommonAgent._
 import io.janstenpickle.trace4cats.avro.kafka.AvroKafkaSpanExporter
-import io.janstenpickle.trace4cats.avro.server.AvroServer
+import io.janstenpickle.trace4cats.kernel.BuildInfo
+import io.janstenpickle.trace4cats.model.AttributeValue
 
 object AgentKafka
-    extends CommandIOApp(name = "trace4cats-agent-kafka", header = "Trace 4 Cats Kafka Agent", version = "0.1.0") {
-
-  val portOpt: Opts[Int] =
-    Opts
-      .env[Int](AgentPortEnv, help = "The port to run on.")
-      .orElse(Opts.option[Int]("port", "The port to run on"))
-      .withDefault(DefaultPort)
+    extends CommandIOApp(
+      name = "trace4cats-agent-kafka",
+      header = "Trace 4 Cats Kafka Agent",
+      version = BuildInfo.version
+    ) {
 
   val kafkaBootstrapServersHelp = "Kafka bootstrap servers"
 
@@ -37,28 +36,30 @@ object AgentKafka
   val kafkaTopicOpt: Opts[String] =
     Opts.env[String]("T4C_AGENT_KAFKA_TOPIC", kafkaTopicHelp).orElse(Opts.option[String]("kafka-topic", kafkaTopicHelp))
 
-  val bufferSizeOpt: Opts[Int] =
-    Opts
-      .env[Int]("T4C_AGENT_BUFFER_SIZE", "Number of batches to buffer in case of network issues")
-      .orElse(Opts.option[Int]("buffer-size", "Number of batches to buffer in case of network issues"))
-      .withDefault(500)
-
   override def main: Opts[IO[ExitCode]] =
-    (portOpt, kafkaBootstrapServersOpt, kafkaTopicOpt, bufferSizeOpt).mapN(run)
+    (portOpt, kafkaBootstrapServersOpt, kafkaTopicOpt, bufferSizeOpt, traceOpt, traceSampleOpt).mapN(run)
 
-  def run(port: Int, kafkaBootstrapServers: NonEmptyList[String], kafkaTopic: String, bufferSize: Int): IO[ExitCode] =
-    (for {
-      blocker <- Blocker[IO]
-      implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
-      _ <- Resource.make(
-        logger
-          .info(s"Starting Trace 4 Cats Kafka Agent on udp://::$port. Forwarding to Kafka topic '$kafkaTopic'")
-      )(_ => logger.info("Shutting down Trace 4 Cats Kafka Agent"))
+  def run(
+    port: Int,
+    kafkaBootstrapServers: NonEmptyList[String],
+    kafkaTopic: String,
+    bufferSize: Int,
+    trace: Boolean,
+    traceRate: Option[Double]
+  ): IO[ExitCode] = (for {
+    blocker <- Blocker[IO]
+    implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
 
-      kafkaExporter <- AvroKafkaSpanExporter[IO, Chunk](kafkaBootstrapServers, kafkaTopic)
-
-      queuedExporter <- QueuedSpanExporter(bufferSize, List("Avro Kafka" -> kafkaExporter))
-
-      udpServer <- AvroServer.udp[IO](blocker, queuedExporter.pipe, port)
-    } yield udpServer).use(_.compile.drain.as(ExitCode.Success))
+    kafkaExporter <- AvroKafkaSpanExporter[IO, Chunk](kafkaBootstrapServers, kafkaTopic)
+  } yield CommonAgent.run[IO](
+    blocker,
+    port,
+    bufferSize,
+    "Avro Kafka",
+    List("bootstrap.servers" -> AttributeValue.StringList(kafkaBootstrapServers), "topic" -> kafkaTopic),
+    kafkaExporter,
+    s"Kafka topic '$kafkaTopic'",
+    trace,
+    traceRate
+  )).use(identity)
 }

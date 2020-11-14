@@ -81,7 +81,8 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
                     )
                   }
                   .sortBy(_.operationName),
-                processes = Map("p1" -> JaegerProcess(process.serviceName, convertAttributes(process.attributes).sortBy(_.key)))
+                processes =
+                  Map("p1" -> JaegerProcess(process.serviceName, convertAttributes(process.attributes).sortBy(_.key)))
               )
             )
         )

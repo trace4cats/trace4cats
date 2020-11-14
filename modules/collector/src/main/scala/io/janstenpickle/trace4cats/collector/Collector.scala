@@ -7,7 +7,7 @@ import com.monovore.decline._
 import com.monovore.decline.effect._
 import fs2.Chunk
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import io.janstenpickle.trace4cats.kernel.SpanExporter
+import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanExporter}
 import io.janstenpickle.trace4cats.collector.common.CommonCollector
 import io.janstenpickle.trace4cats.collector.common.config.ConfigParser
 import io.janstenpickle.trace4cats.collector.config.CollectorConfig
@@ -16,7 +16,11 @@ import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpGrpcSpanE
 import io.janstenpickle.trace4cats.stackdriver.StackdriverGrpcSpanExporter
 
 object Collector
-    extends CommandIOApp(name = "trace4cats-collector", header = "Trace 4 Cats Collector", version = "0.1.0") {
+    extends CommandIOApp(
+      name = "trace4cats-collector",
+      header = "Trace 4 Cats Collector",
+      version = BuildInfo.version
+    ) {
 
   override def main: Opts[IO[ExitCode]] =
     CommonCollector.configFileOpt.map { configFile =>
