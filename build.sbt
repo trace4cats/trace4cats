@@ -660,11 +660,15 @@ lazy val collector = (project in file("modules/collector"))
     name := "trace4cats-collector",
     dockerRepository := Some("janstenpickle"),
     dockerUpdateLatest := true,
-    dockerBaseImage := "openjdk:13",
+    dockerBaseImage := "adoptopenjdk/openjdk15:alpine-jre",
     dockerExposedPorts += 7777,
     dockerExposedUdpPorts += 7777,
     daemonUserUid in Docker := Some("9000"),
-    javaOptions in Universal ++= Seq("-Djava.net.preferIPv4Stack=true"),
+    javaOptions in Universal ++= Seq(
+      "-Djava.net.preferIPv4Stack=true",
+      "-J-XX:+UnlockExperimentalVMOptions",
+      "-J-XX:MaxRAMPercentage=90"
+    ),
     libraryDependencies ++= Seq(
       Dependencies.catsEffect,
       Dependencies.declineEffect,
@@ -689,7 +693,7 @@ lazy val collector = (project in file("modules/collector"))
     `stackdriver-grpc-exporter`,
     `stackdriver-http-exporter`
   )
-  .enablePlugins(UniversalPlugin, JavaAppPackaging, DockerPlugin)
+  .enablePlugins(UniversalPlugin, JavaServerAppPackaging, DockerPlugin, AshScriptPlugin)
 
 lazy val `collector-lite` = (project in file("modules/collector-lite"))
   .settings(noPublishSettings)
