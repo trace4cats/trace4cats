@@ -3,10 +3,11 @@ package io.janstenpickle.trace4cats.strackdriver.model
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
+import cats.data.NonEmptyList
 import cats.syntax.show._
 import io.circe.generic.semiauto._
 import io.circe.{Encoder, JsonObject}
-import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind}
+import io.janstenpickle.trace4cats.model.{CompletedSpan, Link, SpanKind}
 import io.janstenpickle.trace4cats.stackdriver.common.StackdriverConstants._
 import io.janstenpickle.trace4cats.stackdriver.common.TruncatableString
 
@@ -20,7 +21,7 @@ case class Span(
   attributes: Attributes,
   stackTrace: JsonObject = JsonObject.empty,
   timeEvents: JsonObject = JsonObject.empty,
-  links: JsonObject = JsonObject.empty,
+  links: SpanLinks,
   status: Status,
   sameProcessAsParentSpan: Option[Boolean],
   childSpanCount: Option[Int] = None,
@@ -38,6 +39,15 @@ object Span {
       case _ => spanName
     }
 
+  def toSpanLinks(links: Option[NonEmptyList[Link]]): SpanLinks =
+    SpanLinks(
+      links.fold(List.empty[SpanLink])(_.map {
+        case Link.Child(traceId, spanId) => SpanLink(traceId.show, spanId.show, "CHILD_LINKED_SPAN")
+        case Link.Parent(traceId, spanId) => SpanLink(traceId.show, spanId.show, "PARENT_LINKED_SPAN")
+      }.toList),
+      0
+    )
+
   def toInstant(time: Long) = Instant.ofEpochMilli(TimeUnit.MICROSECONDS.toMillis(time))
 
   def fromCompleted(projectId: String, completed: CompletedSpan): Span =
@@ -51,7 +61,8 @@ object Span {
       attributes = Attributes.fromCompleted(completed.allAttributes),
       status = Status(completed.status.canonicalCode),
       sameProcessAsParentSpan = completed.context.parent.map(!_.isRemote),
-      spanKind = completed.kind
+      spanKind = completed.kind,
+      links = toSpanLinks(completed.links)
     )
 
   implicit val truncatableStringEncoder: Encoder[TruncatableString] = deriveEncoder

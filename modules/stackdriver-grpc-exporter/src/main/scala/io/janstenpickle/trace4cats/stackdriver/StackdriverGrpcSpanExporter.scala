@@ -3,6 +3,7 @@ package io.janstenpickle.trace4cats.stackdriver
 import java.time.Instant
 
 import cats.Foldable
+import cats.data.NonEmptyList
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
 import cats.syntax.functor._
 import cats.syntax.show._
@@ -90,6 +91,20 @@ object StackdriverGrpcSpanExporter {
         .setCode(status.canonicalCode)
         .build()
 
+    def toLinksProto(links: Option[NonEmptyList[Link]]): Span.Links =
+      links
+        .fold(Span.Links.newBuilder())(_.foldLeft(Span.Links.newBuilder()) { (builder, link) =>
+          val linkType = link match {
+            case Link.Child(_, _) => Span.Link.Type.CHILD_LINKED_SPAN
+            case Link.Parent(_, _) => Span.Link.Type.PARENT_LINKED_SPAN
+          }
+
+          builder.addLink(
+            Span.Link.newBuilder().setType(linkType).setTraceId(link.traceId.show).setSpanId(link.spanId.show)
+          )
+        })
+        .build()
+
     def convert(completedSpan: CompletedSpan): Span = {
       val spanIdHex = completedSpan.context.spanId.show
 
@@ -106,6 +121,7 @@ object StackdriverGrpcSpanExporter {
           .setEndTime(toTimestampProto(completedSpan.end))
           .setAttributes(toAttributesProto(completedSpan.allAttributes))
           .setStatus(toStatusProto(completedSpan.status))
+          .setLinks(toLinksProto(completedSpan.links))
 
       val builder = completedSpan.context.parent.fold(spanBuilder) { parent =>
         spanBuilder.setParentSpanId(parent.spanId.show).setSameProcessAsParentSpan(BoolValue.of(!parent.isRemote))

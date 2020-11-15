@@ -13,7 +13,7 @@ import io.janstenpickle.trace4cats.model._
 import io.opentelemetry.proto.common.v1.common._
 import io.opentelemetry.proto.resource.v1.resource.Resource
 import io.opentelemetry.proto.trace.v1.trace.Span.SpanKind._
-import io.opentelemetry.proto.trace.v1.trace.Span.{Event, Link}
+import io.opentelemetry.proto.trace.v1.trace.Span.Event
 import io.opentelemetry.proto.trace.v1.trace.Status.StatusCode
 import io.opentelemetry.proto.trace.v1.trace.Status.StatusCode._
 import io.opentelemetry.proto.trace.v1.trace.{InstrumentationLibrarySpans, ResourceSpans, Span, Status}
@@ -79,7 +79,10 @@ object Convert {
             case _ => ""
           }
         )
-      )
+      ),
+      links = span.links.fold(List.empty[Span.Link])(_.collect { case Link.Parent(traceId, spanId) =>
+        Span.Link(ByteString.copyFrom(traceId.value), ByteString.copyFrom(spanId.value))
+      })
     )
 
   def toInstrumentationLibrarySpans[G[_]: Foldable](spans: G[CompletedSpan]): InstrumentationLibrarySpans =
@@ -126,7 +129,7 @@ object Convert {
   implicit def keyValueEncoder: Encoder[KeyValue] = deriveConfiguredEncoder
 
   implicit val eventEncoder: Encoder[Event] = deriveConfiguredEncoder
-  implicit val linkEncoder: Encoder[Link] = deriveConfiguredEncoder
+  implicit val linkEncoder: Encoder[Span.Link] = deriveConfiguredEncoder
   implicit val statusCodeEncoder: Encoder[StatusCode] = Encoder.encodeInt.contramap(_.value)
   implicit val statusEncoder: Encoder[Status] = deriveConfiguredEncoder
 

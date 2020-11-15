@@ -41,7 +41,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
     process: TraceProcess,
     kindToAttributes: SpanKind => Map[String, AttributeValue],
     statusToAttributes: SpanStatus => Map[String, AttributeValue],
-    additionalAttributes: Map[String, AttributeValue] = Map.empty
+    additionalAttributes: Map[String, AttributeValue] = Map.empty,
   ): List[JaegerTraceResponse] = {
     def convertAttributes(attributes: Map[String, AttributeValue]): List[JaegerTag] =
       attributes.toList.map {
@@ -75,9 +75,18 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
                           span.status
                         ) ++ additionalAttributes
                       )).sortBy(_.key),
-                      references = span.context.parent.toList.map { parent =>
+                      references = (span.context.parent.toList.map { parent =>
                         JaegerReference("CHILD_OF", traceId.show, parent.spanId.show)
-                      }
+                      } ++ span.links
+                        .fold(List.empty[JaegerReference])(_.map { link =>
+                          val linkType = link match {
+                            case Link.Child(_, _) => "CHILD_OF"
+                            case Link.Parent(_, _) => "FOLLOWS_FROM"
+                          }
+
+                          JaegerReference(linkType, link.traceId.show, link.spanId.show)
+                        }.toList))
+                        .sortBy(_.traceID)
                     )
                   }
                   .sortBy(_.operationName),
@@ -114,6 +123,13 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
         }
         .unsafeRunSync()
         .sortBy(_.data.head.traceID)
+        .map(resp =>
+          resp.copy(data =
+            resp.data.map(trace =>
+              trace.copy(spans = trace.spans.map(span => span.copy(references = span.references.sortBy(_.traceID))))
+            )
+          )
+        )
 
     if (checkProcess) assert(res === expectedResponse)
     else assert(res.map(updateProcess) === expectedResponse.map(updateProcess))
@@ -142,6 +158,13 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
         }
         .unsafeRunSync()
         .sortBy(_.data.head.traceID)
+        .map(resp =>
+          resp.copy(data =
+            resp.data.map(trace =>
+              trace.copy(spans = trace.spans.map(span => span.copy(references = span.references.sortBy(_.traceID))))
+            )
+          )
+        )
 
     if (checkProcess) assert(res === expectedResponse)
     else assert(res.map(updateProcess) === expectedResponse.map(updateProcess))

@@ -5,16 +5,26 @@ import java.util.concurrent.TimeUnit
 
 import alleycats.std.iterable._
 import cats.Foldable
+import cats.data.NonEmptyList
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
 import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.show._
 import io.jaegertracing.thrift.internal.senders.UdpSender
-import io.jaegertracing.thriftjava.{Process, Span, Tag, TagType}
+import io.jaegertracing.thriftjava.{Process, Span, SpanRef, SpanRefType, Tag, TagType}
 import io.janstenpickle.trace4cats.`export`.SemanticTags
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.AttributeValue._
-import io.janstenpickle.trace4cats.model.{AttributeValue, Batch, CompletedSpan, SampleDecision, TraceProcess}
+import io.janstenpickle.trace4cats.model.{
+  AttributeValue,
+  Batch,
+  CompletedSpan,
+  Link,
+  SampleDecision,
+  SpanId,
+  TraceId,
+  TraceProcess
+}
 
 import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters._
@@ -48,10 +58,30 @@ object JaegerSpanExporter {
         .toList
         .asJava
 
+    def traceIdToLongs(traceId: TraceId): (Long, Long) = {
+      val traceIdBuffer = ByteBuffer.wrap(traceId.value)
+      (traceIdBuffer.getLong, traceIdBuffer.getLong)
+    }
+
+    def spanIdToLong(spanId: SpanId): Long = ByteBuffer.wrap(spanId.value).getLong
+
+    def references(links: Option[NonEmptyList[Link]]): java.util.List[SpanRef] =
+      links
+        .fold(List.empty[SpanRef])(_.map { link =>
+          val (traceIdHigh, traceIdLow) = traceIdToLongs(link.traceId)
+          val spanId = spanIdToLong(link.spanId)
+
+          link match {
+
+            case Link.Child(_, _) => new SpanRef(SpanRefType.CHILD_OF, traceIdLow, traceIdHigh, spanId)
+            case Link.Parent(_, _) => new SpanRef(SpanRefType.FOLLOWS_FROM, traceIdLow, traceIdHigh, spanId)
+          }
+        }.toList)
+        .asJava
+
     def convert(span: CompletedSpan): Span = {
-      val traceIdBuffer = ByteBuffer.wrap(span.context.traceId.value)
-      val traceIdHigh = traceIdBuffer.getLong
-      val traceIdLow = traceIdBuffer.getLong
+
+      val (traceIdHigh, traceIdLow) = traceIdToLongs(span.context.traceId)
 
       val startMicros = TimeUnit.MILLISECONDS.toMicros(span.start.toEpochMilli)
       val endMicros = TimeUnit.MILLISECONDS.toMicros(span.end.toEpochMilli)
@@ -59,7 +89,7 @@ object JaegerSpanExporter {
       val thriftSpan = new Span(
         traceIdLow,
         traceIdHigh,
-        ByteBuffer.wrap(span.context.spanId.value).getLong,
+        spanIdToLong(span.context.spanId),
         span.context.parent.map(parent => ByteBuffer.wrap(parent.spanId.value).getLong).getOrElse(0),
         span.name,
         span.context.traceFlags.sampled match {
@@ -70,7 +100,9 @@ object JaegerSpanExporter {
         endMicros - startMicros
       )
 
-      thriftSpan.setTags(makeTags(span.allAttributes ++ statusTags(span.status) ++ SemanticTags.kindTags(span.kind)))
+      thriftSpan
+        .setTags(makeTags(span.allAttributes ++ statusTags(span.status) ++ SemanticTags.kindTags(span.kind)))
+        .setReferences(references(span.links))
     }
 
     Resource.make(Sync[F].delay(new UdpSender(host, port, 0)))(sender => Sync[F].delay(sender.close()).void).map {
