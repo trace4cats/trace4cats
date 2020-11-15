@@ -11,6 +11,7 @@ import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanExporter}
 import io.janstenpickle.trace4cats.collector.common.CommonCollector
 import io.janstenpickle.trace4cats.collector.common.config.ConfigParser
 import io.janstenpickle.trace4cats.collector.config.CollectorConfig
+import io.janstenpickle.trace4cats.model.AttributeValue
 import io.janstenpickle.trace4cats.opentelemetry.jaeger.OpenTelemetryJaegerSpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpGrpcSpanExporter
 import io.janstenpickle.trace4cats.stackdriver.StackdriverGrpcSpanExporter
@@ -38,19 +39,23 @@ object Collector
   def others[F[_]: ConcurrentEffect: Parallel: ContextShift: Timer](
     blocker: Blocker,
     configFile: String
-  ): Resource[F, List[(String, SpanExporter[F, Chunk])]] =
+  ): Resource[F, List[(String, List[(String, AttributeValue)], SpanExporter[F, Chunk])]] =
     for {
       config <- Resource.liftF(ConfigParser.parse[F, CollectorConfig](configFile))
       jaegerProtoExporters <- config.jaegerProto.traverse { jaeger =>
-        OpenTelemetryJaegerSpanExporter[F, Chunk](jaeger.host, jaeger.port).map("Jaeger Proto" -> _)
+        OpenTelemetryJaegerSpanExporter[F, Chunk](jaeger.host, jaeger.port).map(
+          ("Jaeger Proto", List[(String, AttributeValue)]("host" -> jaeger.host, "port" -> jaeger.port), _)
+        )
       }
 
       otGrpcExporters <- config.otlpGrpc.traverse { otlp =>
-        OpenTelemetryOtlpGrpcSpanExporter[F, Chunk](host = otlp.host, port = otlp.port).map("OpenTelemetry GRPC" -> _)
+        OpenTelemetryOtlpGrpcSpanExporter[F, Chunk](host = otlp.host, port = otlp.port)
+          .map(("OpenTelemetry GRPC", List[(String, AttributeValue)]("host" -> otlp.host, "port" -> otlp.port), _))
       }
 
       stackdriverExporters <- config.stackdriverGrpc.traverse { stackdriver =>
-        StackdriverGrpcSpanExporter[F, Chunk](blocker, projectId = stackdriver.projectId).map("Stackdriver GRPC" -> _)
+        StackdriverGrpcSpanExporter[F, Chunk](blocker, projectId = stackdriver.projectId)
+          .map(("Stackdriver GRPC", List[(String, AttributeValue)]("project.id" -> stackdriver.projectId), _))
       }
     } yield List(jaegerProtoExporters, otGrpcExporters, stackdriverExporters).flatten
 

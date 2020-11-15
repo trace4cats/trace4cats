@@ -13,6 +13,7 @@ case class CommonCollectorConfig(
   listener: ListenerConfig = ListenerConfig(),
   kafkaListener: Option[KafkaListenerConfig] = None,
   batch: Option[BatchConfig] = None,
+  tracing: Option[TracingConfig] = None,
   forwarders: List[ForwarderConfig] = List.empty,
   kafkaForwarders: List[KafkaForwarderConfig] = List.empty,
   jaeger: List[JaegerConfig] = List.empty,
@@ -146,4 +147,9 @@ object FilteringConfig {
   ).reduceLeft(_.or(_))
 
   implicit val decoder: Decoder[FilteringConfig] = deriveConfiguredDecoder
+}
+
+case class TracingConfig(enabled: Boolean, sampleRate: Option[Double] = None)
+object TracingConfig {
+  implicit val decoder: Decoder[TracingConfig] = deriveConfiguredDecoder
 }

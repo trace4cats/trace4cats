@@ -645,6 +645,7 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
   .dependsOn(
     model,
     `exporter-common`,
+    meta,
     `avro-exporter`,
     `avro-server`,
     `datadog-http-exporter`,
