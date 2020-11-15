@@ -8,7 +8,7 @@ import cats.syntax.functor._
 import fs2.concurrent.Queue
 import fs2.{Pipe, Stream}
 import io.janstenpickle.trace4cats.Span
-import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
+import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.model._
 
 object PipeTracer {
@@ -20,8 +20,7 @@ object PipeTracer {
   ): F[Pipe[F, CompletedSpan, CompletedSpan]] =
     Queue.circularBuffer[F, CompletedSpan](bufferSize).map { queue =>
       val completer = new SpanCompleter[F] {
-        override def complete(span: CompletedSpan.Builder): F[Unit] =
-          queue.enqueue1(span.build(process))
+        override def complete(span: CompletedSpan.Builder): F[Unit] = queue.enqueue1(span.build(process))
       }
 
       in: Stream[F, CompletedSpan] =>
@@ -35,7 +34,10 @@ object PipeTracer {
                     val (batchSize, links, spans) = BatchUtil.extractMetadata(batch, meta.context)
 
                     meta.putAll(
-                      ("batch.size" -> AttributeValue.LongValue(batchSize.toLong)) :: attributes: _*
+                      List[(String, AttributeValue)](
+                        "batch.size" -> batchSize,
+                        "trace4cats.version" -> BuildInfo.version
+                      ) ++ attributes: _*
                     ) *> NonEmptyList
                       .fromList(links)
                       .fold(Applicative[F].unit)(meta.addLinks)
@@ -44,6 +46,6 @@ object PipeTracer {
                 }
             })
           }
-          .mergeHaltBoth(queue.dequeue)
+          .merge(queue.dequeue)
     }
 }

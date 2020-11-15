@@ -80,7 +80,7 @@ case class EmptySpan[F[_]: Defer: MonadError[*[_], Throwable]] private (context:
   override def addLinks(links: NonEmptyList[Link]): F[Unit] = Applicative[F].unit
   override def child(name: String, kind: SpanKind): Resource[F, Span[F]] =
     Resource.liftF(SpanContext.child[F](context).map { childContext =>
-      EmptySpan(childContext.setIsSampled())
+      EmptySpan(childContext.setDrop())
     })
   override def child(
     name: String,
@@ -120,7 +120,7 @@ object Span {
           .map(_.toBoolean)
       )
       .ifM(
-        Resource.liftF(Applicative[F].pure(EmptySpan[F](context.setIsSampled()))),
+        Resource.liftF(Applicative[F].pure(EmptySpan[F](context.setDrop()))),
         Resource.makeCase(for {
           attributesRef <- Ref.of[F, Map[String, AttributeValue]](Map.empty)
           now <- Clock[F].realTime(TimeUnit.MILLISECONDS)

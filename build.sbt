@@ -435,7 +435,7 @@ lazy val meta =
   (project in file("modules/meta"))
     .settings(publishSettings)
     .settings(name := "trace4cats-meta", libraryDependencies ++= Seq(Dependencies.catsEffect))
-    .dependsOn(model, kernel, core, `exporter-common`)
+    .dependsOn(model, kernel, core, `exporter-common`, test % "test->compile")
 
 lazy val `exporter-http` =
   (project in file("modules/exporter-http"))
