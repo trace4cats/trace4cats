@@ -45,12 +45,12 @@ object Tracing {
             "listen.format" -> "avro",
             "listen.port" -> listener.port
           ) ++ kafka.toList.flatMap { kafkaConfig =>
-            Map(
+            List[(String, AttributeValue)](
               "bootstrap.servers" -> AttributeValue.StringList(kafkaConfig.bootstrapServers),
               "topic" -> kafkaConfig.topic,
               "consumer.group" -> kafkaConfig.group
             )
-          },
+          }.toMap,
           process,
           sampler
         )

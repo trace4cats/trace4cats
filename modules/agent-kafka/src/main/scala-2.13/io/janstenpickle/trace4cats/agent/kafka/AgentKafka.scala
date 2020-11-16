@@ -56,7 +56,10 @@ object AgentKafka
     port,
     bufferSize,
     "Avro Kafka",
-    Map("bootstrap.servers" -> AttributeValue.StringList(kafkaBootstrapServers), "topic" -> kafkaTopic),
+    Map[String, AttributeValue](
+      "bootstrap.servers" -> AttributeValue.StringList(kafkaBootstrapServers),
+      "topic" -> kafkaTopic
+    ),
     kafkaExporter,
     s"Kafka topic '$kafkaTopic'",
     trace,
