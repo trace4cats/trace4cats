@@ -44,18 +44,37 @@ object Collector
       config <- Resource.liftF(ConfigParser.parse[F, CollectorConfig](configFile))
       jaegerProtoExporters <- config.jaegerProto.traverse { jaeger =>
         OpenTelemetryJaegerSpanExporter[F, Chunk](jaeger.host, jaeger.port).map(
-          ("Jaeger Proto", List[(String, AttributeValue)]("host" -> jaeger.host, "port" -> jaeger.port), _)
+          (
+            "Jaeger Proto",
+            List[(String, AttributeValue)](
+              "jaeger.protobuf.host" -> jaeger.host,
+              "jaeger.protobuf.port" -> jaeger.port
+            ),
+            _
+          )
         )
       }
 
       otGrpcExporters <- config.otlpGrpc.traverse { otlp =>
         OpenTelemetryOtlpGrpcSpanExporter[F, Chunk](host = otlp.host, port = otlp.port)
-          .map(("OpenTelemetry GRPC", List[(String, AttributeValue)]("host" -> otlp.host, "port" -> otlp.port), _))
+          .map(
+            (
+              "OpenTelemetry GRPC",
+              List[(String, AttributeValue)]("otlp.grpc.host" -> otlp.host, "otlp.grpc.port" -> otlp.port),
+              _
+            )
+          )
       }
 
       stackdriverExporters <- config.stackdriverGrpc.traverse { stackdriver =>
         StackdriverGrpcSpanExporter[F, Chunk](blocker, projectId = stackdriver.projectId)
-          .map(("Stackdriver GRPC", List[(String, AttributeValue)]("project.id" -> stackdriver.projectId), _))
+          .map(
+            (
+              "Stackdriver GRPC",
+              List[(String, AttributeValue)]("stackdriver.grpc.project.id" -> stackdriver.projectId),
+              _
+            )
+          )
       }
     } yield List(jaegerProtoExporters, otGrpcExporters, stackdriverExporters).flatten
 

@@ -49,7 +49,7 @@ object Agent
       port,
       bufferSize,
       "Avro TCP",
-      List("forward.host" -> collectorHost, "forward.port" -> collectorPort),
+      Map("forward.host" -> collectorHost, "forward.port" -> collectorPort),
       avroExporter,
       s"tcp://$collectorHost:$collectorPort",
       trace,

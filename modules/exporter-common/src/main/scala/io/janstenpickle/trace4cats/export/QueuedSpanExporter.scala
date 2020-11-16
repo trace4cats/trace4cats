@@ -10,11 +10,11 @@ import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.monad._
 import cats.syntax.parallel._
-import fs2.{Chunk, Pipe}
+import fs2.Chunk
 import fs2.concurrent.Queue
 import io.chrisdavenport.log4cats.Logger
 import io.janstenpickle.trace4cats.kernel.SpanExporter
-import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan}
+import io.janstenpickle.trace4cats.model.Batch
 
 import scala.concurrent.duration._
 
@@ -37,8 +37,6 @@ object QueuedSpanExporter {
             if (current == bufferSize) current
             else current + 1
           }).timeoutTo(enqueueTimeout, Logger[F].warn(s"Failed to enqueue span batch in $enqueueTimeout"))
-
-        override def pipe: Pipe[F, CompletedSpan, Unit] = _.chunks.evalMap(chunk => exportBatch(Batch(chunk)))
       }
 
     exporters

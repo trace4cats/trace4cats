@@ -20,6 +20,7 @@ import io.opentelemetry.proto.trace.v1.trace.{InstrumentationLibrarySpans, Resou
 import org.apache.commons.codec.binary.Hex
 import scalapb.UnknownFieldSet
 import cats.syntax.foldable._
+import cats.syntax.semigroup._
 
 import scala.collection.mutable.ListBuffer
 object Convert {
@@ -85,7 +86,7 @@ object Convert {
       })
     )
 
-  def toInstrumentationLibrarySpans[G[_]: Foldable](spans: G[CompletedSpan]): InstrumentationLibrarySpans =
+  def toInstrumentationLibrarySpans(spans: List[CompletedSpan]): InstrumentationLibrarySpans =
     InstrumentationLibrarySpans(
       instrumentationLibrary = Some(InstrumentationLibrary("trace4cats")),
       spans = spans
@@ -95,11 +96,21 @@ object Convert {
         .toList
     )
 
-  def toResourceSpans[G[_]: Foldable](batch: Batch[G]): ResourceSpans =
-    ResourceSpans(
-      resource = Some(Resource()),
-      instrumentationLibrarySpans = List(toInstrumentationLibrarySpans(batch.spans))
-    )
+  def toResourceSpans[G[_]: Foldable](batch: Batch[G]): Iterable[ResourceSpans] =
+    batch.spans
+      .foldLeft(Map.empty[String, List[CompletedSpan]]) { (acc, span) =>
+        acc |+| Map(span.serviceName -> List(span))
+      }
+      .map { case (service, spans) =>
+        ResourceSpans(
+          resource = Some(
+            Resource(attributes =
+              List(KeyValue("service.name", Some(AnyValue.of(AnyValue.Value.StringValue(service)))))
+            )
+          ),
+          instrumentationLibrarySpans = List(toInstrumentationLibrarySpans(spans))
+        )
+      }
 
   implicit val jsonConfig = Configuration.default.withSnakeCaseConstructorNames.withSnakeCaseMemberNames
 
@@ -138,15 +149,15 @@ object Convert {
   implicit val instrumentationLibraryEncoder: Encoder[InstrumentationLibrary] = deriveConfiguredEncoder
   implicit val instrumentationLibrarySpansEncoder: Encoder[InstrumentationLibrarySpans] = deriveConfiguredEncoder
   implicit val resourceEncoder: Encoder[Resource] = deriveConfiguredEncoder
-  implicit val resourceSpansEncoder: Encoder[ResourceSpans] = deriveConfiguredEncoder[ResourceSpans].mapJsonObject {
-    obj =>
+  implicit val resourceSpansEncoder: Encoder[ResourceSpans] = deriveConfiguredEncoder
+  implicit val resourceSpansIterableEncoder: Encoder[Iterable[ResourceSpans]] =
+    Encoder.encodeJsonObject.contramapObject { resourceSpans =>
       JsonObject.fromMap(
-        Map(
-          "resource_spans" -> Json
-            .fromValues(List(Json.fromJsonObject(obj).deepDropNullValues))
-        )
+        Map("resource_spans" -> Json.fromValues(resourceSpans.map(resourceSpansEncoder(_).deepDropNullValues)))
       )
-  }
+    }
 
-  def toJsonString[G[_]: Foldable](batch: Batch[G]): String = resourceSpansEncoder(toResourceSpans(batch)).spaces2
+  def toJsonString[G[_]: Foldable](batch: Batch[G]): String = resourceSpansIterableEncoder(
+    toResourceSpans(batch)
+  ).noSpaces
 }

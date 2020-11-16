@@ -1,22 +1,19 @@
 package io.janstenpickle.trace4cats.meta
 
 import cats.effect.{ContextShift, IO, Resource, Timer}
-import fs2.Chunk
+import fs2.{Chunk, Stream}
 import fs2.concurrent.Queue
+import io.chrisdavenport.log4cats.Logger
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanExporter, SpanSampler}
-import io.janstenpickle.trace4cats.model.{AttributeValue, Batch, CompletedSpan, Link, MetaTrace, SpanKind, TraceProcess}
+import io.janstenpickle.trace4cats.model._
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
+import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.concurrent.ExecutionContext
-import fs2.Stream
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import org.scalatest.Assertion
-
-import scala.concurrent.duration._
 
 class TracedSpanExporterSpec
     extends AnyFlatSpec
@@ -71,18 +68,25 @@ class TracedSpanExporterSpec
 
       spans.size should be(batch.spans.size + 1)
 
-      metaSpan.links.fold(List.empty[Link])(_.toList) should contain theSameElementsAs links
+      links match {
+        case Nil => assert(true)
+        case h :: t =>
+          metaSpan.context.traceId should be(h.traceId)
+          metaSpan.context.parent.map(_.spanId) should be(Some(h.spanId))
+
+          metaSpan.links.fold(List.empty[Link])(_.toList) should contain theSameElementsAs t
+      }
     }
   )
 
   def exporterTest(
     sampler: SpanSampler[IO],
     mapBatch: Batch[Chunk] => Batch[Chunk],
-    test: (String, List[(String, AttributeValue)], TraceProcess, Batch[Chunk], Chunk[CompletedSpan]) => Assertion,
+    test: (String, Map[String, AttributeValue], TraceProcess, Batch[Chunk], Chunk[CompletedSpan]) => Assertion,
     expectedMetaSpans: Long = 1
   ): Assertion =
     forAll {
-      (exporterName: String, attributes: List[(String, AttributeValue)], process: TraceProcess, spans: Batch[Chunk]) =>
+      (exporterName: String, attributes: Map[String, AttributeValue], process: TraceProcess, spans: Batch[Chunk]) =>
         val batch = mapBatch(spans)
 
         (for {
@@ -91,14 +95,7 @@ class TracedSpanExporterSpec
             override def exportBatch(batch: Batch[Chunk]): IO[Unit] =
               Stream.chunk(batch.spans).covary[IO].through(queue.enqueue).compile.drain
           }
-          tracedExporter <- TracedSpanExporter[IO](
-            exporterName,
-            attributes,
-            process,
-            sampler,
-            exporter,
-            batchTimeout = 1.milli
-          )
+          tracedExporter = TracedSpanExporter[IO](exporterName, attributes, process, sampler, exporter)
           _ <- Resource.liftF(tracedExporter.exportBatch(batch))
 
           allSpans <- Resource.liftF(queue.dequeue.take(batch.spans.size + expectedMetaSpans).compile.to(Chunk))

@@ -53,7 +53,7 @@ object OpenTelemetryGrpcSpanExporter {
             .`export`(
               batch.spans
                 .foldLeft(ListBuffer.empty[SpanData]) { (buf, span) =>
-                  buf += Trace4CatsSpanData(Trace4CatsResource(), span)
+                  buf += Trace4CatsSpanData(Trace4CatsResource(span.serviceName), span)
                 }
                 .asJavaCollection
             )

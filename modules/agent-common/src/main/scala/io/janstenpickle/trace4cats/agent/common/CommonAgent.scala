@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.agent.common
 
-import cats.Parallel
+import cats.{Applicative, Parallel}
 import cats.effect.{Blocker, Concurrent, ContextShift, ExitCode, Resource, Timer}
 import cats.syntax.functor._
 import com.monovore.decline.Opts
@@ -48,7 +48,7 @@ object CommonAgent {
     port: Int,
     bufferSize: Int,
     exporterName: String,
-    exporterAttributes: List[(String, AttributeValue)],
+    exporterAttributes: Map[String, AttributeValue],
     exporter: SpanExporter[F, Chunk],
     exporterText: String,
     trace: Boolean,
@@ -60,9 +60,10 @@ object CommonAgent {
           .info(s"Starting Trace 4 Cats Agent v${BuildInfo.version} on udp://::$port. Forwarding to $exporterText")
       )(_ => Logger[F].info("Shutting down Trace 4 Cats Agent"))
 
-      (pipe, exp) <-
+      (pipe, exp) <- Resource.liftF(
         if (trace) AgentTrace[F](exporterName, exporterAttributes, port, traceRate, bufferSize, exporter)
-        else Resource.pure[F, (Pipe[F, CompletedSpan, CompletedSpan], SpanExporter[F, Chunk])]((identity, exporter))
+        else Applicative[F].pure[(Pipe[F, CompletedSpan, CompletedSpan], SpanExporter[F, Chunk])]((identity, exporter))
+      )
 
       queuedExporter <- QueuedSpanExporter(bufferSize, List(exporterName -> exp))
 

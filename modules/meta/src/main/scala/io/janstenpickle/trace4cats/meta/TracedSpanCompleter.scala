@@ -1,12 +1,15 @@
 package io.janstenpickle.trace4cats.meta
 
 import cats.effect.{Clock, Sync}
-import cats.syntax.apply._
-import io.janstenpickle.trace4cats.Span
-import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanCompleter, SpanSampler}
-import io.janstenpickle.trace4cats.model.{CompletedSpan, MetaTrace, SampleDecision, SpanKind}
+import cats.syntax.flatMap._
+import cats.syntax.functor._
+import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
+import io.janstenpickle.trace4cats.model._
 
 object TracedSpanCompleter {
+  private final val spanName = "trace4cats.complete.span"
+  private final val spanKind = SpanKind.Producer
+
   def apply[F[_]: Sync: Clock](
     name: String,
     sampler: SpanSampler[F],
@@ -14,14 +17,17 @@ object TracedSpanCompleter {
   ): SpanCompleter[F] = {
     new SpanCompleter[F] {
       override def complete(span: CompletedSpan.Builder): F[Unit] =
-        Span.root[F]("trace4cats.complete.span", SpanKind.Producer, sampler, underlying).use { meta =>
-          meta.context.traceFlags.sampled match {
+        for {
+          context <- SpanContext.root[F]
+          sample <- sampler.shouldSample(None, context.traceId, spanName, spanKind)
+          _ <- sample match {
             case SampleDecision.Drop => underlying.complete(span)
             case SampleDecision.Include =>
-              meta.putAll("completer.name" -> name, "trace4cats.version" -> BuildInfo.version) *> underlying
-                .complete(span.withMetaTrace(MetaTrace(meta.context.traceId, meta.context.spanId)))
+              MetaTraceUtil
+                .trace[F](context, spanName, spanKind, Map("completer.name" -> name), None, underlying.complete)
+                .use(meta => underlying.complete(span.withMetaTrace(meta)))
           }
-        }
+        } yield ()
     }
   }
 }

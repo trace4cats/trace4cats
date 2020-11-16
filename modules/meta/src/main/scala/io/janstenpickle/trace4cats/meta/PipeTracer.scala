@@ -1,51 +1,48 @@
 package io.janstenpickle.trace4cats.meta
 
 import cats.Applicative
-import cats.data.NonEmptyList
+import cats.effect.concurrent.Deferred
 import cats.effect.{Concurrent, Timer}
-import cats.syntax.apply._
+import cats.syntax.flatMap._
 import cats.syntax.functor._
-import fs2.concurrent.Queue
-import fs2.{Pipe, Stream}
-import io.janstenpickle.trace4cats.Span
-import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanCompleter, SpanSampler}
+import fs2.{Chunk, Pipe, Stream}
+import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model._
 
 object PipeTracer {
+  private final val spanName = "trace4cats.receive.batch"
+  private final val spanKind = SpanKind.Consumer
+
   def apply[F[_]: Concurrent: Timer](
-    attributes: List[(String, AttributeValue)],
+    attributes: Map[String, AttributeValue],
     process: TraceProcess,
     sampler: SpanSampler[F],
-    bufferSize: Int = 200,
-  ): F[Pipe[F, CompletedSpan, CompletedSpan]] =
-    Queue.circularBuffer[F, CompletedSpan](bufferSize).map { queue =>
-      val completer = new SpanCompleter[F] {
-        override def complete(span: CompletedSpan.Builder): F[Unit] = queue.enqueue1(span.build(process))
-      }
+  ): Pipe[F, CompletedSpan, CompletedSpan] = _.chunks
+    .flatMap { batch =>
+      Stream.evalUnChunk(for {
+        context <- SpanContext.root[F]
+        sample <- sampler.shouldSample(None, context.traceId, spanName, spanKind)
+        spans <- sample match {
+          case SampleDecision.Drop => Applicative[F].pure(batch)
+          case SampleDecision.Include =>
+            val (batchSize, links) = MetaTraceUtil.extractMetadata(batch)
 
-      in: Stream[F, CompletedSpan] =>
-        in.chunks
-          .flatMap { batch =>
-            Stream.evalUnChunk(Span.root[F]("trace4cats.receive.batch", SpanKind.Consumer, sampler, completer).use {
-              meta =>
-                meta.context.traceFlags.sampled match {
-                  case SampleDecision.Drop => Applicative[F].pure(batch)
-                  case SampleDecision.Include =>
-                    val (batchSize, links, spans) = BatchUtil.extractMetadata(batch, meta.context)
-
-                    meta.putAll(
-                      List[(String, AttributeValue)](
-                        "batch.size" -> batchSize,
-                        "trace4cats.version" -> BuildInfo.version
-                      ) ++ attributes: _*
-                    ) *> NonEmptyList
-                      .fromList(links)
-                      .fold(Applicative[F].unit)(meta.addLinks)
-                      .as(spans)
-
-                }
-            })
-          }
-          .merge(queue.dequeue)
+            for {
+              metaSpanPromise <- Deferred[F, CompletedSpan]
+              spans <- MetaTraceUtil
+                .trace[F](
+                  context,
+                  spanName,
+                  spanKind,
+                  Map[String, AttributeValue]("batch.size" -> batchSize) ++ attributes,
+                  links,
+                  builder => metaSpanPromise.complete(builder.build(process))
+                )
+                .use(meta => Applicative[F].pure(batch.map(span => span.copy(metaTrace = Some(meta)))))
+              metaSpan <- metaSpanPromise.get
+            } yield Chunk.concat(List(spans, Chunk.singleton(metaSpan)), spans.size + 1)
+        }
+      } yield spans)
     }
+
 }

@@ -62,21 +62,29 @@ class PipeTracerSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenProp
 
       spans.size should be(batch.spans.size + 1)
 
-      metaSpan.links.fold(List.empty[Link])(_.toList) should contain theSameElementsAs links
+      links match {
+        case Nil => assert(true)
+        case h :: t =>
+          metaSpan.context.traceId should be(h.traceId)
+          metaSpan.context.parent.map(_.spanId) should be(Some(h.spanId))
+
+          metaSpan.links.fold(List.empty[Link])(_.toList) should contain theSameElementsAs t
+      }
     }
   )
 
   def exporterTest(
     sampler: SpanSampler[IO],
     mapBatch: Batch[Chunk] => Batch[Chunk],
-    test: (List[(String, AttributeValue)], TraceProcess, Batch[Chunk], Chunk[CompletedSpan]) => Assertion,
+    test: (Map[String, AttributeValue], TraceProcess, Batch[Chunk], Chunk[CompletedSpan]) => Assertion,
     expectedMetaSpans: Long = 1
   ): Assertion =
-    forAll { (attributes: List[(String, AttributeValue)], process: TraceProcess, spans: Batch[Chunk]) =>
+    forAll { (attributes: Map[String, AttributeValue], process: TraceProcess, spans: Batch[Chunk]) =>
       val batch = mapBatch(spans)
 
+      val pipeTracer = PipeTracer[IO](attributes, process, sampler)
+
       (for {
-        pipeTracer <- PipeTracer[IO](attributes, process, sampler)
         s <- Stream
           .chunk(batch.spans)
           .covary[IO]

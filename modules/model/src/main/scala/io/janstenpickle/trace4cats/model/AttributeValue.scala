@@ -6,6 +6,7 @@
 package io.janstenpickle.trace4cats.model
 
 import cats.data.NonEmptyList
+import cats.kernel.Semigroup
 import cats.{Eq, Order, Show}
 import cats.syntax.foldable._
 import cats.syntax.show._
@@ -83,6 +84,23 @@ object AttributeValue {
     case (DoubleList(x), DoubleList(y)) => Order.compare(x, y)
     case (LongList(x), LongList(y)) => Order.compare(x, y)
     case (x, y) => Order.compare(x.show, y.show)
+  }
+
+  implicit val semigroup: Semigroup[AttributeValue] = Semigroup.instance {
+    case (StringValue(x), StringValue(y)) => StringList(NonEmptyList.of(x, y).sorted)
+    case (BooleanValue(x), BooleanValue(y)) => BooleanList(NonEmptyList.of(x, y).sorted)
+    case (DoubleValue(x), DoubleValue(y)) => DoubleList(NonEmptyList.of(x, y).sorted)
+    case (LongValue(x), LongValue(y)) => LongList(NonEmptyList.of(x, y).sorted)
+    case (StringList(x), StringList(y)) => StringList((x ++ y.toList).sorted)
+    case (BooleanList(x), BooleanList(y)) => BooleanList((x ++ y.toList).sorted)
+    case (DoubleList(x), DoubleList(y)) => DoubleList((x ++ y.toList).sorted)
+    case (LongList(x), LongList(y)) => LongList((x ++ y.toList).sorted)
+    case (x: AttributeList, y: AttributeList) => StringList((x.value ++ y.value.toList).map(_.toString).sorted)
+    case (x: AttributeList, y: AttributeValue) =>
+      StringList(NonEmptyList(y.show, x.value.map(_.toString).toList).sorted)
+    case (x: AttributeValue, y: AttributeList) =>
+      StringList(NonEmptyList(x.show, y.value.map(_.toString).toList).sorted)
+    case (x, y) => StringList(NonEmptyList.of(x.show, y.show).sorted)
   }
 
   implicit val ordering: Ordering[AttributeValue] = order.toOrdering

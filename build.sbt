@@ -128,6 +128,7 @@ lazy val model =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-model",
+      libraryDependencies ++= Dependencies.test.map(_ % Test),
       libraryDependencies ++= Seq(
         Dependencies.enumeratum,
         Dependencies.enumeratumCats,
@@ -171,7 +172,8 @@ lazy val example = (project in file("modules/example"))
     `tail-sampling`,
     `tail-sampling-cache-store`,
     filtering,
-    `rate-sampling`
+    `rate-sampling`,
+    meta
   )
 
 lazy val test = (project in file("modules/test"))
@@ -434,8 +436,8 @@ lazy val `exporter-common` =
 lazy val meta =
   (project in file("modules/meta"))
     .settings(publishSettings)
-    .settings(name := "trace4cats-meta", libraryDependencies ++= Seq(Dependencies.catsEffect))
-    .dependsOn(model, kernel, core, `exporter-common`, test % "test->compile")
+    .settings(name := "trace4cats-meta", libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.log4cats))
+    .dependsOn(model, kernel, core, `exporter-stream`, `exporter-common` % "test->compile", test % "test->compile")
 
 lazy val `exporter-http` =
   (project in file("modules/exporter-http"))

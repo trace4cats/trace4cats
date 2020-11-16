@@ -1,50 +1,64 @@
 package io.janstenpickle.trace4cats.meta
 
 import cats.Applicative
-import cats.data.NonEmptyList
-import cats.effect.{Concurrent, Resource, Timer}
-import cats.syntax.apply._
+import cats.effect.concurrent.Deferred
+import cats.effect.{Concurrent, Timer}
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
-import io.janstenpickle.trace4cats.Span
-import io.janstenpickle.trace4cats.`export`.QueuedSpanCompleter
-import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanExporter, SpanSampler}
+import io.janstenpickle.trace4cats.`export`.StreamSpanExporter
+import io.janstenpickle.trace4cats.kernel.{SpanExporter, SpanSampler}
 import io.janstenpickle.trace4cats.model._
 
-import scala.concurrent.duration._
-
 object TracedSpanExporter {
+  private final val spanName = "trace4cats.export.batch"
+  private final val spanKind = SpanKind.Producer
+
   def apply[F[_]: Concurrent: Timer: Logger](
     name: String,
-    attributes: List[(String, AttributeValue)],
+    attributes: Map[String, AttributeValue],
     process: TraceProcess,
     sampler: SpanSampler[F],
     underlying: SpanExporter[F, Chunk],
-    bufferSize: Int = 2000,
-    batchSize: Int = 50,
-    batchTimeout: FiniteDuration = 5.seconds
-  ): Resource[F, SpanExporter[F, Chunk]] =
-    QueuedSpanCompleter[F](process, underlying, bufferSize, batchSize, batchTimeout).map { completer =>
-      new SpanExporter[F, Chunk] {
-        override def exportBatch(batch: Batch[Chunk]): F[Unit] =
-          Span.root[F]("trace4cats.export.batch", SpanKind.Producer, sampler, completer).use { meta =>
-            meta.context.traceFlags.sampled match {
-              case SampleDecision.Drop => underlying.exportBatch(batch)
-              case SampleDecision.Include =>
-                val (batchSize, links, spans) = BatchUtil.extractMetadata(batch.spans, meta.context)
+  ): StreamSpanExporter[F] = new StreamSpanExporter[F] {
+    override def exportBatch(batch: Batch[Chunk]): F[Unit] = for {
+      context <- SpanContext.root[F]
+      sample <- sampler.shouldSample(None, context.traceId, spanName, spanKind)
+      _ <- sample match {
+        case SampleDecision.Drop => underlying.exportBatch(batch)
+        case SampleDecision.Include =>
+          val (batchSize, links) = MetaTraceUtil.extractMetadata(batch.spans)
 
-                meta.putAll(
-                  List[(String, AttributeValue)](
-                    "exporter.name" -> name,
-                    "batch.size" -> batchSize,
-                    "trace4cats.version" -> BuildInfo.version
-                  ) ++ attributes: _*
-                ) *> NonEmptyList
-                  .fromList(links)
-                  .fold(Applicative[F].unit)(meta.addLinks) *> underlying
-                  .exportBatch(Batch(spans))
-            }
-          }
+          for {
+            metaSpanPromise <- Deferred[F, CompletedSpan]
+
+            spans <- MetaTraceUtil
+              .trace[F](
+                context,
+                spanName,
+                spanKind,
+                Map[String, AttributeValue]("exporter.name" -> name, "batch.size" -> batchSize) ++ attributes,
+                links,
+                builder => metaSpanPromise.complete(builder.build(process))
+              )
+              .use(meta => Applicative[F].pure(batch.spans.map(span => span.copy(metaTrace = Some(meta)))))
+
+            metaSpan <- metaSpanPromise.get
+            _ <- exportBatch(Batch(Chunk.concat(List(spans, Chunk.singleton(metaSpan)), spans.size + 1)))
+          } yield ()
+
+          MetaTraceUtil
+            .trace[F](
+              context,
+              spanName,
+              spanKind,
+              Map[String, AttributeValue]("exporter.name" -> name, "batch.size" -> batchSize) ++ attributes,
+              links,
+              builder => underlying.exportBatch(Batch(Chunk.singleton(builder.build(process))))
+            )
+            .use(meta => underlying.exportBatch(Batch(batch.spans.map(span => span.copy(metaTrace = Some(meta))))))
       }
-    }
+    } yield ()
+  }
 }

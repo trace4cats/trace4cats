@@ -4,20 +4,23 @@ import java.net.InetAddress
 
 import cats.Applicative
 import cats.data.NonEmptyList
-import cats.effect.{Concurrent, Resource, Sync, Timer}
+import cats.effect.{Concurrent, Sync, Timer}
 import cats.syntax.functor._
 import cats.syntax.traverse._
-import fs2.{Chunk, Pipe}
+import cats.syntax.semigroup._
+import fs2.Pipe
 import io.chrisdavenport.log4cats.Logger
+import io.janstenpickle.trace4cats.`export`.StreamSpanExporter
 import io.janstenpickle.trace4cats.collector.common.config.{KafkaListenerConfig, ListenerConfig, TracingConfig}
-import io.janstenpickle.trace4cats.kernel.{SpanExporter, SpanSampler}
+import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.meta.{PipeTracer, TracedSpanExporter}
+import io.janstenpickle.trace4cats.model.AttributeValue.StringList
 import io.janstenpickle.trace4cats.model.{AttributeValue, CompletedSpan, TraceProcess}
 import io.janstenpickle.trace4cats.rate.sampling.RateSpanSampler
 
 object Tracing {
   def process[F[_]: Sync]: F[TraceProcess] = Sync[F].delay(InetAddress.getLocalHost.getHostName).map { hostname =>
-    TraceProcess("trace4cats-agent", Map("hostname" -> hostname))
+    TraceProcess("trace4cats-collector", Map("hostname" -> hostname))
   }
 
   def sampler[F[_]: Concurrent: Timer](config: Option[TracingConfig], bufferSize: Int): F[Option[SpanSampler[F]]] =
@@ -30,42 +33,52 @@ object Tracing {
     process: TraceProcess,
     listener: ListenerConfig,
     kafka: Option[KafkaListenerConfig],
-    bufferSize: Int
-  ): F[Pipe[F, CompletedSpan, CompletedSpan]] =
+  ): Pipe[F, CompletedSpan, CompletedSpan] =
     sampler match {
-      case None => Applicative[F].pure[Pipe[F, CompletedSpan, CompletedSpan]](identity)
+      case None => identity
       case Some(sampler) =>
         PipeTracer[F](
-          List[(String, AttributeValue)](
+          Map[String, AttributeValue](
             "listen.protocols" -> AttributeValue.StringList(
               NonEmptyList("tcp", List("udp") ++ kafka.map(_ => "kafka"))
             ),
             "listen.format" -> "avro",
             "listen.port" -> listener.port
           ) ++ kafka.toList.flatMap { kafkaConfig =>
-            List(
+            Map(
               "bootstrap.servers" -> AttributeValue.StringList(kafkaConfig.bootstrapServers),
               "topic" -> kafkaConfig.topic,
               "consumer.group" -> kafkaConfig.group
             )
           },
           process,
-          sampler,
-          bufferSize
+          sampler
         )
     }
+
+  def combineAttributes(allAttrs: List[(String, AttributeValue)]): Map[String, AttributeValue] =
+    allAttrs.groupMapReduce(_._1)(_._2)(_ |+| _)
 
   def exporter[F[_]: Concurrent: Timer: Logger](
     sampler: Option[SpanSampler[F]],
     name: String,
+    exporterNames: List[String],
     attributes: List[(String, AttributeValue)],
     process: TraceProcess,
-    bufferSize: Int,
-    exporter: SpanExporter[F, Chunk],
-  ): Resource[F, (String, SpanExporter[F, Chunk])] =
+    exporter: StreamSpanExporter[F],
+  ): StreamSpanExporter[F] =
     sampler match {
-      case None => Resource.pure[F, (String, SpanExporter[F, Chunk])](name -> exporter)
+      case None => exporter
       case Some(sampler) =>
-        TracedSpanExporter[F](name, attributes, process, sampler, exporter, bufferSize = bufferSize).map(name -> _)
+        TracedSpanExporter[F](
+          name,
+          combineAttributes(attributes) ++ NonEmptyList
+            .fromList(exporterNames.distinct)
+            .map(names => "exporter.names" -> StringList(names))
+            .toMap,
+          process,
+          sampler,
+          exporter
+        )
     }
 }
