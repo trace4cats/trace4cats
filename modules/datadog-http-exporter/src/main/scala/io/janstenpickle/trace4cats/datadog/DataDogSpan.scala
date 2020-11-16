@@ -54,18 +54,18 @@ object DataDogSpan {
           span.serviceName,
           allAttributes.get("resource.name").fold(span.serviceName)(_.toString),
           allAttributes.collect {
-            case (k, AttributeValue.StringValue(value)) => k -> value
-            case (k, AttributeValue.BooleanValue(value)) if k != "error" => k -> value.toString
+            case (k, AttributeValue.StringValue(value)) => k -> value.value
+            case (k, AttributeValue.BooleanValue(value)) if k != "error" => k -> value.value.toString
             case (k, value: AttributeValue.AttributeList) => k -> value.show
           },
           allAttributes.collect {
-            case (k, AttributeValue.DoubleValue(value)) => k -> value
-            case (k, AttributeValue.LongValue(value)) => k -> value.toDouble
+            case (k, AttributeValue.DoubleValue(value)) => k -> value.value
+            case (k, AttributeValue.LongValue(value)) => k -> value.value.toDouble
           },
           startNanos,
           TimeUnit.MILLISECONDS.toNanos(span.end.toEpochMilli) - startNanos,
           allAttributes.get("error").map {
-            case AttributeValue.BooleanValue(true) => 1
+            case AttributeValue.BooleanValue(v) if v.value => 1
             case _ => 0
           }
         )

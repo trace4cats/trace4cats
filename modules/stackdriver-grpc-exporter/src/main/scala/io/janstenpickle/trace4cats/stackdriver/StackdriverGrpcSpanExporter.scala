@@ -5,9 +5,9 @@ import java.time.Instant
 import cats.Foldable
 import cats.data.NonEmptyList
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
+import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.show._
-import cats.syntax.foldable._
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.auth.Credentials
 import com.google.auth.oauth2.GoogleCredentials
@@ -73,10 +73,11 @@ object StackdriverGrpcSpanExporter {
             k,
             (v match {
               case AttributeValue.StringValue(value) =>
-                GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(value))
-              case AttributeValue.BooleanValue(value) => GAttributeValue.newBuilder().setBoolValue(value)
-              case AttributeValue.DoubleValue(value) => GAttributeValue.newBuilder().setIntValue(value.toLong)
-              case AttributeValue.LongValue(value) => GAttributeValue.newBuilder().setIntValue(value)
+                GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(value.value))
+              case AttributeValue.BooleanValue(value) => GAttributeValue.newBuilder().setBoolValue(value.value)
+              case AttributeValue.DoubleValue(value) =>
+                GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(value.value.show))
+              case AttributeValue.LongValue(value) => GAttributeValue.newBuilder().setIntValue(value.value)
               case vs: AttributeValue.AttributeList =>
                 GAttributeValue.newBuilder().setStringValue(toTruncatableStringProto(vs.show))
             }).build()

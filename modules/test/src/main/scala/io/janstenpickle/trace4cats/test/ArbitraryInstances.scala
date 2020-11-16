@@ -2,6 +2,7 @@ package io.janstenpickle.trace4cats.test
 
 import java.time.Instant
 
+import cats.Eval
 import fs2.Chunk
 import io.janstenpickle.trace4cats.model._
 import org.scalacheck.{Arbitrary, Gen, ScalacheckShapeless}
@@ -40,6 +41,8 @@ trait ArbitraryInstances extends ScalacheckShapeless {
         TraceState(kvs.toMap).get
       }
   )
+
+  implicit def evalArb[A: Arbitrary]: Arbitrary[Eval[A]] = Arbitrary(Arbitrary.arbitrary[A].map(Eval.later(_)))
 
   implicit val batchArb: Arbitrary[Batch[Chunk]] = Arbitrary(for {
     size <- Gen.choose(1, 3)

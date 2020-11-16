@@ -7,13 +7,13 @@ package io.janstenpickle.trace4cats.model
 
 import cats.data.NonEmptyList
 import cats.kernel.Semigroup
-import cats.{Eq, Order, Show}
+import cats.{Eq, Eval, Order, Show}
 import cats.syntax.foldable._
 import cats.syntax.show._
 
-sealed trait AttributeValue extends Product with Serializable {
-  def value: Any
-  override def toString: String = value.toString
+sealed trait AttributeValue extends Any {
+  def value: Eval[Any]
+  override def toString: String = value.value.toString
   override def equals(obj: Any): Boolean =
     obj match {
       case other: AttributeValue => Eq.eqv(other, this)
@@ -23,96 +23,113 @@ sealed trait AttributeValue extends Product with Serializable {
 
 object AttributeValue {
 
-  case class StringValue(value: String) extends AttributeValue
-  case class BooleanValue(value: Boolean) extends AttributeValue
-  case class DoubleValue(value: Double) extends AttributeValue
-  case class LongValue(value: Long) extends AttributeValue
+  case class StringValue(value: Eval[String]) extends AnyVal with AttributeValue
+  object StringValue {
+    def apply(value: => String): StringValue = new StringValue(Eval.later(value))
+  }
+  case class BooleanValue(value: Eval[Boolean]) extends AnyVal with AttributeValue
+  object BooleanValue {
+    def apply(value: => Boolean): BooleanValue = new BooleanValue(Eval.later(value))
+  }
+  case class DoubleValue(value: Eval[Double]) extends AnyVal with AttributeValue
+  object DoubleValue {
+    def apply(value: => Double): DoubleValue = new DoubleValue(Eval.later(value))
+  }
+  case class LongValue(value: Eval[Long]) extends AnyVal with AttributeValue
+  object LongValue {
+    def apply(value: => Long): LongValue = new LongValue(Eval.later(value))
+  }
 
   sealed trait AttributeList extends AttributeValue {
-    override def value: NonEmptyList[Any]
-    override def toString: String = value.map(_.toString).mkString_("[", ",", "]")
+    override def value: Eval[NonEmptyList[Any]]
+    override def toString: String = value.value.map(_.toString).mkString_("[", ",", "]")
   }
 
   object AttributeList {
     private def listString[A: Show](fa: NonEmptyList[A]): String = fa.mkString_("[", ",", "]")
 
     implicit val show: Show[AttributeList] = Show.show {
-      case StringList(value) => listString(value)(Show.show(s => s""""$s""""))
-      case BooleanList(value) => listString(value)
-      case DoubleList(value) => listString(value)
-      case LongList(value) => listString(value)
+      case StringList(value) => listString(value.value)(Show.show(s => s""""$s""""))
+      case BooleanList(value) => listString(value.value)
+      case DoubleList(value) => listString(value.value)
+      case LongList(value) => listString(value.value)
     }
   }
 
-  case class StringList(value: NonEmptyList[String]) extends AttributeList
-  case class BooleanList(value: NonEmptyList[Boolean]) extends AttributeList
-  case class DoubleList(value: NonEmptyList[Double]) extends AttributeList
-  case class LongList(value: NonEmptyList[Long]) extends AttributeList
-
-  implicit def stringToTraceValue(value: String): AttributeValue = StringValue(value)
-  implicit def boolToTraceValue(value: Boolean): AttributeValue = BooleanValue(value)
-  implicit def intToTraceValue(value: Int): AttributeValue = LongValue(value.toLong)
-  implicit def doubleToTraceValue(value: Double): AttributeValue = DoubleValue(value)
-
-  implicit val show: Show[AttributeValue] = Show.show {
-    case StringValue(value) => value
-    case BooleanValue(value) => value.show
-    case DoubleValue(value) => value.show
-    case LongValue(value) => value.show
-    case list: AttributeList => list.show
+  case class StringList(value: Eval[NonEmptyList[String]]) extends AttributeList
+  object StringList {
+    def apply(value: => NonEmptyList[String]): StringList = new StringList(Eval.later(value))
+  }
+  case class BooleanList(value: Eval[NonEmptyList[Boolean]]) extends AttributeList
+  object BooleanList {
+    def apply(value: => NonEmptyList[Boolean]): BooleanList = new BooleanList(Eval.later(value))
+  }
+  case class DoubleList(value: Eval[NonEmptyList[Double]]) extends AttributeList
+  object DoubleList {
+    def apply(value: => NonEmptyList[Double]): DoubleList = new DoubleList(Eval.later(value))
+  }
+  case class LongList(value: Eval[NonEmptyList[Long]]) extends AttributeList
+  object LongList {
+    def apply(value: => NonEmptyList[Long]): LongList = new LongList(Eval.later(value))
   }
 
-  implicit val eq: Eq[AttributeValue] = Eq.instance {
-    case (StringValue(x), StringValue(y)) => Eq[String].eqv(x, y)
-    case (BooleanValue(x), BooleanValue(y)) => x == y
-    case (DoubleValue(x), DoubleValue(y)) => Eq[Double].eqv(x, y)
-    case (LongValue(x), LongValue(y)) => Eq[Long].eqv(x, y)
-    case (StringList(x), StringList(y)) => Eq[NonEmptyList[String]].eqv(x, y)
-    case (BooleanList(x), BooleanList(y)) => Eq[NonEmptyList[Boolean]].eqv(x, y)
-    case (DoubleList(x), DoubleList(y)) => Eq[NonEmptyList[Double]].eqv(x, y)
-    case (LongList(x), LongList(y)) => Eq[NonEmptyList[Long]].eqv(x, y)
-    case (_, _) => false
+  implicit def stringToTraceValue(value: => String): AttributeValue = StringValue(value)
+  implicit def boolToTraceValue(value: => Boolean): AttributeValue = BooleanValue(value)
+  implicit def intToTraceValue(value: => Int): AttributeValue = LongValue(value.toLong)
+  implicit def doubleToTraceValue(value: => Double): AttributeValue = DoubleValue(value)
+
+  implicit val show: Show[AttributeValue] = Show.show {
+    case StringValue(value) => value.value
+    case BooleanValue(value) => value.value.show
+    case DoubleValue(value) => value.value.show
+    case LongValue(value) => value.value.show
+    case list: AttributeList => list.show
   }
 
   implicit val order: Order[AttributeValue] = Order.from {
     case (StringValue(x), StringValue(y)) => Order.compare(x, y)
     case (BooleanValue(x), BooleanValue(y)) => Order.compare(x, y)
     case (DoubleValue(x), DoubleValue(y)) => Order.compare(x, y)
+    case (DoubleValue(x), LongValue(y)) => Order.compare(x.value, y.value.toDouble)
     case (LongValue(x), LongValue(y)) => Order.compare(x, y)
+    case (LongValue(x), DoubleValue(y)) => Order.compare(x.value.toDouble, y.value)
     case (StringList(x), StringList(y)) => Order.compare(x, y)
     case (BooleanList(x), BooleanList(y)) => Order.compare(x, y)
     case (DoubleList(x), DoubleList(y)) => Order.compare(x, y)
+    case (DoubleList(x), LongList(y)) => Order.compare(x.value, y.value.map(_.toDouble))
     case (LongList(x), LongList(y)) => Order.compare(x, y)
+    case (LongList(x), DoubleList(y)) => Order.compare(x.value.map(_.toDouble), y.value)
     case (x, y) => Order.compare(x.show, y.show)
   }
 
   implicit val semigroup: Semigroup[AttributeValue] = Semigroup.instance {
-    case (StringValue(x), StringValue(y)) => StringList(NonEmptyList.of(x, y).sorted)
-    case (StringValue(x), StringList(y)) => StringList(NonEmptyList(x, y.toList).sorted)
-    case (StringList(x), StringValue(y)) => StringList(NonEmptyList(y, x.toList).sorted)
-    case (StringList(x), StringList(y)) => StringList((x ++ y.toList).sorted)
+    case (StringValue(x), StringValue(y)) => StringList(Eval.later(NonEmptyList.of(x.value, y.value).sorted))
+    case (StringValue(x), StringList(y)) => StringList(Eval.later(NonEmptyList(x.value, y.value.toList).sorted))
+    case (StringList(x), StringValue(y)) => StringList(Eval.later(NonEmptyList(y.value, x.value.toList).sorted))
+    case (StringList(x), StringList(y)) => StringList(Eval.later((x.value ++ y.value.toList).sorted))
 
-    case (BooleanValue(x), BooleanValue(y)) => BooleanList(NonEmptyList.of(x, y).sorted)
-    case (BooleanValue(x), BooleanList(y)) => BooleanList(NonEmptyList(x, y.toList).sorted)
-    case (BooleanList(x), BooleanValue(y)) => BooleanList(NonEmptyList(y, x.toList).sorted)
-    case (BooleanList(x), BooleanList(y)) => BooleanList((x ++ y.toList).sorted)
+    case (BooleanValue(x), BooleanValue(y)) => BooleanList(Eval.later(NonEmptyList.of(x.value, y.value).sorted))
+    case (BooleanValue(x), BooleanList(y)) => BooleanList(Eval.later(NonEmptyList(x.value, y.value.toList).sorted))
+    case (BooleanList(x), BooleanValue(y)) => BooleanList(Eval.later(NonEmptyList(y.value, x.value.toList).sorted))
+    case (BooleanList(x), BooleanList(y)) => BooleanList(Eval.later((x.value ++ y.value.toList).sorted))
 
-    case (DoubleValue(x), DoubleValue(y)) => DoubleList(NonEmptyList.of(x, y).sorted)
-    case (DoubleValue(x), DoubleList(y)) => DoubleList(NonEmptyList(x, y.toList).sorted)
-    case (DoubleList(x), DoubleValue(y)) => DoubleList(NonEmptyList(y, x.toList).sorted)
-    case (DoubleList(x), DoubleList(y)) => DoubleList((x ++ y.toList).sorted)
+    case (DoubleValue(x), DoubleValue(y)) => DoubleList(Eval.later(NonEmptyList.of(x.value, y.value).sorted))
+    case (DoubleValue(x), DoubleList(y)) => DoubleList(Eval.later(NonEmptyList(x.value, y.value.toList).sorted))
+    case (DoubleList(x), DoubleValue(y)) => DoubleList(Eval.later(NonEmptyList(y.value, x.value.toList).sorted))
+    case (DoubleList(x), DoubleList(y)) => DoubleList(Eval.later((x.value ++ y.value.toList).sorted))
 
-    case (LongValue(x), LongValue(y)) => LongList(NonEmptyList.of(x, y).sorted)
-    case (LongValue(x), LongList(y)) => LongList(NonEmptyList(x, y.toList).sorted)
-    case (LongList(x), LongValue(y)) => LongList(NonEmptyList(y, x.toList).sorted)
-    case (LongList(x), LongList(y)) => LongList((x ++ y.toList).sorted)
+    case (LongValue(x), LongValue(y)) => LongList(Eval.later(NonEmptyList.of(x.value, y.value).sorted))
+    case (LongValue(x), LongList(y)) => LongList(Eval.later(NonEmptyList(x.value, y.value.toList).sorted))
+    case (LongList(x), LongValue(y)) => LongList(Eval.later(NonEmptyList(y.value, x.value.toList).sorted))
+    case (LongList(x), LongList(y)) => LongList(Eval.later((x.value ++ y.value.toList).sorted))
 
-    case (x: AttributeList, y: AttributeList) => StringList((x.value ++ y.value.toList).map(_.toString).sorted)
+    case (x: AttributeList, y: AttributeList) =>
+      StringList(Eval.later((x.value.value ++ y.value.value.toList).map(_.toString).sorted))
     case (x: AttributeList, y: AttributeValue) =>
-      StringList(NonEmptyList(y.show, x.value.map(_.toString).toList).sorted)
+      StringList(Eval.later(NonEmptyList(y.show, x.value.value.map(_.toString).toList).sorted))
     case (x: AttributeValue, y: AttributeList) =>
-      StringList(NonEmptyList(x.show, y.value.map(_.toString).toList).sorted)
-    case (x, y) => StringList(NonEmptyList.of(x.show, y.show).sorted)
+      StringList(Eval.later(NonEmptyList(x.show, y.value.value.map(_.toString).toList).sorted))
+    case (x, y) => StringList(Eval.later(NonEmptyList.of(x.show, y.show).sorted))
   }
 
   implicit val ordering: Ordering[AttributeValue] = order.toOrdering

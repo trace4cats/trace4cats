@@ -1,7 +1,8 @@
 package io.janstenpickle.trace4cats.model
 
+import cats.Eval
 import cats.kernel.laws.discipline.SemigroupTests
-import org.scalacheck.ScalacheckShapeless
+import org.scalacheck.{Arbitrary, ScalacheckShapeless}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.typelevel.discipline.scalatest.FunSuiteDiscipline
@@ -11,6 +12,8 @@ class AttributeValueSpec
     with ScalaCheckDrivenPropertyChecks
     with FunSuiteDiscipline
     with ScalacheckShapeless {
+
+  implicit def evalArb[A: Arbitrary]: Arbitrary[Eval[A]] = Arbitrary(Arbitrary.arbitrary[A].map(Eval.now))
 
   checkAll("AttributeValue semigroup", SemigroupTests[AttributeValue].semigroup)
 }

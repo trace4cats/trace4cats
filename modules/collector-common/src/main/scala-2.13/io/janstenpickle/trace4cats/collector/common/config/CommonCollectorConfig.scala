@@ -1,5 +1,6 @@
 package io.janstenpickle.trace4cats.collector.common.config
 
+import cats.Eval
 import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
 import cats.syntax.functor._
 import io.circe.Decoder
@@ -136,14 +137,14 @@ case class FilteringConfig(
 )
 object FilteringConfig {
   implicit val attributeValueDecoder: Decoder[AttributeValue] = List[Decoder[AttributeValue]](
-    Decoder.decodeBoolean.map(AttributeValue.BooleanValue).widen,
-    Decoder.decodeDouble.map(AttributeValue.DoubleValue).widen,
-    Decoder.decodeLong.map(AttributeValue.LongValue).widen,
-    Decoder.decodeString.map(AttributeValue.StringValue).widen,
-    Decoder[NonEmptyList[Boolean]].map(AttributeValue.BooleanList).widen,
-    Decoder[NonEmptyList[Double]].map(AttributeValue.DoubleList).widen,
-    Decoder[NonEmptyList[Long]].map(AttributeValue.LongList).widen,
-    Decoder[NonEmptyList[String]].map(AttributeValue.StringList).widen
+    Decoder.decodeBoolean.map(v => AttributeValue.BooleanValue(Eval.now(v))).widen,
+    Decoder.decodeDouble.map(v => AttributeValue.DoubleValue(Eval.now(v))).widen,
+    Decoder.decodeLong.map(v => AttributeValue.LongValue(Eval.now(v))).widen,
+    Decoder.decodeString.map(v => AttributeValue.StringValue(Eval.now(v))).widen,
+    Decoder[NonEmptyList[Boolean]].map(v => AttributeValue.BooleanList(Eval.now(v))).widen,
+    Decoder[NonEmptyList[Double]].map(v => AttributeValue.DoubleList(Eval.now(v))).widen,
+    Decoder[NonEmptyList[Long]].map(v => AttributeValue.LongList(Eval.now(v))).widen,
+    Decoder[NonEmptyList[String]].map(v => AttributeValue.StringList(Eval.now(v))).widen
   ).reduceLeft(_.or(_))
 
   implicit val decoder: Decoder[FilteringConfig] = deriveConfiguredDecoder

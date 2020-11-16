@@ -1,8 +1,8 @@
 package io.janstenpickle.trace4cats.avro
 
-import cats.ApplicativeError
 import cats.data.NonEmptyList
 import cats.syntax.either._
+import cats.{ApplicativeError, Eval}
 import io.janstenpickle.trace4cats.model._
 import org.apache.avro.Schema
 import vulcan.generic._
@@ -34,6 +34,13 @@ object AvroInstances {
   implicit val parentCodec: Codec[Parent] = Codec.derive
 
   implicit val spanContextCodec: Codec[SpanContext] = Codec.derive
+
+  implicit def evalCodec[A: Codec]: Codec[Eval[A]] =
+    Codec.instance(
+      Codec[A].schema,
+      a => Codec[A].encode(a.value),
+      (obj, schema) => Codec[A].decode(obj, schema).map(Eval.later(_))
+    )
 
   implicit val traceValueCodec: Codec[AttributeValue] = Codec.derive[AttributeValue]
 

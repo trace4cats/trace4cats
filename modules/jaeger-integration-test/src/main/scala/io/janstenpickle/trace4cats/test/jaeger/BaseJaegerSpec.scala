@@ -45,10 +45,10 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
   ): List[JaegerTraceResponse] = {
     def convertAttributes(attributes: Map[String, AttributeValue]): List[JaegerTag] =
       attributes.toList.map {
-        case (k, AttributeValue.StringValue(value)) => JaegerTag.StringTag(k, value)
-        case (k, AttributeValue.BooleanValue(value)) => JaegerTag.BoolTag(k, value)
-        case (k, AttributeValue.DoubleValue(value)) => JaegerTag.FloatTag(k, value)
-        case (k, AttributeValue.LongValue(value)) => JaegerTag.LongTag(k, value)
+        case (k, AttributeValue.StringValue(value)) => JaegerTag.StringTag(k, value.value)
+        case (k, AttributeValue.BooleanValue(value)) => JaegerTag.BoolTag(k, value.value)
+        case (k, AttributeValue.DoubleValue(value)) => JaegerTag.FloatTag(k, value.value)
+        case (k, AttributeValue.LongValue(value)) => JaegerTag.LongTag(k, value.value)
         case (k, v: AttributeValue.AttributeList) => JaegerTag.StringTag(k, v.show)
       }
 
