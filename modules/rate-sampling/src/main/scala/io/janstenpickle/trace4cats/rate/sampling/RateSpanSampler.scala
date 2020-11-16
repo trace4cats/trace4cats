@@ -1,13 +1,13 @@
 package io.janstenpickle.trace4cats.rate.sampling
 
-import cats.Functor
+import cats.{Applicative, Functor}
 import cats.effect.{Concurrent, Timer}
 import cats.syntax.functor._
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{SampleDecision, SpanContext, SpanKind, TraceId}
 import io.janstenpickle.trace4cats.rate.TokenBucket
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 object RateSpanSampler {
   def apply[F[_]: Functor: TokenBucket]: SpanSampler[F] =
@@ -24,6 +24,11 @@ object RateSpanSampler {
         }
     }
 
-  def create[F[_]: Concurrent: Timer](bucketSize: Int, tokenRate: FiniteDuration): F[SpanSampler[F]] =
-    TokenBucket[F](bucketSize, tokenRate).map(implicit tb => apply[F])
+  def create[F[_]: Concurrent: Timer](bucketSize: Int, tokenRate: Double): F[SpanSampler[F]] =
+    Some(1.second / tokenRate)
+      .collect { case dur: FiniteDuration => dur }
+      .fold(Applicative[F].pure(SpanSampler.always[F]))(create[F](bucketSize, _))
+
+  def create[F[_]: Concurrent: Timer](bucketSize: Int, tokenInterval: FiniteDuration): F[SpanSampler[F]] =
+    TokenBucket[F](bucketSize, tokenInterval).map(implicit tb => apply[F])
 }

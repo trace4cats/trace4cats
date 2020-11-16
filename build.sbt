@@ -26,7 +26,7 @@ lazy val commonSettings = Seq(
   pgpPublicRing := file("./.github/git adlocal.pubring.asc"),
   pgpSecretRing := file("./.github/local.secring.asc"),
   crossScalaVersions := Seq(Dependencies.Versions.scala213, Dependencies.Versions.scala212),
-  resolvers += Resolver.sonatypeRepo("releases")
+  resolvers += Resolver.sonatypeRepo("releases"),
 )
 
 lazy val noPublishSettings = commonSettings ++ Seq(publish := {}, publishArtifact := false, publishTo := None)
@@ -83,6 +83,7 @@ lazy val root = (project in file("."))
     model,
     core,
     kernel,
+    meta,
     avro,
     inject,
     `inject-zio`,
@@ -95,6 +96,7 @@ lazy val root = (project in file("."))
     `avro-server`,
     `avro-kafka-consumer`,
     `avro-test`,
+    `agent-common`,
     `collector-common`,
     `datadog-http-exporter`,
     `exporter-stream`,
@@ -126,6 +128,7 @@ lazy val model =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-model",
+      libraryDependencies ++= Dependencies.test.map(_ % Test),
       libraryDependencies ++= Seq(
         Dependencies.enumeratum,
         Dependencies.enumeratumCats,
@@ -169,7 +172,8 @@ lazy val example = (project in file("modules/example"))
     `tail-sampling`,
     `tail-sampling-cache-store`,
     filtering,
-    `rate-sampling`
+    `rate-sampling`,
+    meta
   )
 
 lazy val test = (project in file("modules/test"))
@@ -193,9 +197,12 @@ lazy val kernel =
     .settings(
       name := "trace4cats-kernel",
       libraryDependencies ++= Dependencies.test.map(_ % Test),
-      libraryDependencies ++= Seq(Dependencies.catsEffect % Test)
+      libraryDependencies ++= Seq(Dependencies.catsEffect % Test),
+      buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion, sbtVersion),
+      buildInfoPackage := "io.janstenpickle.trace4cats.kernel"
     )
     .dependsOn(model, test % "test->compile")
+    .enablePlugins(BuildInfoPlugin)
 
 lazy val core =
   (project in file("modules/core"))
@@ -426,6 +433,12 @@ lazy val `exporter-common` =
     )
     .dependsOn(model, kernel, `exporter-stream`)
 
+lazy val meta =
+  (project in file("modules/meta"))
+    .settings(publishSettings)
+    .settings(name := "trace4cats-meta", libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.log4cats))
+    .dependsOn(model, kernel, core, `exporter-stream`, `exporter-common` % "test->compile", test % "test->compile")
+
 lazy val `exporter-http` =
   (project in file("modules/exporter-http"))
     .settings(publishSettings)
@@ -550,11 +563,10 @@ lazy val `graal-kafka` = (project in file("modules/graal-kafka"))
     libraryDependencies ++= Seq(Dependencies.svm, Dependencies.kafka, Dependencies.micronautCore)
   )
 
-lazy val agent = (project in file("modules/agent"))
-  .settings(noPublishSettings)
-  .settings(graalSettings)
+lazy val `agent-common` = (project in file("modules/agent-common"))
+  .settings(publishSettings)
   .settings(
-    name := "trace4cats-agent",
+    name := "trace4cats-agent-common",
     libraryDependencies ++= Seq(
       Dependencies.catsEffect,
       Dependencies.declineEffect,
@@ -562,22 +574,20 @@ lazy val agent = (project in file("modules/agent"))
       Dependencies.logback
     )
   )
-  .dependsOn(model, `avro-exporter`, `avro-server`, `exporter-common`)
+  .dependsOn(model, `avro-server`, `exporter-common`, meta, `rate-sampling`)
+
+lazy val agent = (project in file("modules/agent"))
+  .settings(noPublishSettings)
+  .settings(graalSettings)
+  .settings(name := "trace4cats-agent")
+  .dependsOn(model, `avro-exporter`, `agent-common`)
   .enablePlugins(GraalVMNativeImagePlugin)
 
 lazy val `agent-kafka` = (project in file("modules/agent-kafka"))
   .settings(noPublishSettings)
   .settings(graalSettings)
-  .settings(
-    name := "trace4cats-agent-kafka",
-    libraryDependencies ++= Seq(
-      Dependencies.catsEffect,
-      Dependencies.declineEffect,
-      Dependencies.log4cats,
-      Dependencies.logback
-    )
-  )
-  .dependsOn(model, `avro-exporter`, `avro-kafka-exporter`, `avro-server`, `exporter-common`, `graal-kafka`)
+  .settings(name := "trace4cats-agent-kafka")
+  .dependsOn(model, `avro-kafka-exporter`, `exporter-common`, `graal-kafka`, `agent-common`)
   .enablePlugins(GraalVMNativeImagePlugin)
 
 lazy val filtering = (project in file("modules/filtering"))
@@ -637,6 +647,7 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
   .dependsOn(
     model,
     `exporter-common`,
+    meta,
     `avro-exporter`,
     `avro-server`,
     `datadog-http-exporter`,

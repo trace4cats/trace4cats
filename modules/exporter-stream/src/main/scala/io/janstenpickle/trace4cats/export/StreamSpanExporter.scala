@@ -8,7 +8,7 @@ import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan}
 import cats.syntax.functor._
 
 trait StreamSpanExporter[F[_]] extends SpanExporter[F, Chunk] {
-  def pipe: Pipe[F, CompletedSpan, Unit]
+  def pipe: Pipe[F, CompletedSpan, Unit] = _.chunks.evalMap(chunk => exportBatch(Batch(chunk)))
 }
 
 object StreamSpanExporter {

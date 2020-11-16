@@ -3,6 +3,7 @@ package io.janstenpickle.trace4cats
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
+import cats.data.NonEmptyList
 import cats.{~>, Applicative, Defer, MonadError}
 import cats.effect.concurrent.Ref
 import cats.effect.{Clock, ExitCase, Resource, Sync}
@@ -16,6 +17,8 @@ trait Span[F[_]] {
   def put(key: String, value: AttributeValue): F[Unit]
   def putAll(fields: (String, AttributeValue)*): F[Unit]
   def setStatus(spanStatus: SpanStatus): F[Unit]
+  def addLink(link: Link): F[Unit]
+  def addLinks(links: NonEmptyList[Link]): F[Unit]
   def child(name: String, kind: SpanKind): Resource[F, Span[F]]
   def child(name: String, kind: SpanKind, errorHandler: PartialFunction[Throwable, SpanStatus]): Resource[F, Span[F]]
   final def mapK[G[_]: Defer: Applicative](fk: F ~> G): Span[G] = Span.mapK(fk)(this)
@@ -28,6 +31,7 @@ case class RefSpan[F[_]: Sync: Clock] private (
   start: Long,
   attributes: Ref[F, Map[String, AttributeValue]],
   status: Ref[F, SpanStatus],
+  links: Ref[F, List[Link]],
   sampler: SpanSampler[F],
   completer: SpanCompleter[F]
 ) extends Span[F] {
@@ -37,6 +41,8 @@ case class RefSpan[F[_]: Sync: Clock] private (
   override def putAll(fields: (String, AttributeValue)*): F[Unit] =
     attributes.update(_ ++ fields)
   override def setStatus(spanStatus: SpanStatus): F[Unit] = status.set(spanStatus)
+  override def addLink(link: Link): F[Unit] = links.update(link :: _)
+  override def addLinks(lns: NonEmptyList[Link]): F[Unit] = links.update(lns.toList ::: _)
   override def child(name: String, kind: SpanKind): Resource[F, Span[F]] =
     Span.child[F](name, context, kind, sampler, completer)
   override def child(
@@ -50,6 +56,7 @@ case class RefSpan[F[_]: Sync: Clock] private (
     for {
       now <- Clock[F].realTime(TimeUnit.MILLISECONDS)
       attrs <- attributes.get
+      lns <- links.get
       completed = CompletedSpan.Builder(
         context,
         name,
@@ -57,7 +64,8 @@ case class RefSpan[F[_]: Sync: Clock] private (
         Instant.ofEpochMilli(start),
         Instant.ofEpochMilli(now),
         attrs,
-        status
+        status,
+        NonEmptyList.fromList(lns)
       )
       _ <- completer.complete(completed)
     } yield ()
@@ -68,9 +76,11 @@ case class EmptySpan[F[_]: Defer: MonadError[*[_], Throwable]] private (context:
   override def put(key: String, value: AttributeValue): F[Unit] = Applicative[F].unit
   override def putAll(fields: (String, AttributeValue)*): F[Unit] = Applicative[F].unit
   override def setStatus(spanStatus: SpanStatus): F[Unit] = Applicative[F].unit
+  override def addLink(link: Link): F[Unit] = Applicative[F].unit
+  override def addLinks(links: NonEmptyList[Link]): F[Unit] = Applicative[F].unit
   override def child(name: String, kind: SpanKind): Resource[F, Span[F]] =
     Resource.liftF(SpanContext.child[F](context).map { childContext =>
-      EmptySpan(childContext.setIsSampled())
+      EmptySpan(childContext.setDrop())
     })
   override def child(
     name: String,
@@ -83,6 +93,8 @@ case class NoopSpan[F[_]: Applicative] private (context: SpanContext) extends Sp
   override def put(key: String, value: AttributeValue): F[Unit] = Applicative[F].unit
   override def putAll(fields: (String, AttributeValue)*): F[Unit] = Applicative[F].unit
   override def setStatus(spanStatus: SpanStatus): F[Unit] = Applicative[F].unit
+  override def addLink(link: Link): F[Unit] = Applicative[F].unit
+  override def addLinks(links: NonEmptyList[Link]): F[Unit] = Applicative[F].unit
   override def child(name: String, kind: SpanKind): Resource[F, Span[F]] = Span.noop[F]
   override def child(
     name: String,
@@ -108,12 +120,13 @@ object Span {
           .map(_.toBoolean)
       )
       .ifM(
-        Resource.liftF(Applicative[F].pure(EmptySpan[F](context.setIsSampled()))),
+        Resource.liftF(Applicative[F].pure(EmptySpan[F](context.setDrop()))),
         Resource.makeCase(for {
           attributesRef <- Ref.of[F, Map[String, AttributeValue]](Map.empty)
           now <- Clock[F].realTime(TimeUnit.MILLISECONDS)
           statusRef <- Ref.of[F, SpanStatus](SpanStatus.Ok)
-        } yield RefSpan[F](context, name, kind, now, attributesRef, statusRef, sampler, completer)) {
+          linksRef <- Ref.of[F, List[Link]](List.empty)
+        } yield RefSpan[F](context, name, kind, now, attributesRef, statusRef, linksRef, sampler, completer)) {
           case (span, ExitCase.Completed) => span.end
           case (span, ExitCase.Canceled) => span.end(SpanStatus.Cancelled)
           case (span, ExitCase.Error(th)) =>
@@ -150,6 +163,8 @@ object Span {
       override def put(key: String, value: AttributeValue): G[Unit] = fk(span.put(key, value))
       override def putAll(fields: (String, AttributeValue)*): G[Unit] = fk(span.putAll(fields: _*))
       override def setStatus(spanStatus: SpanStatus): G[Unit] = fk(span.setStatus(spanStatus))
+      override def addLink(link: Link): G[Unit] = fk(span.addLink(link))
+      override def addLinks(links: NonEmptyList[Link]): G[Unit] = fk(span.addLinks(links))
       override def child(name: String, kind: SpanKind): Resource[G, Span[G]] =
         span.child(name, kind).mapK(fk).map(Span.mapK(fk))
       override def child(

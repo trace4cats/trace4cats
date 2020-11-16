@@ -13,13 +13,14 @@ import io.janstenpickle.trace4cats.model._
 import io.opentelemetry.proto.common.v1.common._
 import io.opentelemetry.proto.resource.v1.resource.Resource
 import io.opentelemetry.proto.trace.v1.trace.Span.SpanKind._
-import io.opentelemetry.proto.trace.v1.trace.Span.{Event, Link}
+import io.opentelemetry.proto.trace.v1.trace.Span.Event
 import io.opentelemetry.proto.trace.v1.trace.Status.StatusCode
 import io.opentelemetry.proto.trace.v1.trace.Status.StatusCode._
 import io.opentelemetry.proto.trace.v1.trace.{InstrumentationLibrarySpans, ResourceSpans, Span, Status}
 import org.apache.commons.codec.binary.Hex
 import scalapb.UnknownFieldSet
 import cats.syntax.foldable._
+import cats.syntax.semigroup._
 
 import scala.collection.mutable.ListBuffer
 object Convert {
@@ -79,10 +80,13 @@ object Convert {
             case _ => ""
           }
         )
-      )
+      ),
+      links = span.links.fold(List.empty[Span.Link])(_.collect { case Link.Parent(traceId, spanId) =>
+        Span.Link(ByteString.copyFrom(traceId.value), ByteString.copyFrom(spanId.value))
+      })
     )
 
-  def toInstrumentationLibrarySpans[G[_]: Foldable](spans: G[CompletedSpan]): InstrumentationLibrarySpans =
+  def toInstrumentationLibrarySpans(spans: List[CompletedSpan]): InstrumentationLibrarySpans =
     InstrumentationLibrarySpans(
       instrumentationLibrary = Some(InstrumentationLibrary("trace4cats")),
       spans = spans
@@ -92,11 +96,21 @@ object Convert {
         .toList
     )
 
-  def toResourceSpans[G[_]: Foldable](batch: Batch[G]): ResourceSpans =
-    ResourceSpans(
-      resource = Some(Resource()),
-      instrumentationLibrarySpans = List(toInstrumentationLibrarySpans(batch.spans))
-    )
+  def toResourceSpans[G[_]: Foldable](batch: Batch[G]): Iterable[ResourceSpans] =
+    batch.spans
+      .foldLeft(Map.empty[String, List[CompletedSpan]]) { (acc, span) =>
+        acc |+| Map(span.serviceName -> List(span))
+      }
+      .map { case (service, spans) =>
+        ResourceSpans(
+          resource = Some(
+            Resource(attributes =
+              List(KeyValue("service.name", Some(AnyValue.of(AnyValue.Value.StringValue(service)))))
+            )
+          ),
+          instrumentationLibrarySpans = List(toInstrumentationLibrarySpans(spans))
+        )
+      }
 
   implicit val jsonConfig = Configuration.default.withSnakeCaseConstructorNames.withSnakeCaseMemberNames
 
@@ -126,7 +140,7 @@ object Convert {
   implicit def keyValueEncoder: Encoder[KeyValue] = deriveConfiguredEncoder
 
   implicit val eventEncoder: Encoder[Event] = deriveConfiguredEncoder
-  implicit val linkEncoder: Encoder[Link] = deriveConfiguredEncoder
+  implicit val linkEncoder: Encoder[Span.Link] = deriveConfiguredEncoder
   implicit val statusCodeEncoder: Encoder[StatusCode] = Encoder.encodeInt.contramap(_.value)
   implicit val statusEncoder: Encoder[Status] = deriveConfiguredEncoder
 
@@ -135,15 +149,15 @@ object Convert {
   implicit val instrumentationLibraryEncoder: Encoder[InstrumentationLibrary] = deriveConfiguredEncoder
   implicit val instrumentationLibrarySpansEncoder: Encoder[InstrumentationLibrarySpans] = deriveConfiguredEncoder
   implicit val resourceEncoder: Encoder[Resource] = deriveConfiguredEncoder
-  implicit val resourceSpansEncoder: Encoder[ResourceSpans] = deriveConfiguredEncoder[ResourceSpans].mapJsonObject {
-    obj =>
+  implicit val resourceSpansEncoder: Encoder[ResourceSpans] = deriveConfiguredEncoder
+  implicit val resourceSpansIterableEncoder: Encoder[Iterable[ResourceSpans]] =
+    Encoder.encodeJsonObject.contramapObject { resourceSpans =>
       JsonObject.fromMap(
-        Map(
-          "resource_spans" -> Json
-            .fromValues(List(Json.fromJsonObject(obj).deepDropNullValues))
-        )
+        Map("resource_spans" -> Json.fromValues(resourceSpans.map(resourceSpansEncoder(_).deepDropNullValues)))
       )
-  }
+    }
 
-  def toJsonString[G[_]: Foldable](batch: Batch[G]): String = resourceSpansEncoder(toResourceSpans(batch)).spaces2
+  def toJsonString[G[_]: Foldable](batch: Batch[G]): String = resourceSpansIterableEncoder(
+    toResourceSpans(batch)
+  ).noSpaces
 }

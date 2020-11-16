@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.avro
 
 import cats.ApplicativeError
+import cats.data.NonEmptyList
 import cats.syntax.either._
 import io.janstenpickle.trace4cats.model._
 import org.apache.avro.Schema
@@ -39,6 +40,12 @@ object AvroInstances {
   implicit val attributesCodec: Codec[Map[String, AttributeValue]] = Codec.map[AttributeValue]
 
   implicit val spanKindCodec: Codec[SpanKind] = Codec.derive[SpanKind]
+
+  implicit val linkCodec: Codec[Link] = Codec.derive[Link]
+
+  implicit val linksCodec: Codec[NonEmptyList[Link]] = Codec.nonEmptyList[Link]
+
+  implicit val metaTraceCodec: Codec[MetaTrace] = Codec.derive[MetaTrace]
 
   implicit val spanStatusCodec: Codec[SpanStatus] = Codec.derive[SpanStatus]
 

@@ -2,6 +2,7 @@ package io.janstenpickle.trace4cats.model
 
 import java.time.Instant
 
+import cats.data.NonEmptyList
 import cats.{Eq, Show}
 import cats.syntax.all._
 
@@ -13,7 +14,9 @@ case class CompletedSpan(
   start: Instant,
   end: Instant,
   attributes: Map[String, AttributeValue],
-  status: SpanStatus
+  status: SpanStatus,
+  links: Option[NonEmptyList[Link]],
+  metaTrace: Option[MetaTrace]
 ) {
   lazy val allAttributes: Map[String, AttributeValue] =
     attributes.updated("service.name", AttributeValue.StringValue(serviceName))
@@ -30,8 +33,10 @@ object CompletedSpan {
           |  kind: ${span.kind}
           |  start: ${span.start}
           |  end: ${span.end}
-          |  attributes: ${span.attributes}
+          |  attributes: ${span.allAttributes}
           |  status: ${span.status}
+          |  link: ${span.links}
+          |  meta-trace: ${span.metaTrace.fold("[ ]")(_.show)}
           |}""".stripMargin
   }
 
@@ -45,11 +50,25 @@ object CompletedSpan {
     start: Instant,
     end: Instant,
     attributes: Map[String, AttributeValue],
-    status: SpanStatus
+    status: SpanStatus,
+    links: Option[NonEmptyList[Link]],
+    metaTrace: Option[MetaTrace] = None
   ) {
+    def withMetaTrace(trace: MetaTrace): Builder = copy(metaTrace = Some(trace))
     def build(process: TraceProcess): CompletedSpan =
-      CompletedSpan(context, name, process.serviceName, kind, start, end, process.attributes ++ attributes, status)
+      CompletedSpan(
+        context,
+        name,
+        process.serviceName,
+        kind,
+        start,
+        end,
+        process.attributes ++ attributes,
+        status,
+        links,
+        metaTrace
+      )
     def build(serviceName: String): CompletedSpan =
-      CompletedSpan(context, name, serviceName, kind, start, end, attributes, status)
+      CompletedSpan(context, name, serviceName, kind, start, end, attributes, status, links, metaTrace)
   }
 }

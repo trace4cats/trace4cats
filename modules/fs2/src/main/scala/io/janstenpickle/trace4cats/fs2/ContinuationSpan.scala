@@ -1,10 +1,11 @@
 package io.janstenpickle.trace4cats.fs2
 
+import cats.data.NonEmptyList
 import cats.{Applicative, Defer}
 import cats.effect.Resource
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.inject.{LiftTrace, Provide}
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanContext, SpanKind, SpanStatus}
+import io.janstenpickle.trace4cats.model.{AttributeValue, Link, SpanContext, SpanKind, SpanStatus}
 
 trait ContinuationSpan[F[_]] extends Span[F] {
   def run[A](k: F[A]): F[A]
@@ -25,6 +26,10 @@ object ContinuationSpan {
       override def putAll(fields: (String, AttributeValue)*): G[Unit] = spanK.putAll(fields: _*)
 
       override def setStatus(spanStatus: SpanStatus): G[Unit] = spanK.setStatus(spanStatus)
+
+      override def addLink(link: Link): G[Unit] = spanK.addLink(link)
+
+      override def addLinks(links: NonEmptyList[Link]): G[Unit] = spanK.addLinks(links)
 
       override def child(name: String, kind: SpanKind): Resource[G, Span[G]] = spanK.child(name, kind)
 

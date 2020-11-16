@@ -11,7 +11,7 @@ case class SpanContext(
   traceState: TraceState,
   isRemote: Boolean
 ) {
-  def setIsSampled(): SpanContext =
+  def setDrop(): SpanContext =
     copy(traceFlags = traceFlags.copy(sampled = SampleDecision.Drop))
 }
 
