@@ -3,11 +3,11 @@ package io.janstenpickle.trace4cats.http4s.common
 import org.http4s.Uri
 
 object Http4sSpanNamer {
-  def method: Http4sSpanNamer = _.method.name
+  val method: Http4sSpanNamer = _.method.name
 
-  def path: Http4sSpanNamer = req => Uri.decode(req.pathInfo)
+  val path: Http4sSpanNamer = req => Uri.decode(req.pathInfo)
 
-  def methodWithPath: Http4sSpanNamer = req => s"${req.method.name} ${Uri.decode(req.pathInfo)}"
+  val methodWithPath: Http4sSpanNamer = req => s"${req.method.name} ${Uri.decode(req.pathInfo)}"
 
   /** Similar to `methodWithPath`, but allows one to reduce the cardinality of the operation name by applying
     * a transformation to each path segment, e.g.:

@@ -1,11 +1,11 @@
 package io.janstenpickle.trace4cats.sttp.backend
 
 object SttpSpanNamer {
-  def method: SttpSpanNamer = _.method.method
+  val method: SttpSpanNamer = _.method.method
 
-  def path: SttpSpanNamer = req => req.uri.path.mkString("/")
+  val path: SttpSpanNamer = req => req.uri.path.mkString("/")
 
-  def methodWithPath: SttpSpanNamer = req => s"${req.method.method} ${req.uri.path.mkString("/")}"
+  val methodWithPath: SttpSpanNamer = req => s"${req.method.method} ${req.uri.path.mkString("/")}"
 
   /** Similar to `methodWithPath`, but allows one to reduce the cardinality of the operation name by applying
     * a transformation to each path segment, e.g.:
