@@ -46,11 +46,14 @@ Instrumentation for trace propagation and continuation is available for the foll
 - [FS2 Kafka] consumer and producer
 - [FS2]
 
+**Unlike other tracing libraries, trace attributes are lazily evaluated. If a span is not [sampled](docs/sampling.md),
+no computation associated with calculating attribute values will be performed** 
+
 For more information on how to use these can be found in the [examples documentation](docs/examples.md)
 
 ## Quickstart
 
-** For more see the [documentation](#documentation) for more advanced [examples](docs/examples.md) **
+**For more see the [documentation](#documentation) for more advanced [examples](docs/examples.md)**
 
 Add the following dependencies to your `build.sbt`:
 
