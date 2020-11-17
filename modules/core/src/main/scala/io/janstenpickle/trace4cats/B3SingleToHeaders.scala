@@ -33,9 +33,9 @@ private[trace4cats] class B3SingleToHeaders extends ToHeaders {
 
     val header = show"${context.traceId}-${context.spanId}-$sampled"
 
-    TraceHeaders(Map(traceHeader -> context.parent.fold(header) { parent =>
+    TraceHeaders.of(traceHeader -> context.parent.fold(header) { parent =>
       show"$header-${parent.spanId}"
-    }))
+    })
   }
 
 }

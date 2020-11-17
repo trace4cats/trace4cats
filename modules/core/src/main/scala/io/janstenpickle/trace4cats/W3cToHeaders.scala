@@ -56,6 +56,6 @@ private[trace4cats] class W3cToHeaders extends ToHeaders {
       .map { case (k, v) => show"$k=$v" }
       .mkString(",")
 
-    TraceHeaders(Map(parentHeader -> traceParent, stateHeader -> traceState))
+    TraceHeaders.of(parentHeader -> traceParent, stateHeader -> traceState)
   }
 }
