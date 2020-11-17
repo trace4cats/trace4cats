@@ -17,7 +17,7 @@ object TracedProducer {
       override def produce[P](records: ProducerRecords[K, V, P]): G[G[ProducerResult[K, V, P]]] =
         Trace[G].span("kafka.send", SpanKind.Producer) {
           Trace[G].headers(toHeaders).flatMap { traceHeaders =>
-            val msgHeaders = Headers.fromIterable(traceHeaders.values.map { case (k, v) => Header(k, v) })
+            val msgHeaders = KafkaHeaders.converter.to(traceHeaders)
 
             NonEmptyList
               .fromList(records.records.map(_.topic).toList)

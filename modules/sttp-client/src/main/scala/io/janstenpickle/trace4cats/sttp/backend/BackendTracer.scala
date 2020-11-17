@@ -32,8 +32,8 @@ class BackendTracer[F[_]: Bracket[*[_], Throwable], G[_]: MonadError[*[_], Throw
               }
             )
             .use { span =>
-              val headers = toHeaders.fromContext(span.context).values
-              val req = request.headers(headers)
+              val headers = SttpHeaders.converter.to(toHeaders.fromContext(span.context))
+              val req = request.headers(headers.headers: _*)
 
               backend.send(req).flatTap { resp =>
                 span.setStatus(SttpStatusMapping.statusToSpanStatus(resp.statusText, resp.code))

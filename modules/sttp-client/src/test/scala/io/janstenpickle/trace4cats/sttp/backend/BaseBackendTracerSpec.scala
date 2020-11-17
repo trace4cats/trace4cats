@@ -4,9 +4,10 @@ import cats.data.NonEmptyList
 import cats.effect.concurrent.Ref
 import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Sync, Timer}
 import cats.implicits._
-import cats.{~>, Eq, Id}
+import cats.{Eq, Id, ~>}
 import io.janstenpickle.trace4cats.ToHeaders
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
+import io.janstenpickle.trace4cats.http4s.common.Http4sHeaders
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Provide, Trace}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.model.TraceHeaders
@@ -128,14 +129,7 @@ abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift, G[_]:
         req
           .as[String]
           .flatMap { key =>
-            headersRef.update(
-              _.updated(
-                key,
-                TraceHeaders(req.headers.toList.map { header =>
-                  header.name.value -> header.value
-                }.toMap)
-              )
-            )
+            headersRef.update(_.updated(key, Http4sHeaders.converter.from(req.headers)))
           }
           .as(resp)
       }

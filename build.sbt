@@ -526,7 +526,7 @@ lazy val `sttp-client` = (project in file("modules/sttp-client"))
       Dependencies.sttpHttp4s
     )).map(_ % Test)
   )
-  .dependsOn(model, kernel, core, inject, `exporter-common` % "test->compile")
+  .dependsOn(model, kernel, core, inject, `exporter-common` % "test->compile", `http4s-common` % "test->compile")
 
 lazy val `http4s-client` = (project in file("modules/http4s-client"))
   .settings(publishSettings)

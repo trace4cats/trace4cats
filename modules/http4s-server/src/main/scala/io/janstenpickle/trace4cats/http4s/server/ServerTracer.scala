@@ -14,7 +14,7 @@ import io.janstenpickle.trace4cats.http4s.common.{
   Http4sStatusMapping
 }
 import io.janstenpickle.trace4cats.inject.{EntryPoint, LiftTrace, Provide}
-import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders}
+import io.janstenpickle.trace4cats.model.SpanKind
 import org.http4s.util.CaseInsensitiveString
 import org.http4s.{HttpApp, HttpRoutes, Request, Response}
 
@@ -28,7 +28,7 @@ object ServerTracer {
   )(implicit provide: Provide[F, G], lift: LiftTrace[F, G]): HttpRoutes[F] =
     Kleisli[OptionT[F, *], Request[F], Response[F]] { req =>
       val filter = requestFilter.lift(req.covary).getOrElse(true)
-      val headers = TraceHeaders(req.headers.toList.map(h => h.name.value -> h.value).toMap)
+      val headers = Http4sHeaders.converter.from(req.headers)
       val spanR =
         if (filter) entryPoint.continueOrElseRoot(spanNamer(req.covary), SpanKind.Server, headers) else Span.noop[F]
 
@@ -60,7 +60,7 @@ object ServerTracer {
   )(implicit provide: Provide[F, G], lift: LiftTrace[F, G]): HttpApp[F] =
     Kleisli[F, Request[F], Response[F]] { req =>
       val filter = requestFilter.lift(req.covary).getOrElse(true)
-      val headers = TraceHeaders(req.headers.toList.map(h => h.name.value -> h.value).toMap)
+      val headers = Http4sHeaders.converter.from(req.headers)
       val spanR =
         if (filter) entryPoint.continueOrElseRoot(spanNamer(req.covary), SpanKind.Server, headers) else Span.noop[F]
 
