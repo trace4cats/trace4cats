@@ -14,10 +14,10 @@ import scala.collection.mutable.ListBuffer
 // https://docs.newrelic.com/docs/understand-dependencies/distributed-tracing/trace-api/report-new-relic-format-traces-trace-api
 object Convert {
   implicit val traceValueEncoder: Encoder[AttributeValue] = Encoder.instance {
-    case AttributeValue.StringValue(value) => Json.fromString(value)
-    case AttributeValue.BooleanValue(value) => Json.fromBoolean(value)
-    case AttributeValue.LongValue(value) => Json.fromLong(value)
-    case AttributeValue.DoubleValue(value) => Json.fromDoubleOrString(value)
+    case AttributeValue.StringValue(value) => Json.fromString(value.value)
+    case AttributeValue.BooleanValue(value) => Json.fromBoolean(value.value)
+    case AttributeValue.LongValue(value) => Json.fromLong(value.value)
+    case AttributeValue.DoubleValue(value) => Json.fromDoubleOrString(value.value)
     case value: AttributeValue.AttributeList => Json.fromString(value.show)
   }
 

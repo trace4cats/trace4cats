@@ -45,13 +45,13 @@ object JaegerSpanExporter {
       attributes.view
         .map {
           case (key, StringValue(value)) =>
-            new Tag(key, TagType.STRING).setVStr(value)
+            new Tag(key, TagType.STRING).setVStr(value.value)
           case (key, DoubleValue(value)) =>
-            new Tag(key, TagType.DOUBLE).setVDouble(value)
+            new Tag(key, TagType.DOUBLE).setVDouble(value.value)
           case (key, BooleanValue(value)) =>
-            new Tag(key, TagType.BOOL).setVBool(value)
+            new Tag(key, TagType.BOOL).setVBool(value.value)
           case (key, LongValue(value)) =>
-            new Tag(key, TagType.LONG).setVLong(value)
+            new Tag(key, TagType.LONG).setVLong(value.value)
           case (key, value: AttributeList) =>
             new Tag(key, TagType.STRING).setVStr(value.show)
         }

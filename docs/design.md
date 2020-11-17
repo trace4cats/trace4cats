@@ -48,6 +48,20 @@ The following implementations are provided out of the box:
 - Probabilistic
 - Rate
 
+#### `AttributeValue`
+
+An ADT for representing different types of span attributes, currently supports the following types as single values or
+as lists.
+
+- String
+- Boolean
+- Double
+- Long
+
+Unlike many other tracing libraries, `AttributeValue`s are lazily evaluated, so if a span is not sampled the value will
+not be computed. This is especially useful when a value requires some computation before it can be displayed, such as
+the size of a collection.
+
 #### `ToHeaders`
 
 Convert a span context to and from message or http headers.

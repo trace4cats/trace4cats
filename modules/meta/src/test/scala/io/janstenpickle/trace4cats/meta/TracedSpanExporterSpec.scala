@@ -1,5 +1,6 @@
 package io.janstenpickle.trace4cats.meta
 
+import cats.Eq
 import cats.effect.{ContextShift, IO, Resource, Timer}
 import fs2.{Chunk, Stream}
 import fs2.concurrent.Queue
@@ -34,12 +35,17 @@ class TracedSpanExporterSpec
 
       spans.size should be(batch.spans.size + 1)
 
-      metaSpan.allAttributes should contain theSameElementsAs (process.attributes ++ Map[String, AttributeValue](
-        "exporter.name" -> exporterName,
-        "trace4cats.version" -> BuildInfo.version,
-        "batch.size" -> batch.spans.size,
-        "service.name" -> process.serviceName
-      ) ++ attributes)
+      assert(
+        Eq.eqv(
+          metaSpan.allAttributes,
+          process.attributes ++ Map[String, AttributeValue](
+            "exporter.name" -> exporterName,
+            "trace4cats.version" -> BuildInfo.version,
+            "batch.size" -> batch.spans.size,
+            "service.name" -> process.serviceName
+          ) ++ attributes
+        )
+      )
       metaSpan.kind should be(SpanKind.Producer)
     }
   )

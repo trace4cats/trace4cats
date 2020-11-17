@@ -1,5 +1,6 @@
 package io.janstenpickle.trace4cats.meta
 
+import cats.Eq
 import cats.effect.{ContextShift, IO, Timer}
 import fs2.{Chunk, Stream}
 import io.chrisdavenport.log4cats.Logger
@@ -29,11 +30,16 @@ class PipeTracerSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenProp
 
       spans.size should be(batch.spans.size + 1)
 
-      metaSpan.allAttributes should contain theSameElementsAs (process.attributes ++ Map[String, AttributeValue](
-        "trace4cats.version" -> BuildInfo.version,
-        "batch.size" -> batch.spans.size,
-        "service.name" -> process.serviceName
-      ) ++ attributes)
+      assert(
+        Eq.eqv(
+          metaSpan.allAttributes,
+          process.attributes ++ Map[String, AttributeValue](
+            "trace4cats.version" -> BuildInfo.version,
+            "batch.size" -> batch.spans.size,
+            "service.name" -> process.serviceName
+          ) ++ attributes
+        )
+      )
       metaSpan.kind should be(SpanKind.Consumer)
     }
   )

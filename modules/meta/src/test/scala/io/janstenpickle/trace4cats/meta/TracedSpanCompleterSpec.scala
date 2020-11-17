@@ -1,5 +1,6 @@
 package io.janstenpickle.trace4cats.meta
 
+import cats.Eq
 import cats.effect.{ContextShift, IO, Timer}
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanSampler}
@@ -33,11 +34,16 @@ class TracedSpanCompleterSpec
 
         spans.size should be(2)
 
-        metaSpan.allAttributes should contain theSameElementsAs (process.attributes ++ Map[String, AttributeValue](
-          "completer.name" -> completerName,
-          "trace4cats.version" -> BuildInfo.version,
-          "service.name" -> process.serviceName
-        ))
+        assert(
+          Eq.eqv(
+            metaSpan.allAttributes,
+            process.attributes ++ Map[String, AttributeValue](
+              "completer.name" -> completerName,
+              "trace4cats.version" -> BuildInfo.version,
+              "service.name" -> process.serviceName
+            )
+          )
+        )
         metaSpan.kind should be(SpanKind.Producer)
         completedSpan.metaTrace should be(Some(MetaTrace(metaSpan.context.traceId, metaSpan.context.spanId)))
 

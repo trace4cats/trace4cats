@@ -27,13 +27,13 @@ object Convert {
   def toAttributes(attributes: Map[String, AttributeValue]): List[KeyValue] =
     attributes.toList.map {
       case (k, AttributeValue.StringValue(v)) =>
-        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.StringValue(v))))
+        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.StringValue(v.value))))
       case (k, AttributeValue.BooleanValue(v)) =>
-        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.BoolValue(v))))
+        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.BoolValue(v.value))))
       case (k, AttributeValue.DoubleValue(v)) =>
-        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.DoubleValue(v))))
+        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.DoubleValue(v.value))))
       case (k, AttributeValue.LongValue(v)) =>
-        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.IntValue(v))))
+        KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.IntValue(v.value))))
       case (k, v: AttributeValue.AttributeList) =>
         KeyValue(key = k, value = Some(AnyValue.of(AnyValue.Value.StringValue(v.show))))
     }

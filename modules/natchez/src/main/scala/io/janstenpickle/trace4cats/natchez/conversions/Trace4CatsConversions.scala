@@ -40,10 +40,10 @@ trait Trace4CatsConversions {
       override def put(key: String, value: AttributeValue): F[Unit] = putAll(key -> value)
       override def putAll(fields: (String, AttributeValue)*): F[Unit] =
         trace.put(fields.map {
-          case (k, StringValue(v)) => k -> V.StringValue(v)
-          case (k, DoubleValue(v)) => k -> V.NumberValue(v)
-          case (k, LongValue(v)) => k -> V.NumberValue(v)
-          case (k, BooleanValue(v)) => k -> V.BooleanValue(v)
+          case (k, StringValue(v)) => k -> V.StringValue(v.value)
+          case (k, DoubleValue(v)) => k -> V.NumberValue(v.value)
+          case (k, LongValue(v)) => k -> V.NumberValue(v.value)
+          case (k, BooleanValue(v)) => k -> V.BooleanValue(v.value)
           case (k, StringList(v)) => k -> V.StringValue(v.toString())
           case (k, BooleanList(v)) => k -> V.StringValue(v.toString())
           case (k, DoubleList(v)) => k -> V.StringValue(v.toString())

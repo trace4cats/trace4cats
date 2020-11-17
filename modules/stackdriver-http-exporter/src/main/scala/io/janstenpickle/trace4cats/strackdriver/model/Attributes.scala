@@ -10,10 +10,10 @@ case class Attributes(attributeMap: Map[String, SDAttributeValue], droppedAttrib
 object Attributes {
   def fromCompleted(attributes: Map[String, AttributeValue]): Attributes = {
     val attrs = attributes.take(32).map {
-      case (k, AttributeValue.StringValue(value)) => k -> SDAttributeValue.StringValue(value)
-      case (k, AttributeValue.DoubleValue(value)) => k -> SDAttributeValue.StringValue(value.toString)
-      case (k, AttributeValue.BooleanValue(value)) => k -> SDAttributeValue.BoolValue(value)
-      case (k, AttributeValue.LongValue(value)) => k -> SDAttributeValue.IntValue(value)
+      case (k, AttributeValue.StringValue(value)) => k -> SDAttributeValue.StringValue(value.value)
+      case (k, AttributeValue.DoubleValue(value)) => k -> SDAttributeValue.StringValue(value.value.toString)
+      case (k, AttributeValue.BooleanValue(value)) => k -> SDAttributeValue.BoolValue(value.value)
+      case (k, AttributeValue.LongValue(value)) => k -> SDAttributeValue.IntValue(value.value)
       case (k, v: AttributeValue.AttributeList) => k -> SDAttributeValue.StringValue(v.show)
     }
 
