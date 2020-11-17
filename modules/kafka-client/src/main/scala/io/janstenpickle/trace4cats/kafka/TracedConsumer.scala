@@ -17,9 +17,7 @@ object TracedConsumer extends Fs2StreamSyntax {
   )(ep: EntryPoint[F])(implicit provide: Provide[F, G]): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
     stream
       .injectContinue(ep, "kafka.receive", SpanKind.Consumer) { record =>
-        record.record.headers.toChain.foldLeft(Map.empty[String, String]) { (acc, header) =>
-          acc.updated(header.key(), header.as[String])
-        }
+        KafkaHeaders.converter.from(record.record.headers)
       }
       .evalMapTrace { record =>
         Trace[G]

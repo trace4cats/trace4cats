@@ -5,15 +5,15 @@ import cats.syntax.semigroup._
 import io.janstenpickle.trace4cats.model._
 
 trait ToHeaders {
-  def toContext(headers: Map[String, String]): Option[SpanContext]
-  def fromContext(context: SpanContext): Map[String, String]
+  def toContext(headers: TraceHeaders): Option[SpanContext]
+  def fromContext(context: SpanContext): TraceHeaders
 }
 
 object ToHeaders {
   implicit val toHeadersSemigroup: Semigroup[ToHeaders] = new Semigroup[ToHeaders] {
     override def combine(x: ToHeaders, y: ToHeaders): ToHeaders =
       new ToHeaders {
-        override def toContext(headers: Map[String, String]): Option[SpanContext] =
+        override def toContext(headers: TraceHeaders): Option[SpanContext] =
           (x.toContext(headers), y.toContext(headers)) match {
             case (ctx @ Some(_), None) => ctx
             case (None, ctx @ Some(_)) => ctx
@@ -29,13 +29,13 @@ object ToHeaders {
             case (None, None) => None
           }
 
-        override def fromContext(context: SpanContext): Map[String, String] =
-          x.fromContext(context) ++ y.fromContext(context)
+        override def fromContext(context: SpanContext): TraceHeaders =
+          TraceHeaders(x.fromContext(context).values ++ y.fromContext(context).values)
       }
   }
 
-  val w3c: ToHeaders = new W3cToHeaders()
-  val b3: ToHeaders = new B3ToHeaders()
+  val w3c: ToHeaders = new W3cToHeaders
+  val b3: ToHeaders = new B3ToHeaders
   val b3Single: ToHeaders = new B3SingleToHeaders
   val envoy: ToHeaders = new EnvoyToHeaders
   val all: ToHeaders = w3c |+| b3 |+| b3Single |+| envoy

@@ -28,7 +28,7 @@ object ServerTracer {
   )(implicit provide: Provide[F, G], lift: LiftTrace[F, G]): HttpRoutes[F] =
     Kleisli[OptionT[F, *], Request[F], Response[F]] { req =>
       val filter = requestFilter.lift(req.covary).getOrElse(true)
-      val headers = req.headers.toList.map(h => h.name.value -> h.value).toMap
+      val headers = Http4sHeaders.converter.from(req.headers)
       val spanR =
         if (filter) entryPoint.continueOrElseRoot(spanNamer(req.covary), SpanKind.Server, headers) else Span.noop[F]
 
@@ -60,7 +60,7 @@ object ServerTracer {
   )(implicit provide: Provide[F, G], lift: LiftTrace[F, G]): HttpApp[F] =
     Kleisli[F, Request[F], Response[F]] { req =>
       val filter = requestFilter.lift(req.covary).getOrElse(true)
-      val headers = req.headers.toList.map(h => h.name.value -> h.value).toMap
+      val headers = Http4sHeaders.converter.from(req.headers)
       val spanR =
         if (filter) entryPoint.continueOrElseRoot(spanNamer(req.covary), SpanKind.Server, headers) else Span.noop[F]
 

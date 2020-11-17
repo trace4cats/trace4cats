@@ -7,7 +7,7 @@ private[trace4cats] class W3cToHeaders extends ToHeaders {
   final val parentHeader = "traceparent"
   final val stateHeader = "tracestate"
 
-  override def toContext(headers: Map[String, String]): Option[SpanContext] = {
+  override def toContext(headers: TraceHeaders): Option[SpanContext] = {
     def splitParent(traceParent: String): Option[(String, String, SampleDecision)] =
       traceParent.split('-').toList match {
         case _ :: traceId :: spanId :: sampled :: Nil =>
@@ -28,7 +28,7 @@ private[trace4cats] class W3cToHeaders extends ToHeaders {
       }
 
     val parseState: TraceState = (for {
-      state <- headers.get(stateHeader)
+      state <- headers.values.get(stateHeader)
       split = state.split(',')
       traceState <-
         if (split.length <= 32)
@@ -37,14 +37,14 @@ private[trace4cats] class W3cToHeaders extends ToHeaders {
     } yield traceState).getOrElse(TraceState.empty)
 
     for {
-      traceParent <- headers.get(parentHeader)
+      traceParent <- headers.values.get(parentHeader)
       (tid, sid, sampled) <- splitParent(traceParent)
       traceId <- TraceId.fromHexString(tid)
       spanId <- SpanId.fromHexString(sid)
     } yield SpanContext(traceId, spanId, None, TraceFlags(sampled), parseState, isRemote = true)
   }
 
-  override def fromContext(context: SpanContext): Map[String, String] = {
+  override def fromContext(context: SpanContext): TraceHeaders = {
     val sampled = context.traceFlags.sampled match {
       case SampleDecision.Drop => "00"
       case SampleDecision.Include => "01"
@@ -56,6 +56,6 @@ private[trace4cats] class W3cToHeaders extends ToHeaders {
       .map { case (k, v) => show"$k=$v" }
       .mkString(",")
 
-    Map(parentHeader -> traceParent, stateHeader -> traceState)
+    TraceHeaders.of(parentHeader -> traceParent, stateHeader -> traceState)
   }
 }

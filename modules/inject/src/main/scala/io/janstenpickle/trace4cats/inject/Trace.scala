@@ -11,7 +11,7 @@ import cats.syntax.applicative._
 import cats.syntax.option._
 import cats.syntax.show._
 import cats.{Applicative, Functor}
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus}
+import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus, TraceHeaders}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 
 /** A tracing effect, which always has a current span. */
@@ -20,8 +20,8 @@ trait Trace[F[_]] {
   def putAll(fields: (String, AttributeValue)*): F[Unit]
   def span[A](name: String)(fa: F[A]): F[A] = span(name, SpanKind.Internal)(fa)
   def span[A](name: String, kind: SpanKind)(fa: F[A]): F[A]
-  def headers: F[Map[String, String]] = headers(ToHeaders.all)
-  def headers(toHeaders: ToHeaders): F[Map[String, String]]
+  def headers: F[TraceHeaders] = headers(ToHeaders.all)
+  def headers(toHeaders: ToHeaders): F[TraceHeaders]
   def setStatus(status: SpanStatus): F[Unit]
   def traceId: F[Option[String]]
 }
@@ -39,8 +39,8 @@ object Trace {
     implicit def noop[F[_]: Applicative]: Trace[F] =
       new Trace[F] {
         final val void = ().pure[F]
-        override val headers: F[Map[String, String]] = Map.empty[String, String].pure[F]
-        override def headers(toHeaders: ToHeaders): F[Map[String, String]] = Map.empty[String, String].pure[F]
+        override val headers: F[TraceHeaders] = TraceHeaders.empty.pure[F]
+        override def headers(toHeaders: ToHeaders): F[TraceHeaders] = TraceHeaders.empty.pure[F]
         override def put(key: String, value: AttributeValue): F[Unit] = void
         override def putAll(fields: (String, AttributeValue)*): F[Unit] = void
         override def span[A](name: String)(fa: F[A]): F[A] = fa
@@ -63,7 +63,7 @@ object Trace {
     */
   class KleisliTrace[F[_]: Bracket[*[_], Throwable]] extends Trace[Kleisli[F, Span[F], *]] {
 
-    override def headers(toHeaders: ToHeaders): Kleisli[F, Span[F], Map[String, String]] =
+    override def headers(toHeaders: ToHeaders): Kleisli[F, Span[F], TraceHeaders] =
       Kleisli { span =>
         toHeaders.fromContext(span.context).pure[F]
       }
@@ -92,7 +92,7 @@ object Trace {
         override def span[A](name: String, kind: SpanKind)(k: Kleisli[F, E, A]): Kleisli[F, E, A] =
           Kleisli(e => f(e).child(name, kind).use(s => k.run(g(e, s))))
 
-        override def headers(toHeaders: ToHeaders): Kleisli[F, E, Map[String, String]] =
+        override def headers(toHeaders: ToHeaders): Kleisli[F, E, TraceHeaders] =
           Kleisli(e => toHeaders.fromContext(f(e).context).pure[F])
 
         override def setStatus(status: SpanStatus): Kleisli[F, E, Unit] =
@@ -113,7 +113,7 @@ object Trace {
       override def span[B](name: String, kind: SpanKind)(fa: EitherT[F, A, B]): EitherT[F, A, B] =
         EitherT(trace.span(name, kind)(fa.value))
 
-      override def headers(toHeaders: ToHeaders): EitherT[F, A, Map[String, String]] =
+      override def headers(toHeaders: ToHeaders): EitherT[F, A, TraceHeaders] =
         EitherT.liftF(trace.headers(toHeaders))
 
       override def setStatus(status: SpanStatus): EitherT[F, A, Unit] =

@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.inject.zio
 
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import io.janstenpickle.trace4cats.inject.Trace
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus}
+import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus, TraceHeaders}
 import zio.{Task, ZIO}
 import zio.interop.catz._
 import cats.syntax.show._
@@ -17,7 +17,7 @@ class ZIOTracer extends Trace[ZIOTrace] {
   override def span[A](name: String, kind: SpanKind)(fa: ZIOTrace[A]): ZIOTrace[A] =
     ZIO.environment[Span[Task]].flatMap(_.child(name, kind).use(fa.provide))
 
-  override def headers(toHeaders: ToHeaders): ZIOTrace[Map[String, String]] =
+  override def headers(toHeaders: ToHeaders): ZIOTrace[TraceHeaders] =
     ZIO.environment[Span[Task]].map { s =>
       toHeaders.fromContext(s.context)
     }
@@ -47,7 +47,7 @@ class ZIOTracer extends Trace[ZIOTrace] {
           f(r).child(name, kind).use(s => fa.provide(g(r, s)))
         }
 
-      override def headers(toHeaders: ToHeaders): ZIO[R, Throwable, Map[String, String]] =
+      override def headers(toHeaders: ToHeaders): ZIO[R, Throwable, TraceHeaders] =
         ZIO.environment[R].flatMap { r =>
           ZIO.effectTotal(toHeaders.fromContext(f(r).context))
         }

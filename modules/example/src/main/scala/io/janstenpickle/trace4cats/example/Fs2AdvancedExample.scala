@@ -16,7 +16,7 @@ import io.janstenpickle.trace4cats.fs2.syntax.all._
 import io.janstenpickle.trace4cats.inject.{EntryPoint, LiftTrace, Provide, Trace}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.AttributeValue.LongValue
-import io.janstenpickle.trace4cats.model.{SpanKind, TraceProcess}
+import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders, TraceProcess}
 
 import scala.concurrent.duration._
 import scala.util.Random
@@ -89,12 +89,12 @@ object Fs2AdvancedExample extends IOApp {
   // gets the trace headers from the span context so that they may be propagated across service boundaries
   def getHeaders[F[_]: Bracket[*[_], Throwable]](
     stream: TracedStream[F, Unit]
-  ): TracedStream[F, (Map[String, String], Unit)] =
+  ): TracedStream[F, (TraceHeaders, Unit)] =
     stream.traceHeaders
 
   def continue[F[_]: Bracket[*[_], Throwable]: Defer, G[_]: Applicative: Defer: Trace](
     ep: EntryPoint[F],
-    stream: Stream[F, (Map[String, String], Unit)]
+    stream: Stream[F, (TraceHeaders, Unit)]
   )(implicit provide: Provide[F, G], lift: LiftTrace[F, G]): TracedStream[G, Unit] =
     // inject the entry point and extract headers from the stream element
     stream
@@ -114,7 +114,7 @@ object Fs2AdvancedExample extends IOApp {
       .use { ep =>
         // inject the entry point into an infinite stream, do some work,
         // then export the trace context as message headers
-        val headersStream: TracedStream[Kleisli[IO, Span[IO], *], (Map[String, String], Unit)] =
+        val headersStream: TracedStream[Kleisli[IO, Span[IO], *], (TraceHeaders, Unit)] =
           inject(ep)
             .liftTrace[Kleisli[IO, Span[IO], *]] // lift the stream effect to the traced type
             .through(doWork[Kleisli[IO, Span[IO], *]])
@@ -122,7 +122,7 @@ object Fs2AdvancedExample extends IOApp {
             .through(doTracedWork[Kleisli[IO, Span[IO], *]])
             .through(getHeaders[Kleisli[IO, Span[IO], *]])
 
-        val headers: Stream[IO, (Map[String, String], Unit)] =
+        val headers: Stream[IO, (TraceHeaders, Unit)] =
           headersStream.endTrace[IO] // `endTrace[IO]` returns the stream's effect to IO by providing a "noop" span
 
         // simulate going across service boundaries by using the message headers

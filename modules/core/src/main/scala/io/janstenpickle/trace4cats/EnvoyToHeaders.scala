@@ -1,7 +1,16 @@
 package io.janstenpickle.trace4cats
 
 import cats.Eq
-import io.janstenpickle.trace4cats.model.{Parent, SampleDecision, SpanContext, SpanId, TraceFlags, TraceId, TraceState}
+import io.janstenpickle.trace4cats.model.{
+  Parent,
+  SampleDecision,
+  SpanContext,
+  SpanId,
+  TraceFlags,
+  TraceHeaders,
+  TraceId,
+  TraceState
+}
 import cats.syntax.show._
 
 private[trace4cats] class EnvoyToHeaders extends ToHeaders {
@@ -10,15 +19,15 @@ private[trace4cats] class EnvoyToHeaders extends ToHeaders {
   final val clientTraceIdHeader = "x-client-trace-id"
   final val contextHeader = "x-ot-span-context"
 
-  override def toContext(headers: Map[String, String]): Option[SpanContext] = {
+  override def toContext(headers: TraceHeaders): Option[SpanContext] = {
     val traceState =
       (for {
-        reqId <- headers.get(clientTraceIdHeader).orElse(headers.get(requestIdHeader))
+        reqId <- headers.values.get(clientTraceIdHeader).orElse(headers.values.get(requestIdHeader))
         reqIdTraceState <- TraceState.Value(reqId)
         state <- TraceState(Map(requestIdStateKey -> reqIdTraceState))
       } yield state).getOrElse(TraceState.empty)
 
-    headers.get(contextHeader).map(_.split(';').toList) match {
+    headers.values.get(contextHeader).map(_.split(';').toList) match {
       case Some(traceIdHex :: spanIdHex :: parentSpanIdHex :: _ :: Nil) =>
         for {
           traceId <- TraceId.fromHexString(traceIdHex)
@@ -37,8 +46,10 @@ private[trace4cats] class EnvoyToHeaders extends ToHeaders {
     }
   }
 
-  override def fromContext(context: SpanContext): Map[String, String] =
-    Map(
-      contextHeader -> show"${context.traceId.show};${context.spanId.show};${context.parent.fold(SpanId.invalid)(_.spanId).show};cs"
-    ) ++ context.traceState.values.get(requestIdStateKey).map(traceValue => requestIdHeader -> traceValue.v)
+  override def fromContext(context: SpanContext): TraceHeaders =
+    TraceHeaders(
+      Map(
+        contextHeader -> show"${context.traceId.show};${context.spanId.show};${context.parent.fold(SpanId.invalid)(_.spanId).show};cs"
+      ) ++ context.traceState.values.get(requestIdStateKey).map(traceValue => requestIdHeader -> traceValue.v)
+    )
 }

@@ -18,7 +18,7 @@ object Trace4CatsTracer {
 
       override def continue(name: String, kernel: Kernel): Resource[F, Span[F]] =
         Trace4CatsSpan(
-          toHeaders.toContext(kernel.toHeaders) match {
+          toHeaders.toContext(KernelConverter.from(kernel)) match {
             case None => io.janstenpickle.trace4cats.Span.root(name, SpanKind.Server, sampler, completer)
             case Some(parent) =>
               io.janstenpickle.trace4cats.Span.child(name, parent, SpanKind.Server, sampler, completer)

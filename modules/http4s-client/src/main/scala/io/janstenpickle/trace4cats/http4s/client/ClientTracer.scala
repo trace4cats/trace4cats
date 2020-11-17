@@ -28,7 +28,7 @@ object ClientTracer {
             }
           ).flatMap { span =>
             val headers = toHeaders.fromContext(span.context)
-            val req = request.putHeaders(Http4sHeaders.traceHeadersToHttp(headers): _*)
+            val req = request.putHeaders(Http4sHeaders.converter.to(headers).toList: _*)
 
             client
               .run(req.mapK(provide.fk(span)))

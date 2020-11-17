@@ -1,7 +1,15 @@
 package io.janstenpickle.trace4cats
 
 import cats.kernel.Eq
-import io.janstenpickle.trace4cats.model.{SampleDecision, SpanContext, SpanId, TraceFlags, TraceId, TraceState}
+import io.janstenpickle.trace4cats.model.{
+  SampleDecision,
+  SpanContext,
+  SpanId,
+  TraceFlags,
+  TraceHeaders,
+  TraceId,
+  TraceState
+}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -19,7 +27,7 @@ class W3cToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks w
   }
 
   it should "decode an example traceparent header" in {
-    val headers = Map("traceparent" -> "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
+    val headers = TraceHeaders.of("traceparent" -> "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
 
     val expected = for {
       traceId <- TraceId.fromHexString("4bf92f3577b34da6a3ce929d0e0e4736")
@@ -37,7 +45,7 @@ class W3cToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks w
   }
 
   it should "decode example traceparent and tracestate headers" in {
-    val headers = Map(
+    val headers = TraceHeaders.of(
       "traceparent" -> "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
       "tracestate" -> "rojo=00f067aa0ba902b7,congo=t61rcWkgMzE"
     )
@@ -63,13 +71,13 @@ class W3cToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks w
   }
 
   it should "not decode from empty headers" in {
-    assert(Eq[Option[SpanContext]].eqv(w3c.toContext(Map.empty), None))
+    assert(Eq[Option[SpanContext]].eqv(w3c.toContext(TraceHeaders.empty), None))
   }
 
   it should "not decode when only tracestate is available" in {
     assert(
       Eq[Option[SpanContext]]
-        .eqv(w3c.toContext(Map("tracestate" -> "rojo=00f067aa0ba902b7,congo=t61rcWkgMzE")), None)
+        .eqv(w3c.toContext(TraceHeaders.of("tracestate" -> "rojo=00f067aa0ba902b7,congo=t61rcWkgMzE")), None)
     )
   }
 }

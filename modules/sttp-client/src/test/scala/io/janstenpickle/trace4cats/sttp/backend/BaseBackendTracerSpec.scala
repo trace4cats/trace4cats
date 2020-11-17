@@ -7,8 +7,10 @@ import cats.implicits._
 import cats.{~>, Eq, Id}
 import io.janstenpickle.trace4cats.ToHeaders
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
+import io.janstenpickle.trace4cats.http4s.common.Http4sHeaders
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Provide, Trace}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
+import io.janstenpickle.trace4cats.model.TraceHeaders
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.`WWW-Authenticate`
@@ -119,22 +121,15 @@ abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift, G[_]:
 
   def entryPoint(completer: SpanCompleter[F]): EntryPoint[F] = EntryPoint[F](SpanSampler.always[F], completer)
 
-  def makeHttpApp(resp: Response[F]): (HttpApp[F], Ref[F, Map[String, Map[String, String]]]) = {
-    val headersRef = Ref.unsafe[F, Map[String, Map[String, String]]](Map.empty)
+  def makeHttpApp(resp: Response[F]): (HttpApp[F], Ref[F, Map[String, TraceHeaders]]) = {
+    val headersRef = Ref.unsafe[F, Map[String, TraceHeaders]](Map.empty)
 
     HttpRoutes
       .of[F] { case req @ GET -> Root =>
         req
           .as[String]
           .flatMap { key =>
-            headersRef.update(
-              _.updated(
-                key,
-                req.headers.toList.map { header =>
-                  header.name.value -> header.value
-                }.toMap
-              )
-            )
+            headersRef.update(_.updated(key, Http4sHeaders.converter.from(req.headers)))
           }
           .as(resp)
       }

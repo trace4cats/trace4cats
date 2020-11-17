@@ -8,7 +8,7 @@ import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
-import io.janstenpickle.trace4cats.model.{CompletedSpan, SampleDecision, SpanContext, TraceFlags}
+import io.janstenpickle.trace4cats.model.{CompletedSpan, SampleDecision, SpanContext, TraceFlags, TraceHeaders}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
@@ -194,7 +194,7 @@ class Fs2StreamSyntaxSpec
         completer <- RefSpanCompleter[IO](serviceName)
         ep = EntryPoint[IO](SpanSampler.always[IO], completer)
         _ <- Stream
-          .emit[IO, (String, Map[String, String])](rootName -> parentHeaders)
+          .emit[IO, (String, TraceHeaders)](rootName -> parentHeaders)
           .injectContinue(ep, _._1)(_._2)
           .evalMap(spanName)(_ => IO.unit)
           .endTrace
@@ -221,7 +221,7 @@ class Fs2StreamSyntaxSpec
         completer <- RefSpanCompleter[IO](serviceName)
         ep = EntryPoint[IO](SpanSampler.always[IO], completer)
         _ <- Stream
-          .emit[IO, (String, Map[String, String])](rootName -> parentHeaders)
+          .emit[IO, (String, TraceHeaders)](rootName -> parentHeaders)
           .injectContinue(ep, _._1)(_._2)
           .evalMap(spanName)(_ => IO.unit)
           .endTrace
