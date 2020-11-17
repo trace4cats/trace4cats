@@ -19,7 +19,7 @@ final case class Trace4CatsSpan[F[_]: Sync: Clock](span: io.janstenpickle.trace4
       case (k, V.BooleanValue(v)) => k -> BooleanValue(v)
     }: _*)
 
-  override def kernel: F[Kernel] = Applicative[F].pure(Kernel(toHeaders.fromContext(span.context)))
+  override def kernel: F[Kernel] = Applicative[F].pure(Kernel(toHeaders.fromContext(span.context).values))
 
   override def span(name: String): Resource[F, Span[F]] =
     Trace4CatsSpan(span.child(name, SpanKind.Internal), toHeaders)

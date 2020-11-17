@@ -9,7 +9,7 @@ import cats.{~>, Applicative, Defer, Functor}
 import fs2.Stream
 import io.janstenpickle.trace4cats.fs2.{ContinuationSpan, TracedStream}
 import io.janstenpickle.trace4cats.inject.{EntryPoint, LiftTrace, Provide}
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind}
+import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, TraceHeaders}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 
 trait Fs2StreamSyntax {
@@ -26,20 +26,16 @@ trait Fs2StreamSyntax {
     def inject(ep: EntryPoint[F], name: A => String, kind: SpanKind): TracedStream[F, A] =
       WriterT(stream.evalMapChunk(a => ep.root(name(a), kind).use(s => (s -> a).pure)))
 
-    def injectContinue(ep: EntryPoint[F], name: String)(f: A => Map[String, String]): TracedStream[F, A] =
+    def injectContinue(ep: EntryPoint[F], name: String)(f: A => TraceHeaders): TracedStream[F, A] =
       injectContinue(ep, name, SpanKind.Internal)(f)
 
-    def injectContinue(ep: EntryPoint[F], name: String, kind: SpanKind)(
-      f: A => Map[String, String]
-    ): TracedStream[F, A] =
+    def injectContinue(ep: EntryPoint[F], name: String, kind: SpanKind)(f: A => TraceHeaders): TracedStream[F, A] =
       injectContinue(ep, _ => name, kind)(f)
 
-    def injectContinue(ep: EntryPoint[F], name: A => String)(f: A => Map[String, String]): TracedStream[F, A] =
+    def injectContinue(ep: EntryPoint[F], name: A => String)(f: A => TraceHeaders): TracedStream[F, A] =
       injectContinue(ep, name, SpanKind.Internal)(f)
 
-    def injectContinue(ep: EntryPoint[F], name: A => String, kind: SpanKind)(
-      f: A => Map[String, String]
-    ): TracedStream[F, A] =
+    def injectContinue(ep: EntryPoint[F], name: A => String, kind: SpanKind)(f: A => TraceHeaders): TracedStream[F, A] =
       WriterT(stream.evalMapChunk(a => ep.continueOrElseRoot(name(a), kind, f(a)).use(s => (s -> a).pure)))
   }
 
@@ -138,25 +134,25 @@ trait Fs2StreamSyntax {
         span.mapK(fk) -> a
       })
 
-    def traceHeaders: TracedStream[F, (Map[String, String], A)] = traceHeaders(ToHeaders.all)
+    def traceHeaders: TracedStream[F, (TraceHeaders, A)] = traceHeaders(ToHeaders.all)
 
-    def traceHeaders(toHeaders: ToHeaders): TracedStream[F, (Map[String, String], A)] =
+    def traceHeaders(toHeaders: ToHeaders): TracedStream[F, (TraceHeaders, A)] =
       WriterT(stream.run.map { case (span, a) =>
         (span, (toHeaders.fromContext(span.context), a))
       })
 
-    def mapTraceHeaders[B](f: (Map[String, String], A) => B): TracedStream[F, B] =
+    def mapTraceHeaders[B](f: (TraceHeaders, A) => B): TracedStream[F, B] =
       mapTraceHeaders[B](ToHeaders.all)(f)
 
-    def mapTraceHeaders[B](toHeaders: ToHeaders)(f: (Map[String, String], A) => B): TracedStream[F, B] =
+    def mapTraceHeaders[B](toHeaders: ToHeaders)(f: (TraceHeaders, A) => B): TracedStream[F, B] =
       WriterT(stream.run.map { case (span, a) =>
         span -> f(toHeaders.fromContext(span.context), a)
       })
 
-    def evalMapTraceHeaders[B](f: (Map[String, String], A) => F[B])(implicit F: Functor[F]): TracedStream[F, B] =
+    def evalMapTraceHeaders[B](f: (TraceHeaders, A) => F[B])(implicit F: Functor[F]): TracedStream[F, B] =
       evalMapTraceHeaders(ToHeaders.all)(f)
 
-    def evalMapTraceHeaders[B](toHeaders: ToHeaders)(f: (Map[String, String], A) => F[B])(implicit
+    def evalMapTraceHeaders[B](toHeaders: ToHeaders)(f: (TraceHeaders, A) => F[B])(implicit
       F: Functor[F]
     ): TracedStream[F, B] =
       WriterT(stream.run.evalMap { case (span, a) => f(toHeaders.fromContext(span.context), a).map(span -> _) })

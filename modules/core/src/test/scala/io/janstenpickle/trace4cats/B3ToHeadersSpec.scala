@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats
 
 import cats.Eq
-import io.janstenpickle.trace4cats.model.{Parent, SampleDecision, SpanContext, SpanId, TraceFlags, TraceId, TraceState}
+import io.janstenpickle.trace4cats.model.{Parent, SampleDecision, SpanContext, SpanId, TraceFlags, TraceHeaders, TraceId, TraceState}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -27,7 +27,7 @@ class B3ToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wi
   }
 
   it should "decode example B3 headers" in {
-    val headers = Map(
+    val headers = TraceHeaders.of(
       "X-B3-TraceId" -> "80f198ee56343ba864fe8b2a57d3eff7",
       "X-B3-ParentSpanId" -> "05e3ac9a4f6e3b90",
       "X-B3-SpanId" -> "e457b5a2e4d86bd1",

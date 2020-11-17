@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.http4s.common
 
-import io.janstenpickle.trace4cats.model.AttributeValue
+import io.janstenpickle.trace4cats.model.{AttributeValue, TraceHeaders}
 import org.http4s.util.CaseInsensitiveString
 import org.http4s.{Header, Headers, Request, Response}
 
@@ -38,8 +38,8 @@ object Http4sHeaders {
       h.name.value -> h.value
     }.toMap
 
-  def traceHeadersToHttp(headers: Map[String, String]): List[Header] =
-    headers.toList.map { case (k, v) =>
+  def traceHeadersToHttp(headers: TraceHeaders): List[Header] =
+    headers.values.toList.map { case (k, v) =>
       Header(k, v)
     }
 }

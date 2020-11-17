@@ -27,7 +27,7 @@ class B3SingleToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChe
   }
 
   it should "decode example B3 headers" in {
-    val headers = Map("b3" -> "80f198ee56343ba864fe8b2a57d3eff7-e457b5a2e4d86bd1-1-05e3ac9a4f6e3b90")
+    val headers = TraceHeaders.of("b3" -> "80f198ee56343ba864fe8b2a57d3eff7-e457b5a2e4d86bd1-1-05e3ac9a4f6e3b90")
 
     val expected = for {
       traceId <- TraceId.fromHexString("80f198ee56343ba864fe8b2a57d3eff7")

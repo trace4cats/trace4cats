@@ -1,6 +1,15 @@
 package io.janstenpickle.trace4cats
 
-import io.janstenpickle.trace4cats.model.{Parent, SampleDecision, SpanContext, SpanId, TraceFlags, TraceId, TraceState}
+import io.janstenpickle.trace4cats.model.{
+  Parent,
+  SampleDecision,
+  SpanContext,
+  SpanId,
+  TraceFlags,
+  TraceHeaders,
+  TraceId,
+  TraceState
+}
 import cats.syntax.show._
 
 private[trace4cats] class B3ToHeaders extends ToHeaders {
@@ -9,12 +18,12 @@ private[trace4cats] class B3ToHeaders extends ToHeaders {
   final val parentSpanIdHeader = "X-B3-ParentSpanId"
   final val sampledHeader = "X-B3-Sampled"
 
-  override def toContext(headers: Map[String, String]): Option[SpanContext] =
+  override def toContext(headers: TraceHeaders): Option[SpanContext] =
     (
-      headers.get(traceIdHeader),
-      headers.get(spanIdHeader),
-      headers.get(parentSpanIdHeader),
-      headers.get(sampledHeader)
+      headers.values.get(traceIdHeader),
+      headers.values.get(spanIdHeader),
+      headers.values.get(parentSpanIdHeader),
+      headers.values.get(sampledHeader)
     ) match {
       case (Some(traceIdHex), Some(spanIdHex), parentSpanIdHex, sampled) =>
         for {
@@ -33,20 +42,22 @@ private[trace4cats] class B3ToHeaders extends ToHeaders {
       case _ => None
     }
 
-  override def fromContext(context: SpanContext): Map[String, String] = {
+  override def fromContext(context: SpanContext): TraceHeaders = {
     val sampled = context.traceFlags.sampled match {
       case SampleDecision.Drop => "0"
       case SampleDecision.Include => "1"
     }
 
-    Map(
-      traceIdHeader -> context.traceId.show,
-      spanIdHeader -> context.spanId.show,
-      sampledHeader -> sampled
-    ) ++ context.parent
-      .map { parent =>
-        parentSpanIdHeader -> parent.spanId.show
-      }
+    TraceHeaders(
+      Map(
+        traceIdHeader -> context.traceId.show,
+        spanIdHeader -> context.spanId.show,
+        sampledHeader -> sampled
+      ) ++ context.parent
+        .map { parent =>
+          parentSpanIdHeader -> parent.spanId.show
+        }
+    )
   }
 
 }

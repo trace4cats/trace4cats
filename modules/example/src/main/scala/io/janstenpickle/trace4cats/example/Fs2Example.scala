@@ -16,7 +16,7 @@ import io.janstenpickle.trace4cats.fs2.syntax.all._
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.AttributeValue.LongValue
-import io.janstenpickle.trace4cats.model.{SpanKind, TraceProcess}
+import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders, TraceProcess}
 
 import scala.concurrent.duration._
 import scala.util.Random
@@ -84,12 +84,12 @@ object Fs2Example extends IOApp {
   // gets the trace headers from the span context so that they may be propagated across service boundaries
   def getHeaders[F[_]: Bracket[*[_], Throwable]](
     stream: TracedStream[F, Unit]
-  ): Stream[F, (Map[String, String], Unit)] =
+  ): Stream[F, (TraceHeaders, Unit)] =
     stream.traceHeaders.endTrace
 
   def continue[F[_]: Bracket[*[_], Throwable]](
     ep: EntryPoint[F],
-    stream: Stream[F, (Map[String, String], Unit)]
+    stream: Stream[F, (TraceHeaders, Unit)]
   ): TracedStream[F, Unit] =
     // inject the entry point and extract headers from the stream element
     stream

@@ -4,12 +4,13 @@ import cats.data.NonEmptyList
 import cats.effect.concurrent.Ref
 import cats.effect.{Blocker, ConcurrentEffect, Sync, Timer}
 import cats.implicits._
-import cats.{~>, Eq, Id}
+import cats.{Eq, Id, ~>}
 import io.janstenpickle.trace4cats.ToHeaders
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.http4s.common.Http4sStatusMapping
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Provide, Trace}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
+import io.janstenpickle.trace4cats.model.TraceHeaders
 import org.http4s._
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
@@ -123,8 +124,8 @@ abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace](
 
   def entryPoint(completer: SpanCompleter[F]): EntryPoint[F] = EntryPoint[F](SpanSampler.always[F], completer)
 
-  def makeHttpApp(resp: Response[F]): (HttpApp[F], Ref[F, Map[String, Map[String, String]]]) = {
-    val headersRef = Ref.unsafe[F, Map[String, Map[String, String]]](Map.empty)
+  def makeHttpApp(resp: Response[F]): (HttpApp[F], Ref[F, Map[String, TraceHeaders]]) = {
+    val headersRef = Ref.unsafe[F, Map[String, TraceHeaders]](Map.empty)
 
     HttpRoutes
       .of[F] { case req @ GET -> Root =>
@@ -134,9 +135,9 @@ abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace](
             headersRef.update(
               _.updated(
                 key,
-                req.headers.toList.map { header =>
+                TraceHeaders(req.headers.toList.map { header =>
                   header.name.value -> header.value
-                }.toMap
+                }.toMap)
               )
             )
           }

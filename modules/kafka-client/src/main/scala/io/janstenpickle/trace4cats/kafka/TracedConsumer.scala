@@ -8,7 +8,7 @@ import fs2.kafka.{CommittableConsumerRecord, CommittableOffset}
 import io.janstenpickle.trace4cats.fs2.TracedStream
 import io.janstenpickle.trace4cats.fs2.syntax.Fs2StreamSyntax
 import io.janstenpickle.trace4cats.inject.{EntryPoint, LiftTrace, Provide, Trace}
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind}
+import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, TraceHeaders}
 
 object TracedConsumer extends Fs2StreamSyntax {
 
@@ -17,9 +17,9 @@ object TracedConsumer extends Fs2StreamSyntax {
   )(ep: EntryPoint[F])(implicit provide: Provide[F, G]): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
     stream
       .injectContinue(ep, "kafka.receive", SpanKind.Consumer) { record =>
-        record.record.headers.toChain.foldLeft(Map.empty[String, String]) { (acc, header) =>
+        TraceHeaders(record.record.headers.toChain.foldLeft(Map.empty[String, String]) { (acc, header) =>
           acc.updated(header.key(), header.as[String])
-        }
+        })
       }
       .evalMapTrace { record =>
         Trace[G]

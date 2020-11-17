@@ -10,7 +10,7 @@ import cats.Applicative
 import cats.effect.{Clock, Resource, Sync}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
-import io.janstenpickle.trace4cats.model.SpanKind
+import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders}
 
 /** An entry point, for creating root spans or continuing traces that were started on another
   * system.
@@ -25,9 +25,9 @@ trait EntryPoint[F[_]] {
     * span as with `root` if the headers do not contain the required values. In other words, we
     * continue the existing span if we can, otherwise we start a new one.
     */
-  def continueOrElseRoot(name: String, headers: Map[String, String]): Resource[F, Span[F]] =
+  def continueOrElseRoot(name: String, headers: TraceHeaders): Resource[F, Span[F]] =
     continueOrElseRoot(name, SpanKind.Server, headers)
-  def continueOrElseRoot(name: String, kind: SpanKind, headers: Map[String, String]): Resource[F, Span[F]]
+  def continueOrElseRoot(name: String, kind: SpanKind, headers: TraceHeaders): Resource[F, Span[F]]
 }
 
 object EntryPoint {
@@ -42,11 +42,7 @@ object EntryPoint {
       override def root(name: String, kind: SpanKind): Resource[F, Span[F]] =
         Span.root[F](name, kind, sampler, completer)
 
-      override def continueOrElseRoot(
-        name: String,
-        kind: SpanKind,
-        headers: Map[String, String]
-      ): Resource[F, Span[F]] =
+      override def continueOrElseRoot(name: String, kind: SpanKind, headers: TraceHeaders): Resource[F, Span[F]] =
         toHeaders.toContext(headers).fold(root(name, kind)) { parent =>
           Span.child[F](name, parent, kind, sampler, completer)
         }
@@ -55,11 +51,7 @@ object EntryPoint {
   def noop[F[_]: Applicative]: EntryPoint[F] =
     new EntryPoint[F] {
       override def root(name: String, kind: SpanKind): Resource[F, Span[F]] = Span.noop[F]
-      override def continueOrElseRoot(
-        name: String,
-        kind: SpanKind,
-        headers: Map[String, String]
-      ): Resource[F, Span[F]] =
+      override def continueOrElseRoot(name: String, kind: SpanKind, headers: TraceHeaders): Resource[F, Span[F]] =
         Span.noop[F]
     }
 }

@@ -32,7 +32,7 @@ class BackendTracer[F[_]: Bracket[*[_], Throwable], G[_]: MonadError[*[_], Throw
               }
             )
             .use { span =>
-              val headers = toHeaders.fromContext(span.context)
+              val headers = toHeaders.fromContext(span.context).values
               val req = request.headers(headers)
 
               backend.send(req).flatTap { resp =>
