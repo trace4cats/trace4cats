@@ -1,16 +1,18 @@
 package io.janstenpickle.trace4cats.fs2.syntax
 
 import cats.data.WriterT
-import cats.effect.Bracket
+import cats.effect.{Bracket, Concurrent, Timer}
 import cats.syntax.applicative._
 import cats.syntax.apply._
 import cats.syntax.functor._
 import cats.{~>, Applicative, Defer, Functor}
-import fs2.Stream
-import io.janstenpickle.trace4cats.fs2.{ContinuationSpan, TracedStream}
+import fs2.{Chunk, Stream}
+import io.janstenpickle.trace4cats.fs2.{ContinuationSpan, MultiParentSpan, TracedStream}
 import io.janstenpickle.trace4cats.inject.{EntryPoint, LiftTrace, Provide}
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, TraceHeaders}
+import io.janstenpickle.trace4cats.model.{AttributeValue, SpanContext, SpanKind, TraceHeaders}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
+
+import scala.concurrent.duration.FiniteDuration
 
 trait Fs2StreamSyntax {
   implicit class InjectEntryPoint[F[_]: Bracket[*[_], Throwable], A](stream: Stream[F, A]) {
@@ -156,6 +158,29 @@ trait Fs2StreamSyntax {
       F: Functor[F]
     ): TracedStream[F, B] =
       WriterT(stream.run.evalMap { case (span, a) => f(toHeaders.fromContext(span.context), a).map(span -> _) })
+
+    private def deChunkSpans(s: Stream[F, Chunk[(Span[F], A)]])(implicit F: Applicative[F]) = s.flatMap { spans =>
+      spans.head match {
+        case Some((span, a)) =>
+          val (parents, as) =
+            spans.drop(1).foldLeft((List.empty[SpanContext], scala.collection.mutable.Buffer[A](a))) {
+              case ((parents, arr), (span, a)) =>
+                (span.context :: parents, arr :+ a)
+            }
+
+          Stream.emit((MultiParentSpan[F](span, parents), Chunk.buffer(as)))
+        case None => Stream.empty
+      }
+    }
+
+    def groupWithin(n: Int, d: FiniteDuration)(implicit F: Concurrent[F], timer: Timer[F]): TracedStream[F, Chunk[A]] =
+      WriterT(deChunkSpans(stream.run.groupWithin(n, d)))
+
+    def chunkN(n: Int, allowFewer: Boolean = true)(implicit F: Applicative[F]): TracedStream[F, Chunk[A]] =
+      WriterT(deChunkSpans(stream.run.chunkN(n, allowFewer)))
+
+    def chunks(implicit F: Applicative[F]): TracedStream[F, Chunk[A]] =
+      WriterT(deChunkSpans(stream.run.chunks))
 
   }
 
