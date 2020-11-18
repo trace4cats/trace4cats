@@ -22,4 +22,3 @@ class Http4sHeadersConverterSpec extends AnyFlatSpec with ScalaCheckDrivenProper
     assert(Eq.eqv(converter.from(headers), expected))
   }
 }
-
