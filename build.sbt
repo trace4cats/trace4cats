@@ -733,3 +733,6 @@ lazy val `collector-lite` = (project in file("modules/collector-lite"))
     `graal-kafka`
   )
   .enablePlugins(GraalVMNativeImagePlugin)
+
+addCommandAlias("fmt", "all root/scalafmtSbt root/scalafmtAll")
+addCommandAlias("fmtCheck", "all root/scalafmtSbtCheck root/scalafmtCheckAll")
