@@ -504,7 +504,7 @@ lazy val fs2 = (project in file("modules/fs2"))
 lazy val `kafka-client` = (project in file("modules/kafka-client"))
   .settings(publishSettings)
   .settings(name := "trace4cats-kafka-client", libraryDependencies ++= Seq(Dependencies.catsMtl, Dependencies.fs2Kafka))
-  .dependsOn(model, kernel, core, inject, fs2, `exporter-common` % "test->compile")
+  .dependsOn(model, kernel, core, inject, fs2, test % "test->compile", `exporter-common` % "test->compile")
 
 lazy val `http4s-common` = (project in file("modules/http4s-common"))
   .settings(publishSettings)
@@ -512,7 +512,7 @@ lazy val `http4s-common` = (project in file("modules/http4s-common"))
     name := "trace4cats-http4s-common",
     libraryDependencies ++= Seq(Dependencies.http4sServer, Dependencies.http4sDsl)
   )
-  .dependsOn(model)
+  .dependsOn(model, test % "test->compile")
 
 lazy val `sttp-client` = (project in file("modules/sttp-client"))
   .settings(publishSettings)
@@ -526,7 +526,15 @@ lazy val `sttp-client` = (project in file("modules/sttp-client"))
       Dependencies.sttpHttp4s
     )).map(_ % Test)
   )
-  .dependsOn(model, kernel, core, inject, `exporter-common` % "test->compile", `http4s-common` % "test->compile")
+  .dependsOn(
+    model,
+    kernel,
+    core,
+    inject,
+    test              % "test->compile",
+    `exporter-common` % "test->compile",
+    `http4s-common`   % "test->compile"
+  )
 
 lazy val `http4s-client` = (project in file("modules/http4s-client"))
   .settings(publishSettings)

@@ -42,6 +42,13 @@ trait ArbitraryInstances extends ScalacheckShapeless {
       }
   )
 
+  implicit val traceHeadersArb: Arbitrary[TraceHeaders] =
+    Arbitrary(for {
+      size <- Gen.choose(1, 10)
+      tuple = Gen.zip(stringArb.arbitrary, stringArb.arbitrary)
+      values <- Gen.mapOfN(size, tuple)
+    } yield TraceHeaders(values))
+
   implicit def evalArb[A: Arbitrary]: Arbitrary[Eval[A]] = Arbitrary(Arbitrary.arbitrary[A].map(Eval.later(_)))
 
   implicit val batchArb: Arbitrary[Batch[Chunk]] = Arbitrary(for {
