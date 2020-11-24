@@ -26,6 +26,7 @@ object Dependencies {
     val log4cats = "1.1.1"
     val logback = "1.2.3"
     val micronaut = "2.1.4"
+    val monocle = "2.1.0"
     val natchez = "0.0.13"
     val openTelemetry = "0.9.1"
     val redis4cats = "0.10.3"
@@ -82,6 +83,7 @@ object Dependencies {
   lazy val log4cats = "io.chrisdavenport"                  %% "log4cats-slf4j"                  % Versions.log4cats
   lazy val logback = "ch.qos.logback"                       % "logback-classic"                 % Versions.logback
   lazy val micronautCore = "io.micronaut"                   % "micronaut-core"                  % Versions.micronaut
+  lazy val monocleCore = "com.github.julien-truffaut"      %% "monocle-core"                    % Versions.monocle
   lazy val natchez = "org.tpolecat"                        %% "natchez-core"                    % Versions.natchez
   lazy val openTelemetrySdk = "io.opentelemetry"            % "opentelemetry-sdk"               % Versions.openTelemetry
   lazy val openTelemetryOtlpExporter = "io.opentelemetry"   % "opentelemetry-exporters-otlp"    % Versions.openTelemetry

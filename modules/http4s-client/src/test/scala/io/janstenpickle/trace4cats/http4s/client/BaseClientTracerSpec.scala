@@ -5,10 +5,10 @@ import cats.effect.concurrent.Ref
 import cats.effect.{Blocker, ConcurrentEffect, Sync, Timer}
 import cats.implicits._
 import cats.{~>, Eq, Id}
-import io.janstenpickle.trace4cats.ToHeaders
+import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.http4s.common.{Http4sHeaders, Http4sStatusMapping}
-import io.janstenpickle.trace4cats.inject.{EntryPoint, Provide, Trace}
+import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace, UnliftProvide}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.model.TraceHeaders
 import org.http4s._
@@ -27,12 +27,13 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.concurrent.duration._
 
-abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace](
+abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace, Ctx](
   port: Int,
-  fkId: F ~> Id,
+  unsafeRunK: F ~> Id,
+  makeSomeContext: Span[F] => Ctx,
   liftClient: Client[F] => Client[G],
   timer: Timer[F]
-)(implicit provide: Provide[F, G])
+)(implicit UP: UnliftProvide[F, G, Ctx])
     extends AnyFlatSpec
     with ScalaCheckDrivenPropertyChecks
     with Matchers
@@ -53,7 +54,7 @@ abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace](
           BadGateway(),
           ServiceUnavailable(),
           GatewayTimeout()
-        ).map(fkId.apply)
+        ).map(unsafeRunK.apply)
       )
     )
 
@@ -73,7 +74,7 @@ abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace](
 
       val (httpApp, headersRef) = makeHttpApp(response)
 
-      fkId(withRunningHttpServer(httpApp) { port =>
+      unsafeRunK(withRunningHttpServer(httpApp) { port =>
         RefSpanCompleter[F]("test").flatMap { completer =>
           withClient { client =>
             def req(body: String): G[Unit] =
@@ -82,13 +83,13 @@ abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace](
             for {
               _ <- entryPoint(completer)
                 .root(rootSpanName)
-                .use(
-                  provide(
+                .use { span =>
+                  UP.provide(makeSomeContext(span))(
                     Trace[G]
                       .span(req1SpanName)(req(req1SpanName))
                       .handleError(_ => ()) >> Trace[G].span(req2SpanName)(req(req2SpanName)).handleError(_ => ())
                   )
-                )
+                }
               spans <- completer.get
               headersMap <- headersRef.get
             } yield {

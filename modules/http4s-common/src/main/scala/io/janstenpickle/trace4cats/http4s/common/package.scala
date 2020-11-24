@@ -1,14 +1,19 @@
 package io.janstenpickle.trace4cats.http4s
 
-import org.http4s.Request
+import org.http4s.{Request, Response}
 
 package object common {
   type AnyK[_] = Any
 
-  /** `Http4sSpanNamer` is intentionally existential via `AnyK`, since no knowledge about `F[_]`
-    * may be used to get a `String` from a `Request[F]`.
+  /** Existential versions of [[Request]] and [[Response]] used to prevent access to their bodies or triggering effects.
     */
-  type Http4sSpanNamer = Request[AnyK] => String
+  type Request_ = Request[AnyK]
+  @inline implicit def Request_[F[_]](req: Request[F]): Request_ = req.covary[AnyK]
 
-  type Http4sRequestFilter = PartialFunction[Request[AnyK], Boolean]
+  type Response_ = Response[AnyK]
+  @inline implicit def Response_[F[_]](resp: Response[F]): Response_ = resp.covary[AnyK]
+
+  type Http4sSpanNamer = Request_ => String
+
+  type Http4sRequestFilter = PartialFunction[Request_, Boolean]
 }

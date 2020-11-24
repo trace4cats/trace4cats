@@ -7,10 +7,12 @@ package io.janstenpickle.trace4cats.inject
 
 import cats.data.{EitherT, Kleisli}
 import cats.effect.Bracket
+import cats.mtl.Local
 import cats.syntax.applicative._
+import cats.syntax.flatMap._
 import cats.syntax.option._
 import cats.syntax.show._
-import cats.{Applicative, Functor}
+import cats.{Applicative, Defer, Functor}
 import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus, TraceHeaders}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 
@@ -121,5 +123,21 @@ object Trace {
 
       override def traceId: EitherT[F, A, Option[String]] = EitherT.liftF(trace.traceId)
     }
+
+  implicit def localSpanInstance[F[_], G[_]](implicit
+    C: Local[G, Span[F]],
+    L: Lift[F, G],
+    G1: Bracket[G, Throwable],
+    G2: Defer[G]
+  ): Trace[G] = new Trace[G] {
+    def put(key: String, value: AttributeValue): G[Unit] = C.ask.flatMap(span => L.lift(span.put(key, value)))
+    def putAll(fields: (String, AttributeValue)*): G[Unit] = C.ask.flatMap(span => L.lift(span.putAll(fields: _*)))
+    def span[A](name: String, kind: SpanKind)(fa: G[A]): G[A] =
+      C.ask.flatMap(span => span.child(name, kind).mapK(L.liftK).use(C.scope(fa)))
+    def headers(toHeaders: ToHeaders): G[TraceHeaders] =
+      C.reader(span => toHeaders.fromContext(span.context))
+    def setStatus(status: SpanStatus): G[Unit] = C.ask.flatMap(span => L.lift(span.setStatus(status)))
+    def traceId: G[Option[String]] = C.reader(_.context.traceId.show.some)
+  }
 
 }

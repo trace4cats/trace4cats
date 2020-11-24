@@ -484,7 +484,7 @@ lazy val `avro-kafka-consumer` =
 
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-inject")
+  .settings(name := "trace4cats-inject", libraryDependencies ++= Seq(Dependencies.catsMtl))
   .dependsOn(model, kernel, core)
 
 lazy val `inject-zio` = (project in file("modules/inject-zio"))
@@ -510,9 +510,9 @@ lazy val `http4s-common` = (project in file("modules/http4s-common"))
   .settings(publishSettings)
   .settings(
     name := "trace4cats-http4s-common",
-    libraryDependencies ++= Seq(Dependencies.http4sServer, Dependencies.http4sDsl)
+    libraryDependencies ++= Seq(Dependencies.http4sServer, Dependencies.http4sDsl, Dependencies.monocleCore % Test)
   )
-  .dependsOn(model, test % "test->compile")
+  .dependsOn(model, inject % "test->compile", test % "test->compile")
 
 lazy val `sttp-client` = (project in file("modules/sttp-client"))
   .settings(publishSettings)
@@ -540,14 +540,21 @@ lazy val `http4s-client` = (project in file("modules/http4s-client"))
   .settings(publishSettings)
   .settings(
     name := "trace4cats-http4s-client",
-    libraryDependencies ++= Seq(Dependencies.catsMtl, Dependencies.http4sClient),
+    libraryDependencies ++= Seq(Dependencies.catsMtl, Dependencies.http4sClient, Dependencies.monocleCore),
     libraryDependencies ++= (Dependencies.test ++ Seq(
       Dependencies.http4sBlazeClient,
       Dependencies.http4sBlazeServer,
       Dependencies.http4sDsl
     )).map(_ % Test)
   )
-  .dependsOn(model, kernel, core, inject, `http4s-common`, `exporter-common` % "test->compile")
+  .dependsOn(
+    model,
+    kernel,
+    core,
+    inject,
+    `http4s-common`   % "compile->compile;test->test",
+    `exporter-common` % "test->compile"
+  )
 
 lazy val `http4s-server` = (project in file("modules/http4s-server"))
   .settings(publishSettings)
@@ -557,7 +564,14 @@ lazy val `http4s-server` = (project in file("modules/http4s-server"))
     libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.http4sBlazeClient, Dependencies.http4sBlazeServer))
       .map(_ % Test)
   )
-  .dependsOn(model, kernel, core, inject, `http4s-common`, `exporter-common` % "test->compile")
+  .dependsOn(
+    model,
+    kernel,
+    core,
+    inject,
+    `http4s-common`   % "compile->compile;test->test",
+    `exporter-common` % "test->compile"
+  )
 
 lazy val natchez = (project in file("modules/natchez"))
   .settings(publishSettings)
