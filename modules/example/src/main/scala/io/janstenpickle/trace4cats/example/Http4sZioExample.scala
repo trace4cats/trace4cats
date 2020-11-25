@@ -3,6 +3,7 @@ package io.janstenpickle.trace4cats.example
 import cats.effect.{Blocker, Resource}
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import io.janstenpickle.trace4cats.base.context.zio._
 import io.janstenpickle.trace4cats.example.Fs2Example.entryPoint
 import io.janstenpickle.trace4cats.http4s.client.syntax._
 import io.janstenpickle.trace4cats.http4s.common.Http4sRequestFilter

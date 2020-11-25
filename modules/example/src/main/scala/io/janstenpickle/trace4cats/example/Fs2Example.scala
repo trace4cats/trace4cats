@@ -82,9 +82,7 @@ object Fs2Example extends IOApp {
     }
 
   // gets the trace headers from the span context so that they may be propagated across service boundaries
-  def getHeaders[F[_]: Bracket[*[_], Throwable]](
-    stream: TracedStream[F, Unit]
-  ): Stream[F, (TraceHeaders, Unit)] =
+  def getHeaders[F[_]: Bracket[*[_], Throwable]](stream: TracedStream[F, Unit]): Stream[F, (TraceHeaders, Unit)] =
     stream.traceHeaders.endTrace
 
   def continue[F[_]: Bracket[*[_], Throwable]](

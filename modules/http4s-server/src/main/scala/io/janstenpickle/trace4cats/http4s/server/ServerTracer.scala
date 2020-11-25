@@ -6,6 +6,7 @@ import cats.syntax.apply._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.http4s.common.{
   Http4sHeaders,
   Http4sRequestFilter,
@@ -14,7 +15,7 @@ import io.janstenpickle.trace4cats.http4s.common.{
   Request_,
   Response_
 }
-import io.janstenpickle.trace4cats.inject.{EntryPoint, Spanned, UnliftProvide}
+import io.janstenpickle.trace4cats.inject.{EntryPoint, Spanned}
 import io.janstenpickle.trace4cats.model.SpanKind
 import org.http4s.util.CaseInsensitiveString
 import org.http4s.{HttpApp, HttpRoutes, Request, Response}
@@ -27,7 +28,7 @@ object ServerTracer {
     requestFilter: Http4sRequestFilter,
     dropHeadersWhen: CaseInsensitiveString => Boolean,
     makeContext: Request_ => Spanned[F, Ctx]
-  )(implicit UP: UnliftProvide[F, G, Ctx], F: Bracket[F, Throwable]): HttpRoutes[F] =
+  )(implicit P: Provide[F, G, Ctx], F: Bracket[F, Throwable]): HttpRoutes[F] =
     Kleisli[OptionT[F, *], Request[F], Response[F]] { req =>
       val filter = requestFilter.lift(req).getOrElse(true)
       val headers = Http4sHeaders.converter.from(req.headers)
@@ -39,10 +40,10 @@ object ServerTracer {
           for {
             _ <- span.putAll(Http4sHeaders.requestFields(req, dropHeadersWhen): _*)
             ctx <- makeContext(req).run(span)
-            lower = UP.provideK(ctx)
+            lower = P.provideK(ctx)
             resp <-
               routes
-                .run(req.mapK(UP.liftK))
+                .run(req.mapK(P.liftK))
                 .mapK(lower)
                 .map(_.mapK(lower))
                 .semiflatTap { res =>
@@ -62,7 +63,7 @@ object ServerTracer {
     requestFilter: Http4sRequestFilter,
     dropHeadersWhen: CaseInsensitiveString => Boolean,
     makeContext: Request_ => Spanned[F, Ctx]
-  )(implicit UP: UnliftProvide[F, G, Ctx], F: Bracket[F, Throwable]): HttpApp[F] =
+  )(implicit P: Provide[F, G, Ctx], F: Bracket[F, Throwable]): HttpApp[F] =
     Kleisli[F, Request[F], Response[F]] { req =>
       val filter = requestFilter.lift(req).getOrElse(true)
       val headers = Http4sHeaders.converter.from(req.headers)
@@ -73,8 +74,8 @@ object ServerTracer {
         for {
           _ <- span.putAll(Http4sHeaders.requestFields(req, dropHeadersWhen): _*)
           ctx <- makeContext(req).run(span)
-          lower = UP.provideK(ctx)
-          resp <- lower(app.run(req.mapK(UP.liftK))).map(_.mapK(lower))
+          lower = P.provideK(ctx)
+          resp <- lower(app.run(req.mapK(P.liftK))).map(_.mapK(lower))
           _ <- span.setStatus(Http4sStatusMapping.toSpanStatus(resp.status))
           _ <- span.putAll(Http4sHeaders.responseFields(resp, dropHeadersWhen): _*)
         } yield resp

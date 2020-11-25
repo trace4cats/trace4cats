@@ -4,8 +4,9 @@ import cats.Monad
 import cats.data.Kleisli
 import cats.effect.Bracket
 import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.http4s.common.{Http4sRequestFilter, Http4sSpanNamer, Request_}
-import io.janstenpickle.trace4cats.inject.{EntryPoint, Spanned, UnliftProvide}
+import io.janstenpickle.trace4cats.inject.{EntryPoint, Spanned}
 import org.http4s._
 import org.http4s.util.CaseInsensitiveString
 
@@ -16,7 +17,7 @@ trait ServerSyntax {
       spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath,
       requestFilter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
       dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
-    )(implicit UP: UnliftProvide[F, G, Span[F]], F: Bracket[F, Throwable]): HttpRoutes[F] =
+    )(implicit P: Provide[F, G, Span[F]], F: Bracket[F, Throwable]): HttpRoutes[F] =
       ServerTracer
         .injectRoutes(routes, entryPoint, spanNamer, requestFilter, dropHeadersWhen, _ => Kleisli.ask[F, Span[F]])
 
@@ -26,7 +27,7 @@ trait ServerSyntax {
       spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath,
       requestFilter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
       dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
-    )(implicit UP: UnliftProvide[F, G, Ctx], F: Bracket[F, Throwable]): HttpRoutes[F] =
+    )(implicit P: Provide[F, G, Ctx], F: Bracket[F, Throwable]): HttpRoutes[F] =
       ServerTracer
         .injectRoutes(routes, entryPoint, spanNamer, requestFilter, dropHeadersWhen, makeContext)
   }
@@ -37,7 +38,7 @@ trait ServerSyntax {
       spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath,
       requestFilter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
       dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
-    )(implicit UP: UnliftProvide[F, G, Span[F]], F: Bracket[F, Throwable]): HttpApp[F] =
+    )(implicit P: Provide[F, G, Span[F]], F: Bracket[F, Throwable]): HttpApp[F] =
       ServerTracer
         .injectApp(app, entryPoint, spanNamer, requestFilter, dropHeadersWhen, _ => Kleisli.ask[F, Span[F]])
 
@@ -47,7 +48,7 @@ trait ServerSyntax {
       spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath,
       requestFilter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
       dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
-    )(implicit UP: UnliftProvide[F, G, Ctx], F: Bracket[F, Throwable]): HttpApp[F] =
+    )(implicit P: Provide[F, G, Ctx], F: Bracket[F, Throwable]): HttpApp[F] =
       ServerTracer
         .injectApp(app, entryPoint, spanNamer, requestFilter, dropHeadersWhen, makeContext)
   }

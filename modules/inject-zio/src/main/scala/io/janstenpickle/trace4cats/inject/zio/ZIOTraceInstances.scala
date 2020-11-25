@@ -9,7 +9,7 @@ import zio.interop.catz._
 trait ZIOTraceInstances {
   implicit val zioTrace: ZIOTracer = new ZIOTracer
 
-  implicit val zioProvide: Provide[Task, ZIOTrace] = new Provide[Task, ZIOTrace] {
+  implicit val zioProvideSpan: Provide[Task, ZIOTrace] = new Provide[Task, ZIOTrace] {
     override def fk(span: Span[Task]): ZIOTrace ~> Task =
       new (ZIOTrace ~> Task) {
         override def apply[A](fa: ZIOTrace[A]): Task[A] = fa.provide(span)
@@ -20,7 +20,7 @@ trait ZIOTraceInstances {
     }
   }
 
-  implicit val zioLift: LiftTrace[Task, ZIOTrace] = new LiftTrace[Task, ZIOTrace] {
+  implicit val zioLiftTrace: LiftTrace[Task, ZIOTrace] = new LiftTrace[Task, ZIOTrace] {
     override val fk: Task ~> ZIOTrace = new (Task ~> ZIOTrace) {
       override def apply[A](fa: Task[A]): ZIOTrace[A] = fa
     }

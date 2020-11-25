@@ -14,6 +14,6 @@ class ClientCtxSyntaxSpec
       9085,
       λ[IO ~> Id](_.unsafeRunSync()),
       TraceContext("3d86cad5-d321-448f-a758-d28714fc1045", _),
-      _.liftTraceContext(spanLens = TraceContext.span[IO], headersGetter = TraceContext.headers[IO](ToHeaders.w3c)),
+      _.liftTraceContext(spanLens = TraceContext.span[IO], headersGetter = TraceContext.headers[IO](ToHeaders.all)),
       IO.timer(ExecutionContext.global)
     )

@@ -81,6 +81,8 @@ lazy val root = (project in file("."))
   .settings(name := "Trace4Cats")
   .aggregate(
     model,
+    base,
+    `base-zio`,
     core,
     kernel,
     meta,
@@ -120,7 +122,8 @@ lazy val root = (project in file("."))
     `tail-sampling-cache-store`,
     `tail-sampling-redis-store`,
     filtering,
-    `rate-sampling`
+    `rate-sampling`,
+    example
   )
 
 lazy val model =
@@ -213,6 +216,21 @@ lazy val core =
       libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.catsEffectLaws % Test)
     )
     .dependsOn(model, kernel, test % "test->compile", `exporter-common` % "test->compile")
+
+lazy val base =
+  (project in file("modules/base"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-base",
+      libraryDependencies ++= Dependencies.test.map(_ % Test),
+      libraryDependencies ++= Seq(Dependencies.cats)
+    )
+
+lazy val `base-zio` =
+  (project in file("modules/base-zio"))
+    .settings(publishSettings)
+    .settings(name := "trace4cats-base-zio", libraryDependencies ++= Seq(Dependencies.zioInterop))
+    .dependsOn(base)
 
 lazy val avro =
   (project in file("modules/avro"))
@@ -484,13 +502,13 @@ lazy val `avro-kafka-consumer` =
 
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-inject", libraryDependencies ++= Seq(Dependencies.catsMtl))
-  .dependsOn(model, kernel, core)
+  .settings(name := "trace4cats-inject")
+  .dependsOn(model, kernel, core, base)
 
 lazy val `inject-zio` = (project in file("modules/inject-zio"))
   .settings(publishSettings)
   .settings(name := "trace4cats-inject-zio", libraryDependencies ++= Seq(Dependencies.zioInterop, Dependencies.catsMtl))
-  .dependsOn(inject)
+  .dependsOn(inject, `base-zio`)
 
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
@@ -510,7 +528,7 @@ lazy val `http4s-common` = (project in file("modules/http4s-common"))
   .settings(publishSettings)
   .settings(
     name := "trace4cats-http4s-common",
-    libraryDependencies ++= Seq(Dependencies.http4sServer, Dependencies.http4sDsl, Dependencies.monocleCore % Test)
+    libraryDependencies ++= Seq(Dependencies.http4sServer, Dependencies.http4sDsl)
   )
   .dependsOn(model, inject % "test->compile", test % "test->compile")
 
@@ -540,7 +558,7 @@ lazy val `http4s-client` = (project in file("modules/http4s-client"))
   .settings(publishSettings)
   .settings(
     name := "trace4cats-http4s-client",
-    libraryDependencies ++= Seq(Dependencies.catsMtl, Dependencies.http4sClient, Dependencies.monocleCore),
+    libraryDependencies ++= Seq(Dependencies.catsMtl, Dependencies.http4sClient),
     libraryDependencies ++= (Dependencies.test ++ Seq(
       Dependencies.http4sBlazeClient,
       Dependencies.http4sBlazeServer,

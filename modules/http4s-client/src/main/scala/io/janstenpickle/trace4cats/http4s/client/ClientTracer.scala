@@ -3,10 +3,10 @@ package io.janstenpickle.trace4cats.http4s.client
 import cats.effect.{Bracket, Resource}
 import cats.{Applicative, Defer}
 import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.base.context.Provide
+import io.janstenpickle.trace4cats.base.optics.{Getter, Lens}
 import io.janstenpickle.trace4cats.http4s.common.{Http4sHeaders, Http4sSpanNamer, Http4sStatusMapping, Request_}
-import io.janstenpickle.trace4cats.inject.UnliftProvide
 import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders}
-import monocle.{Getter, Lens}
 import org.http4s.Request
 import org.http4s.client.{Client, UnexpectedStatus}
 
@@ -16,10 +16,10 @@ object ClientTracer {
     spanLens: Lens[Ctx, Span[F]],
     headersGetter: Getter[Ctx, TraceHeaders],
     spanNamer: Http4sSpanNamer
-  )(implicit UP: UnliftProvide[F, G, Ctx]): Client[G] =
+  )(implicit P: Provide[F, G, Ctx]): Client[G] =
     Client { request: Request[G] =>
       Resource
-        .liftF(UP.ask[Ctx])
+        .liftF(P.ask[Ctx])
         .flatMap { parentCtx =>
           val parentSpan = spanLens.get(parentCtx)
           parentSpan
@@ -36,13 +36,13 @@ object ClientTracer {
               val req = request.putHeaders(Http4sHeaders.converter.to(headers).toList: _*)
 
               client
-                .run(req.mapK(UP.provideK(childCtx)))
+                .run(req.mapK(P.provideK(childCtx)))
                 .evalTap { resp =>
                   childSpan.setStatus(Http4sStatusMapping.toSpanStatus(resp.status))
                 }
             }
-            .mapK(UP.liftK)
-            .map(_.mapK(UP.liftK))
+            .mapK(P.liftK)
+            .map(_.mapK(P.liftK))
         }
     }
 }
