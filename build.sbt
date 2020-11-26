@@ -122,8 +122,7 @@ lazy val root = (project in file("."))
     `tail-sampling-cache-store`,
     `tail-sampling-redis-store`,
     filtering,
-    `rate-sampling`,
-    example
+    `rate-sampling`
   )
 
 lazy val model =
