@@ -11,7 +11,7 @@ import org.http4s.Request
 import org.http4s.client.{Client, UnexpectedStatus}
 
 object ClientTracer {
-  def liftTrace[F[_]: Applicative, G[_]: Applicative: Defer: Bracket[*[_], Throwable], Ctx](
+  def liftTrace[F[_]: Applicative, G[_]: Defer: Bracket[*[_], Throwable], Ctx](
     client: Client[F],
     spanLens: Lens[Ctx, Span[F]],
     headersGetter: Getter[Ctx, TraceHeaders],
