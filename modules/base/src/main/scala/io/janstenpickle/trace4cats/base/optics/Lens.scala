@@ -1,5 +1,7 @@
 package io.janstenpickle.trace4cats.base.optics
 
+import scala.Function.const
+
 trait Lens[S, A] extends Getter[S, A] { self =>
   def get(s: S): A
 
@@ -19,5 +21,5 @@ object Lens {
     def set(a: A): S => S = _set(a)
   }
 
-  def id[A]: Lens[A, A] = apply(identity[A])(_ => identity)
+  def id[A]: Lens[A, A] = apply(identity[A])(const)
 }
