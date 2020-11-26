@@ -18,5 +18,5 @@ trait Ask[F[_], R] extends ContextRoot { self =>
 }
 
 object Ask {
-  def apply[F[_], R](implicit ev: Ask[F, R]): ev.type = ev
+  def apply[F[_], R](implicit ev: Ask[F, R]): Ask[F, R] = ev
 }

@@ -27,7 +27,7 @@ trait Trace[F[_]] {
   def traceId: F[Option[String]]
 }
 
-object Trace {
+object Trace extends TraceInstancesLowPriority {
 
   def apply[F[_]](implicit ev: Trace[F]): ev.type = ev
 
@@ -122,7 +122,9 @@ object Trace {
 
       override def traceId: EitherT[F, A, Option[String]] = EitherT.liftF(trace.traceId)
     }
+}
 
+trait TraceInstancesLowPriority {
   implicit def localSpanInstance[F[_], G[_]](implicit
     C: Local[G, Span[F]],
     L: Lift[F, G],
@@ -138,5 +140,4 @@ object Trace {
     def setStatus(status: SpanStatus): G[Unit] = C.accessM(span => L.lift(span.setStatus(status)))
     def traceId: G[Option[String]] = C.access(_.context.traceId.show.some)
   }
-
 }

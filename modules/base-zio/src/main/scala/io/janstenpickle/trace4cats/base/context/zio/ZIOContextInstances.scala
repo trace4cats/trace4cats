@@ -19,22 +19,21 @@ trait ZIOContextInstances extends ZIOContextInstancesLowPriority {
       def provide[A](fa: ZIO[R, E, A])(r: R): IO[E, A] = fa.provide(r)
     }
 
-  implicit def zioProvideSome[R <: Has[_], R1, E, C: Tag](implicit
-    ev: R1 =:= R with Has[C]
+  implicit def zioProvideSome[R <: Has[_], R1 <: Has[_], E, C: Tag](implicit
+    ev1: R1 <:< R with Has[C],
+    ev2: R with Has[C] <:< R1
   ): Provide[ZIO[R, E, *], ZIO[R1, E, *], C] =
     new Provide[ZIO[R, E, *], ZIO[R1, E, *], C] {
-      implicit val ev2: R with Has[C] =:= R1 = ev.asInstanceOf[R with Has[C] =:= R1] //.flip is missing on scala 2.12
-
       def F: Monad[ZIO[R1, E, *]] = zio.interop.catz.monadErrorInstance
 
-      def ask[C2 >: C]: ZIO[R1, E, C2] = ZIO.access[Has[C]](_.get).provideSome(ev)
+      def ask[C2 >: C]: ZIO[R1, E, C2] = ZIO.access[Has[C]](_.get).provideSome(ev1)
 
       def local[A](fa: ZIO[R1, E, A])(f: C => C): ZIO[R1, E, A] =
-        fa.provideSome[R1](r1 => ev(r1).update(f))
+        fa.provideSome[R1](_.update(f))
 
-      def lift[A](la: ZIO[R, E, A]): ZIO[R1, E, A] = la.provideSome(ev)
+      def lift[A](la: ZIO[R, E, A]): ZIO[R1, E, A] = la.provideSome(ev1)
 
-      def provide[A](fa: ZIO[R1, E, A])(c: C): ZIO[R, E, A] = fa.provideSome[R](r => r.add(c))
+      def provide[A](fa: ZIO[R1, E, A])(c: C): ZIO[R, E, A] = fa.provideSome[R](_.add(c))
     }
 
 }

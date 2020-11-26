@@ -8,5 +8,5 @@ trait Lift[Low[_], F[_]] extends ContextRoot {
 }
 
 object Lift {
-  def apply[Low[_], F[_]](implicit ev: Lift[Low, F]): ev.type = ev
+  def apply[Low[_], F[_]](implicit ev: Lift[Low, F]): Lift[Low, F] = ev
 }

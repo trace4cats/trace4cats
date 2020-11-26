@@ -13,5 +13,5 @@ trait Provide[Low[_], F[_], R] extends Local[F, R] with Unlift[Low, F] {
 }
 
 object Provide {
-  def apply[Low[_], F[_], R](implicit ev: Provide[Low, F, R]): ev.type = ev
+  def apply[Low[_], F[_], R](implicit ev: Provide[Low, F, R]): Provide[Low, F, R] = ev
 }

@@ -11,5 +11,5 @@ trait Unlift[Low[_], F[_]] extends Lift[Low, F] {
 }
 
 object Unlift {
-  def apply[Low[_], F[_]](implicit ev: Unlift[Low, F]): ev.type = ev
+  def apply[Low[_], F[_]](implicit ev: Unlift[Low, F]): Unlift[Low, F] = ev
 }

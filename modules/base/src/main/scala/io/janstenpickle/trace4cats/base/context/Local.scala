@@ -18,5 +18,5 @@ trait Local[F[_], R] extends Ask[F, R] { self =>
 }
 
 object Local {
-  def apply[F[_], R](implicit ev: Local[F, R]): ev.type = ev
+  def apply[F[_], R](implicit ev: Local[F, R]): Local[F, R] = ev
 }
