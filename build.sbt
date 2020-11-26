@@ -535,7 +535,7 @@ lazy val `sttp-client` = (project in file("modules/sttp-client"))
   .settings(publishSettings)
   .settings(
     name := "trace4cats-sttp-client",
-    libraryDependencies ++= Seq(Dependencies.catsMtl, Dependencies.sttpClient),
+    libraryDependencies ++= Seq(Dependencies.sttpClient),
     libraryDependencies ++= (Dependencies.test ++ Seq(
       Dependencies.http4sBlazeClient,
       Dependencies.http4sBlazeServer,
@@ -550,14 +550,14 @@ lazy val `sttp-client` = (project in file("modules/sttp-client"))
     inject,
     test              % "test->compile",
     `exporter-common` % "test->compile",
-    `http4s-common`   % "test->compile"
+    `http4s-common`   % "test->test"
   )
 
 lazy val `http4s-client` = (project in file("modules/http4s-client"))
   .settings(publishSettings)
   .settings(
     name := "trace4cats-http4s-client",
-    libraryDependencies ++= Seq(Dependencies.catsMtl, Dependencies.http4sClient),
+    libraryDependencies ++= Seq(Dependencies.http4sClient),
     libraryDependencies ++= (Dependencies.test ++ Seq(
       Dependencies.http4sBlazeClient,
       Dependencies.http4sBlazeServer,

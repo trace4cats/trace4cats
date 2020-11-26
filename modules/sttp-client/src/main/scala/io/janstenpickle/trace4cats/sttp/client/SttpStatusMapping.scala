@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.sttp.backend
+package io.janstenpickle.trace4cats.sttp.client
 
 import io.janstenpickle.trace4cats.model.SpanStatus
 import sttp.client.HttpError

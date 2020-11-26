@@ -1,16 +1,18 @@
-package io.janstenpickle.trace4cats.sttp.backend
+package io.janstenpickle.trace4cats.sttp.client
 
 import cats.data.NonEmptyList
 import cats.effect.concurrent.Ref
 import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Sync, Timer}
 import cats.implicits._
 import cats.{~>, Eq, Id}
-import io.janstenpickle.trace4cats.ToHeaders
+import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
+import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.http4s.common.Http4sHeaders
-import io.janstenpickle.trace4cats.inject.{EntryPoint, Provide, Trace}
+import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.model.TraceHeaders
+import io.janstenpickle.trace4cats.sttp.client.syntax.{INothing, INothingT}
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.`WWW-Authenticate`
@@ -28,12 +30,13 @@ import sttp.model.StatusCode
 
 import scala.concurrent.duration._
 
-abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift, G[_]: Sync: Trace](
+abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift, G[_]: Sync: Trace, Ctx](
   port: Int,
-  fkId: F ~> Id,
-  liftBackend: SttpBackend[F, Nothing, NothingT] => SttpBackend[G, Nothing, NothingT],
+  unsafeRunK: F ~> Id,
+  makeSomeContext: Span[F] => Ctx,
+  liftBackend: SttpBackend[F, INothing, INothingT] => SttpBackend[G, INothing, INothingT],
   timer: Timer[F]
-)(implicit provide: Provide[F, G])
+)(implicit P: Provide[F, G, Ctx])
     extends AnyFlatSpec
     with ScalaCheckDrivenPropertyChecks
     with Matchers
@@ -53,7 +56,7 @@ abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift, G[_]:
           BadGateway(),
           ServiceUnavailable(),
           GatewayTimeout()
-        ).map(fkId.apply)
+        ).map(unsafeRunK.apply)
       )
     )
 
@@ -69,7 +72,7 @@ abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift, G[_]:
 
       val (httpApp, headersRef) = makeHttpApp(response)
 
-      fkId(withRunningHttpServer(httpApp) { port =>
+      unsafeRunK(withRunningHttpServer(httpApp) { port =>
         RefSpanCompleter[F]("test").flatMap { completer =>
           withBackend { backend =>
             def req(body: String): G[Unit] =
@@ -78,13 +81,13 @@ abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift, G[_]:
             for {
               _ <- entryPoint(completer)
                 .root(rootSpanName)
-                .use(
-                  provide(
+                .use { span =>
+                  P.provideK(makeSomeContext(span))(
                     Trace[G]
                       .span(req1SpanName)(req(req1SpanName))
                       .handleError(_ => ()) >> Trace[G].span(req2SpanName)(req(req2SpanName)).handleError(_ => ())
                   )
-                )
+                }
               spans <- completer.get
               headersMap <- headersRef.get
             } yield {

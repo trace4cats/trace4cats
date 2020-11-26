@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.sttp.backend
+package io.janstenpickle.trace4cats.sttp.client
 
 object SttpSpanNamer {
   val method: SttpSpanNamer = _.method.method

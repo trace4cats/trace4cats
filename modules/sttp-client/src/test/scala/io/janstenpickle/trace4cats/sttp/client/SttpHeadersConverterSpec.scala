@@ -1,8 +1,8 @@
-package io.janstenpickle.trace4cats.sttp.backend
+package io.janstenpickle.trace4cats.sttp.client
 
 import cats.Eq
 import io.janstenpickle.trace4cats.model.TraceHeaders
-import io.janstenpickle.trace4cats.sttp.backend.SttpHeaders.converter
+import io.janstenpickle.trace4cats.sttp.client.SttpHeaders.converter
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -12,7 +12,6 @@ class SttpHeadersConverterSpec extends AnyFlatSpec with ScalaCheckDrivenProperty
   behavior.of("SttpHeaders.converter")
 
   it should "convert headers isomorphically" in forAll { traceHeaders: TraceHeaders =>
-    println(traceHeaders)
     assert(Eq.eqv(traceHeaders, converter.from(converter.to(traceHeaders))))
   }
 

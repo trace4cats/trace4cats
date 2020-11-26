@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.http4s
+package io.janstenpickle.trace4cats.sttp.client
 
 import java.util.concurrent.Executors
 
@@ -10,7 +10,7 @@ import io.janstenpickle.trace4cats.http4s.common.TraceContext
 
 import scala.concurrent.ExecutionContext
 
-package object client {
+object Instances {
   implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.fromExecutor(Executors.newCachedThreadPool()))
 
   implicit val localSpan: Local[Kleisli[IO, TraceContext[IO], *], Span[IO]] =

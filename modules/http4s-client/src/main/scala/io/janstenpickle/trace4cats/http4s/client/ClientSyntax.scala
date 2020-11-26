@@ -10,15 +10,15 @@ import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import org.http4s.client.Client
 
 trait ClientSyntax {
-  implicit class TracedClient[F[_], G[_]](client: Client[F]) {
-    def liftTrace(
+  implicit class TracedClient[F[_]](client: Client[F]) {
+    def liftTrace[G[_]](
       toHeaders: ToHeaders = ToHeaders.all,
       spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath
     )(implicit P: Provide[F, G, Span[F]], F: Applicative[F], G: Sync[G]): Client[G] =
       ClientTracer
         .liftTrace[F, G, Span[F]](client, Lens.id, Getter((toHeaders.fromContext _).compose(_.context)), spanNamer)
 
-    def liftTraceContext[Ctx](
+    def liftTraceContext[G[_], Ctx](
       spanLens: Lens[Ctx, Span[F]],
       headersGetter: Getter[Ctx, TraceHeaders],
       spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath
