@@ -15,7 +15,7 @@ import io.janstenpickle.trace4cats.http4s.common.{
   Request_,
   Response_
 }
-import io.janstenpickle.trace4cats.inject.{EntryPoint, Spanned}
+import io.janstenpickle.trace4cats.inject.EntryPoint
 import io.janstenpickle.trace4cats.model.SpanKind
 import org.http4s.util.CaseInsensitiveString
 import org.http4s.{HttpApp, HttpRoutes, Request, Response}
@@ -27,7 +27,7 @@ object ServerTracer {
     spanNamer: Http4sSpanNamer,
     requestFilter: Http4sRequestFilter,
     dropHeadersWhen: CaseInsensitiveString => Boolean,
-    makeContext: Request_ => Spanned[F, Ctx]
+    makeContext: (Request_, Span[F]) => F[Ctx]
   )(implicit P: Provide[F, G, Ctx], F: Bracket[F, Throwable]): HttpRoutes[F] =
     Kleisli[OptionT[F, *], Request[F], Response[F]] { req =>
       val filter = requestFilter.lift(req).getOrElse(true)
@@ -39,7 +39,7 @@ object ServerTracer {
         spanR.use { span =>
           for {
             _ <- span.putAll(Http4sHeaders.requestFields(req, dropHeadersWhen): _*)
-            ctx <- makeContext(req).run(span)
+            ctx <- makeContext(req, span)
             lower = P.provideK(ctx)
             resp <-
               routes
@@ -62,7 +62,7 @@ object ServerTracer {
     spanNamer: Http4sSpanNamer,
     requestFilter: Http4sRequestFilter,
     dropHeadersWhen: CaseInsensitiveString => Boolean,
-    makeContext: Request_ => Spanned[F, Ctx]
+    makeContext: (Request_, Span[F]) => F[Ctx]
   )(implicit P: Provide[F, G, Ctx], F: Bracket[F, Throwable]): HttpApp[F] =
     Kleisli[F, Request[F], Response[F]] { req =>
       val filter = requestFilter.lift(req).getOrElse(true)
@@ -73,7 +73,7 @@ object ServerTracer {
       spanR.use { span =>
         for {
           _ <- span.putAll(Http4sHeaders.requestFields(req, dropHeadersWhen): _*)
-          ctx <- makeContext(req).run(span)
+          ctx <- makeContext(req, span)
           lower = P.provideK(ctx)
           resp <- lower(app.run(req.mapK(P.liftK))).map(_.mapK(lower))
           _ <- span.setStatus(Http4sStatusMapping.toSpanStatus(resp.status))
