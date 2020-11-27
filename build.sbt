@@ -506,21 +506,21 @@ lazy val inject = (project in file("modules/inject"))
 
 lazy val `inject-zio` = (project in file("modules/inject-zio"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-inject-zio", libraryDependencies ++= Seq(Dependencies.zioInterop, Dependencies.catsMtl))
+  .settings(name := "trace4cats-inject-zio", libraryDependencies ++= Seq(Dependencies.zioInterop))
   .dependsOn(inject, `base-zio`)
 
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
   .settings(
     name := "trace4cats-fs2",
-    libraryDependencies ++= Seq(Dependencies.fs2, Dependencies.catsMtl),
+    libraryDependencies ++= Seq(Dependencies.fs2),
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
   .dependsOn(model, kernel, core, inject, `exporter-common` % "test->compile", test % "test->compile")
 
 lazy val `kafka-client` = (project in file("modules/kafka-client"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-kafka-client", libraryDependencies ++= Seq(Dependencies.catsMtl, Dependencies.fs2Kafka))
+  .settings(name := "trace4cats-kafka-client", libraryDependencies ++= Seq(Dependencies.fs2Kafka))
   .dependsOn(model, kernel, core, inject, fs2, test % "test->compile", `exporter-common` % "test->compile")
 
 lazy val `http4s-common` = (project in file("modules/http4s-common"))

@@ -3,7 +3,6 @@ import sbt._
 object Dependencies {
   object Versions {
     val cats = "2.2.0"
-    val catsMtl = "1.0.0"
     val catsEffect = "2.2.0"
     val collectionCompat = "2.3.1"
     val commonsCodec = "1.15"
@@ -47,7 +46,6 @@ object Dependencies {
   }
 
   lazy val cats = "org.typelevel"                          %% "cats-core"                       % Versions.cats
-  lazy val catsMtl = "org.typelevel"                       %% "cats-mtl"                        % Versions.catsMtl
   lazy val catsEffect = "org.typelevel"                    %% "cats-effect"                     % Versions.catsEffect
   lazy val commonsCodec = "commons-codec"                   % "commons-codec"                   % Versions.commonsCodec
   lazy val collectionCompat = "org.scala-lang.modules"     %% "scala-collection-compat"         % Versions.collectionCompat
