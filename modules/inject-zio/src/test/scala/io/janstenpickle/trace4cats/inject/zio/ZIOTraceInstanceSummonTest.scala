@@ -2,13 +2,12 @@ package io.janstenpickle.trace4cats.inject.zio
 
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.base.context.Local
-import io.janstenpickle.trace4cats.base.context.zio._
 import io.janstenpickle.trace4cats.inject.Trace
 import zio.interop.catz._
 import zio.{Has, RIO, Task, ZEnv}
 
 object ZIOTraceInstanceSummonTest {
-  type F[x] = RIO[Span[Task], x]
+  type F[x] = SpannedRIO[x]
   implicitly[Trace[F]]
 
   type ZSpan = Has[Span[Task]]

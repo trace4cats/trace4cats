@@ -1,7 +1,8 @@
 package io.janstenpickle.trace4cats.base.context.zio
 
-import io.janstenpickle.trace4cats.base.context.{Ask, Lift, Local, Provide, Unlift}
-import zio.{IO, ZIO}
+import _root_.zio.{IO, ZIO}
+import io.janstenpickle.trace4cats.base.context._
+import io.janstenpickle.trace4cats.base.context.zio.instances._
 
 object ZIOInstanceSummonTest {
   type R

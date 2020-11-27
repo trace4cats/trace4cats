@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.example
 
 import cats.effect.Blocker
 import io.janstenpickle.trace4cats.Span
-import io.janstenpickle.trace4cats.base.context.zio._
+import io.janstenpickle.trace4cats.inject.zio._
 import io.janstenpickle.trace4cats.sttp.client.syntax._
 import org.http4s.EntityBody
 import org.http4s.client.blaze.BlazeClientBuilder

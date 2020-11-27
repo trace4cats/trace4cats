@@ -7,8 +7,9 @@ import cats.syntax.apply._
 import cats.syntax.functor._
 import cats.{~>, Applicative, Defer, Functor}
 import fs2.Stream
+import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.fs2.{ContinuationSpan, TracedStream}
-import io.janstenpickle.trace4cats.inject.{EntryPoint, LiftTrace, Provide}
+import io.janstenpickle.trace4cats.inject.EntryPoint
 import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, TraceHeaders}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 
@@ -58,16 +59,16 @@ trait Fs2StreamSyntax {
 
     private def evalTrace[G[_], B](
       f: A => G[B]
-    )(implicit F: Functor[F], provide: Provide[F, G]): (Span[F], A) => F[(Span[F], B)] = { case (span, a) =>
-      provide(f(a))(span).map(span -> _)
+    )(implicit F: Functor[F], P: Provide[F, G, Span[F]]): (Span[F], A) => F[(Span[F], B)] = { case (span, a) =>
+      P.provide(f(a))(span).map(span -> _)
     }
 
-    def evalMapTrace[G[_], B](f: A => G[B])(implicit F: Functor[F], provide: Provide[F, G]): TracedStream[F, B] =
+    def evalMapTrace[G[_], B](f: A => G[B])(implicit F: Functor[F], P: Provide[F, G, Span[F]]): TracedStream[F, B] =
       WriterT(stream.run.evalMap(evalTrace(f).tupled))
 
     def evalMapChunkTrace[G[_], B](
       f: A => G[B]
-    )(implicit F: Applicative[F], provide: Provide[F, G]): TracedStream[F, B] =
+    )(implicit F: Applicative[F], P: Provide[F, G, Span[F]]): TracedStream[F, B] =
       WriterT(stream.run.evalMapChunk(evalTrace(f).tupled))
 
     def evalMap[B](f: A => F[B])(implicit F: Functor[F]): TracedStream[F, B] =
@@ -109,23 +110,20 @@ trait Fs2StreamSyntax {
     def endTrace: Stream[F, A] =
       stream.value
 
-    def endTrace[G[_]: Applicative: Defer](implicit provide: Provide[G, F]): Stream[G, A] = translate(
-      provide.noopFk
-    ).value
+    def endTrace[G[_]: Applicative: Defer](implicit P: Provide[G, F, Span[G]]): Stream[G, A] =
+      Stream.resource(Span.noop[G]).flatMap(endTrace(_))
 
-    def endTrace[G[_]: Applicative: Defer](span: Span[G])(implicit provide: Provide[G, F]): Stream[G, A] = translate(
-      provide.fk(span)
-    ).value
+    def endTrace[G[_]: Applicative: Defer](span: Span[G])(implicit P: Provide[G, F, Span[G]]): Stream[G, A] =
+      translate(P.provideK(span)).value
 
     def through[B](f: TracedStream[F, A] => TracedStream[F, B]): TracedStream[F, B] = f(stream)
 
     def liftTrace[G[_]: Applicative: Defer](implicit
       F: Applicative[F],
       defer: Defer[F],
-      provide: Provide[F, G],
-      lift: LiftTrace[F, G]
+      P: Provide[F, G, Span[F]]
     ): TracedStream[G, A] =
-      WriterT(stream.run.translate(lift.fk).map { case (span, a) =>
+      WriterT(stream.run.translate(P.liftK).map { case (span, a) =>
         ContinuationSpan.fromSpan[F, G](span) -> a
       })
 

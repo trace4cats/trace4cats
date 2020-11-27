@@ -3,7 +3,6 @@ package io.janstenpickle.trace4cats.example
 import cats.effect.{Blocker, Resource}
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import io.janstenpickle.trace4cats.base.context.zio._
 import io.janstenpickle.trace4cats.example.Fs2Example.entryPoint
 import io.janstenpickle.trace4cats.http4s.client.syntax._
 import io.janstenpickle.trace4cats.http4s.common.Http4sRequestFilter
@@ -18,11 +17,12 @@ import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
 import zio._
 import zio.interop.catz._
+import zio.interop.catz.implicits._
 
 object Http4sZioExample extends CatsApp {
 
-  def makeRoutes(client: Client[ZIOTrace]): HttpRoutes[ZIOTrace] = {
-    object dsl extends Http4sDsl[ZIOTrace]
+  def makeRoutes(client: Client[SpannedRIO]): HttpRoutes[SpannedRIO] = {
+    object dsl extends Http4sDsl[SpannedRIO]
     import dsl._
 
     HttpRoutes.of { case req @ GET -> Root / "forward" =>
