@@ -7,7 +7,7 @@ trait Unlift[Low[_], F[_]] extends Lift[Low, F] {
 
   def unlift: F[F ~> Low]
 
-  def disclose[A](f: F ~> Low => Low[A]): F[A] = F.flatMap(unlift)(f.andThen(lift))
+  def withUnlift[A](f: F ~> Low => Low[A]): F[A] = F.flatMap(unlift)(f.andThen(lift))
 }
 
 object Unlift {
