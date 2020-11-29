@@ -336,37 +336,7 @@ jobs:
           java-version: '15'
 
       - name: docker containers
-        run: |
-          docker network create jaeger
-
-          docker run -d --rm -p 55680:55680 -p 55681:55681 -p 55678:55678 -p 55679:55679 \
-            --net jaeger \
-            -v `pwd`/.github/otel-test-config.yaml:/otel-local-config.yaml \
-            --name otelcol \
-            otel/opentelemetry-collector:0.12.0 \
-            --config otel-local-config.yaml
-
-          docker run -d --rm \
-            --name jaeger \
-            --net jaeger \
-            -e COLLECTOR_ZIPKIN_HTTP_PORT=9411 \
-            -p 5775:5775/udp \
-            -p 6831:6831/udp \
-            -p 6832:6832/udp \
-            -p 5778:5778 \
-            -p 16686:16686 \
-            -p 14268:14268 \
-            -p 14250:14250 \
-            -p 9411:9411 \
-            jaegertracing/all-in-one:1.20
-
-          DOCKER_CONTENT_TRUST=1 docker run --rm -d -p8126:8126 \
-            --name dd-agent \
-            -v /var/run/docker.sock:/var/run/docker.sock:ro \
-            -v /proc/:/host/proc/:ro \
-            -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro \
-            -e DD_API_KEY=test \
-            datadog/agent:7
+        run: docker-compose up -d
 
       - name: Cache ivy2
         uses: actions/cache@v1
