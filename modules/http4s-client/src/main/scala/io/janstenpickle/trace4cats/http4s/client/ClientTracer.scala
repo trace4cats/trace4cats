@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.http4s.client
 
-import cats.effect.{Bracket, Resource}
+import cats.effect.{BracketThrow, Resource}
 import cats.{Applicative, Defer}
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.base.context.Provide
@@ -11,7 +11,7 @@ import org.http4s.Request
 import org.http4s.client.{Client, UnexpectedStatus}
 
 object ClientTracer {
-  def liftTrace[F[_]: Applicative, G[_]: Defer: Bracket[*[_], Throwable], Ctx](
+  def liftTrace[F[_]: Applicative, G[_]: Defer: BracketThrow, Ctx](
     client: Client[F],
     spanLens: Lens[Ctx, Span[F]],
     headersGetter: Getter[Ctx, TraceHeaders],

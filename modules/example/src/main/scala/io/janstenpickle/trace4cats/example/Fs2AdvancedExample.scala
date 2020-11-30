@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.example
 import java.util.concurrent.TimeUnit
 
 import cats.data.Kleisli
-import cats.effect.{Blocker, Bracket, Clock, Concurrent, ContextShift, ExitCode, IO, IOApp, Resource, Sync, Timer}
+import cats.effect.{Blocker, BracketThrow, Clock, Concurrent, ContextShift, ExitCode, IO, IOApp, Resource, Sync, Timer}
 import cats.implicits._
 import cats.{Applicative, Apply, Defer, Functor, Monad, Order, Parallel}
 import fs2.Stream
@@ -58,7 +58,7 @@ object Fs2AdvancedExample extends IOApp {
   def sourceStream[F[_]: Functor: Timer]: Stream[F, FiniteDuration] = Stream.awakeEvery[F](10.seconds)
 
   // uses WriterT to inject the EntryPoint with element in the stream
-  def inject[F[_]: Bracket[*[_], Throwable]: Timer](ep: EntryPoint[F]): TracedStream[F, FiniteDuration] =
+  def inject[F[_]: BracketThrow: Timer](ep: EntryPoint[F]): TracedStream[F, FiniteDuration] =
     sourceStream[F].inject(ep, "this is injected root span", SpanKind.Producer)
 
   // after the first call to `evalMap` a `Span` is propagated alongside the entry point
@@ -88,10 +88,10 @@ object Fs2AdvancedExample extends IOApp {
     }
 
   // gets the trace headers from the span context so that they may be propagated across service boundaries
-  def getHeaders[F[_]: Bracket[*[_], Throwable]](stream: TracedStream[F, Unit]): TracedStream[F, (TraceHeaders, Unit)] =
+  def getHeaders[F[_]: BracketThrow](stream: TracedStream[F, Unit]): TracedStream[F, (TraceHeaders, Unit)] =
     stream.traceHeaders
 
-  def continue[F[_]: Bracket[*[_], Throwable]: Defer, G[_]: Applicative: Defer: Trace](
+  def continue[F[_]: BracketThrow: Defer, G[_]: Applicative: Defer: Trace](
     ep: EntryPoint[F],
     stream: Stream[F, (TraceHeaders, Unit)]
   )(implicit P: Provide[F, G, Span[F]]): TracedStream[G, Unit] =

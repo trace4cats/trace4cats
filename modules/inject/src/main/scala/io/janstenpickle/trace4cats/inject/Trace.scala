@@ -6,7 +6,7 @@
 package io.janstenpickle.trace4cats.inject
 
 import cats.data.{EitherT, Kleisli}
-import cats.effect.Bracket
+import cats.effect.BracketThrow
 import cats.syntax.applicative._
 import cats.syntax.option._
 import cats.syntax.show._
@@ -52,17 +52,17 @@ object Trace extends TraceInstancesLowPriority {
 
   }
 
-  /** `Kleisli[F, Span[F], *]` is a `Trace` given `Bracket[F, Throwable]`. The instance can be
+  /** `Kleisli[F, Span[F], *]` is a `Trace` given `BracketThrow[F]`. The instance can be
     * widened to an environment that *contains* a `Span[F]` via the `lens` method.
     */
-  implicit def kleisliInstance[F[_]: Bracket[*[_], Throwable]]: KleisliTrace[F] =
+  implicit def kleisliInstance[F[_]: BracketThrow]: KleisliTrace[F] =
     new KleisliTrace[F]
 
   /** A trace instance for `Kleisli[F, Span[F], *]`, which is the mechanism we use to introduce
     * context into our computations. We can also "lensMap" out to `Kleisli[F, E, *]` given a lens
     * from `E` to `Span[F]`.
     */
-  class KleisliTrace[F[_]: Bracket[*[_], Throwable]] extends Trace[Kleisli[F, Span[F], *]] {
+  class KleisliTrace[F[_]: BracketThrow] extends Trace[Kleisli[F, Span[F], *]] {
 
     override def headers(toHeaders: ToHeaders): Kleisli[F, Span[F], TraceHeaders] =
       Kleisli { span =>
@@ -128,7 +128,7 @@ trait TraceInstancesLowPriority {
   implicit def localSpanInstance[F[_], G[_]](implicit
     C: Local[G, Span[F]],
     L: Lift[F, G],
-    G1: Bracket[G, Throwable],
+    G1: BracketThrow[G],
     G2: Defer[G]
   ): Trace[G] = new Trace[G] {
     def put(key: String, value: AttributeValue): G[Unit] = C.accessF(span => L.lift(span.put(key, value)))

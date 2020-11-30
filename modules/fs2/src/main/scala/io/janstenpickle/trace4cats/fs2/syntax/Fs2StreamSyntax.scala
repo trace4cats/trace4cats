@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.fs2.syntax
 
 import cats.data.WriterT
-import cats.effect.Bracket
+import cats.effect.BracketThrow
 import cats.syntax.applicative._
 import cats.syntax.apply._
 import cats.syntax.functor._
@@ -14,7 +14,7 @@ import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, TraceHeaders
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 
 trait Fs2StreamSyntax {
-  implicit class InjectEntryPoint[F[_]: Bracket[*[_], Throwable], A](stream: Stream[F, A]) {
+  implicit class InjectEntryPoint[F[_]: BracketThrow, A](stream: Stream[F, A]) {
     def inject(ep: EntryPoint[F], name: String): TracedStream[F, A] =
       inject(ep, _ => name, SpanKind.Internal)
 
@@ -50,7 +50,7 @@ trait Fs2StreamSyntax {
     }
 
     private def eval[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
-      F: Bracket[F, Throwable]
+      F: BracketThrow[F]
     ): (Span[F], A) => F[(Span[F], B)] = { case (span, a) =>
       span.child(name, kind).use { child =>
         child.putAll(attributes: _*) *> eval(f).apply(span, a)
@@ -78,32 +78,32 @@ trait Fs2StreamSyntax {
       WriterT(stream.run.evalMapChunk(eval(f).tupled))
 
     def evalMap[B](name: String, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
-      F: Bracket[F, Throwable]
+      F: BracketThrow[F]
     ): TracedStream[F, B] =
       evalMap(name, SpanKind.Internal, attributes: _*)(f)
 
     def evalMap[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
-      F: Bracket[F, Throwable]
+      F: BracketThrow[F]
     ): TracedStream[F, B] =
       WriterT(stream.run.evalMap(eval(name, kind, attributes: _*)(f).tupled))
 
     def evalMapChunk[B](name: String, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
-      F: Bracket[F, Throwable]
+      F: BracketThrow[F]
     ): TracedStream[F, B] =
       evalMapChunk(name, SpanKind.Internal, attributes: _*)(f)
 
     def evalMapChunk[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
-      F: Bracket[F, Throwable]
+      F: BracketThrow[F]
     ): TracedStream[F, B] =
       WriterT(stream.run.evalMapChunk(eval(name, kind, attributes: _*)(f).tupled))
 
     def traceMapChunk[B](name: String, attributes: (String, AttributeValue)*)(f: A => B)(implicit
-      F: Bracket[F, Throwable]
+      F: BracketThrow[F]
     ): TracedStream[F, B] =
       traceMapChunk[B](name, SpanKind.Internal, attributes: _*)(f)
 
     def traceMapChunk[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(f: A => B)(implicit
-      F: Bracket[F, Throwable]
+      F: BracketThrow[F]
     ): TracedStream[F, B] =
       WriterT(stream.run.evalMapChunk(eval(name, kind, attributes: _*)(a => Applicative[F].pure(f(a))).tupled))
 

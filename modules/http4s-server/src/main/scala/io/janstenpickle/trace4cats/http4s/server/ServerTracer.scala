@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.http4s.server
 
 import cats.data.{Kleisli, OptionT}
-import cats.effect.Bracket
+import cats.effect.BracketThrow
 import cats.syntax.apply._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -28,7 +28,7 @@ object ServerTracer {
     requestFilter: Http4sRequestFilter,
     dropHeadersWhen: CaseInsensitiveString => Boolean,
     makeContext: (Request_, Span[F]) => F[Ctx]
-  )(implicit P: Provide[F, G, Ctx], F: Bracket[F, Throwable]): HttpRoutes[F] =
+  )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F]): HttpRoutes[F] =
     Kleisli[OptionT[F, *], Request[F], Response[F]] { req =>
       val filter = requestFilter.lift(req).getOrElse(true)
       val headers = Http4sHeaders.converter.from(req.headers)
@@ -63,7 +63,7 @@ object ServerTracer {
     requestFilter: Http4sRequestFilter,
     dropHeadersWhen: CaseInsensitiveString => Boolean,
     makeContext: (Request_, Span[F]) => F[Ctx]
-  )(implicit P: Provide[F, G, Ctx], F: Bracket[F, Throwable]): HttpApp[F] =
+  )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F]): HttpApp[F] =
     Kleisli[F, Request[F], Response[F]] { req =>
       val filter = requestFilter.lift(req).getOrElse(true)
       val headers = Http4sHeaders.converter.from(req.headers)

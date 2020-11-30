@@ -1,7 +1,6 @@
 package io.janstenpickle.trace4cats.sttp.client
 
-import cats.MonadError
-import cats.effect.Bracket
+import cats.effect.{BracketThrow, MonadThrow}
 import cats.syntax.flatMap._
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.base.context.Provide
@@ -17,7 +16,7 @@ class BackendTracer[F[_], G[_], -S, -WS_HANLDER[_], Ctx](
   spanLens: Lens[Ctx, Span[F]],
   headersGetter: Getter[Ctx, TraceHeaders],
   spanNamer: SttpSpanNamer
-)(implicit P: Provide[F, G, Ctx], F: Bracket[F, Throwable], G: MonadError[G, Throwable])
+)(implicit P: Provide[F, G, Ctx], F: BracketThrow[F], G: MonadThrow[G])
     extends SttpBackend[G, S, WS_HANLDER] {
   override def send[T](request: Request[T, S]): G[Response[T]] =
     P.kleislift { parentCtx =>

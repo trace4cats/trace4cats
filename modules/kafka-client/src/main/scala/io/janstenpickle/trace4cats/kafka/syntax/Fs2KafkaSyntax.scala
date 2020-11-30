@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.kafka.syntax
 
-import cats.effect.Bracket
-import cats.{ApplicativeError, Defer, Functor, Monad}
+import cats.effect.{ApplicativeThrow, BracketThrow}
+import cats.{Defer, Functor, Monad}
 import fs2.Stream
 import fs2.kafka.{CommittableConsumerRecord, KafkaProducer}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
@@ -21,7 +21,7 @@ trait Fs2KafkaSyntax {
   implicit class ConsumerSyntax[F[_], K, V](consumerStream: Stream[F, CommittableConsumerRecord[F, K, V]]) {
     def inject[G[_]](ep: EntryPoint[F])(implicit
       P: Provide[F, G, Span[F]],
-      F: Bracket[F, Throwable],
+      F: BracketThrow[F],
       G: Functor[G],
       T: Trace[G],
     ): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
@@ -29,9 +29,9 @@ trait Fs2KafkaSyntax {
 
     def injectK[G[_]](ep: EntryPoint[F])(implicit
       P: Provide[F, G, Span[F]],
-      F: Bracket[F, Throwable],
+      F: BracketThrow[F],
       deferF: Defer[F],
-      G: ApplicativeError[G, Throwable],
+      G: ApplicativeThrow[G],
       deferG: Defer[G],
       trace: Trace[G]
     ): TracedStream[G, CommittableConsumerRecord[G, K, V]] =

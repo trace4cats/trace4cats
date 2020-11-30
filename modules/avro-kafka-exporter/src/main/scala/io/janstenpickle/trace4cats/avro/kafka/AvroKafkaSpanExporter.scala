@@ -3,14 +3,14 @@ package io.janstenpickle.trace4cats.avro.kafka
 import java.io.ByteArrayOutputStream
 
 import cats.data.NonEmptyList
-import cats.effect.{ConcurrentEffect, ContextShift, Resource, Sync}
+import cats.effect.{ApplicativeThrow, ConcurrentEffect, ContextShift, Resource, Sync}
 import cats.syntax.applicativeError._
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.show._
-import cats.{ApplicativeError, Foldable, Functor, Traverse}
+import cats.{Foldable, Functor, Traverse}
 import fs2.kafka._
 import io.chrisdavenport.log4cats.Logger
 import io.janstenpickle.trace4cats.avro.AvroInstances
@@ -72,7 +72,7 @@ object AvroKafkaSpanExporter {
           .map(fromProducer[F, G](_, topic))
       }
 
-  def fromProducer[F[_]: ApplicativeError[*[_], Throwable]: Logger, G[+_]: Functor: Traverse: Foldable](
+  def fromProducer[F[_]: ApplicativeThrow: Logger, G[+_]: Functor: Traverse: Foldable](
     producer: KafkaProducer[F, TraceId, CompletedSpan],
     topic: String
   ): SpanExporter[F, G] =

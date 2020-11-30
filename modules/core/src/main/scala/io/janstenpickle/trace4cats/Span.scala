@@ -4,9 +4,9 @@ import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 import cats.data.NonEmptyList
-import cats.{~>, Applicative, Defer, MonadError}
+import cats.{~>, Applicative, Defer}
 import cats.effect.concurrent.Ref
-import cats.effect.{Clock, ExitCase, Resource, Sync}
+import cats.effect.{Clock, ExitCase, MonadThrow, Resource, Sync}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
@@ -72,7 +72,7 @@ case class RefSpan[F[_]: Sync: Clock] private (
 
 }
 
-case class EmptySpan[F[_]: Defer: MonadError[*[_], Throwable]] private (context: SpanContext) extends Span[F] {
+case class EmptySpan[F[_]: Defer: MonadThrow] private (context: SpanContext) extends Span[F] {
   override def put(key: String, value: AttributeValue): F[Unit] = Applicative[F].unit
   override def putAll(fields: (String, AttributeValue)*): F[Unit] = Applicative[F].unit
   override def setStatus(spanStatus: SpanStatus): F[Unit] = Applicative[F].unit
