@@ -12,8 +12,8 @@ trait Local[F[_], R] extends Ask[F, R] { self =>
 
   def focus[R1](lens: Lens[R, R1]): Local[F, R1] = new Local[F, R1] {
     def F: Monad[F] = self.F
+    def ask[R2 >: R1]: F[R2] = self.access(lens.get)
     def local[A](fa: F[A])(f: R1 => R1): F[A] = self.local(fa)(r => lens.set(f(lens.get(r)))(r))
-    def ask[R2 >: R1]: F[R2] = self.access(r => lens.get(r))
   }
 }
 

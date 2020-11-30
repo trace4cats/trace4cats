@@ -3,11 +3,11 @@ package io.janstenpickle.trace4cats.base.context
 import cats.{~>, Monad}
 
 trait Unlift[Low[_], F[_]] extends Lift[Low, F] {
-  protected def F: Monad[F]
+  def F: Monad[F]
 
-  def unlift: F[F ~> Low]
+  def askUnlift: F[F ~> Low]
 
-  def withUnlift[A](f: F ~> Low => Low[A]): F[A] = F.flatMap(unlift)(f.andThen(lift))
+  def withUnlift[A](f: F ~> Low => Low[A]): F[A] = F.flatMap(askUnlift)(f.andThen(lift))
 }
 
 object Unlift {

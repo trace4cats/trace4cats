@@ -131,13 +131,13 @@ trait TraceInstancesLowPriority {
     G1: Bracket[G, Throwable],
     G2: Defer[G]
   ): Trace[G] = new Trace[G] {
-    def put(key: String, value: AttributeValue): G[Unit] = C.accessM(span => L.lift(span.put(key, value)))
-    def putAll(fields: (String, AttributeValue)*): G[Unit] = C.accessM(span => L.lift(span.putAll(fields: _*)))
+    def put(key: String, value: AttributeValue): G[Unit] = C.accessF(span => L.lift(span.put(key, value)))
+    def putAll(fields: (String, AttributeValue)*): G[Unit] = C.accessF(span => L.lift(span.putAll(fields: _*)))
     def span[A](name: String, kind: SpanKind)(fa: G[A]): G[A] =
-      C.accessM(span => span.child(name, kind).mapK(L.liftK).use(C.scope(fa)))
+      C.accessF(_.child(name, kind).mapK(L.liftK).use(C.scope(fa)))
     def headers(toHeaders: ToHeaders): G[TraceHeaders] =
       C.access(span => toHeaders.fromContext(span.context))
-    def setStatus(status: SpanStatus): G[Unit] = C.accessM(span => L.lift(span.setStatus(status)))
+    def setStatus(status: SpanStatus): G[Unit] = C.accessF(span => L.lift(span.setStatus(status)))
     def traceId: G[Option[String]] = C.access(_.context.traceId.show.some)
   }
 }
