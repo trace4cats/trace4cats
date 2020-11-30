@@ -18,6 +18,9 @@ trait ProvideLaws[Low[_], F[_], R] extends LocalLaws[F, R] with UnliftLaws[Low, 
 
   def kleisliftIsLiftAndAccessF[A](f: R => Low[A]): IsEq[F[A]] =
     instance.accessF(r => instance.lift(f(r))) <-> instance.kleislift(f)
+
+  def klesliftAndProvideIsApply[A](f: R => Low[A], r: R): IsEq[Low[A]] =
+    instance.provide(instance.kleislift(f))(r) <-> f(r)
 }
 
 object ProvideLaws {

@@ -3,7 +3,7 @@ package laws
 package discipline
 
 import cats.kernel.laws.discipline.catsLawsIsEqToProp
-import cats.{Eq, ~>}
+import cats.{~>, Eq}
 import org.scalacheck.Prop.{forAll => ∀}
 import org.scalacheck.{Arbitrary, Cogen, Prop}
 
@@ -23,7 +23,8 @@ trait ProvideTests[Low[_], F[_], R] extends LocalTests[F, R] with UnliftTests[Lo
     CogenR: Cogen[R],
     EqFR: Eq[F[R]],
     EqFA: Eq[F[A]],
-    EqFB: Eq[F[B]]
+    EqFB: Eq[F[B]],
+    EqLowA: Eq[Low[A]]
   ): RuleSet = {
     new RuleSet {
       def name: String = "provide"
@@ -32,6 +33,7 @@ trait ProvideTests[Low[_], F[_], R] extends LocalTests[F, R] with UnliftTests[Lo
       def props: Seq[(String, Prop)] = Seq(
         "askUnlift is access and provideK" -> ∀(laws.askUnliftIsAccessProvideK[A] _),
         "kleslift is lift and accessF" -> ∀(laws.kleisliftIsLiftAndAccessF[A] _),
+        "kleslift and provide is apply" -> ∀(laws.klesliftAndProvideIsApply[A] _)
       )
     }
   }
