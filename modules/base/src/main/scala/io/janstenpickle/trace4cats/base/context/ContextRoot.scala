@@ -8,6 +8,7 @@ trait ContextRoot extends Serializable
 object ContextRoot {
   implicit def kleisliInstance[F[_]: Monad, R]: Provide[F, Kleisli[F, R, *], R] =
     new Provide[F, Kleisli[F, R, *], R] {
+      def Low: Monad[F] = implicitly
       def F: Monad[Kleisli[F, R, *]] = implicitly
 
       def ask[R1 >: R]: Kleisli[F, R, R1] = Kleisli.ask

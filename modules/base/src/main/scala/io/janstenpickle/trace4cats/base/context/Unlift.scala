@@ -1,10 +1,8 @@
 package io.janstenpickle.trace4cats.base.context
 
-import cats.{~>, Monad}
+import cats.~>
 
 trait Unlift[Low[_], F[_]] extends Lift[Low, F] {
-  def F: Monad[F]
-
   def askUnlift: F[F ~> Low]
 
   def withUnlift[A](f: F ~> Low => Low[A]): F[A] = F.flatMap(askUnlift)(f.andThen(lift))

@@ -225,6 +225,16 @@ lazy val base =
       libraryDependencies ++= Seq(Dependencies.cats)
     )
 
+lazy val `base-laws` =
+  (project in file("modules/base-laws"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-base-laws",
+      libraryDependencies ++= Seq(Dependencies.catsLaws),
+      libraryDependencies ++= Dependencies.test.map(_ % Test)
+    )
+    .dependsOn(base)
+
 lazy val `base-zio` =
   (project in file("modules/base-zio"))
     .settings(publishSettings)

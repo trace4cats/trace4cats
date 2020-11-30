@@ -8,6 +8,7 @@ import zio.{Has, IO, ZIO}
 trait ZIOContextInstances extends ZIOContextInstancesLowPriority {
   implicit def zioProvide[E, R]: Provide[IO[E, *], ZIO[R, E, *], R] =
     new Provide[IO[E, *], ZIO[R, E, *], R] {
+      def Low: Monad[IO[E, *]] = zio.interop.catz.monadErrorInstance
       def F: Monad[ZIO[R, E, *]] = zio.interop.catz.monadErrorInstance
 
       def ask[R2 >: R]: ZIO[R, E, R2] = ZIO.environment
@@ -25,6 +26,7 @@ trait ZIOContextInstances extends ZIOContextInstancesLowPriority {
     ev2: R with Has[C] <:< R1
   ): Provide[ZIO[R, E, *], ZIO[R1, E, *], C] =
     new Provide[ZIO[R, E, *], ZIO[R1, E, *], C] {
+      def Low: Monad[ZIO[R, E, *]] = zio.interop.catz.monadErrorInstance
       def F: Monad[ZIO[R1, E, *]] = zio.interop.catz.monadErrorInstance
 
       def ask[C2 >: C]: ZIO[R1, E, C2] = ZIO.access[Has[C]](_.get).provideSome(ev1)
@@ -38,6 +40,7 @@ trait ZIOContextInstances extends ZIOContextInstancesLowPriority {
 trait ZIOContextInstancesLowPriority {
   implicit def zioUnliftSome[R, R1 <: R, E]: Unlift[ZIO[R, E, *], ZIO[R1, E, *]] =
     new Unlift[ZIO[R, E, *], ZIO[R1, E, *]] {
+      def Low: Monad[ZIO[R, E, *]] = zio.interop.catz.monadErrorInstance
       def F: Monad[ZIO[R1, E, *]] = zio.interop.catz.monadErrorInstance
 
       def lift[A](la: ZIO[R, E, A]): ZIO[R1, E, A] = la
