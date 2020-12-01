@@ -1,7 +1,18 @@
-// Adapted from cats-mtl
-// Copyright (c) 2017 Cats-mtl Contributors
-// This software is licensed under the MIT License (MIT).
-// For more information see LICENSE or https://opensource.org/licenses/MIT
+/*
+ * Copyright 2020 Typelevel
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package io.janstenpickle.trace4cats.base.context
 package laws
@@ -13,6 +24,7 @@ import cats.syntax.apply._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 
+// adapted from cats-mtl
 trait AskLaws[F[_], R] {
   implicit def instance: Ask[F, R]
 
