@@ -1,9 +1,8 @@
 package io.janstenpickle.trace4cats.base.context
 package laws
 
-import cats.Monad
+import cats.{Monad, ~>}
 import cats.laws.{IsEq, IsEqArrow}
-import cats.syntax.flatMap._
 
 trait ProvideLaws[Low[_], F[_], R] extends LocalLaws[F, R] with UnliftLaws[Low, F] {
   override implicit def instance: Provide[Low, F, R]
@@ -12,9 +11,8 @@ trait ProvideLaws[Low[_], F[_], R] extends LocalLaws[F, R] with UnliftLaws[Low, 
   override implicit def F: Monad[F] = instance.F
 
   // internal laws:
-  def askUnliftIsAccessProvideK[A](fa: F[A]): IsEq[F[A]] =
-    instance.access(instance.provideK).flatMap(lower => instance.lift(lower(fa))) <->
-      instance.askUnlift.flatMap(lower => instance.lift(lower(fa)))
+  def askUnliftIsAccessProvideK: IsEq[F[F ~> Low]] =
+    instance.access(instance.provideK) <-> instance.askUnlift
 
   def kleisliftIsLiftAndAccessF[A](f: R => Low[A]): IsEq[F[A]] =
     instance.accessF(r => instance.lift(f(r))) <-> instance.kleislift(f)

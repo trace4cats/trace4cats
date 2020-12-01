@@ -24,14 +24,15 @@ trait ProvideTests[Low[_], F[_], R] extends LocalTests[F, R] with UnliftTests[Lo
     EqFR: Eq[F[R]],
     EqFA: Eq[F[A]],
     EqFB: Eq[F[B]],
-    EqLowA: Eq[Low[A]]
+    EqLowA: Eq[Low[A]],
+    EqFLower: Eq[F[F ~> Low]]
   ): RuleSet = {
     new RuleSet {
       def name: String = "provide"
       def bases: Seq[(String, RuleSet)] = Nil
       def parents: Seq[RuleSet] = Seq(local[A, B], unlift[A, B])
       def props: Seq[(String, Prop)] = Seq(
-        "askUnlift is access and provideK" -> ∀(laws.askUnliftIsAccessProvideK[A] _),
+        "askUnlift is access and provideK" -> Prop.lzy(laws.askUnliftIsAccessProvideK),
         "kleslift is lift and accessF" -> ∀(laws.kleisliftIsLiftAndAccessF[A] _),
         "kleslift and provide is apply" -> ∀(laws.klesliftAndProvideIsApply[A] _)
       )
