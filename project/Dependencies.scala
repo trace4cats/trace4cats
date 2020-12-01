@@ -30,7 +30,7 @@ object Dependencies {
     val redis4cats = "0.10.3"
     val scaffeine = "4.0.2"
     val scala212 = "2.12.12"
-    val scala213 = "2.13.3"
+    val scala213 = "2.13.4"
     val scalapb = "0.10.1"
     val sttp = "2.2.9"
     val svm = "19.2.1"
