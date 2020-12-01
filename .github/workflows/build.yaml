@@ -324,7 +324,7 @@ jobs:
       matrix:
         scala-version:
           - "2.12.12"
-          - "2.13.3"
+          - "2.13.4"
     steps:
       - name: checkout
         uses: actions/checkout@v1
