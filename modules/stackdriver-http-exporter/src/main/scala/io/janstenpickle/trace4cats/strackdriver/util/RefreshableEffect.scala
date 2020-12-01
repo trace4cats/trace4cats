@@ -2,10 +2,9 @@ package io.janstenpickle.trace4cats.strackdriver.util
 
 /** Code copied from https://github.com/permutive/fs2-google-pubsub
   */
-import cats.MonadError
 import cats.effect.concurrent.Ref
 import cats.effect.syntax.concurrent._
-import cats.effect.{CancelToken, Concurrent, Resource, Sync, Timer}
+import cats.effect.{CancelToken, Concurrent, MonadThrow, Resource, Sync, Timer}
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -78,7 +77,7 @@ object RefreshableEffect {
       .drain
 
   private def updateUnhandled[F[_], A](refresh: F[A], ref: Ref[F, A], onRefreshSuccess: F[Unit])(implicit
-    ME: MonadError[F, Throwable]
+    ME: MonadThrow[F]
   ): F[Unit] =
     for {
       refreshed <- refresh

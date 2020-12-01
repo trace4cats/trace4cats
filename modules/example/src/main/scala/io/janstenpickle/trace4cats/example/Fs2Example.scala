@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.example
 import java.util.concurrent.TimeUnit
 
 import cats.data.Kleisli
-import cats.effect.{Blocker, Bracket, Clock, Concurrent, ContextShift, ExitCode, IO, IOApp, Resource, Sync, Timer}
+import cats.effect.{Blocker, BracketThrow, Clock, Concurrent, ContextShift, ExitCode, IO, IOApp, Resource, Sync, Timer}
 import cats.implicits._
 import cats.{Applicative, Functor, Monad, Order, Parallel}
 import fs2.Stream
@@ -57,11 +57,11 @@ object Fs2Example extends IOApp {
   def sourceStream[F[_]: Functor: Timer]: Stream[F, FiniteDuration] = Stream.awakeEvery[F](10.seconds)
 
   // uses WriterT to inject the EntryPoint with element in the stream
-  def inject[F[_]: Bracket[*[_], Throwable]: Timer](ep: EntryPoint[F]): TracedStream[F, FiniteDuration] =
+  def inject[F[_]: BracketThrow: Timer](ep: EntryPoint[F]): TracedStream[F, FiniteDuration] =
     sourceStream[F].inject(ep, "this is injected root span", SpanKind.Producer)
 
   // after the first call to `evalMap` a `Span` is propagated alongside the entry point
-  def doWork[F[_]: Bracket[*[_], Throwable]: Clock](stream: TracedStream[F, FiniteDuration]): TracedStream[F, Long] =
+  def doWork[F[_]: BracketThrow: Clock](stream: TracedStream[F, FiniteDuration]): TracedStream[F, Long] =
     stream
       // eval some effect within a span
       .evalMap("this is child of the initial injected root span", SpanKind.Internal, "optional-attribute" -> true) {
@@ -70,7 +70,7 @@ object Fs2Example extends IOApp {
       }
 
   // perform a map operation on the underlying stream where each element is traced
-  def map[F[_]: Bracket[*[_], Throwable]: Clock](stream: TracedStream[F, Long]): TracedStream[F, String] =
+  def map[F[_]: BracketThrow: Clock](stream: TracedStream[F, Long]): TracedStream[F, String] =
     stream.traceMapChunk("map", "opt-attr-2" -> LongValue(1))(_.toString)
 
   // `evalMapTrace` takes a function which transforms A => Kleisli[F, Span[F], B] and injects a root or child span
@@ -82,12 +82,10 @@ object Fs2Example extends IOApp {
     }
 
   // gets the trace headers from the span context so that they may be propagated across service boundaries
-  def getHeaders[F[_]: Bracket[*[_], Throwable]](
-    stream: TracedStream[F, Unit]
-  ): Stream[F, (TraceHeaders, Unit)] =
+  def getHeaders[F[_]: BracketThrow](stream: TracedStream[F, Unit]): Stream[F, (TraceHeaders, Unit)] =
     stream.traceHeaders.endTrace
 
-  def continue[F[_]: Bracket[*[_], Throwable]](
+  def continue[F[_]: BracketThrow](
     ep: EntryPoint[F],
     stream: Stream[F, (TraceHeaders, Unit)]
   ): TracedStream[F, Unit] =

@@ -1,10 +1,12 @@
 package io.janstenpickle.trace4cats.example
 
 import cats.effect.Blocker
+import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.inject.zio._
-import io.janstenpickle.trace4cats.sttp.backend.TracedBackend
+import io.janstenpickle.trace4cats.sttp.client.syntax._
+import org.http4s.EntityBody
 import org.http4s.client.blaze.BlazeClientBuilder
-import sttp.client.{NothingT, SttpBackend}
+import sttp.client.SttpBackend
 import sttp.client.http4s.Http4sBackend
 import zio._
 import zio.interop.catz._
@@ -15,9 +17,8 @@ object SttpZioExample extends CatsApp {
     (for {
       blocker <- Blocker[Task]
       client <- BlazeClientBuilder[Task](blocker.blockingContext).resource
-      sttpBackend = Http4sBackend.usingClient(client, blocker)
-      tracedBackend: SttpBackend[ZIOTrace, Nothing, NothingT] =
-        TracedBackend[Task, ZIOTrace, Nothing, NothingT](sttpBackend)
+      sttpBackend = Http4sBackend.usingClient(client, blocker): SttpBackend[Task, EntityBody[Task], INothingT]
+      tracedBackend = sttpBackend.liftTrace[RIO[Span[Task], *]]()
     } yield tracedBackend)
       .use { _ =>
         ZIO.never

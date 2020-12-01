@@ -4,7 +4,7 @@ import cats.data.NonEmptyList
 import cats.{Applicative, Defer}
 import cats.effect.Resource
 import io.janstenpickle.trace4cats.Span
-import io.janstenpickle.trace4cats.inject.{LiftTrace, Provide}
+import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.model.{AttributeValue, Link, SpanContext, SpanKind, SpanStatus}
 
 trait ContinuationSpan[F[_]] extends Span[F] {
@@ -14,9 +14,9 @@ trait ContinuationSpan[F[_]] extends Span[F] {
 object ContinuationSpan {
   def fromSpan[F[_]: Applicative: Defer, G[_]: Applicative: Defer](
     span: Span[F]
-  )(implicit provide: Provide[F, G], liftTrace: LiftTrace[F, G]): ContinuationSpan[G] = {
+  )(implicit P: Provide[F, G, Span[F]]): ContinuationSpan[G] = {
     // 👀
-    val spanK: Span[G] = span.mapK(liftTrace.fk)
+    val spanK: Span[G] = span.mapK(P.liftK)
 
     new ContinuationSpan[G] {
       override def context: SpanContext = spanK.context
@@ -39,7 +39,7 @@ object ContinuationSpan {
         errorHandler: PartialFunction[Throwable, SpanStatus]
       ): Resource[G, Span[G]] = spanK.child(name, kind, errorHandler)
 
-      override def run[A](k: G[A]): G[A] = liftTrace(provide(k)(span))
+      override def run[A](k: G[A]): G[A] = P.lift(P.provide(k)(span))
     }
   }
 }

@@ -12,7 +12,7 @@ import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.parallel._
 import cats.syntax.partialOrder._
-import cats.{Monad, Order, Parallel}
+import cats.{Monad, Order, Parallel, ~>}
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.Span
@@ -24,6 +24,7 @@ import io.janstenpickle.trace4cats.model.TraceProcess
 import io.janstenpickle.trace4cats.natchez.conversions._
 import natchez.{Trace => NatchezTrace}
 import zio.interop.catz._
+import zio.interop.catz.implicits._
 import zio._
 
 import scala.concurrent.duration._
@@ -34,6 +35,8 @@ import scala.util.Random
   * This example demonstrates how to use Trace4Cats inject to implicitly pass spans around the callstack.
   */
 object InjectZioExample extends CatsApp {
+  implicit val rioTimer: Timer[SpannedRIO] = Timer[Task].mapK(λ[Task ~> SpannedRIO](t => t))
+
   def entryPoint[F[_]: Concurrent: ContextShift: Timer: Parallel: Logger](
     blocker: Blocker,
     process: TraceProcess

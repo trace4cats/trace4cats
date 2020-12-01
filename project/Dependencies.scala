@@ -3,7 +3,6 @@ import sbt._
 object Dependencies {
   object Versions {
     val cats = "2.3.0"
-    val catsMtl = "1.0.0"
     val catsEffect = "2.3.0"
     val collectionCompat = "2.3.1"
     val commonsCodec = "1.15"
@@ -38,6 +37,7 @@ object Dependencies {
     val vulcan = "1.2.0"
     val zioInterop = "2.2.0.1"
 
+    val catsTestkitScalatest = "2.0.0"
     val disciplineScalatest = "2.1.0"
     val discipline = "1.1.2"
     val scalaCheck = "1.15.1"
@@ -47,7 +47,6 @@ object Dependencies {
   }
 
   lazy val cats = "org.typelevel"                          %% "cats-core"                       % Versions.cats
-  lazy val catsMtl = "org.typelevel"                       %% "cats-mtl"                        % Versions.catsMtl
   lazy val catsEffect = "org.typelevel"                    %% "cats-effect"                     % Versions.catsEffect
   lazy val commonsCodec = "commons-codec"                   % "commons-codec"                   % Versions.commonsCodec
   lazy val collectionCompat = "org.scala-lang.modules"     %% "scala-collection-compat"         % Versions.collectionCompat
@@ -99,16 +98,26 @@ object Dependencies {
   lazy val vulcanEnumeratum = "com.github.fd4s"            %% "vulcan-enumeratum"               % Versions.vulcan
   lazy val zioInterop = "dev.zio"                          %% "zio-interop-cats"                % Versions.zioInterop
 
-  lazy val catsLaws = "org.typelevel"            %% "cats-laws"            % Versions.cats
-  lazy val catsEffectLaws = "org.typelevel"      %% "cats-effect-laws"     % Versions.catsEffect
-  lazy val disciplineScalatest = "org.typelevel" %% "discipline-scalatest" % Versions.disciplineScalatest
-  lazy val disciplineCore = "org.typelevel"      %% "discipline-core"      % Versions.discipline
-  lazy val scalacheck = "org.scalacheck"         %% "scalacheck"           % Versions.scalaCheck
+  lazy val catsLaws = "org.typelevel"             %% "cats-laws"              % Versions.cats
+  lazy val catsEffectLaws = "org.typelevel"       %% "cats-effect-laws"       % Versions.catsEffect
+  lazy val catsTestkitScalatest = "org.typelevel" %% "cats-testkit-scalatest" % Versions.catsTestkitScalatest
+  lazy val disciplineScalatest = "org.typelevel"  %% "discipline-scalatest"   % Versions.disciplineScalatest
+  lazy val disciplineCore = "org.typelevel"       %% "discipline-core"        % Versions.discipline
+  lazy val scalacheck = "org.scalacheck"          %% "scalacheck"             % Versions.scalaCheck
   lazy val scalacheckShapeless =
     "com.github.alexarchambault"           %% "scalacheck-shapeless_1.14"      % Versions.scalaCheckShapeless
   lazy val scalaTest = "org.scalatest"     %% "scalatest"                      % Versions.scalaTest
   lazy val testContainers = "com.dimafeng" %% "testcontainers-scala-scalatest" % Versions.testContainers
 
   lazy val test =
-    Seq(catsLaws, catsEffectLaws, disciplineScalatest, disciplineCore, scalacheck, scalacheckShapeless, scalaTest)
+    Seq(
+      catsLaws,
+      catsEffectLaws,
+      catsTestkitScalatest,
+      disciplineScalatest,
+      disciplineCore,
+      scalacheck,
+      scalacheckShapeless,
+      scalaTest
+    )
 }

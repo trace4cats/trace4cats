@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.http4s.common
 
 import io.janstenpickle.trace4cats.model.{AttributeValue, TraceHeaders}
 import org.http4s.util.CaseInsensitiveString
-import org.http4s.{Header, Headers, Request, Response}
+import org.http4s.{Header, Headers}
 
 object Http4sHeaders {
   def headerFields(
@@ -14,8 +14,8 @@ object Http4sHeaders {
       case h if !dropWhen(h.name) => s"${`type`}.header.${h.name.value}" -> AttributeValue.stringToTraceValue(h.value)
     }
 
-  def requestFields[F[_]](
-    req: Request[F],
+  def requestFields(
+    req: Request_,
     dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
   ): List[(String, AttributeValue)] =
     List[(String, AttributeValue)]("http.method" -> req.method.name, "http.url" -> req.uri.path) ++ headerFields(
@@ -24,8 +24,8 @@ object Http4sHeaders {
       dropHeadersWhen
     )
 
-  def responseFields[F[_]](
-    resp: Response[F],
+  def responseFields(
+    resp: Response_,
     dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
   ): List[(String, AttributeValue)] =
     List[(String, AttributeValue)](
