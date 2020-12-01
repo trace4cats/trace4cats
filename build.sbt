@@ -239,7 +239,7 @@ lazy val `base-zio` =
   (project in file("modules/base-zio"))
     .settings(publishSettings)
     .settings(name := "trace4cats-base-zio", libraryDependencies ++= Seq(Dependencies.zioInterop))
-    .dependsOn(base)
+    .dependsOn(base, `base-laws` % "test->compile;test->test")
 
 lazy val avro =
   (project in file("modules/avro"))
