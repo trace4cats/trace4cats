@@ -5,7 +5,7 @@ import org.http4s.{Request, Response}
 package object common {
   type AnyK[_] = Any
 
-  /** Existential versions of [[Request]] and [[Response]] used to prevent access to their bodies or triggering effects.
+  /** Existential versions of `Request` and Response` used to prevent access to their bodies or triggering effects.
     */
   type Request_ = Request[AnyK]
   @inline implicit def Request_[F[_]](req: Request[F]): Request_ = req.covary[AnyK]
