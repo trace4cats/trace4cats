@@ -5,7 +5,7 @@ import cats.{~>, Eq}
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.base.context.laws.discipline.ProvideTests
 import io.janstenpickle.trace4cats.base.context.zio.instances._
-import org.scalacheck.Cogen
+import org.scalacheck.{Arbitrary, Cogen}
 import zio.{IO, RIO, Runtime, ZIO}
 
 class ZIOTests extends catzSpecZIOBase {
@@ -17,7 +17,16 @@ class ZIOTests extends catzSpecZIOBase {
 
   checkAllAsync(
     "ZIO[String, Long, *]",
-    implicit tc => ProvideTests[IO[Long, *], ZIO[String, Long, *], String].provide[String, Int]
+    { implicit tc =>
+      type R = String
+      type E = Long
+      type F[x] = ZIO[R, E, x]
+      type Low[x] = IO[E, x]
+
+      implicit def zioArb[A: Arbitrary: Cogen]: Arbitrary[F[A]] = zioArbitrary[R, E, A]
+
+      ProvideTests[Low, F, R].provide[String, Int]
+    }
   )
 
   checkAll(
