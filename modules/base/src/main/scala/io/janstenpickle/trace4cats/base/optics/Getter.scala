@@ -9,4 +9,6 @@ trait Getter[S, A] { self =>
 object Getter {
   def apply[S, A](_get: S => A): Getter[S, A] = _get(_)
   def id[A]: Getter[A, A] = identity[A]
+
+  implicit def functionToGetter[S, A](_get: S => A): Getter[S, A] = Getter(_get)
 }

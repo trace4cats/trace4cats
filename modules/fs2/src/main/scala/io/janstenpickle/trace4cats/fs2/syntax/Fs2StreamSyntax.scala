@@ -7,7 +7,7 @@ import cats.syntax.apply._
 import cats.syntax.functor._
 import cats.{~>, Applicative, Defer, Functor}
 import fs2.Stream
-import io.janstenpickle.trace4cats.base.context.Provide
+import io.janstenpickle.trace4cats.base.context.{Init, Provide}
 import io.janstenpickle.trace4cats.fs2.{ContinuationSpan, TracedStream}
 import io.janstenpickle.trace4cats.inject.EntryPoint
 import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, TraceHeaders}
@@ -27,6 +27,18 @@ trait Fs2StreamSyntax {
     def inject(ep: EntryPoint[F], name: A => String, kind: SpanKind): TracedStream[F, A] =
       WriterT(stream.evalMapChunk(a => ep.root(name(a), kind).use(s => (s -> a).pure)))
 
+    def trace[G[_]](name: String)(implicit I: Init[F, G, Span[F], (String, SpanKind)]): TracedStream[F, A] =
+      trace[G](name, SpanKind.Internal)
+
+    def trace[G[_]](name: String, kind: SpanKind)(implicit
+      I: Init[F, G, Span[F], (String, SpanKind)]
+    ): TracedStream[F, A] = trace[G]((_: A) => name, kind)
+
+    def trace[G[_]](name: A => String, kind: SpanKind)(implicit
+      I: Init[F, G, Span[F], (String, SpanKind)]
+    ): TracedStream[F, A] =
+      WriterT(stream.evalMapChunk(a => I.init(I.ask)((name(a), kind)).map(_ -> a)))
+
     def injectContinue(ep: EntryPoint[F], name: String)(f: A => TraceHeaders): TracedStream[F, A] =
       injectContinue(ep, name, SpanKind.Internal)(f)
 
@@ -38,6 +50,23 @@ trait Fs2StreamSyntax {
 
     def injectContinue(ep: EntryPoint[F], name: A => String, kind: SpanKind)(f: A => TraceHeaders): TracedStream[F, A] =
       WriterT(stream.evalMapChunk(a => ep.continueOrElseRoot(name(a), kind, f(a)).use(s => (s -> a).pure)))
+
+    def traceContinue[G[_]](name: String)(f: A => TraceHeaders)(implicit
+      I: Init[F, G, Span[F], (String, SpanKind, TraceHeaders)]
+    ): TracedStream[F, A] = traceContinue[G]((_: A) => name)(f)
+
+    def traceContinue[G[_]](name: String, kind: SpanKind)(f: A => TraceHeaders)(implicit
+      I: Init[F, G, Span[F], (String, SpanKind, TraceHeaders)]
+    ): TracedStream[F, A] = traceContinue[G]((_: A) => name, kind)(f)
+
+    def traceContinue[G[_]](name: A => String)(f: A => TraceHeaders)(implicit
+      I: Init[F, G, Span[F], (String, SpanKind, TraceHeaders)]
+    ): TracedStream[F, A] = traceContinue[G](name, SpanKind.Internal)(f)
+
+    def traceContinue[G[_]](name: A => String, kind: SpanKind)(f: A => TraceHeaders)(implicit
+      I: Init[F, G, Span[F], (String, SpanKind, TraceHeaders)]
+    ): TracedStream[F, A] =
+      WriterT(stream.evalMapChunk(a => I.init(I.ask)((name(a), kind, f(a))).map(_ -> a)))
   }
 
   implicit class TracedStreamOps[F[_], A](stream: TracedStream[F, A]) {

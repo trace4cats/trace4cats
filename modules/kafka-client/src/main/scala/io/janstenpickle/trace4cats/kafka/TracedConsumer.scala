@@ -6,19 +6,19 @@ import cats.{Defer, Functor}
 import fs2.Stream
 import fs2.kafka.{CommittableConsumerRecord, CommittableOffset}
 import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.base.context.Init
 import io.janstenpickle.trace4cats.fs2.TracedStream
 import io.janstenpickle.trace4cats.fs2.syntax.Fs2StreamSyntax
-import io.janstenpickle.trace4cats.base.context.Provide
-import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind}
+import io.janstenpickle.trace4cats.inject.Trace
+import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, TraceHeaders}
 
 object TracedConsumer extends Fs2StreamSyntax {
 
-  def inject[F[_]: BracketThrow, G[_]: Functor: Trace, K, V](
-    stream: Stream[F, CommittableConsumerRecord[F, K, V]]
-  )(ep: EntryPoint[F])(implicit P: Provide[F, G, Span[F]]): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
+  def inject[F[_]: BracketThrow, G[_]: Functor: Trace, K, V](stream: Stream[F, CommittableConsumerRecord[F, K, V]])(
+    implicit I: Init[F, G, Span[F], (String, SpanKind, TraceHeaders)]
+  ): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
     stream
-      .injectContinue(ep, "kafka.receive", SpanKind.Consumer) { record =>
+      .traceContinue[G]("kafka.receive", SpanKind.Consumer) { record =>
         KafkaHeaders.converter.from(record.record.headers)
       }
       .evalMapTrace { record =>
@@ -34,7 +34,9 @@ object TracedConsumer extends Fs2StreamSyntax {
 
   def injectK[F[_]: BracketThrow: Defer, G[_]: ApplicativeThrow: Defer: Trace, K, V](
     stream: Stream[F, CommittableConsumerRecord[F, K, V]]
-  )(ep: EntryPoint[F])(implicit P: Provide[F, G, Span[F]]): TracedStream[G, CommittableConsumerRecord[G, K, V]] = {
+  )(implicit
+    I: Init[F, G, Span[F], (String, SpanKind, TraceHeaders)]
+  ): TracedStream[G, CommittableConsumerRecord[G, K, V]] = {
     def liftConsumerRecord(record: CommittableConsumerRecord[F, K, V]): CommittableConsumerRecord[G, K, V] =
       CommittableConsumerRecord[G, K, V](
         record.record,
@@ -42,11 +44,11 @@ object TracedConsumer extends Fs2StreamSyntax {
           record.offset.topicPartition,
           record.offset.offsetAndMetadata,
           record.offset.consumerGroupId,
-          _ => P.lift(record.offset.commit)
+          _ => I.lift(record.offset.commit)
         )
       )
 
-    inject[F, G, K, V](stream)(ep).liftTrace[G].map(liftConsumerRecord)
+    inject[F, G, K, V](stream).liftTrace[G].map(liftConsumerRecord)
   }
 
 }

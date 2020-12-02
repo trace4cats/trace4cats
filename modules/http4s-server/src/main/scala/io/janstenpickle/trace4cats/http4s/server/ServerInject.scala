@@ -10,7 +10,7 @@ import io.janstenpickle.trace4cats.inject.EntryPoint
 import io.janstenpickle.trace4cats.model.SpanKind
 
 object ServerInject {
-  def ctx[F[_]: BracketThrow, Ctx](
+  def context[F[_]: BracketThrow, Ctx](
     entryPoint: EntryPoint[F],
     spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath,
     requestFilter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
@@ -31,5 +31,5 @@ object ServerInject {
     spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath,
     requestFilter: Http4sRequestFilter = Http4sRequestFilter.allowAll
   ): Inject[F, Span[F], Request_] =
-    ctx[F, Span[F]](entryPoint, spanNamer, requestFilter, (_, span) => span.pure[F])
+    context[F, Span[F]](entryPoint, spanNamer, requestFilter, (_, span) => span.pure[F])
 }

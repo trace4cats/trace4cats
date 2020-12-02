@@ -20,6 +20,12 @@ class ServerCtxSyntaxSpec
           getter = (ctx: TraceContext[IO]) => ctx.span,
           requestFilter = filter
         ),
-      (app, filter, ep) => app.injectContext(ep, makeContext = TraceContext.make[IO], requestFilter = filter),
+      (app, filter, ep) =>
+        app.injectContext(
+          ep,
+          makeContext = TraceContext.make[IO],
+          getter = (ctx: TraceContext[IO]) => ctx.span,
+          requestFilter = filter
+        ),
       IO.timer(ExecutionContext.global)
     )

@@ -1,10 +1,12 @@
 package io.janstenpickle.trace4cats.base.context
-import cats.Monad
+import cats.{~>, Monad}
 
 trait Init[Low[_], F[_], R, R0] extends Provide[Low, F, R] {
   def P: Provide[Low, F, R]
 
   def init[A](fa: F[A])(r0: R0): Low[A]
+
+  def initK[A](r0: R0): F ~> Low = λ[F ~> Low](init(_)(r0))
 
   override def provide[A](fa: F[A])(r: R): Low[A] = P.provide(fa)(r)
 
