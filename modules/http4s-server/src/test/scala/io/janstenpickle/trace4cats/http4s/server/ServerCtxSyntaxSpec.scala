@@ -13,7 +13,13 @@ class ServerCtxSyntaxSpec
       9083,
       λ[IO ~> Id](_.unsafeRunSync()),
       λ[Kleisli[IO, TraceContext[IO], *] ~> IO](ga => TraceContext.empty[IO].flatMap(ga.run)),
-      (routes, filter, ep) => routes.injectContext(ep, makeContext = TraceContext.make[IO], requestFilter = filter),
+      (routes, filter, ep) =>
+        routes.injectContext(
+          ep,
+          makeContext = TraceContext.make[IO],
+          getter = (ctx: TraceContext[IO]) => ctx.span,
+          requestFilter = filter
+        ),
       (app, filter, ep) => app.injectContext(ep, makeContext = TraceContext.make[IO], requestFilter = filter),
       IO.timer(ExecutionContext.global)
     )

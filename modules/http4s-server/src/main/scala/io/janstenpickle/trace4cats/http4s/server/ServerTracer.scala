@@ -1,12 +1,14 @@
 package io.janstenpickle.trace4cats.http4s.server
 
+import cats.Monad
 import cats.data.{Kleisli, OptionT}
 import cats.effect.BracketThrow
 import cats.syntax.apply._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.janstenpickle.trace4cats.Span
-import io.janstenpickle.trace4cats.base.context.Provide
+import io.janstenpickle.trace4cats.base.context.{Init, Provide}
+import io.janstenpickle.trace4cats.base.optics.Getter
 import io.janstenpickle.trace4cats.http4s.common.{
   Http4sHeaders,
   Http4sRequestFilter,
@@ -53,6 +55,36 @@ object ServerTracer {
                 .value
           } yield resp
         }
+
+      }
+    }
+
+  def injectRoutes2[F[_], G[_]: Monad, Ctx](
+    routes: HttpRoutes[G],
+    dropHeadersWhen: CaseInsensitiveString => Boolean,
+    getter: Getter[Ctx, Span[F]],
+  )(implicit P: Init[F, G, Ctx, Request_], F: BracketThrow[F]): HttpRoutes[F] =
+    Kleisli[OptionT[F, *], Request[F], Response[F]] { req =>
+      val fa =
+        for {
+          ctx <- P.ask[Ctx]
+          span = getter.get(ctx)
+          _ <- P.lift(span.putAll(Http4sHeaders.requestFields(req, dropHeadersWhen): _*))
+          resp <-
+            routes
+              .run(req.mapK(P.liftK))
+              .map(_.mapK(P.provideK(ctx)))
+              .semiflatTap { res =>
+                P.lift(
+                  span.setStatus(Http4sStatusMapping.toSpanStatus(res.status)) *>
+                    span.putAll(Http4sHeaders.responseFields(res, dropHeadersWhen): _*)
+                )
+              }
+              .value
+        } yield resp
+
+      OptionT[F, Response[F]] {
+        P.init(fa)(req)
       }
     }
 
