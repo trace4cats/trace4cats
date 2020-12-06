@@ -5,7 +5,7 @@ import cats.effect.BracketThrow
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.http4s.common.{Http4sRequestFilter, Http4sSpanNamer, Request_}
-import io.janstenpickle.trace4cats.inject.{ContextConstructor, EntryPoint, Trace}
+import io.janstenpickle.trace4cats.inject.{EntryPoint, ResourceReader, Trace}
 import org.http4s._
 import org.http4s.util.CaseInsensitiveString
 
@@ -17,13 +17,13 @@ trait ServerSyntax {
       requestFilter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
       dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
     )(implicit P: Provide[F, G, Span[F]], F: BracketThrow[F], G: Monad[G], trace: Trace[G]): HttpRoutes[F] = {
-      val context = Http4sContextConstructors.fromHeaders(spanNamer, requestFilter)(entryPoint.toContextConstructor)
+      val context = Http4sResourceReaders.fromHeaders(spanNamer, requestFilter)(entryPoint.toReader)
 
       ServerTracer.injectRoutes(routes, context, dropHeadersWhen)
     }
 
     def traced(
-      contextConstructor: ContextConstructor[F, Request_, Span[F]],
+      contextConstructor: ResourceReader[F, Request_, Span[F]],
       dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
     )(implicit P: Provide[F, G, Span[F]], F: BracketThrow[F], G: Monad[G], trace: Trace[G]): HttpRoutes[F] =
       ServerTracer.injectRoutes(routes, contextConstructor, dropHeadersWhen)
@@ -36,15 +36,13 @@ trait ServerSyntax {
       dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
     )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F], G: Monad[G], trace: Trace[G]): HttpRoutes[F] = {
       val context =
-        Http4sContextConstructors.fromHeadersContext(makeContext, spanNamer, requestFilter)(
-          entryPoint.toContextConstructor
-        )
+        Http4sResourceReaders.fromHeadersContext(makeContext, spanNamer, requestFilter)(entryPoint.toReader)
 
       ServerTracer.injectRoutes(routes, context, dropHeadersWhen)
     }
 
     def tracedContext[Ctx](
-      contextConstructor: ContextConstructor[F, Request_, Ctx],
+      contextConstructor: ResourceReader[F, Request_, Ctx],
       dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
     )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F], G: Monad[G], trace: Trace[G]): HttpRoutes[F] =
       ServerTracer.injectRoutes(routes, contextConstructor, dropHeadersWhen)
@@ -58,13 +56,13 @@ trait ServerSyntax {
       requestFilter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
       dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
     )(implicit P: Provide[F, G, Span[F]], F: BracketThrow[F], G: Monad[G], trace: Trace[G]): HttpApp[F] = {
-      val context = Http4sContextConstructors.fromHeaders(spanNamer, requestFilter)(entryPoint.toContextConstructor)
+      val context = Http4sResourceReaders.fromHeaders(spanNamer, requestFilter)(entryPoint.toReader)
 
       ServerTracer.injectApp(app, context, dropHeadersWhen)
     }
 
     def traced(
-      contextConstructor: ContextConstructor[F, Request_, Span[F]],
+      contextConstructor: ResourceReader[F, Request_, Span[F]],
       dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
     )(implicit P: Provide[F, G, Span[F]], F: BracketThrow[F], G: Monad[G], trace: Trace[G]): HttpApp[F] =
       ServerTracer.injectApp(app, contextConstructor, dropHeadersWhen)
@@ -77,15 +75,13 @@ trait ServerSyntax {
       dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
     )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F], G: Monad[G], trace: Trace[G]): HttpApp[F] = {
       val context =
-        Http4sContextConstructors.fromHeadersContext(makeContext, spanNamer, requestFilter)(
-          entryPoint.toContextConstructor
-        )
+        Http4sResourceReaders.fromHeadersContext(makeContext, spanNamer, requestFilter)(entryPoint.toReader)
 
       ServerTracer.injectApp(app, context, dropHeadersWhen)
     }
 
     def tracedContext[Ctx](
-      contextConstructor: ContextConstructor[F, Request_, Ctx],
+      contextConstructor: ResourceReader[F, Request_, Ctx],
       dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
     )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F], G: Monad[G], trace: Trace[G]): HttpApp[F] =
       ServerTracer.injectApp(app, contextConstructor, dropHeadersWhen)

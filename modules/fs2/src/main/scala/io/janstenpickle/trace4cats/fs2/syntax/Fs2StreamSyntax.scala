@@ -9,7 +9,7 @@ import cats.{~>, Applicative, Defer, Functor}
 import fs2.Stream
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.fs2.{ContinuationSpan, TracedStream}
-import io.janstenpickle.trace4cats.inject.{ContextConstructor, EntryPoint, SpanName, SpanParams}
+import io.janstenpickle.trace4cats.inject.{EntryPoint, ResourceReader, SpanName, SpanParams}
 import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, TraceHeaders}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 
@@ -18,58 +18,60 @@ trait Fs2StreamSyntax {
     def inject(ep: EntryPoint[F], name: String): TracedStream[F, A] =
       inject(ep, _ => name, SpanKind.Internal)
 
-    def trace(cc: ContextConstructor[F, SpanParams, Span[F]], name: String): TracedStream[F, A] =
-      trace(cc, _ => name, SpanKind.Internal)
+    def trace(reader: ResourceReader[F, SpanParams, Span[F]], name: SpanName): TracedStream[F, A] =
+      trace(reader, _ => name, SpanKind.Internal)
 
     def inject(ep: EntryPoint[F], name: A => String): TracedStream[F, A] =
       inject(ep, name, SpanKind.Internal)
 
-    def trace(cc: ContextConstructor[F, SpanParams, Span[F]], name: A => String): TracedStream[F, A] =
-      trace(cc, name, SpanKind.Internal)
+    def trace(reader: ResourceReader[F, SpanParams, Span[F]], name: A => SpanName): TracedStream[F, A] =
+      trace(reader, name, SpanKind.Internal)
 
-    def inject(ep: EntryPoint[F], name: String, kind: SpanKind): TracedStream[F, A] =
+    def inject(ep: EntryPoint[F], name: SpanName, kind: SpanKind): TracedStream[F, A] =
       inject(ep, _ => name, kind)
 
-    def trace(cc: ContextConstructor[F, SpanParams, Span[F]], name: String, kind: SpanKind): TracedStream[F, A] =
-      trace(cc, _ => name, kind)
+    def trace(reader: ResourceReader[F, SpanParams, Span[F]], name: SpanName, kind: SpanKind): TracedStream[F, A] =
+      trace(reader, _ => name, kind)
 
-    def inject(ep: EntryPoint[F], name: A => String, kind: SpanKind): TracedStream[F, A] =
-      trace(ep.toContextConstructor, name, kind)
+    def inject(ep: EntryPoint[F], name: A => SpanName, kind: SpanKind): TracedStream[F, A] =
+      trace(ep.toReader, name, kind)
 
-    def trace(cc: ContextConstructor[F, SpanParams, Span[F]], name: A => String, kind: SpanKind): TracedStream[F, A] =
-      WriterT(stream.evalMapChunk(a => cc((name(a), kind, TraceHeaders.empty)).use(s => (s -> a).pure)))
+    def trace(reader: ResourceReader[F, SpanParams, Span[F]], name: A => SpanName, kind: SpanKind): TracedStream[F, A] =
+      WriterT(stream.evalMapChunk(a => reader((name(a), kind, TraceHeaders.empty)).use(s => (s -> a).pure)))
 
     def injectContinue(ep: EntryPoint[F], name: String)(f: A => TraceHeaders): TracedStream[F, A] =
       injectContinue(ep, name, SpanKind.Internal)(f)
 
-    def traceContinue(cc: ContextConstructor[F, SpanParams, Span[F]], name: String)(
+    def traceContinue(reader: ResourceReader[F, SpanParams, Span[F]], name: SpanName)(
       f: A => TraceHeaders
     ): TracedStream[F, A] =
-      traceContinue(cc, name, SpanKind.Internal)(f)
+      traceContinue(reader, name, SpanKind.Internal)(f)
 
-    def injectContinue(ep: EntryPoint[F], name: String, kind: SpanKind)(f: A => TraceHeaders): TracedStream[F, A] =
+    def injectContinue(ep: EntryPoint[F], name: SpanName, kind: SpanKind)(f: A => TraceHeaders): TracedStream[F, A] =
       injectContinue(ep, _ => name, kind)(f)
 
-    def traceContinue(cc: ContextConstructor[F, SpanParams, Span[F]], name: String, kind: SpanKind)(
+    def traceContinue(reader: ResourceReader[F, SpanParams, Span[F]], name: SpanName, kind: SpanKind)(
       f: A => TraceHeaders
     ): TracedStream[F, A] =
-      traceContinue(cc, _ => name, kind)(f)
+      traceContinue(reader, _ => name, kind)(f)
 
-    def injectContinue(ep: EntryPoint[F], name: A => String)(f: A => TraceHeaders): TracedStream[F, A] =
+    def injectContinue(ep: EntryPoint[F], name: A => SpanName)(f: A => TraceHeaders): TracedStream[F, A] =
       injectContinue(ep, name, SpanKind.Internal)(f)
 
-    def traceContinue(cc: ContextConstructor[F, SpanParams, Span[F]], name: A => String)(
+    def traceContinue(reader: ResourceReader[F, SpanParams, Span[F]], name: A => SpanName)(
       f: A => TraceHeaders
     ): TracedStream[F, A] =
-      traceContinue(cc, name, SpanKind.Internal)(f)
+      traceContinue(reader, name, SpanKind.Internal)(f)
 
-    def injectContinue(ep: EntryPoint[F], name: A => String, kind: SpanKind)(f: A => TraceHeaders): TracedStream[F, A] =
-      traceContinue(ep.toContextConstructor, name, kind)(f)
-
-    def traceContinue(cc: ContextConstructor[F, SpanParams, Span[F]], name: A => String, kind: SpanKind)(
+    def injectContinue(ep: EntryPoint[F], name: A => SpanName, kind: SpanKind)(
       f: A => TraceHeaders
     ): TracedStream[F, A] =
-      WriterT(stream.evalMapChunk(a => cc((name(a), kind, f(a))).use(s => (s -> a).pure)))
+      traceContinue(ep.toReader, name, kind)(f)
+
+    def traceContinue(reader: ResourceReader[F, SpanParams, Span[F]], name: A => SpanName, kind: SpanKind)(
+      f: A => TraceHeaders
+    ): TracedStream[F, A] =
+      WriterT(stream.evalMapChunk(a => reader((name(a), kind, f(a))).use(s => (s -> a).pure)))
 
   }
 

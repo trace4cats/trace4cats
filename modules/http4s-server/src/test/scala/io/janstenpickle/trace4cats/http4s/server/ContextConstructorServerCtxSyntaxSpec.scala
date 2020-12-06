@@ -15,13 +15,13 @@ class ContextConstructorServerCtxSyntaxSpec
       λ[Kleisli[IO, TraceContext[IO], *] ~> IO](ga => TraceContext.empty[IO].flatMap(ga.run)),
       (routes, filter, ep) =>
         routes.tracedContext(
-          Http4sContextConstructors
-            .fromHeadersContext(TraceContext.make[IO], requestFilter = filter)(ep.toContextConstructor)
+          Http4sResourceReaders
+            .fromHeadersContext(TraceContext.make[IO], requestFilter = filter)(ep.toReader)
         ),
       (app, filter, ep) =>
         app.tracedContext(
-          Http4sContextConstructors
-            .fromHeadersContext(TraceContext.make[IO], requestFilter = filter)(ep.toContextConstructor)
+          Http4sResourceReaders
+            .fromHeadersContext(TraceContext.make[IO], requestFilter = filter)(ep.toReader)
         ),
       IO.timer(ExecutionContext.global)
     )

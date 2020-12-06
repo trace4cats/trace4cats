@@ -7,10 +7,11 @@
 package io.janstenpickle.trace4cats.inject
 
 import cats.Applicative
+import cats.data.Kleisli
 import cats.effect.{Clock, Resource, Sync}
-import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders}
+import io.janstenpickle.trace4cats.{Span, ToHeaders}
 
 /** An entry point, for creating root spans or continuing traces that were started on another
   * system.
@@ -29,8 +30,8 @@ trait EntryPoint[F[_]] {
     continueOrElseRoot(name, SpanKind.Server, headers)
   def continueOrElseRoot(name: SpanName, kind: SpanKind, headers: TraceHeaders): Resource[F, Span[F]]
 
-  def toContextConstructor(implicit F: Applicative[F]): ContextConstructor[F, SpanParams, Span[F]] =
-    ContextConstructor.instance { case (name, kind, headers) =>
+  def toReader: ResourceReader[F, SpanParams, Span[F]] =
+    Kleisli { case (name, kind, headers) =>
       continueOrElseRoot(name, kind, headers)
     }
 }

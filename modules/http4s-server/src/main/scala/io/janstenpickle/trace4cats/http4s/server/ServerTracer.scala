@@ -8,14 +8,14 @@ import cats.syntax.functor._
 import cats.{FlatMap, Monad}
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.http4s.common.{Http4sHeaders, Http4sStatusMapping, Request_, Response_}
-import io.janstenpickle.trace4cats.inject.{ContextConstructor, Trace}
+import io.janstenpickle.trace4cats.inject.{ResourceReader, Trace}
 import org.http4s.util.CaseInsensitiveString
 import org.http4s.{HttpApp, HttpRoutes, Request, Response}
 
 object ServerTracer {
   def injectRoutes[F[_], G[_]: Monad: Trace, Ctx](
     routes: HttpRoutes[G],
-    context: ContextConstructor[F, Request_, Ctx],
+    contextReader: ResourceReader[F, Request_, Ctx],
     dropHeadersWhen: CaseInsensitiveString => Boolean,
   )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F]): HttpRoutes[F] =
     Kleisli[OptionT[F, *], Request[F], Response[F]] { req =>
@@ -35,13 +35,13 @@ object ServerTracer {
         } yield resp
 
       OptionT[F, Response[F]] {
-        context(req).use(P.provide(fa))
+        contextReader(req).use(P.provide(fa))
       }
     }
 
   def injectApp[F[_], G[_]: FlatMap: Trace, Ctx](
     app: HttpApp[G],
-    context: ContextConstructor[F, Request_, Ctx],
+    contextReader: ResourceReader[F, Request_, Ctx],
     dropHeadersWhen: CaseInsensitiveString => Boolean,
   )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F]): HttpApp[F] =
     Kleisli[F, Request[F], Response[F]] { req =>
@@ -54,6 +54,6 @@ object ServerTracer {
           _ <- Trace[G].putAll(Http4sHeaders.responseFields(resp, dropHeadersWhen): _*)
         } yield resp
 
-      context(req).use(P.provide(fa))
+      contextReader(req).use(P.provide(fa))
     }
 }
