@@ -15,7 +15,7 @@ import org.http4s.{HttpApp, HttpRoutes, Request, Response}
 object ServerTracer {
   def injectRoutes[F[_], G[_]: Monad: Trace, Ctx](
     routes: HttpRoutes[G],
-    contextReader: ResourceKleisli[F, Request_, Ctx],
+    k: ResourceKleisli[F, Request_, Ctx],
     dropHeadersWhen: CaseInsensitiveString => Boolean,
   )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F]): HttpRoutes[F] =
     Kleisli[OptionT[F, *], Request[F], Response[F]] { req =>
@@ -35,13 +35,13 @@ object ServerTracer {
         } yield resp
 
       OptionT[F, Response[F]] {
-        contextReader(req).use(P.provide(fa))
+        k(req).use(P.provide(fa))
       }
     }
 
   def injectApp[F[_], G[_]: FlatMap: Trace, Ctx](
     app: HttpApp[G],
-    contextReader: ResourceKleisli[F, Request_, Ctx],
+    k: ResourceKleisli[F, Request_, Ctx],
     dropHeadersWhen: CaseInsensitiveString => Boolean,
   )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F]): HttpApp[F] =
     Kleisli[F, Request[F], Response[F]] { req =>
@@ -54,6 +54,6 @@ object ServerTracer {
           _ <- Trace[G].putAll(Http4sHeaders.responseFields(resp, dropHeadersWhen): _*)
         } yield resp
 
-      contextReader(req).use(P.provide(fa))
+      k(req).use(P.provide(fa))
     }
 }

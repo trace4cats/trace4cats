@@ -27,13 +27,13 @@ trait Fs2KafkaSyntax {
     ): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
       TracedConsumer.inject[F, G, K, V](consumerStream)(ep.toReader)
 
-    def trace[G[_]](cc: ResourceKleisli[F, SpanParams, Span[F]])(implicit
+    def trace[G[_]](k: ResourceKleisli[F, SpanParams, Span[F]])(implicit
       P: Provide[F, G, Span[F]],
       F: BracketThrow[F],
       G: Functor[G],
       T: Trace[G],
     ): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
-      TracedConsumer.inject[F, G, K, V](consumerStream)(cc)
+      TracedConsumer.inject[F, G, K, V](consumerStream)(k)
 
     def injectK[G[_]](ep: EntryPoint[F])(implicit
       P: Provide[F, G, Span[F]],
@@ -45,7 +45,7 @@ trait Fs2KafkaSyntax {
     ): TracedStream[G, CommittableConsumerRecord[G, K, V]] =
       TracedConsumer.injectK[F, G, K, V](consumerStream)(ep.toReader)
 
-    def traceK[G[_]](cc: ResourceKleisli[F, SpanParams, Span[F]])(implicit
+    def traceK[G[_]](k: ResourceKleisli[F, SpanParams, Span[F]])(implicit
       P: Provide[F, G, Span[F]],
       F: BracketThrow[F],
       deferF: Defer[F],
@@ -53,6 +53,6 @@ trait Fs2KafkaSyntax {
       deferG: Defer[G],
       trace: Trace[G]
     ): TracedStream[G, CommittableConsumerRecord[G, K, V]] =
-      TracedConsumer.injectK[F, G, K, V](consumerStream)(cc)
+      TracedConsumer.injectK[F, G, K, V](consumerStream)(k)
   }
 }

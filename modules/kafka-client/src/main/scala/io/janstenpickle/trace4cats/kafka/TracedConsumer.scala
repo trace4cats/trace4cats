@@ -15,10 +15,10 @@ import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind}
 object TracedConsumer extends Fs2StreamSyntax {
 
   def inject[F[_]: BracketThrow, G[_]: Functor: Trace, K, V](stream: Stream[F, CommittableConsumerRecord[F, K, V]])(
-    reader: ResourceKleisli[F, SpanParams, Span[F]]
+    k: ResourceKleisli[F, SpanParams, Span[F]]
   )(implicit P: Provide[F, G, Span[F]]): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
     stream
-      .traceContinue(reader, "kafka.receive", SpanKind.Consumer) { record =>
+      .traceContinue(k, "kafka.receive", SpanKind.Consumer) { record =>
         KafkaHeaders.converter.from(record.record.headers)
       }
       .evalMapTrace { record =>
@@ -35,7 +35,7 @@ object TracedConsumer extends Fs2StreamSyntax {
   def injectK[F[_]: BracketThrow: Defer, G[_]: ApplicativeThrow: Defer: Trace, K, V](
     stream: Stream[F, CommittableConsumerRecord[F, K, V]]
   )(
-    reader: ResourceKleisli[F, SpanParams, Span[F]]
+    k: ResourceKleisli[F, SpanParams, Span[F]]
   )(implicit P: Provide[F, G, Span[F]]): TracedStream[G, CommittableConsumerRecord[G, K, V]] = {
     def liftConsumerRecord(record: CommittableConsumerRecord[F, K, V]): CommittableConsumerRecord[G, K, V] =
       CommittableConsumerRecord[G, K, V](
@@ -48,7 +48,7 @@ object TracedConsumer extends Fs2StreamSyntax {
         )
       )
 
-    inject[F, G, K, V](stream)(reader).liftTrace[G].map(liftConsumerRecord)
+    inject[F, G, K, V](stream)(k).liftTrace[G].map(liftConsumerRecord)
   }
 
 }
