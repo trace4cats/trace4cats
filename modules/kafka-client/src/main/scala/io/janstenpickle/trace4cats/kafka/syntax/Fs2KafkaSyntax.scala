@@ -7,7 +7,7 @@ import fs2.kafka.{CommittableConsumerRecord, KafkaProducer}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import io.janstenpickle.trace4cats.base.context.{Lift, Provide}
 import io.janstenpickle.trace4cats.fs2.TracedStream
-import io.janstenpickle.trace4cats.inject.{EntryPoint, ResourceReader, SpanParams, Trace}
+import io.janstenpickle.trace4cats.inject.{EntryPoint, ResourceKleisli, SpanParams, Trace}
 import io.janstenpickle.trace4cats.kafka.{TracedConsumer, TracedProducer}
 
 trait Fs2KafkaSyntax {
@@ -27,7 +27,7 @@ trait Fs2KafkaSyntax {
     ): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
       TracedConsumer.inject[F, G, K, V](consumerStream)(ep.toReader)
 
-    def trace[G[_]](cc: ResourceReader[F, SpanParams, Span[F]])(implicit
+    def trace[G[_]](cc: ResourceKleisli[F, SpanParams, Span[F]])(implicit
       P: Provide[F, G, Span[F]],
       F: BracketThrow[F],
       G: Functor[G],
@@ -45,7 +45,7 @@ trait Fs2KafkaSyntax {
     ): TracedStream[G, CommittableConsumerRecord[G, K, V]] =
       TracedConsumer.injectK[F, G, K, V](consumerStream)(ep.toReader)
 
-    def traceK[G[_]](cc: ResourceReader[F, SpanParams, Span[F]])(implicit
+    def traceK[G[_]](cc: ResourceKleisli[F, SpanParams, Span[F]])(implicit
       P: Provide[F, G, Span[F]],
       F: BracketThrow[F],
       deferF: Defer[F],

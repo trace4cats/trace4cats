@@ -5,7 +5,7 @@ import cats.data.Kleisli
 import cats.effect.Resource
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.http4s.common.{Http4sHeaders, Http4sRequestFilter, Http4sSpanNamer, Request_}
-import io.janstenpickle.trace4cats.inject.{ResourceReader, SpanParams}
+import io.janstenpickle.trace4cats.inject.{ResourceKleisli, SpanParams}
 import io.janstenpickle.trace4cats.model.SpanKind
 
 object Http4sResourceReaders {
@@ -13,7 +13,7 @@ object Http4sResourceReaders {
     makeContext: (Request_, Span[F]) => F[Ctx],
     spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath,
     requestFilter: Http4sRequestFilter = Http4sRequestFilter.allowAll
-  )(reader: ResourceReader[F, SpanParams, Span[F]]): ResourceReader[F, Request_, Ctx] =
+  )(reader: ResourceKleisli[F, SpanParams, Span[F]]): ResourceKleisli[F, Request_, Ctx] =
     fromHeaders[F](spanNamer, requestFilter)(reader).tapWithF { (req, span) =>
       Resource.liftF(makeContext(req, span))
     }
@@ -21,7 +21,7 @@ object Http4sResourceReaders {
   def fromHeaders[F[_]: Applicative](
     spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath,
     requestFilter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
-  )(reader: ResourceReader[F, SpanParams, Span[F]]): ResourceReader[F, Request_, Span[F]] =
+  )(reader: ResourceKleisli[F, SpanParams, Span[F]]): ResourceKleisli[F, Request_, Span[F]] =
     Kleisli { req =>
       val filter = requestFilter.lift(req).getOrElse(true)
       val headers = Http4sHeaders.converter.from(req.headers)
