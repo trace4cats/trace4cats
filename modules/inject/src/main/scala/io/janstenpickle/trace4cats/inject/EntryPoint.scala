@@ -30,7 +30,7 @@ trait EntryPoint[F[_]] {
     continueOrElseRoot(name, SpanKind.Server, headers)
   def continueOrElseRoot(name: SpanName, kind: SpanKind, headers: TraceHeaders): Resource[F, Span[F]]
 
-  def toReader: ResourceKleisli[F, SpanParams, Span[F]] =
+  def toKleisli: ResourceKleisli[F, SpanParams, Span[F]] =
     Kleisli { case (name, kind, headers) =>
       continueOrElseRoot(name, kind, headers)
     }

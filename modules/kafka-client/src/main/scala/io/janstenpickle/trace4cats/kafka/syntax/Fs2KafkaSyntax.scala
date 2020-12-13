@@ -25,7 +25,7 @@ trait Fs2KafkaSyntax {
       G: Functor[G],
       T: Trace[G],
     ): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
-      TracedConsumer.inject[F, G, K, V](consumerStream)(ep.toReader)
+      TracedConsumer.inject[F, G, K, V](consumerStream)(ep.toKleisli)
 
     def trace[G[_]](k: ResourceKleisli[F, SpanParams, Span[F]])(implicit
       P: Provide[F, G, Span[F]],
@@ -43,7 +43,7 @@ trait Fs2KafkaSyntax {
       deferG: Defer[G],
       trace: Trace[G]
     ): TracedStream[G, CommittableConsumerRecord[G, K, V]] =
-      TracedConsumer.injectK[F, G, K, V](consumerStream)(ep.toReader)
+      TracedConsumer.injectK[F, G, K, V](consumerStream)(ep.toKleisli)
 
     def traceK[G[_]](k: ResourceKleisli[F, SpanParams, Span[F]])(implicit
       P: Provide[F, G, Span[F]],

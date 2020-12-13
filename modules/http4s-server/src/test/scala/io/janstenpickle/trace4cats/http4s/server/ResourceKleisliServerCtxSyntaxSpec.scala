@@ -16,12 +16,12 @@ class ResourceKleisliServerCtxSyntaxSpec
       (routes, filter, ep) =>
         routes.tracedContext(
           Http4sResourceKleislis
-            .fromHeadersContext(TraceContext.make[IO], requestFilter = filter)(ep.toReader)
+            .fromHeadersContext(TraceContext.make[IO], requestFilter = filter)(ep.toKleisli)
         ),
       (app, filter, ep) =>
         app.tracedContext(
           Http4sResourceKleislis
-            .fromHeadersContext(TraceContext.make[IO], requestFilter = filter)(ep.toReader)
+            .fromHeadersContext(TraceContext.make[IO], requestFilter = filter)(ep.toKleisli)
         ),
       IO.timer(ExecutionContext.global)
     )

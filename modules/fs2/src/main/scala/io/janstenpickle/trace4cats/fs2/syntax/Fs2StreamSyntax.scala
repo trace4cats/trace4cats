@@ -34,7 +34,7 @@ trait Fs2StreamSyntax {
       trace(k, _ => name, kind)
 
     def inject(ep: EntryPoint[F], name: A => SpanName, kind: SpanKind): TracedStream[F, A] =
-      trace(ep.toReader, name, kind)
+      trace(ep.toKleisli, name, kind)
 
     def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName, kind: SpanKind): TracedStream[F, A] =
       WriterT(stream.evalMapChunk(a => k((name(a), kind, TraceHeaders.empty)).use(s => (s -> a).pure)))
@@ -66,7 +66,7 @@ trait Fs2StreamSyntax {
     def injectContinue(ep: EntryPoint[F], name: A => SpanName, kind: SpanKind)(
       f: A => TraceHeaders
     ): TracedStream[F, A] =
-      traceContinue(ep.toReader, name, kind)(f)
+      traceContinue(ep.toKleisli, name, kind)(f)
 
     def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName, kind: SpanKind)(
       f: A => TraceHeaders
