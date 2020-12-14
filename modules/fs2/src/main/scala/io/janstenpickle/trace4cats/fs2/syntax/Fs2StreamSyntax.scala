@@ -9,7 +9,7 @@ import cats.{~>, Applicative, Defer, Functor}
 import fs2.Stream
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.fs2.{ContinuationSpan, TracedStream}
-import io.janstenpickle.trace4cats.inject.EntryPoint
+import io.janstenpickle.trace4cats.inject.{EntryPoint, ResourceKleisli, SpanName, SpanParams}
 import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, TraceHeaders}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 
@@ -18,26 +18,61 @@ trait Fs2StreamSyntax {
     def inject(ep: EntryPoint[F], name: String): TracedStream[F, A] =
       inject(ep, _ => name, SpanKind.Internal)
 
+    def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: SpanName): TracedStream[F, A] =
+      trace(k, _ => name, SpanKind.Internal)
+
     def inject(ep: EntryPoint[F], name: A => String): TracedStream[F, A] =
       inject(ep, name, SpanKind.Internal)
 
-    def inject(ep: EntryPoint[F], name: String, kind: SpanKind): TracedStream[F, A] =
+    def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName): TracedStream[F, A] =
+      trace(k, name, SpanKind.Internal)
+
+    def inject(ep: EntryPoint[F], name: SpanName, kind: SpanKind): TracedStream[F, A] =
       inject(ep, _ => name, kind)
 
-    def inject(ep: EntryPoint[F], name: A => String, kind: SpanKind): TracedStream[F, A] =
-      WriterT(stream.evalMapChunk(a => ep.root(name(a), kind).use(s => (s -> a).pure)))
+    def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: SpanName, kind: SpanKind): TracedStream[F, A] =
+      trace(k, _ => name, kind)
+
+    def inject(ep: EntryPoint[F], name: A => SpanName, kind: SpanKind): TracedStream[F, A] =
+      trace(ep.toKleisli, name, kind)
+
+    def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName, kind: SpanKind): TracedStream[F, A] =
+      WriterT(stream.evalMapChunk(a => k((name(a), kind, TraceHeaders.empty)).use(s => (s -> a).pure)))
 
     def injectContinue(ep: EntryPoint[F], name: String)(f: A => TraceHeaders): TracedStream[F, A] =
       injectContinue(ep, name, SpanKind.Internal)(f)
 
-    def injectContinue(ep: EntryPoint[F], name: String, kind: SpanKind)(f: A => TraceHeaders): TracedStream[F, A] =
+    def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: SpanName)(
+      f: A => TraceHeaders
+    ): TracedStream[F, A] =
+      traceContinue(k, name, SpanKind.Internal)(f)
+
+    def injectContinue(ep: EntryPoint[F], name: SpanName, kind: SpanKind)(f: A => TraceHeaders): TracedStream[F, A] =
       injectContinue(ep, _ => name, kind)(f)
 
-    def injectContinue(ep: EntryPoint[F], name: A => String)(f: A => TraceHeaders): TracedStream[F, A] =
+    def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: SpanName, kind: SpanKind)(
+      f: A => TraceHeaders
+    ): TracedStream[F, A] =
+      traceContinue(k, _ => name, kind)(f)
+
+    def injectContinue(ep: EntryPoint[F], name: A => SpanName)(f: A => TraceHeaders): TracedStream[F, A] =
       injectContinue(ep, name, SpanKind.Internal)(f)
 
-    def injectContinue(ep: EntryPoint[F], name: A => String, kind: SpanKind)(f: A => TraceHeaders): TracedStream[F, A] =
-      WriterT(stream.evalMapChunk(a => ep.continueOrElseRoot(name(a), kind, f(a)).use(s => (s -> a).pure)))
+    def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName)(
+      f: A => TraceHeaders
+    ): TracedStream[F, A] =
+      traceContinue(k, name, SpanKind.Internal)(f)
+
+    def injectContinue(ep: EntryPoint[F], name: A => SpanName, kind: SpanKind)(
+      f: A => TraceHeaders
+    ): TracedStream[F, A] =
+      traceContinue(ep.toKleisli, name, kind)(f)
+
+    def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName, kind: SpanKind)(
+      f: A => TraceHeaders
+    ): TracedStream[F, A] =
+      WriterT(stream.evalMapChunk(a => k((name(a), kind, f(a))).use(s => (s -> a).pure)))
+
   }
 
   implicit class TracedStreamOps[F[_], A](stream: TracedStream[F, A]) {
