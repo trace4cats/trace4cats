@@ -2,11 +2,10 @@ package io.janstenpickle.trace4cats.opentelemetry.otlp
 
 import java.time.Instant
 
-import cats.data.NonEmptyList
 import cats.effect.IO
 import fs2.Chunk
 import io.janstenpickle.trace4cats.`export`.SemanticTags
-import io.janstenpickle.trace4cats.model.{Batch, Link, TraceProcess}
+import io.janstenpickle.trace4cats.model.{Batch, TraceProcess}
 import io.janstenpickle.trace4cats.test.jaeger.BaseJaegerSpec
 
 class OpenTelemetryOtlpGrpcSpanExporterSpec extends BaseJaegerSpec {
@@ -17,8 +16,7 @@ class OpenTelemetryOtlpGrpcSpanExporterSpec extends BaseJaegerSpec {
           span.copy(
             serviceName = process.serviceName,
             attributes = process.attributes ++ span.attributes,
-            links = span.links
-              .flatMap(links => NonEmptyList.fromList(links.collect { case l @ Link.Parent(_, _) => l })),
+            links = span.links,
             start = Instant.now(),
             end = Instant.now()
           )

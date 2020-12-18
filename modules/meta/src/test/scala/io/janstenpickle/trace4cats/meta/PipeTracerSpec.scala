@@ -62,7 +62,7 @@ class PipeTracerSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenProp
 
       lazy val links = batch.spans
         .collect[Link] { case CompletedSpan(_, _, _, _, _, _, _, _, _, Some(MetaTrace(traceId, spanId))) =>
-          Link.Parent(traceId, spanId)
+          Link(traceId, spanId)
         }
         .toList
 

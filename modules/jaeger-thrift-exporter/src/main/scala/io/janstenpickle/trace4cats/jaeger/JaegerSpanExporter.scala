@@ -70,12 +70,7 @@ object JaegerSpanExporter {
         .fold(List.empty[SpanRef])(_.map { link =>
           val (traceIdHigh, traceIdLow) = traceIdToLongs(link.traceId)
           val spanId = spanIdToLong(link.spanId)
-
-          link match {
-
-            case Link.Child(_, _) => new SpanRef(SpanRefType.CHILD_OF, traceIdLow, traceIdHigh, spanId)
-            case Link.Parent(_, _) => new SpanRef(SpanRefType.FOLLOWS_FROM, traceIdLow, traceIdHigh, spanId)
-          }
+          new SpanRef(SpanRefType.FOLLOWS_FROM, traceIdLow, traceIdHigh, spanId)
         }.toList)
         .asJava
 
@@ -132,7 +127,7 @@ object JaegerSpanExporter {
                     )
                   }
 
-                grouped.foldM(()) { case (_, (service, spans)) =>
+                grouped.traverse_ { case (service, spans) =>
                   blocker.delay(sender.send(new Process(service), spans.asJava))
                 }
 
