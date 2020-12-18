@@ -81,9 +81,9 @@ object Convert {
           }
         )
       ),
-      links = span.links.fold(List.empty[Span.Link])(_.collect { case Link.Parent(traceId, spanId) =>
-        Span.Link(ByteString.copyFrom(traceId.value), ByteString.copyFrom(spanId.value))
-      })
+      links = span.links.fold(List.empty[Span.Link])(_.map { link =>
+        Span.Link(ByteString.copyFrom(link.traceId.value), ByteString.copyFrom(link.spanId.value))
+      }.toList)
     )
 
   def toInstrumentationLibrarySpans(spans: List[CompletedSpan]): InstrumentationLibrarySpans =

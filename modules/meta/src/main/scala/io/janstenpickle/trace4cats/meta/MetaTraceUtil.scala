@@ -61,9 +61,9 @@ object MetaTraceUtil {
   }
 
   def extractMetadata(batch: Chunk[CompletedSpan]): (Int, Option[NonEmptyList[Link]]) = {
-    val (batchSize, links) = batch.foldLeft((0, Set.empty[Link.Parent])) { case ((count, links), span) =>
+    val (batchSize, links) = batch.foldLeft((0, Set.empty[Link])) { case ((count, links), span) =>
       val updatedLinks = span.metaTrace match {
-        case Some(meta) => links + Link.Parent(meta.traceId, meta.spanId)
+        case Some(meta) => links + Link(meta.traceId, meta.spanId)
         case None => links
       }
 

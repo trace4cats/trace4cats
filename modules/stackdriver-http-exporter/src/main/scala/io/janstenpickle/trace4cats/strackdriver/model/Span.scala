@@ -41,9 +41,8 @@ object Span {
 
   def toSpanLinks(links: Option[NonEmptyList[Link]]): SpanLinks =
     SpanLinks(
-      links.fold(List.empty[SpanLink])(_.map {
-        case Link.Child(traceId, spanId) => SpanLink(traceId.show, spanId.show, "CHILD_LINKED_SPAN")
-        case Link.Parent(traceId, spanId) => SpanLink(traceId.show, spanId.show, "PARENT_LINKED_SPAN")
+      links.fold(List.empty[SpanLink])(_.map { link =>
+        SpanLink(link.traceId.show, link.spanId.show, "PARENT_LINKED_SPAN")
       }.toList),
       0
     )

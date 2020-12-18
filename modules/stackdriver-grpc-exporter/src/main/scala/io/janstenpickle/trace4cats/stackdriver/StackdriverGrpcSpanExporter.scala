@@ -95,13 +95,12 @@ object StackdriverGrpcSpanExporter {
     def toLinksProto(links: Option[NonEmptyList[Link]]): Span.Links =
       links
         .fold(Span.Links.newBuilder())(_.foldLeft(Span.Links.newBuilder()) { (builder, link) =>
-          val linkType = link match {
-            case Link.Child(_, _) => Span.Link.Type.CHILD_LINKED_SPAN
-            case Link.Parent(_, _) => Span.Link.Type.PARENT_LINKED_SPAN
-          }
-
           builder.addLink(
-            Span.Link.newBuilder().setType(linkType).setTraceId(link.traceId.show).setSpanId(link.spanId.show)
+            Span.Link
+              .newBuilder()
+              .setType(Span.Link.Type.PARENT_LINKED_SPAN)
+              .setTraceId(link.traceId.show)
+              .setSpanId(link.spanId.show)
           )
         })
         .build()

@@ -1,14 +1,10 @@
 package io.janstenpickle.trace4cats.model
 
-import enumeratum._
+import cats.{Eq, Show}
 
-sealed trait Link extends EnumEntry {
-  def traceId: TraceId
-  def spanId: SpanId
-}
-object Link extends Enum[Link] with CatsEnum[Link] {
-  override def values = findValues
+case class Link(traceId: TraceId, spanId: SpanId)
 
-  case class Child(traceId: TraceId, spanId: SpanId) extends Link
-  case class Parent(traceId: TraceId, spanId: SpanId) extends Link
+object Link {
+  implicit val show: Show[Link] = cats.derived.semiauto.show[Link]
+  implicit val eq: Eq[Link] = cats.derived.semiauto.eq[Link]
 }

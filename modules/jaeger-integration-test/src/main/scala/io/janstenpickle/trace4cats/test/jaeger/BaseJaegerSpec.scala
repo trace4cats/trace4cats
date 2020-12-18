@@ -79,12 +79,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
                         JaegerReference("CHILD_OF", traceId.show, parent.spanId.show)
                       } ++ span.links
                         .fold(List.empty[JaegerReference])(_.map { link =>
-                          val linkType = link match {
-                            case Link.Child(_, _) => "CHILD_OF"
-                            case Link.Parent(_, _) => "FOLLOWS_FROM"
-                          }
-
-                          JaegerReference(linkType, link.traceId.show, link.spanId.show)
+                          JaegerReference("FOLLOWS_FROM", link.traceId.show, link.spanId.show)
                         }.toList))
                         .sortBy(_.traceID)
                     )

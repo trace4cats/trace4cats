@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 import cats.syntax.show._
 import io.janstenpickle.trace4cats.model.SpanStatus._
 import io.janstenpickle.trace4cats.model.TraceState.{Key, Value}
-import io.janstenpickle.trace4cats.model.{CompletedSpan, Link, SpanKind}
+import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind}
 import io.opentelemetry.common.ReadableAttributes
 import io.opentelemetry.sdk.common.InstrumentationLibraryInfo
 import io.opentelemetry.sdk.resources.Resource
@@ -60,12 +60,11 @@ object Trace4CatsSpanData {
 
       override lazy val getLinks: util.List[SpanData.Link] =
         span.links
-          .fold(List.empty[SpanData.Link])(_.collect {
-            case Link.Parent(traceId, spanId) => // only parent links are supported by OTEL
-              ImmutableLink.create(
-                SpanContext.create(traceId.show, spanId.show, TraceFlags.getSampled, TraceState.getDefault)
-              )
-          })
+          .fold(List.empty[SpanData.Link])(_.map { link =>
+            ImmutableLink.create(
+              SpanContext.create(link.traceId.show, link.spanId.show, TraceFlags.getSampled, TraceState.getDefault)
+            )
+          }.toList)
           .asJava
 
       override lazy val getStatus: Status =
