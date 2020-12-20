@@ -546,12 +546,7 @@ lazy val `sttp-client` = (project in file("modules/sttp-client"))
   .settings(
     name := "trace4cats-sttp-client",
     libraryDependencies ++= Seq(Dependencies.sttpClient),
-    libraryDependencies ++= (Dependencies.test ++ Seq(
-      Dependencies.http4sBlazeClient,
-      Dependencies.http4sBlazeServer,
-      Dependencies.http4sDsl,
-      Dependencies.sttpHttp4s
-    )).map(_ % Test)
+    libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.http4sDsl, Dependencies.sttpHttp4s)).map(_ % Test)
   )
   .dependsOn(
     model,
@@ -568,11 +563,7 @@ lazy val `http4s-client` = (project in file("modules/http4s-client"))
   .settings(
     name := "trace4cats-http4s-client",
     libraryDependencies ++= Seq(Dependencies.http4sClient),
-    libraryDependencies ++= (Dependencies.test ++ Seq(
-      Dependencies.http4sBlazeClient,
-      Dependencies.http4sBlazeServer,
-      Dependencies.http4sDsl
-    )).map(_ % Test)
+    libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.http4sDsl)).map(_ % Test)
   )
   .dependsOn(
     model,
@@ -588,8 +579,7 @@ lazy val `http4s-server` = (project in file("modules/http4s-server"))
   .settings(
     name := "trace4cats-http4s-server",
     libraryDependencies ++= Seq(Dependencies.http4sServer),
-    libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.http4sBlazeClient, Dependencies.http4sBlazeServer))
-      .map(_ % Test)
+    libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.http4sClient)).map(_ % Test)
   )
   .dependsOn(
     model,
