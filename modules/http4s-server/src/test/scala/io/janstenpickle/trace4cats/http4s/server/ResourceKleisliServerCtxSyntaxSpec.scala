@@ -10,7 +10,6 @@ import scala.concurrent.ExecutionContext
 
 class ResourceKleisliServerCtxSyntaxSpec
     extends BaseServerTracerSpec[IO, Kleisli[IO, TraceContext[IO], *]](
-      9183,
       λ[IO ~> Id](_.unsafeRunSync()),
       λ[Kleisli[IO, TraceContext[IO], *] ~> IO](ga => TraceContext.empty[IO].flatMap(ga.run)),
       (routes, filter, ep) =>

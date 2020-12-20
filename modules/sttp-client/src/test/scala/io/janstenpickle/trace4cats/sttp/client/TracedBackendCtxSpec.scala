@@ -12,7 +12,6 @@ import scala.concurrent.ExecutionContext
 
 class TracedBackendCtxSpec
     extends BaseBackendTracerSpec[IO, Kleisli[IO, TraceContext[IO], *], TraceContext[IO]](
-      9094,
       λ[IO ~> Id](_.unsafeRunSync()),
       TraceContext("bf2665b3-2201-466d-868d-8bd3ab151d79", _),
       _.liftTraceContext(spanLens = TraceContext.span[IO], headersGetter = TraceContext.headers[IO](ToHeaders.all)),

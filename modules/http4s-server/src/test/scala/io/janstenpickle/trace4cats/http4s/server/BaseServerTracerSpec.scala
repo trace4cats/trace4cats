@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.http4s.server
 import java.util.UUID
 
 import cats.data.NonEmptyList
-import cats.effect.{Blocker, ConcurrentEffect, Resource, Sync, Timer}
+import cats.effect.{ConcurrentEffect, Resource, Sync, Timer}
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -13,12 +13,11 @@ import io.janstenpickle.trace4cats.http4s.common.{Http4sRequestFilter, Http4sSta
 import io.janstenpickle.trace4cats.inject.EntryPoint
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind, SpanStatus}
-import org.http4s.client.blaze.BlazeClientBuilder
+import org.http4s._
+import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.`WWW-Authenticate`
-import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.syntax.all._
-import org.http4s._
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
@@ -26,10 +25,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.immutable.Queue
-import scala.concurrent.duration._
 
 abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
-  port: Int,
   unsafeRunK: F ~> Id,
   noopProvideK: G ~> F,
   injectRoutes: (HttpRoutes[G], Http4sRequestFilter, EntryPoint[F]) => HttpRoutes[F],
@@ -65,7 +62,7 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
 
     evaluateTrace(app, app.orNotFound) { spans =>
       spans.size should be(1)
-      spans.head.name should be("GET /")
+      spans.head.name should be("GET ")
       spans.head.kind should be(SpanKind.Server)
       spans.head.status should be(SpanStatus.Ok)
     }
@@ -78,7 +75,7 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
 
     evaluateTrace(app, app.orNotFound) { spans =>
       spans.size should be(1)
-      spans.head.name should be("GET /")
+      spans.head.name should be("GET ")
       spans.head.kind should be(SpanKind.Server)
       spans.head.status should be(SpanStatus.Internal(errorMsg))
     }
@@ -94,7 +91,7 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
 
     evaluateTrace(app, app.orNotFound) { spans =>
       spans.size should be(1)
-      spans.head.name should be("GET /")
+      spans.head.name should be("GET ")
       spans.head.kind should be(SpanKind.Server)
       spans.head.status should be(expectedStatus)
     }
@@ -122,7 +119,7 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
       app,
       app.orNotFound,
       Http4sRequestFilter.kubernetesPrometheus,
-      NonEmptyList.of("/", "/healthcheck", "/liveness", "/metrics")
+      NonEmptyList.of("", "healthcheck", "liveness", "metrics")
     ) { spans =>
       spans.size should be(1)
     }
@@ -130,8 +127,8 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
 
   it should "should filter arbitrary paths" in forAll(Gen.uuid, Gen.listOf(Gen.uuid)) {
     (first: UUID, others: List[UUID]) =>
-      val NEPaths = NonEmptyList(first, others).map("/" + _)
-      val paths = NEPaths.toList.toSet
+      val NEPaths = NonEmptyList(first, others).map(_.toString)
+      val paths = NEPaths.toList.toSet.map("/" + _)
 
       val app = HttpRoutes.of[G] {
         case req if paths.contains(Uri.decode(req.uri.path)) => Ok()
@@ -141,7 +138,7 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
       evaluateTrace(
         app,
         app.orNotFound,
-        Http4sRequestFilter.fullPaths(NEPaths.head, NEPaths.tail: _*),
+        Http4sRequestFilter.fullPaths("/" + NEPaths.head, NEPaths.tail.map("/" + _): _*),
         "/" :: NEPaths
       ) { spans =>
         spans.size should be(1)
@@ -154,23 +151,19 @@ abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
     filter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
     paths: NonEmptyList[String] = NonEmptyList.one("/")
   )(fa: Queue[CompletedSpan] => Assertion): Assertion = {
+    val clientDsl = new Http4sClientDsl[F] {}
+    import clientDsl._
+
     def test(f: EntryPoint[F] => HttpApp[F]): Assertion =
       unsafeRunK.apply(
         (for {
-          blocker <- Blocker[F]
           completer <- Resource.liftF(RefSpanCompleter[F]("test"))
           ep = EntryPoint[F](SpanSampler.always[F], completer)
-          _ <- BlazeServerBuilder[F](blocker.blockingContext)
-            .bindHttp(port, "localhost")
-            .withHttpApp(f(ep))
-            .resource
-          client <- BlazeClientBuilder[F](blocker.blockingContext).resource
-        } yield (client, completer))
-          .use { case (client, completer) =>
+        } yield (f(ep), completer))
+          .use { case (app, completer) =>
             for {
-              _ <- paths.traverse(path => client.expect[String](s"http://localhost:$port$path").attempt)
+              _ <- paths.traverse(path => GET(Uri.unsafeFromString(s"/$path")).flatMap(app.run).attempt)
               spans <- completer.get
-              _ <- timer.sleep(100.millis)
             } yield fa(spans)
           }
       )
