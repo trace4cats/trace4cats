@@ -2,9 +2,12 @@ import sbt._
 
 object Dependencies {
   object Versions {
-    val cats = "2.3.0"
-    val catsEffect = "2.3.0"
+    val cats = "2.3.1"
+    val catsEffect = "2.3.1"
     val collectionCompat = "2.3.2"
+    val cats = "2.3.1"
+    val catsEffect = "2.3.1"
+    val collectionCompat = "2.3.1"
     val commonsCodec = "1.15"
     val circe = "0.13.0"
     val circeYaml = "0.13.1"
@@ -19,7 +22,7 @@ object Dependencies {
     val http4s = "0.21.14"
     val http4sJdkClient = "0.3.2"
     val jaeger = "1.5.0"
-    val jwt = "3.11.0"
+    val jwt = "3.12.0"
     val kafka = "2.6.0"
     val kittens = "2.2.1"
     val log4cats = "1.1.1"
