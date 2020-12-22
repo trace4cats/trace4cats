@@ -11,7 +11,7 @@ object SttpHeaders {
       .map { h =>
         (s"req.header.${h.name}", h.value: AttributeValue)
       }
-      .to(List)
+      .toList
 
   val converter: TraceHeaders.Converter[Headers] = new TraceHeaders.Converter[Headers] {
     def from(t: Headers): TraceHeaders =
