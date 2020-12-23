@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.http4s.client
 
 import cats.data.NonEmptyList
 import cats.effect.concurrent.Ref
-import cats.effect.{ConcurrentEffect, Sync, Timer}
+import cats.effect.{Sync, Timer}
 import cats.implicits._
 import cats.{~>, Eq, Id}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
@@ -24,19 +24,16 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-abstract class BaseClientTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync: Trace, Ctx](
+abstract class BaseClientTracerSpec[F[_]: Sync: Timer, G[_]: Sync: Trace, Ctx](
   unsafeRunK: F ~> Id,
   makeSomeContext: Span[F] => Ctx,
-  liftClient: Client[F] => Client[G],
-  timer: Timer[F]
+  liftClient: Client[F] => Client[G]
 )(implicit P: Provide[F, G, Ctx])
     extends AnyFlatSpec
     with ScalaCheckDrivenPropertyChecks
     with Matchers
     with Http4sClientDsl[G]
     with Http4sDsl[F] {
-
-  implicit val t: Timer[F] = timer
 
   implicit val responseArb: Arbitrary[Response[F]] =
     Arbitrary(

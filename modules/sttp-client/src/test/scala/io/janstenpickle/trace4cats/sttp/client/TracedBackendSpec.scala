@@ -13,6 +13,5 @@ class TracedBackendSpec
     extends BaseBackendTracerSpec[IO, Kleisli[IO, Span[IO], *], Span[IO]](
       λ[IO ~> Id](_.unsafeRunSync()),
       identity,
-      _.liftTrace(),
-      IO.timer(ExecutionContext.global)
+      _.liftTrace()
     )

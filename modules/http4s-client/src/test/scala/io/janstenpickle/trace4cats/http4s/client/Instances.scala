@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.sttp.client
+package io.janstenpickle.trace4cats.http4s.client
 
 import java.util.concurrent.Executors
 import cats.data.Kleisli

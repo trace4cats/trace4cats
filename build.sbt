@@ -627,7 +627,12 @@ lazy val `sttp-tapir` = (project in file("modules/sttp-tapir"))
   .settings(
     name := "trace4cats-sttp-tapir",
     libraryDependencies ++= Seq(Dependencies.sttpTapir),
-    libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.http4sClient, Dependencies.sttpTapirHttp4s))
+    libraryDependencies ++= (Dependencies.test ++ Seq(
+      Dependencies.circeGeneric,
+      Dependencies.http4sClient,
+      Dependencies.sttpTapirJsonCirce,
+      Dependencies.sttpTapirHttp4s
+    ))
       .map(_ % Test)
   )
   .dependsOn(

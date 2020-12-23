@@ -27,18 +27,15 @@ import sttp.client3._
 import sttp.client3.http4s.Http4sBackend
 import sttp.model.StatusCode
 
-abstract class BaseSttpBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift, G[_]: Sync: Trace, Ctx](
+abstract class BaseSttpBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift: Timer, G[_]: Sync: Trace, Ctx](
   unsafeRunK: F ~> Id,
   makeSomeContext: Span[F] => Ctx,
-  liftBackend: SttpBackend[F, Any] => SttpBackend[G, Any],
-  timer: Timer[F]
+  liftBackend: SttpBackend[F, Any] => SttpBackend[G, Any]
 )(implicit P: Provide[F, G, Ctx])
     extends AnyFlatSpec
     with ScalaCheckDrivenPropertyChecks
     with Matchers
     with Http4sDsl[F] {
-
-  implicit val t: Timer[F] = timer
 
   implicit val responseArb: Arbitrary[Response[F]] =
     Arbitrary(
