@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.http4s.server
 import java.util.UUID
 
 import cats.data.NonEmptyList
-import cats.effect.{ConcurrentEffect, Resource, Sync, Timer}
+import cats.effect.{Resource, Sync, Timer}
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._

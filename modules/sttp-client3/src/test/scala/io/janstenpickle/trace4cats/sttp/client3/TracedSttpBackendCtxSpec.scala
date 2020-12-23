@@ -8,8 +8,6 @@ import io.janstenpickle.trace4cats.http4s.common.TraceContext
 import io.janstenpickle.trace4cats.sttp.client3.Instances._
 import io.janstenpickle.trace4cats.sttp.client3.syntax._
 
-import scala.concurrent.ExecutionContext
-
 class TracedSttpBackendCtxSpec
     extends BaseSttpBackendTracerSpec[IO, Kleisli[IO, TraceContext[IO], *], TraceContext[IO]](
       λ[IO ~> Id](_.unsafeRunSync()),
