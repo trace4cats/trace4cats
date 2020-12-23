@@ -19,7 +19,8 @@ object ServerEndpointTracer {
   def inject[I, E, O, R, F[_], G[_], Ctx](
     serverEndpoint: ServerEndpoint[I, E, O, R, G],
     k: ResourceKleisli[F, I, Either[E, Ctx]],
-    headersGetter: Getter[I, Headers],
+    inHeadersGetter: Getter[I, Headers],
+    outHeadersGetter: Getter[O, Headers],
     errorToSpanStatus: TapirStatusMapping[E],
     dropHeadersWhen: String => Boolean
   )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F], G: Monad[G], T: Trace[G]): ServerEndpoint[I, E, O, R, F] =
@@ -33,10 +34,12 @@ object ServerEndpointTracer {
                 val lower = P.provideK(ctx)
                 val MEG = MEF.imapK(P.liftK)(lower)
                 EitherT {
-                  Trace[G].putAll(SttpHeaders.headerFields(headersGetter.get(input), dropHeadersWhen): _*) >>
+                  Trace[G].putAll(SttpHeaders.requestFields(inHeadersGetter.get(input), dropHeadersWhen): _*) >>
                     serverEndpoint.logic(MEG)(input)
-                }.leftSemiflatTap { e =>
-                  Trace[G].setStatus(errorToSpanStatus(e))
+                }.semiflatTap { output =>
+                  Trace[G].putAll(SttpHeaders.responseFields(outHeadersGetter.get(output), dropHeadersWhen): _*)
+                }.leftSemiflatTap { err =>
+                  Trace[G].setStatus(errorToSpanStatus(err))
                 }.mapK(lower)
               }
               .value
@@ -47,7 +50,8 @@ object ServerEndpointTracer {
   def injectRecoverErrors[I, E <: Throwable, O, R, F[_], G[_], Ctx](
     serverEndpoint: ServerEndpoint[I, E, O, R, G],
     k: ResourceKleisli[F, I, Ctx],
-    headersGetter: Getter[I, Headers],
+    inHeadersGetter: Getter[I, Headers],
+    outHeadersGetter: Getter[O, Headers],
     errorToSpanStatus: TapirStatusMapping[E],
     dropHeadersWhen: String => Boolean
   )(implicit
@@ -58,6 +62,13 @@ object ServerEndpointTracer {
     eClassTag: ClassTag[E]
   ): ServerEndpoint[I, E, O, R, F] =
     serverEndpoint.copy(logic =
-      inject(serverEndpoint, k.attemptNarrow[E], headersGetter, errorToSpanStatus, dropHeadersWhen).logic
+      inject(
+        serverEndpoint,
+        k.attemptNarrow[E],
+        inHeadersGetter,
+        outHeadersGetter,
+        errorToSpanStatus,
+        dropHeadersWhen
+      ).logic
     )
 }

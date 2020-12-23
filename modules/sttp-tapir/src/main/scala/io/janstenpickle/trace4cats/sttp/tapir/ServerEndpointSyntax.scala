@@ -16,7 +16,8 @@ trait ServerEndpointSyntax {
   implicit class TracedServerEndpoint[I, E, O, R, F[_], G[_]](serverEndpoint: ServerEndpoint[I, E, O, R, G]) {
     def inject(
       entryPoint: EntryPoint[F],
-      headersGetter: Getter[I, Headers],
+      inHeadersGetter: Getter[I, Headers] = _ => Headers(Nil),
+      outHeadersGetter: Getter[O, Headers] = _ => Headers(Nil),
       spanNamer: TapirSpanNamer[I] = TapirSpanNamer.methodWithPathTemplate,
       dropHeadersWhen: String => Boolean = HeaderNames.isSensitive,
       errorToSpanStatus: TapirStatusMapping[E] = TapirStatusMapping.errorStringToInternal
@@ -28,21 +29,30 @@ trait ServerEndpointSyntax {
     ): ServerEndpoint[I, E, O, R, F] = {
       val inputSpanNamer = spanNamer(serverEndpoint.endpoint, _)
       val context = TapirResourceKleislis
-        .fromHeaders(headersGetter, inputSpanNamer)(entryPoint.toKleisli)
+        .fromHeaders(inHeadersGetter, inputSpanNamer)(entryPoint.toKleisli)
         .map(_.asRight[E])
-      ServerEndpointTracer.inject(serverEndpoint, context, headersGetter, errorToSpanStatus, dropHeadersWhen)
+      ServerEndpointTracer.inject(
+        serverEndpoint,
+        context,
+        inHeadersGetter,
+        outHeadersGetter,
+        errorToSpanStatus,
+        dropHeadersWhen
+      )
     }
 
     def traced(
       k: ResourceKleisli[F, I, Span[F]],
-      headersGetter: Getter[I, Headers],
+      inHeadersGetter: Getter[I, Headers] = _ => Headers(Nil),
+      outHeadersGetter: Getter[O, Headers] = _ => Headers(Nil),
       dropHeadersWhen: String => Boolean = HeaderNames.isSensitive,
       errorToSpanStatus: TapirStatusMapping[E] = TapirStatusMapping.errorStringToInternal
     )(implicit P: Provide[F, G, Span[F]], F: BracketThrow[F], G: Monad[G], T: Trace[G]): ServerEndpoint[I, E, O, R, F] =
       ServerEndpointTracer.inject(
         serverEndpoint,
         k.map(_.asRight[E]),
-        headersGetter,
+        inHeadersGetter,
+        outHeadersGetter,
         errorToSpanStatus,
         dropHeadersWhen
       )
@@ -50,7 +60,8 @@ trait ServerEndpointSyntax {
     def injectContext[Ctx](
       entryPoint: EntryPoint[F],
       makeContext: (I, Span[F]) => F[Either[E, Ctx]],
-      headersGetter: Getter[I, Headers],
+      inHeadersGetter: Getter[I, Headers] = _ => Headers(Nil),
+      outHeadersGetter: Getter[O, Headers] = _ => Headers(Nil),
       spanNamer: TapirSpanNamer[I] = TapirSpanNamer.methodWithPathTemplate,
       dropHeadersWhen: String => Boolean = HeaderNames.isSensitive,
       errorToSpanStatus: TapirStatusMapping[E] = TapirStatusMapping.errorStringToInternal
@@ -58,21 +69,36 @@ trait ServerEndpointSyntax {
       val inputSpanNamer = spanNamer(serverEndpoint.endpoint, _)
       val context = TapirResourceKleislis.fromHeadersContext(
         makeContext,
-        headersGetter,
+        inHeadersGetter,
         inputSpanNamer,
         errorToSpanStatus,
         dropHeadersWhen
       )(entryPoint.toKleisli)
-      ServerEndpointTracer.inject(serverEndpoint, context, headersGetter, errorToSpanStatus, dropHeadersWhen)
+      ServerEndpointTracer.inject(
+        serverEndpoint,
+        context,
+        inHeadersGetter,
+        outHeadersGetter,
+        errorToSpanStatus,
+        dropHeadersWhen
+      )
     }
 
     def tracedContext[Ctx](
       k: ResourceKleisli[F, I, Either[E, Ctx]],
-      headersGetter: Getter[I, Headers],
+      inHeadersGetter: Getter[I, Headers] = _ => Headers(Nil),
+      outHeadersGetter: Getter[O, Headers] = _ => Headers(Nil),
       dropHeadersWhen: String => Boolean = HeaderNames.isSensitive,
       errorToSpanStatus: TapirStatusMapping[E] = TapirStatusMapping.errorStringToInternal
     )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F], G: Monad[G], T: Trace[G]): ServerEndpoint[I, E, O, R, F] =
-      ServerEndpointTracer.inject(serverEndpoint, k, headersGetter, errorToSpanStatus, dropHeadersWhen)
+      ServerEndpointTracer.inject(
+        serverEndpoint,
+        k,
+        inHeadersGetter,
+        outHeadersGetter,
+        errorToSpanStatus,
+        dropHeadersWhen
+      )
   }
 
   implicit class TracedServerEndpointRecoverErrors[I, E <: Throwable, O, R, F[_], G[_]](
@@ -81,7 +107,8 @@ trait ServerEndpointSyntax {
     def injectContextRecoverErrors[Ctx](
       entryPoint: EntryPoint[F],
       makeContext: (I, Span[F]) => F[Ctx],
-      headersGetter: Getter[I, Headers],
+      inHeadersGetter: Getter[I, Headers] = _ => Headers(Nil),
+      outHeadersGetter: Getter[O, Headers] = _ => Headers(Nil),
       spanNamer: TapirSpanNamer[I] = TapirSpanNamer.methodWithPathTemplate,
       dropHeadersWhen: String => Boolean = HeaderNames.isSensitive,
       errorToSpanStatus: TapirStatusMapping[E] = TapirStatusMapping.errorMessageToInternal
@@ -95,7 +122,7 @@ trait ServerEndpointSyntax {
       val inputSpanNamer = spanNamer(serverEndpoint.endpoint, _)
       val context = TapirResourceKleislis.fromHeadersContextRecoverErrors(
         makeContext,
-        headersGetter,
+        inHeadersGetter,
         inputSpanNamer,
         errorToSpanStatus,
         dropHeadersWhen
@@ -104,7 +131,8 @@ trait ServerEndpointSyntax {
       ServerEndpointTracer.injectRecoverErrors(
         serverEndpoint,
         context,
-        headersGetter,
+        inHeadersGetter,
+        outHeadersGetter,
         errorToSpanStatus,
         dropHeadersWhen
       )
@@ -112,7 +140,8 @@ trait ServerEndpointSyntax {
 
     def tracedContextRecoverErrors[Ctx](
       k: ResourceKleisli[F, I, Ctx],
-      headersGetter: Getter[I, Headers],
+      inHeadersGetter: Getter[I, Headers] = _ => Headers(Nil),
+      outHeadersGetter: Getter[O, Headers] = _ => Headers(Nil),
       dropHeadersWhen: String => Boolean = HeaderNames.isSensitive,
       errorToSpanStatus: TapirStatusMapping[E] = TapirStatusMapping.errorStringToInternal
     )(implicit
@@ -122,6 +151,13 @@ trait ServerEndpointSyntax {
       T: Trace[G],
       eClassTag: ClassTag[E]
     ): ServerEndpoint[I, E, O, R, F] =
-      ServerEndpointTracer.injectRecoverErrors(serverEndpoint, k, headersGetter, errorToSpanStatus, dropHeadersWhen)
+      ServerEndpointTracer.injectRecoverErrors(
+        serverEndpoint,
+        k,
+        inHeadersGetter,
+        outHeadersGetter,
+        errorToSpanStatus,
+        dropHeadersWhen
+      )
   }
 }

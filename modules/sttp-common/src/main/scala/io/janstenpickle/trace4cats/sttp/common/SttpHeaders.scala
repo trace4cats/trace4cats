@@ -5,11 +5,21 @@ import sttp.model.HeaderNames.isSensitive
 import sttp.model.{Header, Headers}
 
 object SttpHeaders {
-  def headerFields(hs: Headers, dropHeadersWhen: String => Boolean = isSensitive): List[(String, AttributeValue)] =
+  def requestFields(hs: Headers, dropHeadersWhen: String => Boolean = isSensitive): List[(String, AttributeValue)] =
+    headerFields(hs, "req", dropHeadersWhen)
+
+  def responseFields(hs: Headers, dropHeadersWhen: String => Boolean = isSensitive): List[(String, AttributeValue)] =
+    headerFields(hs, "resp", dropHeadersWhen)
+
+  def headerFields(
+    hs: Headers,
+    `type`: String,
+    dropHeadersWhen: String => Boolean = isSensitive
+  ): List[(String, AttributeValue)] =
     hs.headers
       .filter(h => !dropHeadersWhen(h.name))
       .map { h =>
-        (s"req.header.${h.name}", h.value: AttributeValue)
+        (s"${`type`}.header.${h.name}", h.value: AttributeValue)
       }
       .toList
 
