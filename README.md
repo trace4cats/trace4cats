@@ -42,7 +42,8 @@ Trace4Cats supports publishing spans to the following systems:
 Instrumentation for trace propagation and continuation is available for the following libraries
 
 - [Http4s] client and server
-- [Sttp] client
+- [Sttp] client v2 and v3
+- [Tapir]
 - [FS2 Kafka] consumer and producer
 - [FS2]
 
@@ -154,6 +155,8 @@ To use Trace4Cats within your application add the dependencies listed below as n
 "io.janstenpickle" %% "trace4cats-http4s-client" % "0.7.0"
 "io.janstenpickle" %% "trace4cats-http4s-server" % "0.7.0"
 "io.janstenpickle" %% "trace4cats-sttp-client" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-sttp-client3" % "0.7.0"
+"io.janstenpickle" %% "trace4cats-sttp-tapir" % "0.7.0"
 "io.janstenpickle" %% "trace4cats-natchez" % "0.7.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.7.0"
 "io.janstenpickle" %% "trace4cats-avro-kafka-exporter" % "0.7.0"
@@ -201,4 +204,5 @@ This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-
 [`Resource`]: https://typelevel.org/cats-effect/datatypes/resource.html
 [ZIO]: https://zio.dev
 [Sttp]: https://sttp.softwaremill.com
+[Tapir]: https://tapir.softwaremill.com
 [FS2 Kafka]: https://fd4s.github.io/fs2-kafka/
