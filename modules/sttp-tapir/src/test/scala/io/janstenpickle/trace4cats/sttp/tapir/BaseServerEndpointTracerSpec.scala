@@ -90,7 +90,7 @@ abstract class BaseServerEndpointTracerSpec[F[_]: Concurrent: ContextShift: Time
         completer <- Resource.liftF(RefSpanCompleter[F]("test"))
         ep = EntryPoint[F](SpanSampler.always[F], completer)
         serverEndpoints = injectEndpoints(ep)
-        app = serverEndpoints.toRoutes.orNotFound
+        app = Http4sServerInterpreter.toRoutes(serverEndpoints).orNotFound
       } yield (app, completer))
         .use { case (app, completer) =>
           for {
