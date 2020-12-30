@@ -5,8 +5,7 @@ import cats.effect.IO
 import cats.{~>, Id}
 import io.janstenpickle.trace4cats.http4s.common.TraceContext
 import io.janstenpickle.trace4cats.http4s.server.syntax._
-
-import scala.concurrent.ExecutionContext
+import io.janstenpickle.trace4cats.http4s.server.Instances._
 
 class ResourceKleisliServerCtxSyntaxSpec
     extends BaseServerTracerSpec[IO, Kleisli[IO, TraceContext[IO], *]](
@@ -21,6 +20,5 @@ class ResourceKleisliServerCtxSyntaxSpec
         app.tracedContext(
           Http4sResourceKleislis
             .fromHeadersContext(TraceContext.make[IO], requestFilter = filter)(ep.toKleisli)
-        ),
-      IO.timer(ExecutionContext.global)
+        )
     )

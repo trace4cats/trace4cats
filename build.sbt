@@ -115,6 +115,9 @@ lazy val root = (project in file("."))
     `stackdriver-grpc-exporter`,
     `stackdriver-http-exporter`,
     `sttp-client`,
+    `sttp-client3`,
+    `sttp-common`,
+    `sttp-tapir`,
     `kafka-client`,
     `graal-kafka`,
     natchez,
@@ -149,7 +152,7 @@ lazy val example = (project in file("modules/example"))
       Dependencies.http4sBlazeClient,
       Dependencies.http4sBlazeServer,
       Dependencies.http4sDsl,
-      Dependencies.sttpHttp4s
+      Dependencies.sttpClient2Http4s
     )
   )
   .dependsOn(
@@ -541,23 +544,6 @@ lazy val `http4s-common` = (project in file("modules/http4s-common"))
   )
   .dependsOn(model, inject % "test->compile", test % "test->compile")
 
-lazy val `sttp-client` = (project in file("modules/sttp-client"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-sttp-client",
-    libraryDependencies ++= Seq(Dependencies.sttpClient),
-    libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.http4sDsl, Dependencies.sttpHttp4s)).map(_ % Test)
-  )
-  .dependsOn(
-    model,
-    kernel,
-    core,
-    inject,
-    test              % "test->compile",
-    `exporter-common` % "test->compile",
-    `http4s-common`   % "test->test"
-  )
-
 lazy val `http4s-client` = (project in file("modules/http4s-client"))
   .settings(publishSettings)
   .settings(
@@ -588,6 +574,76 @@ lazy val `http4s-server` = (project in file("modules/http4s-server"))
     inject,
     `http4s-common`   % "compile->compile;test->test",
     `exporter-common` % "test->compile"
+  )
+
+lazy val `sttp-client` = (project in file("modules/sttp-client"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-sttp-client",
+    libraryDependencies ++= Seq(Dependencies.sttpClient2),
+    libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.http4sDsl, Dependencies.sttpClient2Http4s))
+      .map(_ % Test)
+  )
+  .dependsOn(
+    model,
+    kernel,
+    core,
+    inject,
+    test              % "test->compile",
+    `exporter-common` % "test->compile",
+    `http4s-common`   % "test->test"
+  )
+
+lazy val `sttp-client3` = (project in file("modules/sttp-client3"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-sttp-client3",
+    libraryDependencies ++= Seq(Dependencies.sttpClient3),
+    libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.http4sDsl, Dependencies.sttpClient3Http4s))
+      .map(_ % Test)
+  )
+  .dependsOn(
+    model,
+    kernel,
+    core,
+    inject,
+    `sttp-common`,
+    test              % "test->compile",
+    `exporter-common` % "test->compile",
+    `http4s-common`   % "test->test"
+  )
+
+lazy val `sttp-common` = (project in file("modules/sttp-common"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-sttp-common",
+    libraryDependencies ++= Seq(Dependencies.sttpModel),
+    libraryDependencies ++= Dependencies.test
+  )
+  .dependsOn(model, test % "test->compile")
+
+lazy val `sttp-tapir` = (project in file("modules/sttp-tapir"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-sttp-tapir",
+    libraryDependencies ++= Seq(Dependencies.sttpTapir),
+    libraryDependencies ++= (Dependencies.test ++ Seq(
+      Dependencies.circeGeneric,
+      Dependencies.http4sClient,
+      Dependencies.sttpTapirJsonCirce,
+      Dependencies.sttpTapirHttp4s
+    ))
+      .map(_ % Test)
+  )
+  .dependsOn(
+    model,
+    kernel,
+    core,
+    inject,
+    `sttp-common`,
+    test              % "test->compile",
+    `exporter-common` % "test->compile",
+    `http4s-common`   % "test->test"
   )
 
 lazy val natchez = (project in file("modules/natchez"))

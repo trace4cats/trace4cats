@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.http4s.server
 import java.util.UUID
 
 import cats.data.NonEmptyList
-import cats.effect.{ConcurrentEffect, Resource, Sync, Timer}
+import cats.effect.{Resource, Sync, Timer}
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -26,18 +26,16 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.immutable.Queue
 
-abstract class BaseServerTracerSpec[F[_]: ConcurrentEffect, G[_]: Sync](
+abstract class BaseServerTracerSpec[F[_]: Sync: Timer, G[_]: Sync](
   unsafeRunK: F ~> Id,
   noopProvideK: G ~> F,
   injectRoutes: (HttpRoutes[G], Http4sRequestFilter, EntryPoint[F]) => HttpRoutes[F],
-  injectApp: (HttpApp[G], Http4sRequestFilter, EntryPoint[F]) => HttpApp[F],
-  timer: Timer[F]
+  injectApp: (HttpApp[G], Http4sRequestFilter, EntryPoint[F]) => HttpApp[F]
 ) extends AnyFlatSpec
     with ScalaCheckDrivenPropertyChecks
     with Matchers
     with ServerSyntax
     with Http4sDsl[G] {
-  implicit val t: Timer[F] = timer
 
   implicit val responseArb: Arbitrary[G[Response[G]]] =
     Arbitrary(
