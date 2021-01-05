@@ -27,7 +27,7 @@ class Endpoints[F[_]: Sync, G[_]: BracketThrow: Trace] {
     endpoint.get
       .in("devices" / path[Int]("deviceId"))
       .in(header[Option[String]]("X-Auth-Token"))
-      .in(headers.mapTo(Headers))
+      .in(headers.map(Headers.apply _)(_.headers.toList))
       .out(anyJsonBody[Device])
       .errorOut(ErrorInfo.endpointOutput)
       .serverLogic { case (id, _, _) =>
@@ -41,7 +41,7 @@ class Endpoints[F[_]: Sync, G[_]: BracketThrow: Trace] {
     endpoint.get
       .in("vendors" / path[Int]("vendorId"))
       .in(header[Option[String]]("X-Auth-Token"))
-      .in(headers.mapTo(Headers))
+      .in(headers.map(Headers.apply _)(_.headers.toList))
       .out(anyJsonBody[Vendor])
       .errorOut(ErrorInfoException.endpointOutput)
       .serverLogicRecoverErrors { case (id, _, _) =>
