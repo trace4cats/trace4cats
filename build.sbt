@@ -19,6 +19,7 @@ lazy val commonSettings = Seq(
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
   addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.11.2").cross(CrossVersion.patch)),
   libraryDependencies ++= Seq(Dependencies.cats, Dependencies.collectionCompat),
+  scalacOptions += "-Wconf:src=src_managed/.*:s,any:wv",
   bintrayRepository := "trace4cats",
   releaseEarlyWith in Global := SonatypePublisher,
   credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials"),

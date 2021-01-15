@@ -86,8 +86,8 @@ object Dependencies {
   lazy val micronautCore = "io.micronaut"                       % "micronaut-core"                  % Versions.micronaut
   lazy val natchez = "org.tpolecat"                            %% "natchez-core"                    % Versions.natchez
   lazy val openTelemetrySdk = "io.opentelemetry"                % "opentelemetry-sdk"               % Versions.openTelemetry
-  lazy val openTelemetryOtlpExporter = "io.opentelemetry"       % "opentelemetry-exporters-otlp"    % Versions.openTelemetry
-  lazy val openTelemetryJaegerExporter = "io.opentelemetry"     % "opentelemetry-exporters-jaeger"  % Versions.openTelemetry
+  lazy val openTelemetryOtlpExporter = "io.opentelemetry"       % "opentelemetry-exporter-otlp"     % Versions.openTelemetry
+  lazy val openTelemetryJaegerExporter = "io.opentelemetry"     % "opentelemetry-exporter-jaeger"   % Versions.openTelemetry
   lazy val openTelemetryProto = "io.opentelemetry"              % "opentelemetry-proto"             % Versions.openTelemetry
   lazy val redis4cats = "dev.profunktor"                       %% "redis4cats-effects"              % Versions.redis4cats
   lazy val redis4catsLog4cats = "dev.profunktor"               %% "redis4cats-log4cats"             % Versions.redis4cats

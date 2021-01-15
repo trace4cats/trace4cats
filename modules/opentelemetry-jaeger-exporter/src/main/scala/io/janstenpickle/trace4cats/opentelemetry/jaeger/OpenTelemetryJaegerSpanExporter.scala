@@ -4,7 +4,7 @@ import cats.Foldable
 import cats.effect.{Async, ContextShift, Resource, Timer}
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.common.OpenTelemetryGrpcSpanExporter
-import io.opentelemetry.exporters.jaeger.JaegerGrpcSpanExporter
+import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
 
 object OpenTelemetryJaegerSpanExporter {
   def apply[F[_]: Async: ContextShift: Timer, G[_]: Foldable](
@@ -15,7 +15,7 @@ object OpenTelemetryJaegerSpanExporter {
     OpenTelemetryGrpcSpanExporter(
       host,
       port,
-      channel => JaegerGrpcSpanExporter.newBuilder().setChannel(channel).setServiceName(serviceName).build()
+      channel => JaegerGrpcSpanExporter.builder().setChannel(channel).setServiceName(serviceName).build()
     )
 
 }

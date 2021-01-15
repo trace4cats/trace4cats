@@ -14,7 +14,7 @@ import io.opentelemetry.proto.common.v1.common._
 import io.opentelemetry.proto.resource.v1.resource.Resource
 import io.opentelemetry.proto.trace.v1.trace.Span.SpanKind._
 import io.opentelemetry.proto.trace.v1.trace.Span.Event
-import io.opentelemetry.proto.trace.v1.trace.Status.StatusCode
+import io.opentelemetry.proto.trace.v1.trace.Status.{DeprecatedStatusCode, StatusCode}
 import io.opentelemetry.proto.trace.v1.trace.Status.StatusCode._
 import io.opentelemetry.proto.trace.v1.trace.{InstrumentationLibrarySpans, ResourceSpans, Span, Status}
 import org.apache.commons.codec.binary.Hex
@@ -56,26 +56,11 @@ object Convert {
       attributes = toAttributes(span.allAttributes),
       status = Some(
         Status(
-          span.status match {
-            case Ok => STATUS_CODE_OK
-            case Cancelled => STATUS_CODE_CANCELLED
-            case Unknown => STATUS_CODE_UNKNOWN_ERROR
-            case InvalidArgument => STATUS_CODE_INVALID_ARGUMENT
-            case DeadlineExceeded => STATUS_CODE_DEADLINE_EXCEEDED
-            case NotFound => STATUS_CODE_NOT_FOUND
-            case AlreadyExists => STATUS_CODE_ALREADY_EXISTS
-            case PermissionDenied => STATUS_CODE_PERMISSION_DENIED
-            case ResourceExhausted => STATUS_CODE_RESOURCE_EXHAUSTED
-            case FailedPrecondition => STATUS_CODE_FAILED_PRECONDITION
-            case Aborted => STATUS_CODE_ABORTED
-            case OutOfRange => STATUS_CODE_OUT_OF_RANGE
-            case Unimplemented => STATUS_CODE_UNIMPLEMENTED
-            case Internal(_) => STATUS_CODE_INTERNAL_ERROR
-            case Unavailable => STATUS_CODE_UNAVAILABLE
-            case DataLoss => STATUS_CODE_DATA_LOSS
-            case Unauthenticated => STATUS_CODE_UNAUTHENTICATED
+          code = span.status match {
+            case s if s.isOk => STATUS_CODE_OK
+            case _ => STATUS_CODE_ERROR
           },
-          span.status match {
+          message = span.status match {
             case Internal(message) => message
             case _ => ""
           }
@@ -142,6 +127,7 @@ object Convert {
   implicit val eventEncoder: Encoder[Event] = deriveConfiguredEncoder
   implicit val linkEncoder: Encoder[Span.Link] = deriveConfiguredEncoder
   implicit val statusCodeEncoder: Encoder[StatusCode] = Encoder.encodeInt.contramap(_.value)
+  implicit val deprecatedStatusCodeEncoder: Encoder[DeprecatedStatusCode] = Encoder.encodeInt.contramap(_.value)
   implicit val statusEncoder: Encoder[Status] = deriveConfiguredEncoder
 
   implicit val spanEncoder: Encoder[Span] = deriveConfiguredEncoder
