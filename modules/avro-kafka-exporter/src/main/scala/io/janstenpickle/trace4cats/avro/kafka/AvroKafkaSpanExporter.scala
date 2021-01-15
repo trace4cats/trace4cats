@@ -61,7 +61,8 @@ object AvroKafkaSpanExporter {
     Resource
       .liftF(AvroInstances.completedSpanCodec.schema.leftMap(_.throwable).map(valueSerializer[F]).liftTo[F])
       .flatMap { implicit ser =>
-        KafkaProducer.resource[F]
+        KafkaProducer
+          .resource[F]
           .using(
             modifySettings(
               ProducerSettings[F, TraceId, CompletedSpan]
