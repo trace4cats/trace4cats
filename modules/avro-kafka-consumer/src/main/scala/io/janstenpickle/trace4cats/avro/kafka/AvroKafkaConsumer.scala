@@ -57,7 +57,7 @@ object AvroKafkaConsumer {
         .flatMap { schema =>
           implicit val deser: Deserializer[F, Option[CompletedSpan]] = valueDeserializer[F](schema)
 
-          consumerStream(
+          KafkaConsumer.stream(
             modifySettings(
               ConsumerSettings[F, Option[TraceId], Option[CompletedSpan]]
                 .withBootstrapServers(bootStrapServers.mkString_(","))
