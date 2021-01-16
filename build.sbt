@@ -17,7 +17,7 @@ lazy val commonSettings = Seq(
   ),
   javacOptions in (Compile, compile) ++= Seq("-source", "1.8", "-target", "1.8"),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
-  addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.11.2").cross(CrossVersion.patch)),
+  addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.11.3").cross(CrossVersion.patch)),
   libraryDependencies ++= Seq(Dependencies.cats, Dependencies.collectionCompat),
   bintrayRepository := "trace4cats",
   releaseEarlyWith in Global := SonatypePublisher,
