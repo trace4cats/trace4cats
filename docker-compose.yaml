@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   otelcol:
-    image: otel/opentelemetry-collector:latest
+    image: otel/opentelemetry-collector:0.18.0
     ports:
       - "55680:55680"
       - "55681:55681"
@@ -14,7 +14,7 @@ services:
       - jaeger
 
   jaeger:
-    image: jaegertracing/all-in-one:latest
+    image: jaegertracing/all-in-one:1.21.0
     ports:
       - "5775:5775/udp"
       - "6831:6831/udp"
@@ -28,7 +28,7 @@ services:
       COLLECTOR_ZIPKIN_HTTP_PORT: 9411
 
   dd-agent:
-    image: datadog/agent:latest
+    image: datadog/agent:7
     ports:
       - "8126:8126"
     volumes:
