@@ -31,7 +31,7 @@ class OpenTelemetryOtlpGrpcSpanExporterSpec extends BaseJaegerSpec {
         process,
         SemanticTags.kindTags,
         SemanticTags.statusTags("", statusCode, requireMessage = false),
-        Map("otlp.instrumentation.library.name" -> "trace4cats")
+        additionalTags
       ),
       checkProcess = false
     )

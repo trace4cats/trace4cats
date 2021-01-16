@@ -1,7 +1,6 @@
 package io.janstenpickle.trace4cats.opentelemetry.otlp
 
 import java.time.Instant
-
 import cats.effect.IO
 import fs2.Chunk
 import io.janstenpickle.trace4cats.`export`.SemanticTags
@@ -26,7 +25,7 @@ class OpenTelemetryOtlpGrpcSpanCompleterSpec extends BaseJaegerSpec {
         TraceProcess(serviceName),
         SemanticTags.kindTags,
         SemanticTags.statusTags("", statusCode, requireMessage = false),
-        Map("otlp.instrumentation.library.name" -> "trace4cats")
+        additionalTags
       ),
       checkProcess = false
     )

@@ -21,13 +21,7 @@ class OpenTelemetryJaegerSpanCompleterSpec extends BaseJaegerSpec {
       OpenTelemetryJaegerSpanCompleter[IO](process, "localhost", 14250, batchTimeout = 50.millis),
       updatedSpan,
       process,
-      batchToJaegerResponse(
-        batch,
-        process,
-        SemanticTags.kindTags,
-        SemanticTags.statusTags("span.", statusCode),
-        Map("otel.library.name" -> "trace4cats")
-      ),
+      batchToJaegerResponse(batch, process, SemanticTags.kindTags, statusTags, additionalTags),
       checkProcess = false
     )
   }
