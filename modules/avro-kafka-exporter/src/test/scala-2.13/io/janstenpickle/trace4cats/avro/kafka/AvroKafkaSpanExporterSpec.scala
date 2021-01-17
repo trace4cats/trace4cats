@@ -8,8 +8,6 @@ import cats.syntax.foldable._
 import cats.syntax.show._
 import fs2.Chunk
 import fs2.kafka.{AutoOffsetReset, ConsumerSettings, Deserializer, KafkaConsumer}
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.avro.AvroInstances
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceId}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
@@ -31,8 +29,6 @@ class AvroKafkaSpanExporterSpec
     with ArbitraryInstances {
   implicit val contextShift = IO.contextShift(ExecutionContext.global)
   implicit val timer = IO.timer(ExecutionContext.global)
-
-  implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 3, maxDiscardedFactor = 50.0)
