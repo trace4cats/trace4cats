@@ -4,7 +4,6 @@ import cats.Eq
 import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.syntax.flatMap._
-import cats.syntax.show._
 import fs2.Chunk
 import io.janstenpickle.trace4cats.avro.AvroInstances
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan}
@@ -59,7 +58,7 @@ class AvroKafkaSpanExporterSpec
           .unsafeRunSync()
 
         res.size should be(batch.spans.size)
-        assert(Eq.eqv(res.sortBy(_.context.spanId.show), batch.spans.toList.sortBy(_.context.spanId.show)))
+        assert(Eq.eqv(res, batch.spans.toList))
       }
   }
 }
