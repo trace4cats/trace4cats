@@ -26,13 +26,7 @@ class OpenTelemetryJaegerSpanExporterSpec extends BaseJaegerSpec {
     testExporter(
       OpenTelemetryJaegerSpanExporter[IO, Chunk]("localhost", 14250, process.serviceName),
       updatedBatch,
-      batchToJaegerResponse(
-        updatedBatch,
-        process,
-        SemanticTags.kindTags,
-        SemanticTags.statusTags("span.", statusCode),
-        Map("otel.library.name" -> "trace4cats")
-      ),
+      batchToJaegerResponse(updatedBatch, process, SemanticTags.kindTags, statusTags, additionalTags),
       checkProcess = false
     )
   }

@@ -26,10 +26,10 @@ object Dependencies {
     val logback = "1.2.3"
     val micronaut = "2.2.3"
     val natchez = "0.0.18"
-    val openTelemetry = "0.9.1"
+    val openTelemetry = "0.14.1"
     val redis4cats = "0.11.1"
     val scaffeine = "4.0.2"
-    val scala212 = "2.12.12"
+    val scala212 = "2.12.13"
     val scala213 = "2.13.4"
     val scalapb = "0.10.3"
     val sttpClient2 = "2.2.9"
@@ -86,8 +86,8 @@ object Dependencies {
   lazy val micronautCore = "io.micronaut"                       % "micronaut-core"                  % Versions.micronaut
   lazy val natchez = "org.tpolecat"                            %% "natchez-core"                    % Versions.natchez
   lazy val openTelemetrySdk = "io.opentelemetry"                % "opentelemetry-sdk"               % Versions.openTelemetry
-  lazy val openTelemetryOtlpExporter = "io.opentelemetry"       % "opentelemetry-exporters-otlp"    % Versions.openTelemetry
-  lazy val openTelemetryJaegerExporter = "io.opentelemetry"     % "opentelemetry-exporters-jaeger"  % Versions.openTelemetry
+  lazy val openTelemetryOtlpExporter = "io.opentelemetry"       % "opentelemetry-exporter-otlp"     % Versions.openTelemetry
+  lazy val openTelemetryJaegerExporter = "io.opentelemetry"     % "opentelemetry-exporter-jaeger"   % Versions.openTelemetry
   lazy val openTelemetryProto = "io.opentelemetry"              % "opentelemetry-proto"             % Versions.openTelemetry
   lazy val redis4cats = "dev.profunktor"                       %% "redis4cats-effects"              % Versions.redis4cats
   lazy val redis4catsLog4cats = "dev.profunktor"               %% "redis4cats-log4cats"             % Versions.redis4cats

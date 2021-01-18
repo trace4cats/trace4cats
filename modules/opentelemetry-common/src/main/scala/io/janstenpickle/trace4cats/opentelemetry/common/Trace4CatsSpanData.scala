@@ -2,17 +2,15 @@ package io.janstenpickle.trace4cats.opentelemetry.common
 
 import java.util
 import java.util.concurrent.TimeUnit
-
 import cats.syntax.show._
 import io.janstenpickle.trace4cats.model.SpanStatus._
 import io.janstenpickle.trace4cats.model.TraceState.{Key, Value}
 import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind}
-import io.opentelemetry.common.ReadableAttributes
+import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.common.InstrumentationLibraryInfo
 import io.opentelemetry.sdk.resources.Resource
-import io.opentelemetry.sdk.trace.data.SpanData.Status
-import io.opentelemetry.sdk.trace.data.{ImmutableLink, ImmutableStatus, SpanData}
-import io.opentelemetry.trace._
+import io.opentelemetry.sdk.trace.data.{EventData, LinkData, SpanData, StatusData}
+import io.opentelemetry.api.trace._
 
 import scala.jdk.CollectionConverters._
 
@@ -54,31 +52,34 @@ object Trace4CatsSpanData {
 
       override lazy val getStartEpochNanos: Long = TimeUnit.MILLISECONDS.toNanos(span.start.toEpochMilli)
 
-      override val getAttributes: ReadableAttributes = Trace4CatsReadableAttributes(span.allAttributes)
+      override val getAttributes: Attributes = Trace4CatsAttributes(span.allAttributes)
 
-      override lazy val getEvents: util.List[SpanData.Event] = List.empty.asJava
+      override lazy val getEvents: util.List[EventData] = List.empty.asJava
 
-      override lazy val getLinks: util.List[SpanData.Link] =
+      override lazy val getLinks: util.List[LinkData] =
         span.links
-          .fold(List.empty[SpanData.Link])(_.map { link =>
-            ImmutableLink.create(
+          .fold(List.empty[LinkData])(_.map { link =>
+            LinkData.create(
               SpanContext.create(link.traceId.show, link.spanId.show, TraceFlags.getSampled, TraceState.getDefault)
             )
           }.toList)
           .asJava
 
-      override lazy val getStatus: Status =
+      override lazy val getStatus: StatusData =
         span.status match {
-          case Ok => ImmutableStatus.OK
-          case Internal(message) => ImmutableStatus.create(StatusCanonicalCode.ERROR, message)
-          case _ => ImmutableStatus.ERROR
+          case Ok => StatusData.ok()
+          case Internal(message) => StatusData.create(StatusCode.ERROR, message)
+          case _ => StatusData.error()
         }
 
       override lazy val getEndEpochNanos: Long = TimeUnit.MILLISECONDS.toNanos(span.end.toEpochMilli)
 
-      override lazy val getHasRemoteParent: Boolean = span.context.parent.fold(false)(_.isRemote)
+      override lazy val getParentSpanContext: SpanContext =
+        span.context.parent.fold(SpanContext.getInvalid) { p =>
+          SpanContext.create(span.context.traceId.show, p.spanId.show, TraceFlags.getSampled, TraceState.getDefault)
+        }
 
-      override lazy val getHasEnded: Boolean = true
+      override def hasEnded: Boolean = true
 
       override def getTotalRecordedEvents: Int = 0
 

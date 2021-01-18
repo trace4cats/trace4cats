@@ -19,6 +19,15 @@ lazy val commonSettings = Seq(
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
   addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.11.3").cross(CrossVersion.patch)),
   libraryDependencies ++= Seq(Dependencies.cats, Dependencies.collectionCompat),
+  scalacOptions := {
+    val opts = scalacOptions.value :+ "-Wconf:src=src_managed/.*:s,any:wv"
+
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 12)) => opts.filterNot(Set("-Xfatal-warnings"))
+      case _ => opts
+    }
+  },
+  fork in Test := true,
   bintrayRepository := "trace4cats",
   releaseEarlyWith in Global := SonatypePublisher,
   credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials"),
