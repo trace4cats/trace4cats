@@ -3,9 +3,8 @@ package io.janstenpickle.trace4cats.avro.kafka
 import cats.Eq
 import cats.data.NonEmptyList
 import cats.effect.IO
+import cats.syntax.flatMap._
 import fs2.Chunk
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.avro.AvroInstances
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
@@ -29,8 +28,6 @@ class AvroKafkaSpanExporterSpec
   implicit val contextShift = IO.contextShift(ExecutionContext.global)
   implicit val timer = IO.timer(ExecutionContext.global)
 
-  implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
-
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 3, maxDiscardedFactor = 50.0)
 
@@ -53,17 +50,15 @@ class AvroKafkaSpanExporterSpec
   it should "serialize a batch of spans to kafka" in withRunningKafkaOnFoundPort(userDefinedConfig) {
     implicit actualConfig =>
       forAll { (batch: Batch[Chunk]) =>
-        AvroKafkaSpanExporter[IO, Chunk](NonEmptyList.one(s"localhost:${actualConfig.kafkaPort}"), "test")
+        val res = AvroKafkaSpanExporter[IO, Chunk](NonEmptyList.one(s"localhost:${actualConfig.kafkaPort}"), "test")
           .use { exporter =>
-            exporter.exportBatch(batch)
+            exporter.exportBatch(batch) >>
+              IO(consumeNumberMessagesFrom[CompletedSpan]("test", batch.spans.size))
           }
           .unsafeRunSync()
-
-        val res = consumeNumberMessagesFrom[CompletedSpan]("test", batch.spans.size)
 
         res.size should be(batch.spans.size)
         assert(Eq.eqv(res, batch.spans.toList))
       }
-
   }
 }

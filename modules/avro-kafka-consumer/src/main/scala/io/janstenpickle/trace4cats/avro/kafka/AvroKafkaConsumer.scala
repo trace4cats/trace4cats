@@ -20,12 +20,12 @@ import org.apache.avro.io.DecoderFactory
 
 object AvroKafkaConsumer {
   implicit def keyDeserializer[F[_]: Sync]: Deserializer[F, Option[TraceId]] =
-    Deserializer.instance { (_, _, bytes) =>
+    Deserializer.lift { bytes =>
       Sync[F].delay(Option(bytes).flatMap(TraceId(_)))
     }
 
   def valueDeserializer[F[_]: Sync: Logger](schema: Schema): Deserializer[F, Option[CompletedSpan]] =
-    Deserializer.instance { (_, _, ba) =>
+    Deserializer.lift { ba =>
       Option(ba).flatTraverse { bytes =>
         Sync[F]
           .delay {
@@ -57,7 +57,7 @@ object AvroKafkaConsumer {
         .flatMap { schema =>
           implicit val deser: Deserializer[F, Option[CompletedSpan]] = valueDeserializer[F](schema)
 
-          consumerStream(
+          KafkaConsumer.stream(
             modifySettings(
               ConsumerSettings[F, Option[TraceId], Option[CompletedSpan]]
                 .withBootstrapServers(bootStrapServers.mkString_(","))

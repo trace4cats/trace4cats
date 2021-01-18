@@ -3,8 +3,7 @@ package io.janstenpickle.trace4cats.avro.kafka
 import java.io.ByteArrayOutputStream
 
 import cats.data.NonEmptyList
-import cats.effect.{ApplicativeThrow, ConcurrentEffect, ContextShift, Resource, Sync}
-import cats.syntax.applicativeError._
+import cats.effect.{ConcurrentEffect, ContextShift, Resource, Sync}
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
@@ -12,7 +11,6 @@ import cats.syntax.functor._
 import cats.syntax.show._
 import cats.{Foldable, Functor, Traverse}
 import fs2.kafka._
-import io.chrisdavenport.log4cats.Logger
 import io.janstenpickle.trace4cats.avro.AvroInstances
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceId}
@@ -24,7 +22,7 @@ import org.apache.kafka.clients.producer.ProducerConfig
 object AvroKafkaSpanExporter {
   implicit def keySerializer[F[_]: Sync]: Serializer[F, TraceId] = Serializer.string[F].contramap[TraceId](_.show)
   def valueSerializer[F[_]: Sync](schema: Schema): Serializer[F, CompletedSpan] =
-    Serializer.instance[F, CompletedSpan] { (_, _, span) =>
+    Serializer.lift[F, CompletedSpan] { span =>
       for {
         record <- AvroInstances.completedSpanCodec.encode(span).leftMap(_.throwable).liftTo[F]
         ba <-
@@ -52,7 +50,7 @@ object AvroKafkaSpanExporter {
       } yield ba
     }
 
-  def apply[F[_]: ConcurrentEffect: ContextShift: Logger, G[+_]: Functor: Traverse: Foldable](
+  def apply[F[_]: ConcurrentEffect: ContextShift, G[+_]: Functor: Traverse: Foldable](
     bootStrapServers: NonEmptyList[String],
     topic: String,
     modifySettings: ProducerSettings[F, TraceId, CompletedSpan] => ProducerSettings[F, TraceId, CompletedSpan] =
@@ -61,7 +59,8 @@ object AvroKafkaSpanExporter {
     Resource
       .liftF(AvroInstances.completedSpanCodec.schema.leftMap(_.throwable).map(valueSerializer[F]).liftTo[F])
       .flatMap { implicit ser =>
-        producerResource[F]
+        KafkaProducer
+          .resource[F]
           .using(
             modifySettings(
               ProducerSettings[F, TraceId, CompletedSpan]
@@ -72,7 +71,7 @@ object AvroKafkaSpanExporter {
           .map(fromProducer[F, G](_, topic))
       }
 
-  def fromProducer[F[_]: ApplicativeThrow: Logger, G[+_]: Functor: Traverse: Foldable](
+  def fromProducer[F[_]: Functor, G[+_]: Functor: Traverse: Foldable](
     producer: KafkaProducer[F, TraceId, CompletedSpan],
     topic: String
   ): SpanExporter[F, G] =
@@ -82,9 +81,6 @@ object AvroKafkaSpanExporter {
           .produce(ProducerRecords[G, TraceId, CompletedSpan](batch.spans.map { span =>
             ProducerRecord(topic, span.context.traceId, span)
           }))
-          .map(_.onError { case e =>
-            Logger[F].warn(e)("Failed to export record batch to Kafka")
-          })
           .void
     }
 }
