@@ -1,3 +1,61 @@
+## [0.8.0] - 2021-01-24
+
+Another substantial release, with a much improved typeclass hierarchy for generalising trace and request context
+injection.
+
+A big thank you to [@catostrophe] who as done most of the feature work for this release, especially with the new
+typclass hierarchy in [`base`].
+
+### Added
+
+* [`base`], [`base-laws`] and [`base-zio`]
+  - Typeclass hierarchy and basic optics to support trace/general context injection by [@catostrophe] ([#129](../../issues/129))
+  - Laws for the typeclasses defined in [`base`] by [@catostrophe] ([#129](../../issues/129))
+  - [ZIO] typeclass instances instances by [@catostrophe] ([#129](../../issues/129))
+
+* [`sttp-client3`]
+  - Syntax for lifting an [Sttp] version 3 client into a trace context by [@catostrophe] ([#128](../../issues/128))
+
+* [`sttp-tapir`]
+  - Syntax for lifting a [Tapir] server into a trace context by [@catostrophe] ([#128](../../issues/128))
+
+* [`docker-compose.yml`]
+  - Docker compose definition for use with tests ([#146](../../issues/146))
+  
+### Changed
+
+* [`model`]
+  - Add newtype for headers map by [@catostophe] ([#124](../../issues/124))
+  - Fix span reference mapping [@catostophe] ([#151](../../issues/151))
+ 
+* [`jaeger-thrift-exporter`]
+  - Fix span reference mapping [@catostophe] ([#151](../../issues/151))
+
+* [`opentelemetry-jaeger-exporter`]
+  - Fix span reference mapping [@catostophe] ([#151](../../issues/151))
+  
+* [`opentelemetry-otlp-grpc-exporter`]
+  - Fix span reference mapping [@catostophe] ([#151](../../issues/151))
+
+* [`opentelemetry-otlp-http-exporter`]
+  - Fix span reference mapping [@catostophe] ([#151](../../issues/151))
+
+* [`stackdriver-grpc-exporter`]
+  - Fix span reference mapping [@catostophe] ([#151](../../issues/151))
+
+* [`stackdriver-http-exporter`]
+  - Fix span reference mapping [@catostophe] ([#151](../../issues/151))
+  
+* [`http4s-client`]
+  - Remove http4s server in tests ([#184](../../pull/184))
+  
+* [`http4s-server`]
+  - Remove http4s server in tests ([#184](../../pull/184))
+  
+## Housekeeping
+
+[See a full list of updated libraries here.](../../pulls?q=is%3Apr+sort%3Aupdated-desc+is%3Amerged+updated%3A>2020-11-19++updated%3A<%3D2021-01-24+)
+  
 ## [0.7.0] - 2020-11-09
 
 The biggest release since [0.1.0], most notably this includes:
@@ -247,6 +305,9 @@ Initial Release
 [`model`]: modules/model
 [`kernel`]: modules/kernel
 [`core`]: modules/core
+[`base`]: modules/base
+[`base-laws`]: modules/base-laws
+[`base-zio`]: modules/base-zio
 [`inject`]: modules/inject
 [`inject-zio`]: modules/inject-zio
 [`fs2`]: modules/fs2
@@ -257,6 +318,8 @@ Initial Release
 [`http4s-client-zio`]: modules/http4s-client-zio
 [`http4s-server-zio`]: modules/http4s-server-zio
 [`sttp-client`]: modules/sttp-client
+[`sttp-client3`]: modules/sttp-client3
+[`sttp-tapir`]: modules/sttp-tapir
 [`sttp-client-zio`]: modules/sttp-client-zio
 [`test`]: modules/avro
 [`avro`]: modules/avro
@@ -287,14 +350,17 @@ Initial Release
 [`tail-sampling-cache-store`]: modules/tail-sampling-cache-store
 [`tail-sampling-redis-store`]: modules/tail-sampling-redis-store
 [`rate-sampling`]: modules/rate-sampling
+[`docker-compose.yml`]: docker-compose.yaml
 
 [Natchez]: https://github.com/tpolecat/natchez
 [FS2]: https://fs2.io
 [Http4s]: https://http4s.org
 [ZIO]: https://zio.dev
 [Sttp]: https://sttp.softwaremill.com
+[Tapir]: https://github.com/softwaremill/tapir
 [Kafka]: https://kafka.apache.org
 
+[0.8.0]: https://github.com/janstenpickle/trace4cats/compare/v0.7.0..v0.8.0
 [0.7.0]: https://github.com/janstenpickle/trace4cats/compare/v0.6.0..v0.7.0
 [0.6.0]: https://github.com/janstenpickle/trace4cats/compare/v0.5.2..v0.6.0
 [0.5.2]: https://github.com/janstenpickle/trace4cats/compare/v0.5.1..v0.5.2
