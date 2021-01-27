@@ -40,7 +40,7 @@ object Dependencies {
     val vulcan = "1.3.0"
     val zioInterop = "2.2.0.1"
 
-    val catsTestkitScalatest = "2.1.0"
+    val catsTestkitScalatest = "2.1.1"
     val disciplineScalatest = "2.1.1"
     val discipline = "1.1.3"
     val scalaCheck = "1.15.2"
