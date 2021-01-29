@@ -9,13 +9,8 @@ import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
 object OpenTelemetryJaegerSpanExporter {
   def apply[F[_]: Async: ContextShift: Timer, G[_]: Foldable](
     host: String = "localhost",
-    port: Int = 14250,
-    serviceName: String = "unknown"
+    port: Int = 14250
   ): Resource[F, SpanExporter[F, G]] =
-    OpenTelemetryGrpcSpanExporter(
-      host,
-      port,
-      channel => JaegerGrpcSpanExporter.builder().setChannel(channel).setServiceName(serviceName).build()
-    )
+    OpenTelemetryGrpcSpanExporter(host, port, channel => JaegerGrpcSpanExporter.builder().setChannel(channel).build())
 
 }

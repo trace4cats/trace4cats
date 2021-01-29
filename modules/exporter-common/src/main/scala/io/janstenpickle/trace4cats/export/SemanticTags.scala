@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.`export`
 
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus}
+import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus, TraceProcess}
 
 object SemanticTags {
   val kindString: SpanKind => String = {
@@ -31,4 +31,6 @@ object SemanticTags {
       }
     if (requireMessage) Map[String, AttributeValue](s"${prefix}status.message" -> "") ++ errorAttrs else errorAttrs
   }
+
+  val processTags: TraceProcess => Map[String, AttributeValue] = _.attributes
 }

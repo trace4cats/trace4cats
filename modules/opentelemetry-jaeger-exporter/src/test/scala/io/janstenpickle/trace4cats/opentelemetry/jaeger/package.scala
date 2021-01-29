@@ -1,8 +1,14 @@
 package io.janstenpickle.trace4cats.opentelemetry
 
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanStatus}
+import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus, TraceProcess}
+import io.janstenpickle.trace4cats.`export`.SemanticTags
 
 package object jaeger {
+  val kindTags: SpanKind => Map[String, AttributeValue] = {
+    case SpanKind.Internal => Map.empty
+    case e => SemanticTags.kindTags(e)
+  }
+
   val statusCode: SpanStatus => String = {
     case s if s.isOk => "OK"
     case _ => "ERROR"
@@ -19,6 +25,8 @@ package object jaeger {
       }
     attrs ++ errorAttrs
   }
+
+  val processTags: TraceProcess => Map[String, AttributeValue] = p => Map("service.name" -> p.serviceName)
 
   val additionalTags: Map[String, AttributeValue] = Map("otel.library.name" -> "trace4cats")
 }
