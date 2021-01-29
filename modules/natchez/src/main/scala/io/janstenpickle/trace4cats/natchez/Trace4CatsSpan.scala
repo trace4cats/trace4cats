@@ -24,6 +24,8 @@ final case class Trace4CatsSpan[F[_]: Sync: Clock](span: io.janstenpickle.trace4
   override def span(name: String): Resource[F, Span[F]] =
     Trace4CatsSpan(span.child(name, SpanKind.Internal), toHeaders)
 
+  override def spanId: F[Option[String]] = Applicative[F].pure(Some(span.context.spanId.show))
+
   override def traceId: F[Option[String]] = Applicative[F].pure(Some(span.context.traceId.show))
 
   override def traceUri: F[Option[URI]] = Applicative[F].pure(None)
