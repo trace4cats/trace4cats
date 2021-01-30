@@ -4,7 +4,7 @@ object Dependencies {
   object Versions {
     val cats = "2.3.1"
     val catsEffect = "2.3.1"
-    val collectionCompat = "2.4.0"
+    val collectionCompat = "2.4.1"
     val commonsCodec = "1.15"
     val circe = "0.13.0"
     val circeYaml = "0.13.1"
