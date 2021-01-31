@@ -6,4 +6,4 @@ addSbtPlugin("ch.epfl.scala"             % "sbt-release-early"   % "2.1.1+10-c6e
 addSbtPlugin("com.thesamet"              % "sbt-protoc"          % "1.0.0")
 addSbtPlugin("com.eed3si9n"              % "sbt-buildinfo"       % "0.10.0")
 
-libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.10.10"
+libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.10.11"
