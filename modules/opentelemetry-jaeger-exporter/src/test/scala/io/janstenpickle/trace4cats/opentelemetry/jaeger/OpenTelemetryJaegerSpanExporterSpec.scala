@@ -4,7 +4,6 @@ import java.time.Instant
 
 import cats.effect.IO
 import fs2.Chunk
-import io.janstenpickle.trace4cats.`export`.SemanticTags
 import io.janstenpickle.trace4cats.model.{Batch, TraceProcess}
 import io.janstenpickle.trace4cats.test.jaeger.BaseJaegerSpec
 
@@ -24,10 +23,9 @@ class OpenTelemetryJaegerSpanExporterSpec extends BaseJaegerSpec {
       )
 
     testExporter(
-      OpenTelemetryJaegerSpanExporter[IO, Chunk]("localhost", 14250, process.serviceName),
+      OpenTelemetryJaegerSpanExporter[IO, Chunk]("localhost", 14250),
       updatedBatch,
-      batchToJaegerResponse(updatedBatch, process, SemanticTags.kindTags, statusTags, additionalTags),
-      checkProcess = false
+      batchToJaegerResponse(updatedBatch, process, kindTags, statusTags, processTags, additionalTags)
     )
   }
 }

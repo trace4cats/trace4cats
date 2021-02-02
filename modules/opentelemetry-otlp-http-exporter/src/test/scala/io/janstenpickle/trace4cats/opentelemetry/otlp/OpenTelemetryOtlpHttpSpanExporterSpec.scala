@@ -31,9 +31,9 @@ class OpenTelemetryOtlpHttpSpanExporterSpec extends BaseJaegerSpec {
         process,
         SemanticTags.kindTags,
         SemanticTags.statusTags("", statusCode, requireMessage = false),
+        processTags,
         additionalTags
-      ),
-      checkProcess = false
+      )
     )
   }
 }

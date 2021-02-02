@@ -34,14 +34,13 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
 
   behavior.of("JaegerSpanExport")
 
-  val dummyProcess = Map("p1" -> JaegerProcess("", List.empty))
-
   def batchToJaegerResponse(
     batch: Batch[Chunk],
     process: TraceProcess,
     kindToAttributes: SpanKind => Map[String, AttributeValue],
     statusToAttributes: SpanStatus => Map[String, AttributeValue],
-    additionalAttributes: Map[String, AttributeValue] = Map.empty,
+    processToAttributes: TraceProcess => Map[String, AttributeValue],
+    additionalAttributes: Map[String, AttributeValue] = Map.empty
   ): List[JaegerTraceResponse] = {
     def convertAttributes(attributes: Map[String, AttributeValue]): List[JaegerTag] =
       attributes.toList.map {
@@ -85,8 +84,12 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
                     )
                   }
                   .sortBy(_.operationName),
-                processes =
-                  Map("p1" -> JaegerProcess(process.serviceName, convertAttributes(process.attributes).sortBy(_.key)))
+                processes = Map(
+                  "p1" -> JaegerProcess(
+                    process.serviceName,
+                    convertAttributes(processToAttributes(process)).sortBy(_.key)
+                  )
+                )
               )
             )
         )
@@ -94,14 +97,10 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
       .sortBy(_.data.head.traceID)
   }
 
-  private def updateProcess(resp: JaegerTraceResponse) =
-    JaegerTraceResponse(resp.data.map(_.copy(processes = dummyProcess)))
-
   def testExporter(
     exporter: Resource[IO, SpanExporter[IO, Chunk]],
     batch: Batch[Chunk],
-    expectedResponse: List[JaegerTraceResponse],
-    checkProcess: Boolean = true
+    expectedResponse: List[JaegerTraceResponse]
   ): Assertion = {
     val res =
       BlazeClientBuilder[IO](blocker.blockingContext).resource
@@ -126,16 +125,14 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
           )
         )
 
-    if (checkProcess) assert(res === expectedResponse)
-    else assert(res.map(updateProcess) === expectedResponse.map(updateProcess))
+    assert(res === expectedResponse)
   }
 
   def testCompleter(
     completer: Resource[IO, SpanCompleter[IO]],
     span: CompletedSpan.Builder,
     process: TraceProcess,
-    expectedResponse: List[JaegerTraceResponse],
-    checkProcess: Boolean = true
+    expectedResponse: List[JaegerTraceResponse]
   ) = {
     val batch = Batch(List(span.build(process)))
 
@@ -161,7 +158,6 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
           )
         )
 
-    if (checkProcess) assert(res === expectedResponse)
-    else assert(res.map(updateProcess) === expectedResponse.map(updateProcess))
+    assert(res === expectedResponse)
   }
 }

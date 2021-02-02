@@ -19,7 +19,13 @@ class JaegerSpanCompleterSpec extends BaseJaegerSpec {
       JaegerSpanCompleter[IO](blocker, process, "localhost", 6831, batchTimeout = 50.millis),
       updatedSpan,
       process,
-      batchToJaegerResponse(batch, process, SemanticTags.kindTags, SemanticTags.statusTags("span."))
+      batchToJaegerResponse(
+        batch,
+        process,
+        SemanticTags.kindTags,
+        SemanticTags.statusTags("span."),
+        SemanticTags.processTags
+      )
     )
   }
 }

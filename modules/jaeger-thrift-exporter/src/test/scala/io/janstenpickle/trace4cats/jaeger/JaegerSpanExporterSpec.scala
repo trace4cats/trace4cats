@@ -25,7 +25,13 @@ class JaegerSpanExporterSpec extends BaseJaegerSpec {
     testExporter(
       JaegerSpanExporter[IO, Chunk](blocker, Some(process), "localhost", 6831),
       updatedBatch,
-      batchToJaegerResponse(updatedBatch, process, SemanticTags.kindTags, SemanticTags.statusTags("span."))
+      batchToJaegerResponse(
+        updatedBatch,
+        process,
+        SemanticTags.kindTags,
+        SemanticTags.statusTags("span."),
+        SemanticTags.processTags
+      )
     )
   }
 }
