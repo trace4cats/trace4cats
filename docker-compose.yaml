@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   otelcol:
-    image: otel/opentelemetry-collector:0.18.0
+    image: otel/opentelemetry-collector:0.19.0
     ports:
       - "55680:55680"
       - "55681:55681"
