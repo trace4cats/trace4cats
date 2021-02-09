@@ -6,5 +6,16 @@ pull_request_rules:
       - status-success~=test \(2.13
       - body~=labels:.*semver-patch
     actions:
+      label:
+        add: [dependencies]
+      merge:
+        method: merge
+ 
+  - name: automatically merge dependabot's PRs
+    conditions:
+      - author=dependabot[bot]
+      - status-success~=test \(2.12
+      - status-success~=test \(2.13
+    actions:
       merge:
         method: merge
