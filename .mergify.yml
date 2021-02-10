@@ -54,13 +54,3 @@ pull_request_rules:
     actions:
       merge:
         method: merge
-
-  - name: automatically merge dependabot's PRs reviewed by 1 maintainer
-    conditions:
-      - author=dependabot[bot]
-      - status-success~=test \(2.12
-      - status-success~=test \(2.13
-      - "#approved-reviews-by>=1"
-    actions:
-      merge:
-        method: merge
