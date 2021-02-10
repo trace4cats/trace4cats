@@ -8,10 +8,10 @@ sealed trait SampleDecision {
 
 object SampleDecision {
   case object Drop extends SampleDecision {
-    override val toBoolean = true
+    override val toBoolean = false
   }
   case object Include extends SampleDecision {
-    override val toBoolean = false
+    override val toBoolean = true
   }
 
   implicit val eq: Eq[SampleDecision] = Eq.by(_.toBoolean)
@@ -21,5 +21,6 @@ object SampleDecision {
     case Include => "include"
   }
 
-  def apply(boolean: Boolean): SampleDecision = if (boolean) SampleDecision.Drop else SampleDecision.Include
+  def fromBoolean(boolean: Boolean): SampleDecision =
+    if (boolean) SampleDecision.Include else SampleDecision.Drop
 }

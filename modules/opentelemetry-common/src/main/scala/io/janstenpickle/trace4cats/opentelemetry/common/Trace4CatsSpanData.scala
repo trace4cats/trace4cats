@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import cats.syntax.show._
 import io.janstenpickle.trace4cats.model.SpanStatus._
 import io.janstenpickle.trace4cats.model.TraceState.{Key, Value}
-import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind}
+import io.janstenpickle.trace4cats.model.{CompletedSpan, SampleDecision, SpanKind}
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.common.InstrumentationLibraryInfo
 import io.opentelemetry.sdk.resources.Resource
@@ -22,8 +22,10 @@ object Trace4CatsSpanData {
 
       override lazy val getSpanId: String = span.context.spanId.show
 
-      private lazy val getTraceFlags: TraceFlags =
-        if (span.context.traceFlags.sampled.toBoolean) TraceFlags.getSampled else TraceFlags.getDefault
+      private lazy val getTraceFlags: TraceFlags = span.context.traceFlags.sampled match {
+        case SampleDecision.Drop => TraceFlags.getDefault
+        case SampleDecision.Include => TraceFlags.getSampled
+      }
 
       private lazy val getTraceState: TraceState =
         span.context.traceState.values
@@ -64,7 +66,7 @@ object Trace4CatsSpanData {
         span.links
           .fold(List.empty[LinkData])(_.map { link =>
             LinkData.create(
-              SpanContext.create(link.traceId.show, link.spanId.show, TraceFlags.getSampled, TraceState.getDefault)
+              SpanContext.create(link.traceId.show, link.spanId.show, TraceFlags.getDefault, TraceState.getDefault)
             )
           }.toList)
           .asJava
@@ -80,7 +82,7 @@ object Trace4CatsSpanData {
 
       override lazy val getParentSpanContext: SpanContext =
         span.context.parent.fold(SpanContext.getInvalid) { p =>
-          SpanContext.create(span.context.traceId.show, p.spanId.show, TraceFlags.getSampled, TraceState.getDefault)
+          SpanContext.create(span.context.traceId.show, p.spanId.show, TraceFlags.getDefault, TraceState.getDefault)
         }
 
       override def hasEnded: Boolean = true
