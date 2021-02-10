@@ -10,7 +10,7 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.common.InstrumentationLibraryInfo
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.data.{EventData, LinkData, SpanData, StatusData}
-import io.opentelemetry.api.trace._
+import io.opentelemetry.api.trace.{SpanKind => OtelSpanKind, _}
 
 import scala.jdk.CollectionConverters._
 
@@ -22,14 +22,18 @@ object Trace4CatsSpanData {
 
       override lazy val getSpanId: String = span.context.spanId.show
 
-      override lazy val isSampled: Boolean = span.context.traceFlags.sampled.toBoolean
+      private lazy val getTraceFlags: TraceFlags =
+        if (span.context.traceFlags.sampled.toBoolean) TraceFlags.getSampled else TraceFlags.getDefault
 
-      override lazy val getTraceState: TraceState =
+      private lazy val getTraceState: TraceState =
         span.context.traceState.values
           .foldLeft(TraceState.builder()) { case (builder, (Key(k), Value(v))) =>
             builder.set(k, v)
           }
           .build()
+
+      override lazy val getSpanContext: SpanContext =
+        SpanContext.create(getTraceId, getSpanId, getTraceFlags, getTraceState)
 
       override lazy val getParentSpanId: String =
         span.context.parent.fold(SpanId.getInvalid)(_.spanId.show)
@@ -41,13 +45,13 @@ object Trace4CatsSpanData {
 
       override def getName: String = span.name
 
-      override lazy val getKind: Span.Kind =
+      override lazy val getKind: OtelSpanKind =
         span.kind match {
-          case SpanKind.Client => Span.Kind.CLIENT
-          case SpanKind.Server => Span.Kind.SERVER
-          case SpanKind.Internal => Span.Kind.INTERNAL
-          case SpanKind.Producer => Span.Kind.PRODUCER
-          case SpanKind.Consumer => Span.Kind.CONSUMER
+          case SpanKind.Client => OtelSpanKind.CLIENT
+          case SpanKind.Server => OtelSpanKind.SERVER
+          case SpanKind.Internal => OtelSpanKind.INTERNAL
+          case SpanKind.Producer => OtelSpanKind.PRODUCER
+          case SpanKind.Consumer => OtelSpanKind.CONSUMER
         }
 
       override lazy val getStartEpochNanos: Long = TimeUnit.MILLISECONDS.toNanos(span.start.toEpochMilli)
