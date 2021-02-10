@@ -21,7 +21,7 @@ import io.janstenpickle.trace4cats.inject.zio._
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.TraceProcess
-import io.janstenpickle.trace4cats.natchez.conversions._
+import io.janstenpickle.trace4cats.natchez.conversions.toNatchez._
 import natchez.{Trace => NatchezTrace}
 import zio.interop.catz._
 import zio.interop.catz.implicits._

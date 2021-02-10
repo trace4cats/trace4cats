@@ -21,7 +21,7 @@ import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.TraceProcess
-import io.janstenpickle.trace4cats.natchez.conversions._
+import io.janstenpickle.trace4cats.natchez.conversions.toNatchez._
 import natchez.{Trace => NatchezTrace}
 
 import scala.concurrent.duration._
