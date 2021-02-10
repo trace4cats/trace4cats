@@ -26,7 +26,7 @@ jobs:
         with:
           java-version: '15'
       - name: Cache ivy2
-        uses: actions/cache@v1
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.ivy2/cache
           key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
@@ -35,7 +35,7 @@ jobs:
             ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
 
       - name: Cache SBT
-        uses: actions/cache@v1
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.sbt
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
@@ -90,7 +90,7 @@ jobs:
         with:
           java-version: '15'
       - name: Cache ivy2
-        uses: actions/cache@v1
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.ivy2/cache
           key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
@@ -99,7 +99,7 @@ jobs:
             ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
 
       - name: Cache SBT
-        uses: actions/cache@v1
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.sbt
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
@@ -154,7 +154,7 @@ jobs:
         with:
           java-version: '15'
       - name: Cache ivy2
-        uses: actions/cache@v1
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.ivy2/cache
           key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
@@ -163,7 +163,7 @@ jobs:
             ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
 
       - name: Cache SBT
-        uses: actions/cache@v1
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.sbt
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
@@ -212,7 +212,7 @@ jobs:
         with:
           java-version: '15'
       - name: Cache ivy2
-        uses: actions/cache@v1
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.ivy2/cache
           key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
@@ -221,7 +221,7 @@ jobs:
             ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
 
       - name: Cache SBT
-        uses: actions/cache@v1
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.sbt
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
@@ -275,7 +275,7 @@ jobs:
           java-version: '15'
 
       - name: Cache ivy2
-        uses: actions/cache@v1
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.ivy2/cache
           key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
@@ -284,7 +284,7 @@ jobs:
             ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
 
       - name: Cache SBT
-        uses: actions/cache@v1
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.sbt
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
@@ -339,7 +339,7 @@ jobs:
         run: docker-compose up -d
 
       - name: Cache ivy2
-        uses: actions/cache@v1
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.ivy2/cache
           key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
@@ -348,7 +348,7 @@ jobs:
             ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}-${{ hashFiles('**/project/Dependencies.scala') }}
 
       - name: Cache SBT
-        uses: actions/cache@v1
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.sbt
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/project/build.properties') }}-${{ hashFiles('**/project/plugins.sbt') }}
