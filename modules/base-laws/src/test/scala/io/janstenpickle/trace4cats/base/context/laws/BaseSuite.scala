@@ -16,6 +16,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.Configuration
 import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 
+import scala.{specialized => sp}
+
 abstract class BaseSuite
     extends AnyFunSuite
     with Matchers
@@ -29,7 +31,7 @@ abstract class BaseSuite
 
   // disable Eq syntax (by making `catsSyntaxEq` not implicit), since it collides
   // with scalactic's equality
-  override def catsSyntaxEq[A: Eq](a: A): EqOps[A] =
+  override def catsSyntaxEq[@sp(Int, Long, Float, Double) A: Eq](a: A): EqOps[A] =
     new EqOps[A](a)
 
   override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
