@@ -4,3 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    reviewers:
+      - "janstenpickle"
+      - "catostrophe"
+    labels:
+      - "dependency-update"
