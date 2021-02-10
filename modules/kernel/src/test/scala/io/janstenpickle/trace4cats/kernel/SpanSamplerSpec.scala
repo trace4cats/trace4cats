@@ -13,7 +13,7 @@ class SpanSamplerSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPro
 
   behavior.of("SpanSampler.always")
 
-  it should "always set sample flag to false" in forAll { (traceId: TraceId, name: String, kind: SpanKind) =>
+  it should "always set sample decision to Include" in forAll { (traceId: TraceId, name: String, kind: SpanKind) =>
     SpanSampler.always[Id].shouldSample(None, traceId, name, kind) should be(SampleDecision.Include)
   }
 
@@ -24,7 +24,7 @@ class SpanSamplerSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPro
 
   behavior.of("SpanSampler.never")
 
-  it should "always set sample flag to true" in forAll {
+  it should "always set sample decision to Drop" in forAll {
     (parent: Option[SpanContext], traceId: TraceId, name: String, kind: SpanKind) =>
       SpanSampler.never[Id].shouldSample(parent, traceId, name, kind) should be(SampleDecision.Drop)
   }
@@ -63,31 +63,31 @@ class SpanSamplerSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPro
       )
   }
 
-  it should "always set sample flag to true when probability is 0.0" in forAll {
+  it should "always set sample decision to Drop when probability is 0.0" in forAll {
     (traceId: TraceId, name: String, kind: SpanKind) =>
       SpanSampler.probabilistic[Id](0.0).shouldSample(None, traceId, name, kind) should be(SampleDecision.Drop)
   }
 
-  it should "always set sample flag to false when probability is 1.0" in forAll {
+  it should "always set sample decision to Include when probability is 1.0" in forAll {
     (traceId: TraceId, name: String, kind: SpanKind) =>
       SpanSampler.probabilistic[Id](1.0).shouldSample(None, traceId, name, kind) should be(SampleDecision.Include)
   }
 
-  it should "sample if ID lo bytes are greater than probability boundary" in forAll {
+  it should "sample if ID lo bytes are within probability boundaries" in forAll {
     (traceId: TraceId, name: String, kind: SpanKind) =>
-      val lo = Long.MaxValue - 2
+      val lo = Long.MaxValue / 3
 
       val updatedId = TraceId(traceId.value.dropRight(8) ++ ByteBuffer.allocate(8).putLong(lo).array()).get
 
-      SpanSampler.probabilistic[Id](0.05).shouldSample(None, updatedId, name, kind) should be(SampleDecision.Drop)
+      SpanSampler.probabilistic[Id](0.5).shouldSample(None, updatedId, name, kind) should be(SampleDecision.Include)
   }
 
-  it should "not sample if ID lo bytes are lower than probability boundary" in forAll {
+  it should "not sample if ID lo bytes are beyond probability boundaries" in forAll {
     (traceId: TraceId, name: String, kind: SpanKind) =>
-      val lo = Long.MinValue + 2
+      val lo = Long.MinValue / 3 * 2
 
       val updatedId = TraceId(traceId.value.dropRight(8) ++ ByteBuffer.allocate(8).putLong(lo).array()).get
 
-      SpanSampler.probabilistic[Id](0.05).shouldSample(None, updatedId, name, kind) should be(SampleDecision.Include)
+      SpanSampler.probabilistic[Id](0.5).shouldSample(None, updatedId, name, kind) should be(SampleDecision.Drop)
   }
 }

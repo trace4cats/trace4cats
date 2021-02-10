@@ -11,6 +11,7 @@ private[trace4cats] class W3cToHeaders extends ToHeaders {
     def splitParent(traceParent: String): Option[(String, String, SampleDecision)] =
       traceParent.split('-').toList match {
         case _ :: traceId :: spanId :: sampled :: Nil =>
+          // See: https://www.w3.org/TR/trace-context/#sampled-flag
           if (sampled == "00") Some((traceId, spanId, SampleDecision.Drop))
           else if (sampled == "01") Some((traceId, spanId, SampleDecision.Include))
           else None
@@ -45,6 +46,7 @@ private[trace4cats] class W3cToHeaders extends ToHeaders {
   }
 
   override def fromContext(context: SpanContext): TraceHeaders = {
+    // See: https://www.w3.org/TR/trace-context/#sampled-flag
     val sampled = context.traceFlags.sampled match {
       case SampleDecision.Drop => "00"
       case SampleDecision.Include => "01"

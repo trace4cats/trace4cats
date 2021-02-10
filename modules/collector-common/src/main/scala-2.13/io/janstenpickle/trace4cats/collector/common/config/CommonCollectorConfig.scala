@@ -101,7 +101,7 @@ object NewRelicConfig {
 
 case class SamplingConfig(
   sampleProbability: Option[Double] = None,
-  spanNames: Option[NonEmptySet[String]] = None,
+  dropSpanNames: Option[NonEmptySet[String]] = None,
   rate: Option[RateSamplingConfig] = None,
   cacheTtlMinutes: Int = 2,
   maxCacheSize: Long = 1000000,

@@ -66,23 +66,25 @@ object TailSpanSampler {
               batch.spans
                 .foldM((MonoidK[G].empty[CompletedSpan], Map.empty[TraceId, SampleDecision])) {
                   case (acc @ (sampled, computedDecisions), span) =>
-                    if (span.context.traceFlags.sampled == SampleDecision.Drop) Applicative[F].pure(acc)
-                    else {
+                    span.context.traceFlags.sampled match {
+                      case SampleDecision.Drop => Applicative[F].pure(acc)
+                      case SampleDecision.Include =>
+                        val traceId = span.context.traceId
 
-                      val traceId = span.context.traceId
+                        decisions.get(traceId).orElse(computedDecisions.get(traceId)) match {
+                          case None =>
+                            decider(span).map { decision =>
+                              val spans = decision match {
+                                case SampleDecision.Include => sampled
+                                case SampleDecision.Drop => combine(span, sampled)
+                              }
+                              spans -> computedDecisions.updated(traceId, decision)
+                            }
 
-                      decisions.get(traceId).orElse(computedDecisions.get(traceId)) match {
-                        case None =>
-                          decider(span).map { decision =>
-                            val spans = if (decision == SampleDecision.Include) sampled else combine(span, sampled)
-                            spans -> computedDecisions.updated(traceId, decision)
-                          }
-
-                        case Some(SampleDecision.Drop) => Applicative[F].pure(sampled -> computedDecisions)
-                        case Some(SampleDecision.Include) =>
-                          Applicative[F].pure(combine(span, sampled) -> computedDecisions)
-                      }
-
+                          case Some(SampleDecision.Drop) => Applicative[F].pure(sampled -> computedDecisions)
+                          case Some(SampleDecision.Include) =>
+                            Applicative[F].pure(combine(span, sampled) -> computedDecisions)
+                        }
                     }
                 }
 
@@ -135,11 +137,14 @@ object TailSpanSampler {
   ): TailSpanSampler[F, G] =
     filtering(store, span => if (span.context.parent.isEmpty) filter(span.name) else SampleDecision.Include)
 
-  def spanNameFilter[F[_]: Monad, G[_]: Applicative: Foldable: FunctorFilter: MonoidK](
+  def spanNameDrop[F[_]: Monad, G[_]: Applicative: Foldable: FunctorFilter: MonoidK](
     store: SampleDecisionStore[F],
-    contains: NonEmptySet[String]
+    dropSpanNames: NonEmptySet[String]
   ): TailSpanSampler[F, G] =
-    spanNameFilter(store, name => SampleDecision(contains.exists(name.contains)))
+    spanNameFilter(
+      store,
+      name => if (dropSpanNames.exists(name.contains)) SampleDecision.Drop else SampleDecision.Include
+    )
 
   // Probabilistic sampler does not need a store, as decision is applied consistently based on trace ID
   def probabilistic[F[_]: Applicative, G[_]: Applicative: Foldable: MonoidK](

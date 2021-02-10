@@ -46,13 +46,14 @@ below:
 ```scala
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 
-SpanSampler.always
+SpanSampler.never
 ```
 
 ### Probabilistic
 
 This sampler uses the trace ID to decide whether a trace should be sampled, based on a probability parameter, which must
-be between `0` and `0.1`, where `0` cause no spans to be sent downstream and `0.1` will cause all spans to be forwarded.
+be between `0.0` and `1.0`, where `0.0` cause no spans to be sent downstream and `1.0` will cause all spans to be
+forwarded.
 
 The parameter `rootSpansOnly`, which defaults to `true`, configures whether to apply the sampler to spans which have
 parents. You may want to set this to `false` if upstream systems are making many requests, having a negative
@@ -139,8 +140,8 @@ The configuration fragment below sets up the following:
 
 ```yaml
 sampling:
-  sample-probability: 0.05 # Optional - must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
-  span-names: # Optional - name of spans to sample (may be partial match)
+  sample-probability: 0.05 # Optional - must be between 0 and 1.0. 1.0 being always sample, and 0.0 being never
+  drop-span-names: # Optional - name of spans to drop (may be partial match)
     - healthcheck
     - readiness
     - metrics

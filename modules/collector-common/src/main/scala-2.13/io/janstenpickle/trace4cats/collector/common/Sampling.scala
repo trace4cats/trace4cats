@@ -39,8 +39,8 @@ object Sampling {
     }
 
     for {
-      name <- config.spanNames.traverse { names =>
-        makeDecisionStore(0).map(TailSpanSampler.spanNameFilter[F, Chunk](_, names))
+      name <- config.dropSpanNames.traverse { names =>
+        makeDecisionStore(0).map(TailSpanSampler.spanNameDrop[F, Chunk](_, names))
       }
 
       rate <- config.rate.traverse { rate =>

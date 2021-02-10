@@ -32,7 +32,7 @@ object TailSampling extends IOApp {
       probSampler = TailSpanSampler.probabilistic[IO, Chunk](probability = 0.05)
       nameSampler =
         TailSpanSampler
-          .spanNameFilter[IO, Chunk](nameSampleDecisionStore, NonEmptySet.of("/healthcheck", "/readiness", "/metrics"))
+          .spanNameDrop[IO, Chunk](nameSampleDecisionStore, NonEmptySet.of("/healthcheck", "/readiness", "/metrics"))
       rateSampler <- Resource.liftF(
         RateTailSpanSampler.create[IO, Chunk](rateSampleDecisionStore, bucketSize = 100, tokenRate = 100.millis)
       )

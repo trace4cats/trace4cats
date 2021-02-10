@@ -7,6 +7,7 @@ import cats.data.NonEmptyList
 import cats.{~>, Applicative, Defer}
 import cats.effect.concurrent.Ref
 import cats.effect.{Clock, ExitCase, MonadThrow, Resource, Sync}
+import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
@@ -117,22 +118,23 @@ object Span {
       .liftF(
         sampler
           .shouldSample(parent, context.traceId, name, kind)
-          .map(_.toBoolean)
       )
-      .ifM(
-        Resource.liftF(Applicative[F].pure(EmptySpan[F](context.setDrop()))),
-        Resource.makeCase(for {
-          attributesRef <- Ref.of[F, Map[String, AttributeValue]](Map.empty)
-          now <- Clock[F].realTime(TimeUnit.MILLISECONDS)
-          statusRef <- Ref.of[F, SpanStatus](SpanStatus.Ok)
-          linksRef <- Ref.of[F, List[Link]](List.empty)
-        } yield RefSpan[F](context, name, kind, now, attributesRef, statusRef, linksRef, sampler, completer)) {
-          case (span, ExitCase.Completed) => span.end
-          case (span, ExitCase.Canceled) => span.end(SpanStatus.Cancelled)
-          case (span, ExitCase.Error(th)) =>
-            span.end(errorHandler.applyOrElse[Throwable, SpanStatus](th, t => SpanStatus.Internal(t.getMessage)))
-        }
-      )
+      .flatMap {
+        case SampleDecision.Drop =>
+          EmptySpan[F](context.setDrop()).pure[Resource[F, *]]
+        case SampleDecision.Include =>
+          Resource.makeCase(for {
+            attributesRef <- Ref.of[F, Map[String, AttributeValue]](Map.empty)
+            now <- Clock[F].realTime(TimeUnit.MILLISECONDS)
+            statusRef <- Ref.of[F, SpanStatus](SpanStatus.Ok)
+            linksRef <- Ref.of[F, List[Link]](List.empty)
+          } yield RefSpan[F](context, name, kind, now, attributesRef, statusRef, linksRef, sampler, completer)) {
+            case (span, ExitCase.Completed) => span.end
+            case (span, ExitCase.Canceled) => span.end(SpanStatus.Cancelled)
+            case (span, ExitCase.Error(th)) =>
+              span.end(errorHandler.applyOrElse[Throwable, SpanStatus](th, t => SpanStatus.Internal(t.getMessage)))
+          }
+      }
 
   def noop[F[_]: Applicative]: Resource[F, Span[F]] = Resource.pure[F, Span[F]](NoopSpan[F](SpanContext.invalid))
 

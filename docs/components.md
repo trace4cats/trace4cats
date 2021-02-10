@@ -99,8 +99,8 @@ buffer-size: 1000 # How many batches to buffer in case of a slow exporter, defau
 
 # Span sampling
 sampling:
-  sample-probability: 0.05 # Optional - must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
-  span-names: # Optional - name of spans to sample (may be partial match)
+  sample-probability: 0.05 # Optional - must be between 0 and 1.0. 1.0 being always sample, and 0.0 being never
+  drop-span-names: # Optional - name of spans to drop (may be partial match)
     - some-span-name   
   rate: # Optional - rate sampling
     max-batch-size: 1000
@@ -231,8 +231,8 @@ buffer-size: 1000 # How many batches to buffer in case of a slow exporter, defau
 
 # Span sampling
 sampling:
-  sample-probability: 0.05 # Optional - must be between 0 and 0.1. 0.1 being always sample, and 0.0 being never
-  span-names: # Optional - name of spans to sample (may be partial match)
+  sample-probability: 0.05 # Optional - must be between 0 and 1.0. 1.0 being always sample, and 0.0 being never
+  drop-span-names: # Optional - name of spans to drop (may be partial match)
     - some-span-name 
   rate: # Optional - rate sampling
     max-batch-size: 1000
