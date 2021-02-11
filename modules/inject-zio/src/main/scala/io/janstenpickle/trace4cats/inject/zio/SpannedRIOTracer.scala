@@ -14,8 +14,10 @@ class SpannedRIOTracer extends Trace[SpannedRIO] {
   override def putAll(fields: (String, AttributeValue)*): SpannedRIO[Unit] =
     ZIO.environment[Span[Task]].flatMap(_.putAll(fields: _*))
 
-  override def span[A](name: String, kind: SpanKind)(fa: SpannedRIO[A]): SpannedRIO[A] =
-    ZIO.environment[Span[Task]].flatMap(_.child(name, kind).use(fa.provide))
+  override def span[A](name: String, kind: SpanKind, errorHandler: PartialFunction[Throwable, SpanStatus])(
+    fa: SpannedRIO[A]
+  ): SpannedRIO[A] =
+    ZIO.environment[Span[Task]].flatMap(_.child(name, kind, errorHandler).use(fa.provide))
 
   override def headers(toHeaders: ToHeaders): SpannedRIO[TraceHeaders] =
     ZIO.environment[Span[Task]].map { s =>
@@ -42,9 +44,11 @@ class SpannedRIOTracer extends Trace[SpannedRIO] {
           f(r).putAll(fields: _*)
         }
 
-      override def span[A](name: String, kind: SpanKind)(fa: RIO[R, A]): RIO[R, A] =
+      override def span[A](name: String, kind: SpanKind, errorHandler: PartialFunction[Throwable, SpanStatus])(
+        fa: RIO[R, A]
+      ): RIO[R, A] =
         ZIO.environment[R].flatMap { r =>
-          f(r).child(name, kind).use(s => fa.provide(g(r, s)))
+          f(r).child(name, kind, errorHandler).use(s => fa.provide(g(r, s)))
         }
 
       override def headers(toHeaders: ToHeaders): RIO[R, TraceHeaders] =

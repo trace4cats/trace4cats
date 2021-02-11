@@ -49,7 +49,9 @@ trait Trace4CatsConversions {
           case (k, DoubleList(v)) => k -> V.StringValue(v.toString())
           case (k, LongList(v)) => k -> V.StringValue(v.toString())
         }: _*)
-      override def span[A](name: String, kind: SpanKind)(fa: F[A]): F[A] = trace.span(name)(fa)
+      override def span[A](name: String, kind: SpanKind, errorHandler: PartialFunction[Throwable, SpanStatus])(
+        fa: F[A]
+      ): F[A] = trace.span(name)(fa)
       override def headers(toHeaders: ToHeaders): F[TraceHeaders] = trace.kernel.map(KernelConverter.from)
       override def setStatus(status: SpanStatus): F[Unit] = Applicative[F].unit
       override def traceId: F[Option[String]] = trace.traceId

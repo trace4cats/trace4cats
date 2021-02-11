@@ -10,7 +10,7 @@ import fs2.Stream
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.fs2.{ContinuationSpan, TracedStream}
 import io.janstenpickle.trace4cats.inject.{EntryPoint, ResourceKleisli, SpanName, SpanParams}
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, TraceHeaders}
+import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus, TraceHeaders}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 
 trait Fs2StreamSyntax {
@@ -37,7 +37,15 @@ trait Fs2StreamSyntax {
       trace(ep.toKleisli, name, kind)
 
     def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName, kind: SpanKind): TracedStream[F, A] =
-      WriterT(stream.evalMapChunk(a => k((name(a), kind, TraceHeaders.empty)).use(s => (s -> a).pure)))
+      trace(k, name, kind, PartialFunction.empty)
+
+    def trace(
+      k: ResourceKleisli[F, SpanParams, Span[F]],
+      name: A => SpanName,
+      kind: SpanKind,
+      errorHandler: PartialFunction[Throwable, SpanStatus]
+    ): TracedStream[F, A] =
+      WriterT(stream.evalMapChunk(a => k((name(a), kind, TraceHeaders.empty, errorHandler)).use(s => (s -> a).pure)))
 
     def injectContinue(ep: EntryPoint[F], name: String)(f: A => TraceHeaders): TracedStream[F, A] =
       injectContinue(ep, name, SpanKind.Internal)(f)
@@ -70,8 +78,15 @@ trait Fs2StreamSyntax {
 
     def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName, kind: SpanKind)(
       f: A => TraceHeaders
-    ): TracedStream[F, A] =
-      WriterT(stream.evalMapChunk(a => k((name(a), kind, f(a))).use(s => (s -> a).pure)))
+    ): TracedStream[F, A] = traceContinue(k, name, kind, PartialFunction.empty)(f)
+
+    def traceContinue(
+      k: ResourceKleisli[F, SpanParams, Span[F]],
+      name: A => SpanName,
+      kind: SpanKind,
+      errorHandler: PartialFunction[Throwable, SpanStatus]
+    )(f: A => TraceHeaders): TracedStream[F, A] =
+      WriterT(stream.evalMapChunk(a => k((name(a), kind, f(a), errorHandler)).use(s => (s -> a).pure)))
 
   }
 
