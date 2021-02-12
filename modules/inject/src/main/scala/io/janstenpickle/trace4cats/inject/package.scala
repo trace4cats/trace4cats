@@ -8,6 +8,6 @@ import scala.annotation.unchecked.uncheckedVariance
 
 package object inject {
   type SpanName = String
-  type SpanParams = (SpanName, SpanKind, TraceHeaders)
+  type SpanParams = (SpanName, SpanKind, TraceHeaders, ErrorHandler)
   type ResourceKleisli[F[_], -In, +Out] = Kleisli[Resource[F, +*], In, Out @uncheckedVariance]
 }

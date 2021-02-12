@@ -11,7 +11,7 @@ import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.fs2.{ContinuationSpan, TracedStream}
 import io.janstenpickle.trace4cats.inject.{EntryPoint, ResourceKleisli, SpanName, SpanParams}
 import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, TraceHeaders}
-import io.janstenpickle.trace4cats.{Span, ToHeaders}
+import io.janstenpickle.trace4cats.{ErrorHandler, Span, ToHeaders}
 
 trait Fs2StreamSyntax {
   implicit class InjectEntryPoint[F[_]: BracketThrow, A](stream: Stream[F, A]) {
@@ -37,7 +37,15 @@ trait Fs2StreamSyntax {
       trace(ep.toKleisli, name, kind)
 
     def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName, kind: SpanKind): TracedStream[F, A] =
-      WriterT(stream.evalMapChunk(a => k((name(a), kind, TraceHeaders.empty)).use(s => (s -> a).pure)))
+      trace(k, name, kind, ErrorHandler.empty)
+
+    def trace(
+      k: ResourceKleisli[F, SpanParams, Span[F]],
+      name: A => SpanName,
+      kind: SpanKind,
+      errorHandler: ErrorHandler
+    ): TracedStream[F, A] =
+      WriterT(stream.evalMapChunk(a => k((name(a), kind, TraceHeaders.empty, errorHandler)).use(s => (s -> a).pure)))
 
     def injectContinue(ep: EntryPoint[F], name: String)(f: A => TraceHeaders): TracedStream[F, A] =
       injectContinue(ep, name, SpanKind.Internal)(f)
@@ -70,8 +78,15 @@ trait Fs2StreamSyntax {
 
     def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName, kind: SpanKind)(
       f: A => TraceHeaders
-    ): TracedStream[F, A] =
-      WriterT(stream.evalMapChunk(a => k((name(a), kind, f(a))).use(s => (s -> a).pure)))
+    ): TracedStream[F, A] = traceContinue(k, name, kind, ErrorHandler.empty)(f)
+
+    def traceContinue(
+      k: ResourceKleisli[F, SpanParams, Span[F]],
+      name: A => SpanName,
+      kind: SpanKind,
+      errorHandler: ErrorHandler
+    )(f: A => TraceHeaders): TracedStream[F, A] =
+      WriterT(stream.evalMapChunk(a => k((name(a), kind, f(a), errorHandler)).use(s => (s -> a).pure)))
 
   }
 

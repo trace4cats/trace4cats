@@ -29,7 +29,7 @@ trait ServerEndpointSyntax {
     ): ServerEndpoint[I, E, O, R, F] = {
       val inputSpanNamer = spanNamer(serverEndpoint.endpoint, _)
       val context = TapirResourceKleislis
-        .fromHeaders(inHeadersGetter, inputSpanNamer)(entryPoint.toKleisli)
+        .fromHeaders(inHeadersGetter, inputSpanNamer, dropHeadersWhen)(entryPoint.toKleisli)
         .map(_.asRight[E])
       ServerEndpointTracer.inject(
         serverEndpoint,

@@ -1,11 +1,11 @@
 package io.janstenpickle.trace4cats.inject.zio
 
-import io.janstenpickle.trace4cats.{Span, ToHeaders}
+import cats.syntax.show._
 import io.janstenpickle.trace4cats.inject.Trace
 import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus, TraceHeaders}
-import zio.{RIO, Task, ZIO}
+import io.janstenpickle.trace4cats.{ErrorHandler, Span, ToHeaders}
 import zio.interop.catz._
-import cats.syntax.show._
+import zio.{RIO, Task, ZIO}
 
 class SpannedRIOTracer extends Trace[SpannedRIO] {
   override def put(key: String, value: AttributeValue): SpannedRIO[Unit] =
@@ -14,8 +14,8 @@ class SpannedRIOTracer extends Trace[SpannedRIO] {
   override def putAll(fields: (String, AttributeValue)*): SpannedRIO[Unit] =
     ZIO.environment[Span[Task]].flatMap(_.putAll(fields: _*))
 
-  override def span[A](name: String, kind: SpanKind)(fa: SpannedRIO[A]): SpannedRIO[A] =
-    ZIO.environment[Span[Task]].flatMap(_.child(name, kind).use(fa.provide))
+  override def span[A](name: String, kind: SpanKind, errorHandler: ErrorHandler)(fa: SpannedRIO[A]): SpannedRIO[A] =
+    ZIO.environment[Span[Task]].flatMap(_.child(name, kind, errorHandler).use(fa.provide))
 
   override def headers(toHeaders: ToHeaders): SpannedRIO[TraceHeaders] =
     ZIO.environment[Span[Task]].map { s =>
@@ -42,9 +42,9 @@ class SpannedRIOTracer extends Trace[SpannedRIO] {
           f(r).putAll(fields: _*)
         }
 
-      override def span[A](name: String, kind: SpanKind)(fa: RIO[R, A]): RIO[R, A] =
+      override def span[A](name: String, kind: SpanKind, errorHandler: ErrorHandler)(fa: RIO[R, A]): RIO[R, A] =
         ZIO.environment[R].flatMap { r =>
-          f(r).child(name, kind).use(s => fa.provide(g(r, s)))
+          f(r).child(name, kind, errorHandler).use(s => fa.provide(g(r, s)))
         }
 
       override def headers(toHeaders: ToHeaders): RIO[R, TraceHeaders] =

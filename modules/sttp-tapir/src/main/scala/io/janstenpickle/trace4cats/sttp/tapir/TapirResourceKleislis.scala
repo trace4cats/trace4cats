@@ -4,7 +4,7 @@ import cats.{Applicative, Monad}
 import cats.syntax.applicativeError._
 import cats.data.{EitherT, Kleisli}
 import cats.effect.{MonadThrow, Resource}
-import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.{ErrorHandler, Span}
 import io.janstenpickle.trace4cats.base.optics.Getter
 import io.janstenpickle.trace4cats.inject.{ResourceKleisli, SpanParams}
 import io.janstenpickle.trace4cats.model.SpanKind
@@ -17,12 +17,12 @@ object TapirResourceKleislis {
   def fromHeaders[F[_]: Applicative, I](
     inHeadersGetter: Getter[I, Headers],
     inSpanNamer: TapirInputSpanNamer[I],
-    dropHeadersWhen: String => Boolean = HeaderNames.isSensitive,
+    dropHeadersWhen: String => Boolean = HeaderNames.isSensitive
   )(k: ResourceKleisli[F, SpanParams, Span[F]]): ResourceKleisli[F, I, Span[F]] =
     Kleisli { input =>
       val headers = inHeadersGetter.get(input)
       val traceHeaders = SttpHeaders.converter.from(headers)
-      val spanResource = k.run((inSpanNamer(input), SpanKind.Server, traceHeaders))
+      val spanResource = k.run((inSpanNamer(input), SpanKind.Server, traceHeaders, ErrorHandler.empty))
 
       spanResource.evalTap(_.putAll(SttpHeaders.requestFields(headers, dropHeadersWhen): _*))
     }
