@@ -12,7 +12,7 @@ jobs:
     needs: test
     steps:
       - name: checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
         with:
           submodules: true
       - name: setup-graalvm-ce
@@ -76,7 +76,7 @@ jobs:
     needs: test
     steps:
       - name: checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
         with:
           submodules: true
       - name: setup-graalvm-ce
@@ -140,7 +140,7 @@ jobs:
     needs: test
     steps:
       - name: checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
         with:
           submodules: true
       - name: setup-graalvm-ce
@@ -204,7 +204,7 @@ jobs:
     needs: test
     steps:
       - name: checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
         with:
           submodules: true
       - name: Set up JDK
@@ -266,9 +266,10 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
         with:
           submodules: true
+          fetch-depth: 0
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
@@ -327,7 +328,7 @@ jobs:
           - "2.13.4"
     steps:
       - name: checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
         with:
           submodules: true
       - name: Set up JDK
