@@ -11,7 +11,7 @@ import org.http4s._
 import org.http4s.util.CaseInsensitiveString
 
 trait ServerSyntax {
-  val messageFailureHandler: PartialFunction[Throwable, SpanStatus] = { case e: MessageFailure =>
+  private val messageFailureHandler: PartialFunction[Throwable, SpanStatus] = { case e: MessageFailure =>
     Http4sStatusMapping.toSpanStatus(e.toHttpResponse(HttpVersion.`HTTP/1.0`).status)
   }
 
