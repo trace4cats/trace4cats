@@ -10,8 +10,8 @@ import fs2.Stream
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.fs2.{ContinuationSpan, TracedStream}
 import io.janstenpickle.trace4cats.inject.{EntryPoint, ResourceKleisli, SpanName, SpanParams}
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus, TraceHeaders}
-import io.janstenpickle.trace4cats.{Span, ToHeaders}
+import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, TraceHeaders}
+import io.janstenpickle.trace4cats.{ErrorHandler, Span, ToHeaders}
 
 trait Fs2StreamSyntax {
   implicit class InjectEntryPoint[F[_]: BracketThrow, A](stream: Stream[F, A]) {
@@ -37,13 +37,13 @@ trait Fs2StreamSyntax {
       trace(ep.toKleisli, name, kind)
 
     def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName, kind: SpanKind): TracedStream[F, A] =
-      trace(k, name, kind, PartialFunction.empty)
+      trace(k, name, kind, ErrorHandler.empty)
 
     def trace(
       k: ResourceKleisli[F, SpanParams, Span[F]],
       name: A => SpanName,
       kind: SpanKind,
-      errorHandler: PartialFunction[Throwable, SpanStatus]
+      errorHandler: ErrorHandler
     ): TracedStream[F, A] =
       WriterT(stream.evalMapChunk(a => k((name(a), kind, TraceHeaders.empty, errorHandler)).use(s => (s -> a).pure)))
 
@@ -78,13 +78,13 @@ trait Fs2StreamSyntax {
 
     def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName, kind: SpanKind)(
       f: A => TraceHeaders
-    ): TracedStream[F, A] = traceContinue(k, name, kind, PartialFunction.empty)(f)
+    ): TracedStream[F, A] = traceContinue(k, name, kind, ErrorHandler.empty)(f)
 
     def traceContinue(
       k: ResourceKleisli[F, SpanParams, Span[F]],
       name: A => SpanName,
       kind: SpanKind,
-      errorHandler: PartialFunction[Throwable, SpanStatus]
+      errorHandler: ErrorHandler
     )(f: A => TraceHeaders): TracedStream[F, A] =
       WriterT(stream.evalMapChunk(a => k((name(a), kind, f(a), errorHandler)).use(s => (s -> a).pure)))
 

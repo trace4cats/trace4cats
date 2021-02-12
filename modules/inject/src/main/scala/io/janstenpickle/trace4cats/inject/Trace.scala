@@ -13,17 +13,17 @@ import cats.syntax.show._
 import cats.{Applicative, Defer, Functor}
 import io.janstenpickle.trace4cats.base.context.{Lift, Local}
 import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus, TraceHeaders}
-import io.janstenpickle.trace4cats.{Span, ToHeaders}
+import io.janstenpickle.trace4cats.{ErrorHandler, Span, ToHeaders}
 
 /** A tracing effect, which always has a current span. */
 trait Trace[F[_]] {
   def put(key: String, value: AttributeValue): F[Unit]
   def putAll(fields: (String, AttributeValue)*): F[Unit]
   def span[A](name: String)(fa: F[A]): F[A] = span(name, SpanKind.Internal)(fa)
-  def span[A](name: String, errorHandler: PartialFunction[Throwable, SpanStatus])(fa: F[A]): F[A] =
+  def span[A](name: String, errorHandler: ErrorHandler)(fa: F[A]): F[A] =
     span(name, SpanKind.Internal, errorHandler)(fa)
-  def span[A](name: String, kind: SpanKind)(fa: F[A]): F[A] = span(name, kind, PartialFunction.empty)(fa)
-  def span[A](name: String, kind: SpanKind, errorHandler: PartialFunction[Throwable, SpanStatus])(fa: F[A]): F[A]
+  def span[A](name: String, kind: SpanKind)(fa: F[A]): F[A] = span(name, kind, ErrorHandler.empty)(fa)
+  def span[A](name: String, kind: SpanKind, errorHandler: ErrorHandler)(fa: F[A]): F[A]
   def headers: F[TraceHeaders] = headers(ToHeaders.all)
   def headers(toHeaders: ToHeaders): F[TraceHeaders]
   def setStatus(status: SpanStatus): F[Unit]
@@ -48,12 +48,10 @@ object Trace extends TraceInstancesLowPriority {
         override def put(key: String, value: AttributeValue): F[Unit] = void
         override def putAll(fields: (String, AttributeValue)*): F[Unit] = void
         override def span[A](name: String)(fa: F[A]): F[A] = fa
-        override def span[A](name: String, errorHandler: PartialFunction[Throwable, SpanStatus])(fa: F[A]): F[A] =
+        override def span[A](name: String, errorHandler: ErrorHandler)(fa: F[A]): F[A] =
           fa
         override def span[A](name: String, kind: SpanKind)(fa: F[A]): F[A] = fa
-        override def span[A](name: String, kind: SpanKind, errorHandler: PartialFunction[Throwable, SpanStatus])(
-          fa: F[A]
-        ): F[A] = fa
+        override def span[A](name: String, kind: SpanKind, errorHandler: ErrorHandler)(fa: F[A]): F[A] = fa
         override def setStatus(status: SpanStatus): F[Unit] = void
         override def traceId: F[Option[String]] = Option.empty[String].pure[F]
       }
@@ -83,7 +81,7 @@ object Trace extends TraceInstancesLowPriority {
     override def putAll(fields: (String, AttributeValue)*): Kleisli[F, Span[F], Unit] =
       Kleisli(_.putAll(fields: _*))
 
-    override def span[A](name: String, kind: SpanKind, errorHandler: PartialFunction[Throwable, SpanStatus])(
+    override def span[A](name: String, kind: SpanKind, errorHandler: ErrorHandler)(
       k: Kleisli[F, Span[F], A]
     ): Kleisli[F, Span[F], A] =
       Kleisli(_.child(name, kind, errorHandler).use(k.run))
@@ -100,7 +98,7 @@ object Trace extends TraceInstancesLowPriority {
         override def putAll(fields: (String, AttributeValue)*): Kleisli[F, E, Unit] =
           Kleisli(e => f(e).putAll(fields: _*))
 
-        override def span[A](name: String, kind: SpanKind, errorHandler: PartialFunction[Throwable, SpanStatus])(
+        override def span[A](name: String, kind: SpanKind, errorHandler: ErrorHandler)(
           k: Kleisli[F, E, A]
         ): Kleisli[F, E, A] =
           Kleisli(e => f(e).child(name, kind, errorHandler).use(s => k.run(g(e, s))))
@@ -123,7 +121,7 @@ object Trace extends TraceInstancesLowPriority {
       override def putAll(fields: (String, AttributeValue)*): EitherT[F, A, Unit] =
         EitherT.liftF(trace.putAll(fields: _*))
 
-      override def span[B](name: String, kind: SpanKind, errorHandler: PartialFunction[Throwable, SpanStatus])(
+      override def span[B](name: String, kind: SpanKind, errorHandler: ErrorHandler)(
         fa: EitherT[F, A, B]
       ): EitherT[F, A, B] = EitherT(trace.span(name, kind, errorHandler)(fa.value))
 
@@ -146,7 +144,7 @@ trait TraceInstancesLowPriority {
   ): Trace[G] = new Trace[G] {
     def put(key: String, value: AttributeValue): G[Unit] = C.accessF(span => L.lift(span.put(key, value)))
     def putAll(fields: (String, AttributeValue)*): G[Unit] = C.accessF(span => L.lift(span.putAll(fields: _*)))
-    def span[A](name: String, kind: SpanKind, errorHandler: PartialFunction[Throwable, SpanStatus])(fa: G[A]): G[A] =
+    def span[A](name: String, kind: SpanKind, errorHandler: ErrorHandler)(fa: G[A]): G[A] =
       C.accessF(_.child(name, kind, errorHandler).mapK(L.liftK).use(C.scope(fa)))
     def headers(toHeaders: ToHeaders): G[TraceHeaders] =
       C.access(span => toHeaders.fromContext(span.context))

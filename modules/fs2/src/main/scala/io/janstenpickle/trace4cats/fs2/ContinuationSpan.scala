@@ -1,11 +1,11 @@
 package io.janstenpickle.trace4cats.fs2
 
 import cats.data.NonEmptyList
-import cats.{Applicative, Defer}
 import cats.effect.Resource
-import io.janstenpickle.trace4cats.Span
+import cats.{Applicative, Defer}
 import io.janstenpickle.trace4cats.base.context.Provide
-import io.janstenpickle.trace4cats.model.{AttributeValue, Link, SpanContext, SpanKind, SpanStatus}
+import io.janstenpickle.trace4cats.model._
+import io.janstenpickle.trace4cats.{ErrorHandler, Span}
 
 trait ContinuationSpan[F[_]] extends Span[F] {
   def run[A](k: F[A]): F[A]
@@ -33,11 +33,8 @@ object ContinuationSpan {
 
       override def child(name: String, kind: SpanKind): Resource[G, Span[G]] = spanK.child(name, kind)
 
-      override def child(
-        name: String,
-        kind: SpanKind,
-        errorHandler: PartialFunction[Throwable, SpanStatus]
-      ): Resource[G, Span[G]] = spanK.child(name, kind, errorHandler)
+      override def child(name: String, kind: SpanKind, errorHandler: ErrorHandler): Resource[G, Span[G]] =
+        spanK.child(name, kind, errorHandler)
 
       override def run[A](k: G[A]): G[A] = P.lift(P.provide(k)(span))
     }
