@@ -17,7 +17,7 @@ trait ServerSyntax {
       requestFilter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
       dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains
     )(implicit P: Provide[F, G, Span[F]], F: BracketThrow[F], G: Monad[G], trace: Trace[G]): HttpRoutes[F] = {
-      val context = Http4sResourceKleislis.fromHeaders(spanNamer, requestFilter)(entryPoint.toKleisli)
+      val context = Http4sResourceKleislis.fromHeaders(spanNamer, requestFilter, dropHeadersWhen)(entryPoint.toKleisli)
 
       ServerTracer.injectRoutes(routes, context, dropHeadersWhen)
     }
