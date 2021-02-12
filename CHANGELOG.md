@@ -1,4 +1,4 @@
-## [0.8.0] - 2021-01-24
+## [0.9.0] - 2021-01-24
 
 Another substantial release, with a much improved typeclass hierarchy for generalising trace and request context
 injection.
@@ -221,7 +221,7 @@ The biggest release since [0.1.0], most notably this includes:
   - `jaeger-thrift` to `1.4.0`
   - `natchez-core` to `0.0.12`
   - `opentelemetry-sdk`, `opentelemetry-proto`, `opentelemetry-exporters-otlp` and `opentelemetry-exporters-jaeger` to
-  `0.8.0`
+  `0.9.0`
   - `vulcan-core`, `vulvan-generic` and `vulcan-enumeratum` to `1.2.0`
   - `discipline-scalatest` to `2.0.1`
   - `discipline-core` to `1.0.3`
@@ -360,7 +360,7 @@ Initial Release
 [Tapir]: https://github.com/softwaremill/tapir
 [Kafka]: https://kafka.apache.org
 
-[0.8.0]: https://github.com/janstenpickle/trace4cats/compare/v0.7.0..v0.8.0
+[0.9.0]: https://github.com/janstenpickle/trace4cats/compare/v0.7.0..v0.9.0
 [0.7.0]: https://github.com/janstenpickle/trace4cats/compare/v0.6.0..v0.7.0
 [0.6.0]: https://github.com/janstenpickle/trace4cats/compare/v0.5.2..v0.6.0
 [0.5.2]: https://github.com/janstenpickle/trace4cats/compare/v0.5.1..v0.5.2
