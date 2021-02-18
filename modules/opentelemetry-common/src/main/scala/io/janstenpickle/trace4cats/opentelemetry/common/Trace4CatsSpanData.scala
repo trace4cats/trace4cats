@@ -30,7 +30,7 @@ object Trace4CatsSpanData {
       private lazy val getTraceState: TraceState =
         span.context.traceState.values
           .foldLeft(TraceState.builder()) { case (builder, (Key(k), Value(v))) =>
-            builder.set(k, v)
+            builder.put(k, v)
           }
           .build()
 
