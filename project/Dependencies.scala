@@ -45,7 +45,7 @@ object Dependencies {
     val discipline = "1.1.4"
     val scalaCheck = "1.15.3"
     val scalaCheckShapeless = "1.2.5"
-    val scalaTest = "3.2.3"
+    val scalaTest = "3.2.4"
     val testContainers = "0.37.0"
   }
 
