@@ -12,7 +12,7 @@ object Dependencies {
     val embeddedRedis = "0.7.3"
     val enumeratum = "1.6.1"
     val fs2 = "2.5.2"
-    val fs2Kafka = "1.4.0"
+    val fs2Kafka = "1.4.1"
     val googleCredentials = "0.23.0"
     val googleCloudTrace = "1.2.11"
     val grpc = "1.35.0"
@@ -37,7 +37,7 @@ object Dependencies {
     val sttpModel = "1.3.3"
     val sttpTapir = "0.17.12"
     val svm = "19.2.1"
-    val vulcan = "1.4.0"
+    val vulcan = "1.4.1"
     val zioInterop = "2.3.1.0"
 
     val catsTestkitScalatest = "2.1.2"
