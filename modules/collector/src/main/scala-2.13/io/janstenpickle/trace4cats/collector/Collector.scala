@@ -1,16 +1,15 @@
 package io.janstenpickle.trace4cats.collector
 
-import cats.Parallel
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, ExitCode, IO, Resource, Timer}
+import cats.effect.{Blocker, ConcurrentEffect, ContextShift, ExitCode, IO, Resource}
 import cats.implicits._
 import com.monovore.decline._
 import com.monovore.decline.effect._
 import fs2.Chunk
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanExporter}
 import io.janstenpickle.trace4cats.collector.common.CommonCollector
 import io.janstenpickle.trace4cats.collector.common.config.ConfigParser
 import io.janstenpickle.trace4cats.collector.config.CollectorConfig
+import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanExporter}
 import io.janstenpickle.trace4cats.model.AttributeValue
 import io.janstenpickle.trace4cats.opentelemetry.jaeger.OpenTelemetryJaegerSpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpGrpcSpanExporter
@@ -36,7 +35,7 @@ object Collector
       }
     }
 
-  def others[F[_]: ConcurrentEffect: Parallel: ContextShift: Timer](
+  def others[F[_]: ConcurrentEffect: ContextShift](
     blocker: Blocker,
     configFile: String
   ): Resource[F, List[(String, List[(String, AttributeValue)], SpanExporter[F, Chunk])]] =
