@@ -125,19 +125,19 @@ object TailSpanSampler {
     }
   }
 
-  def filtering[F[_]: Monad, G[_]: Applicative: Foldable: FunctorFilter: MonoidK](
+  def filtering[F[_]: Monad, G[_]: Applicative: Foldable: MonoidK](
     store: SampleDecisionStore[F],
     filter: CompletedSpan => SampleDecision
   ): TailSpanSampler[F, G] =
     storedIncrementalComputation[F, G](store, span => Applicative[F].pure(filter(span)))
 
-  def spanNameFilter[F[_]: Monad, G[_]: Applicative: Foldable: FunctorFilter: MonoidK](
+  def spanNameFilter[F[_]: Monad, G[_]: Applicative: Foldable: MonoidK](
     store: SampleDecisionStore[F],
     filter: String => SampleDecision
   ): TailSpanSampler[F, G] =
     filtering(store, span => if (span.context.parent.isEmpty) filter(span.name) else SampleDecision.Include)
 
-  def spanNameDrop[F[_]: Monad, G[_]: Applicative: Foldable: FunctorFilter: MonoidK](
+  def spanNameDrop[F[_]: Monad, G[_]: Applicative: Foldable: MonoidK](
     store: SampleDecisionStore[F],
     dropSpanNames: NonEmptySet[String]
   ): TailSpanSampler[F, G] =

@@ -9,7 +9,6 @@ import cats.syntax.functor._
 import cats.syntax.traverse._
 import cats.syntax.semigroup._
 import fs2.Pipe
-import io.chrisdavenport.log4cats.Logger
 import io.janstenpickle.trace4cats.`export`.StreamSpanExporter
 import io.janstenpickle.trace4cats.collector.common.config.{KafkaListenerConfig, ListenerConfig, TracingConfig}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
@@ -59,7 +58,7 @@ object Tracing {
   def combineAttributes(allAttrs: List[(String, AttributeValue)]): Map[String, AttributeValue] =
     allAttrs.groupMapReduce(_._1)(_._2)(_ |+| _)
 
-  def exporter[F[_]: Concurrent: Timer: Logger](
+  def exporter[F[_]: Concurrent: Timer](
     sampler: Option[SpanSampler[F]],
     name: String,
     exporterNames: List[String],

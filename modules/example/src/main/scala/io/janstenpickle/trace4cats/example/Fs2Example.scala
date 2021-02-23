@@ -7,8 +7,6 @@ import cats.effect.{Blocker, BracketThrow, Clock, Concurrent, ContextShift, Exit
 import cats.implicits._
 import cats.{Applicative, Functor, Monad, Order, Parallel}
 import fs2.Stream
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.fs2.TracedStream
@@ -23,7 +21,7 @@ import scala.util.Random
 
 object Fs2Example extends IOApp {
 
-  def entryPoint[F[_]: Concurrent: ContextShift: Timer: Parallel: Logger](
+  def entryPoint[F[_]: Concurrent: ContextShift: Timer](
     blocker: Blocker,
     process: TraceProcess
   ): Resource[F, EntryPoint[F]] =
@@ -70,7 +68,7 @@ object Fs2Example extends IOApp {
       }
 
   // perform a map operation on the underlying stream where each element is traced
-  def map[F[_]: BracketThrow: Clock](stream: TracedStream[F, Long]): TracedStream[F, String] =
+  def map[F[_]: BracketThrow](stream: TracedStream[F, Long]): TracedStream[F, String] =
     stream.traceMapChunk("map", "opt-attr-2" -> LongValue(1))(_.toString)
 
   // `evalMapTrace` takes a function which transforms A => Kleisli[F, Span[F], B] and injects a root or child span
@@ -82,7 +80,7 @@ object Fs2Example extends IOApp {
     }
 
   // gets the trace headers from the span context so that they may be propagated across service boundaries
-  def getHeaders[F[_]: BracketThrow](stream: TracedStream[F, Unit]): Stream[F, (TraceHeaders, Unit)] =
+  def getHeaders[F[_]](stream: TracedStream[F, Unit]): Stream[F, (TraceHeaders, Unit)] =
     stream.traceHeaders.endTrace
 
   def continue[F[_]: BracketThrow](
@@ -99,7 +97,6 @@ object Fs2Example extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     (for {
       blocker <- Blocker[IO]
-      implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
       ep <- entryPoint[IO](blocker, TraceProcess("trace4catsFS2"))
     } yield ep)
       .use { ep =>

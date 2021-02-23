@@ -14,8 +14,6 @@ import cats.syntax.functor._
 import cats.syntax.parallel._
 import cats.syntax.partialOrder._
 import cats.{Monad, Order, Parallel}
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
@@ -32,7 +30,7 @@ import scala.util.Random
   * This example demonstrates how to use Trace4Cats inject to implicitly pass spans around the callstack.
   */
 object InjectExample extends IOApp {
-  def entryPoint[F[_]: Concurrent: ContextShift: Timer: Parallel: Logger](
+  def entryPoint[F[_]: Concurrent: ContextShift: Timer](
     blocker: Blocker,
     process: TraceProcess
   ): Resource[F, EntryPoint[F]] =
@@ -70,7 +68,6 @@ object InjectExample extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     (for {
       blocker <- Blocker[IO]
-      implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
       ep <- entryPoint[IO](blocker, TraceProcess("trace4cats"))
     } yield ep)
       .use { ep =>

@@ -6,7 +6,6 @@ import cats.effect.{Concurrent, Timer}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.Chunk
-import io.chrisdavenport.log4cats.Logger
 import io.janstenpickle.trace4cats.`export`.StreamSpanExporter
 import io.janstenpickle.trace4cats.kernel.{SpanExporter, SpanSampler}
 import io.janstenpickle.trace4cats.model._
@@ -15,7 +14,7 @@ object TracedSpanExporter {
   private final val spanName = "trace4cats.export.batch"
   private final val spanKind = SpanKind.Producer
 
-  def apply[F[_]: Concurrent: Timer: Logger](
+  def apply[F[_]: Concurrent: Timer](
     name: String,
     attributes: Map[String, AttributeValue],
     process: TraceProcess,

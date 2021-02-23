@@ -1,8 +1,7 @@
 package io.janstenpickle.trace4cats.datadog
 
 import cats.Foldable
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Sync, Timer}
-import io.chrisdavenport.log4cats.Logger
+import cats.effect.{Blocker, ConcurrentEffect, Resource, Sync, Timer}
 import io.janstenpickle.trace4cats.`export`.HttpSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch
@@ -12,7 +11,7 @@ import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 
 object DataDogSpanExporter {
-  def blazeClient[F[_]: ConcurrentEffect: Timer: ContextShift: Logger, G[_]: Foldable](
+  def blazeClient[F[_]: ConcurrentEffect: Timer, G[_]: Foldable](
     blocker: Blocker,
     host: String = "localhost",
     port: Int = 8126

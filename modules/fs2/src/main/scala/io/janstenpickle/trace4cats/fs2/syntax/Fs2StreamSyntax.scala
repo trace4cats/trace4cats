@@ -168,11 +168,7 @@ trait Fs2StreamSyntax {
 
     def through[B](f: TracedStream[F, A] => TracedStream[F, B]): TracedStream[F, B] = f(stream)
 
-    def liftTrace[G[_]: Applicative: Defer](implicit
-      F: Applicative[F],
-      defer: Defer[F],
-      P: Provide[F, G, Span[F]]
-    ): TracedStream[G, A] =
+    def liftTrace[G[_]: Applicative: Defer](implicit P: Provide[F, G, Span[F]]): TracedStream[G, A] =
       WriterT(stream.run.translate(P.liftK).map { case (span, a) =>
         ContinuationSpan.fromSpan[F, G](span) -> a
       })

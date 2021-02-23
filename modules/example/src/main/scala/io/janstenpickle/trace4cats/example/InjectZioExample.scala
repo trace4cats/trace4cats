@@ -13,8 +13,6 @@ import cats.syntax.functor._
 import cats.syntax.parallel._
 import cats.syntax.partialOrder._
 import cats.{Monad, Order, Parallel, ~>}
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.inject.zio._
@@ -37,7 +35,7 @@ import scala.util.Random
 object InjectZioExample extends CatsApp {
   implicit val rioTimer: Timer[SpannedRIO] = Timer[Task].mapK(λ[Task ~> SpannedRIO](t => t))
 
-  def entryPoint[F[_]: Concurrent: ContextShift: Timer: Parallel: Logger](
+  def entryPoint[F[_]: Concurrent: ContextShift: Timer](
     blocker: Blocker,
     process: TraceProcess
   ): Resource[F, EntryPoint[F]] =
@@ -75,7 +73,6 @@ object InjectZioExample extends CatsApp {
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
     (for {
       blocker <- Blocker[Task]
-      implicit0(logger: Logger[Task]) <- Resource.liftF(Slf4jLogger.create[Task])
       ep <- entryPoint[Task](blocker, TraceProcess("trace4cats"))
     } yield ep)
       .use { ep =>

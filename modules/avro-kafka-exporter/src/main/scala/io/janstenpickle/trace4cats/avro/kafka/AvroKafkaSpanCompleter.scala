@@ -29,17 +29,18 @@ object AvroKafkaSpanCompleter {
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
 
-  def fromProducer[F[_]: ConcurrentEffect: ContextShift: Timer](
+  def fromProducer[F[_]: ConcurrentEffect: Timer](
     process: TraceProcess,
     producer: KafkaProducer[F, TraceId, CompletedSpan],
     topic: String,
     bufferSize: Int = 2000,
     batchSize: Int = 50,
     batchTimeout: FiniteDuration = 10.seconds
-  ): Resource[F, SpanCompleter[F]] =
+  ): Resource[F, SpanCompleter[F]] = {
+    val exporter = AvroKafkaSpanExporter.fromProducer[F, Chunk](producer, topic)
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter = AvroKafkaSpanExporter.fromProducer[F, Chunk](producer, topic)
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
+  }
 }

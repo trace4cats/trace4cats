@@ -7,8 +7,6 @@ import cats.effect.{Blocker, BracketThrow, Clock, Concurrent, ContextShift, Exit
 import cats.implicits._
 import cats.{Applicative, Apply, Defer, Functor, Monad, Order, Parallel}
 import fs2.Stream
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.base.context.Provide
@@ -24,7 +22,7 @@ import scala.util.Random
 
 object Fs2AdvancedExample extends IOApp {
 
-  def entryPoint[F[_]: Concurrent: ContextShift: Timer: Parallel: Logger](
+  def entryPoint[F[_]: Concurrent: ContextShift: Timer](
     blocker: Blocker,
     process: TraceProcess
   ): Resource[F, EntryPoint[F]] =
@@ -62,7 +60,7 @@ object Fs2AdvancedExample extends IOApp {
     sourceStream[F].inject(ep, "this is injected root span", SpanKind.Producer)
 
   // after the first call to `evalMap` a `Span` is propagated alongside the entry point
-  def doWork[F[_]: Functor: Apply: Clock: Trace](stream: TracedStream[F, FiniteDuration]): TracedStream[F, Long] =
+  def doWork[F[_]: Apply: Clock: Trace](stream: TracedStream[F, FiniteDuration]): TracedStream[F, Long] =
     stream
       // eval some traced effect
       .evalMap { dur =>
@@ -72,7 +70,7 @@ object Fs2AdvancedExample extends IOApp {
       }
 
   // perform a map operation on the underlying stream where each element is traced
-  def map[F[_]: Functor: Clock: Trace](stream: TracedStream[F, Long]): TracedStream[F, String] =
+  def map[F[_]: Functor: Trace](stream: TracedStream[F, Long]): TracedStream[F, String] =
     stream.evalMap { long =>
       Trace[F].span("map") {
         Trace[F].put("opt-attr-2", LongValue(long)).as(long.toString)
@@ -88,10 +86,10 @@ object Fs2AdvancedExample extends IOApp {
     }
 
   // gets the trace headers from the span context so that they may be propagated across service boundaries
-  def getHeaders[F[_]: BracketThrow](stream: TracedStream[F, Unit]): TracedStream[F, (TraceHeaders, Unit)] =
+  def getHeaders[F[_]](stream: TracedStream[F, Unit]): TracedStream[F, (TraceHeaders, Unit)] =
     stream.traceHeaders
 
-  def continue[F[_]: BracketThrow: Defer, G[_]: Applicative: Defer: Trace](
+  def continue[F[_]: BracketThrow, G[_]: Applicative: Defer: Trace](
     ep: EntryPoint[F],
     stream: Stream[F, (TraceHeaders, Unit)]
   )(implicit P: Provide[F, G, Span[F]]): TracedStream[G, Unit] =
@@ -107,7 +105,6 @@ object Fs2AdvancedExample extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     (for {
       blocker <- Blocker[IO]
-      implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
       ep <- entryPoint[IO](blocker, TraceProcess("trace4catsFS2"))
     } yield ep)
       .use { ep =>

@@ -109,7 +109,7 @@ trait GenIOInteropCats {
   private def genOfIdentityMapErrors[E, A](io: IO[E, A]): Gen[IO[E, A]] =
     Gen.const(io.mapError(identity))
 
-  private def genOfFlatMaps[E, A: Cogen](io: IO[E, A])(gen: Gen[IO[E, A]]): Gen[IO[E, A]] =
+  private def genOfFlatMaps[E, A](io: IO[E, A])(gen: Gen[IO[E, A]]): Gen[IO[E, A]] =
     gen.map(nextIO => io.flatMap(_ => nextIO))
 
   private def genOfIdentityFlatMaps[E, A](io: IO[E, A]): Gen[IO[E, A]] =

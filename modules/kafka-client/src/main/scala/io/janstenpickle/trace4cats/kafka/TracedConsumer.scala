@@ -32,7 +32,7 @@ object TracedConsumer extends Fs2StreamSyntax {
           .as(record)
       }
 
-  def injectK[F[_]: BracketThrow: Defer, G[_]: ApplicativeThrow: Defer: Trace, K, V](
+  def injectK[F[_]: BracketThrow, G[_]: ApplicativeThrow: Defer: Trace, K, V](
     stream: Stream[F, CommittableConsumerRecord[F, K, V]]
   )(
     k: ResourceKleisli[F, SpanParams, Span[F]]

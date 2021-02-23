@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 import alleycats.std.iterable._
 import cats.Foldable
 import cats.data.NonEmptyList
-import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
+import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync}
 import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.show._
@@ -31,7 +31,7 @@ import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 object JaegerSpanExporter {
-  def apply[F[_]: Concurrent: ContextShift: Timer, G[_]: Foldable](
+  def apply[F[_]: Concurrent: ContextShift, G[_]: Foldable](
     blocker: Blocker,
     process: Option[TraceProcess],
     host: String = Option(System.getenv("JAEGER_AGENT_HOST")).getOrElse(UdpSender.DEFAULT_AGENT_UDP_HOST),
