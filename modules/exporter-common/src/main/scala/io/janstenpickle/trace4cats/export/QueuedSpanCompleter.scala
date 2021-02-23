@@ -1,5 +1,6 @@
 package io.janstenpickle.trace4cats.`export`
 
+import cats.Applicative
 import cats.effect.concurrent.Ref
 import cats.effect.syntax.bracket._
 import cats.effect.syntax.concurrent._
@@ -41,6 +42,7 @@ object QueuedSpanCompleter {
 
     for {
       inFlight <- Resource.liftF(Ref.of(0))
+      hasLoggedWarn <- Resource.liftF(Ref.of(false))
       queue <- Resource.liftF(Queue.bounded[F, CompletedSpan](realBufferSize))
       _ <- Resource.make(
         Stream
@@ -56,9 +58,14 @@ object QueuedSpanCompleter {
           else current + 1
         }
 
+        val warnLog = hasLoggedWarn.get.ifM(
+          Applicative[F].unit,
+          Logger[F].warn(s"Failed to enqueue new span, buffer is full of $realBufferSize") >> hasLoggedWarn.set(true)
+        )
+
         inFlight.get
           .map(_ == realBufferSize)
-          .ifM(Logger[F].warn(s"Failed to enqueue new span, buffer is full of $realBufferSize"), enqueue)
+          .ifM(warnLog, enqueue >> hasLoggedWarn.set(false))
       }
     }
   }
