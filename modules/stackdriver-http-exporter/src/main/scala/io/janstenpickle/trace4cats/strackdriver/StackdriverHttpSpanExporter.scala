@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.strackdriver
 
 import cats.Foldable
-import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
+import cats.effect.{Blocker, Concurrent, ConcurrentEffect, Resource, Timer}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.foldable._
@@ -30,14 +30,14 @@ import scala.collection.mutable.ListBuffer
 object StackdriverHttpSpanExporter {
   private final val base = "https://cloudtrace.googleapis.com/v2/projects"
 
-  def blazeClient[F[_]: ConcurrentEffect: Timer: ContextShift: Logger, G[_]: Foldable](
+  def blazeClient[F[_]: ConcurrentEffect: Timer: Logger, G[_]: Foldable](
     blocker: Blocker,
     projectId: String,
     serviceAccountPath: String,
   ): Resource[F, SpanExporter[F, G]] =
     BlazeClientBuilder[F](blocker.blockingContext).resource.evalMap(apply[F, G](projectId, serviceAccountPath, _))
 
-  def blazeClient[F[_]: ConcurrentEffect: Timer: ContextShift: Logger, G[_]: Foldable](
+  def blazeClient[F[_]: ConcurrentEffect: Timer: Logger, G[_]: Foldable](
     blocker: Blocker,
     serviceAccountName: String = "default"
   ): Resource[F, SpanExporter[F, G]] =
@@ -62,7 +62,7 @@ object StackdriverHttpSpanExporter {
       client
     )
 
-  def apply[F[_]: Concurrent: Timer: Logger, G[_]: Foldable](
+  def apply[F[_]: Concurrent: Timer, G[_]: Foldable](
     projectIdProvider: ProjectIdProvider[F],
     tokenProvider: TokenProvider[F],
     client: Client[F]

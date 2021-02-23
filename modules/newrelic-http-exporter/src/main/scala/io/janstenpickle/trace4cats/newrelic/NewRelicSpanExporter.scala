@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.newrelic
 
 import cats.Foldable
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Sync, Timer}
+import cats.effect.{Blocker, ConcurrentEffect, Resource, Sync, Timer}
 import io.circe.Json
 import io.janstenpickle.trace4cats.`export`.HttpSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
@@ -14,7 +14,7 @@ import org.http4s.{Header, MediaType}
 
 object NewRelicSpanExporter {
 
-  def blazeClient[F[_]: ConcurrentEffect: Timer: ContextShift, G[_]: Foldable](
+  def blazeClient[F[_]: ConcurrentEffect: Timer, G[_]: Foldable](
     blocker: Blocker,
     apiKey: String,
     endpoint: Endpoint

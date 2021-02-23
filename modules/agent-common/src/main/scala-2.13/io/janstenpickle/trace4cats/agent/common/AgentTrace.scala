@@ -7,14 +7,13 @@ import cats.effect.{Concurrent, Sync, Timer}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.{Chunk, Pipe}
-import io.chrisdavenport.log4cats.Logger
 import io.janstenpickle.trace4cats.kernel.{SpanExporter, SpanSampler}
 import io.janstenpickle.trace4cats.meta.{PipeTracer, TracedSpanExporter}
 import io.janstenpickle.trace4cats.model.{AttributeValue, CompletedSpan, TraceProcess}
 import io.janstenpickle.trace4cats.rate.sampling.RateSpanSampler
 
 object AgentTrace {
-  def apply[F[_]: Concurrent: Timer: Logger](
+  def apply[F[_]: Concurrent: Timer](
     exporterName: String,
     exporterAttributes: Map[String, AttributeValue],
     listenerPort: Int,

@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.strackdriver
 
-import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
+import cats.effect.{Blocker, Concurrent, ConcurrentEffect, Resource, Timer}
 import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
@@ -14,7 +14,7 @@ import org.http4s.client.Client
 import scala.concurrent.duration._
 
 object StackdriverHttpSpanCompleter {
-  def serviceAccountBlazeClient[F[_]: ConcurrentEffect: ContextShift: Timer](
+  def serviceAccountBlazeClient[F[_]: ConcurrentEffect: Timer](
     blocker: Blocker,
     process: TraceProcess,
     projectId: String,
@@ -29,7 +29,7 @@ object StackdriverHttpSpanCompleter {
       completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
     } yield completer
 
-  def blazeClient[F[_]: ConcurrentEffect: ContextShift: Timer](
+  def blazeClient[F[_]: ConcurrentEffect: Timer](
     blocker: Blocker,
     process: TraceProcess,
     serviceAccountName: String = "default",

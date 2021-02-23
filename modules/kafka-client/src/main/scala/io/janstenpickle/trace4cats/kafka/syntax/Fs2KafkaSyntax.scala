@@ -38,7 +38,6 @@ trait Fs2KafkaSyntax {
     def injectK[G[_]](ep: EntryPoint[F])(implicit
       P: Provide[F, G, Span[F]],
       F: BracketThrow[F],
-      deferF: Defer[F],
       G: ApplicativeThrow[G],
       deferG: Defer[G],
       trace: Trace[G]
@@ -48,7 +47,6 @@ trait Fs2KafkaSyntax {
     def traceK[G[_]](k: ResourceKleisli[F, SpanParams, Span[F]])(implicit
       P: Provide[F, G, Span[F]],
       F: BracketThrow[F],
-      deferF: Defer[F],
       G: ApplicativeThrow[G],
       deferG: Defer[G],
       trace: Trace[G]

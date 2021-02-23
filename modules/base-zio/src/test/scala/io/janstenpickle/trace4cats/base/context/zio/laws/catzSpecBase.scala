@@ -32,6 +32,8 @@ import zio.random.Random
 import zio.system.System
 import zio.{=!=, Cause, IO, Runtime, Task, UIO, ZIO, ZManaged}
 
+import scala.annotation.unused
+
 trait catzSpecBase
     extends AnyFunSuite
     with FunSuiteDiscipline
@@ -80,7 +82,8 @@ sealed trait catzSpecBaseLowPriority { this: catzSpecBase =>
   }
 
   // 'R =!= Any' evidence fixes the 'diverging implicit expansion for type Arbitrary' error reproducible on scala 2.12 and 2.11.
-  implicit def zmanagedEq[R: * =!= Any: Arbitrary, E: Eq, A: Eq](implicit
+  implicit def zmanagedEq[R: Arbitrary, E: Eq, A: Eq](implicit
+    @unused notAny: R =!= Any,
     rts: Runtime[Any],
     tc: TestContext
   ): Eq[ZManaged[R, E, A]] = {

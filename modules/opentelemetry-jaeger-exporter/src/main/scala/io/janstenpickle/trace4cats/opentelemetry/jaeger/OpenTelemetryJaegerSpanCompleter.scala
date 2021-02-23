@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.opentelemetry.jaeger
 
-import cats.effect.{Concurrent, ContextShift, Resource, Timer}
+import cats.effect.{Concurrent, Resource, Timer}
 import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
@@ -11,7 +11,7 @@ import io.janstenpickle.trace4cats.model.TraceProcess
 import scala.concurrent.duration._
 
 object OpenTelemetryJaegerSpanCompleter {
-  def apply[F[_]: Concurrent: ContextShift: Timer](
+  def apply[F[_]: Concurrent: Timer](
     process: TraceProcess,
     host: String = "localhost",
     port: Int = 14250,

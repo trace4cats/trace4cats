@@ -12,7 +12,7 @@ trait ContinuationSpan[F[_]] extends Span[F] {
 }
 
 object ContinuationSpan {
-  def fromSpan[F[_]: Applicative: Defer, G[_]: Applicative: Defer](
+  def fromSpan[F[_], G[_]: Applicative: Defer](
     span: Span[F]
   )(implicit P: Provide[F, G, Span[F]]): ContinuationSpan[G] = {
     // 👀

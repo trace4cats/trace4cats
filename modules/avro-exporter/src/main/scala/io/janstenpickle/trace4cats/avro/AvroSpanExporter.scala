@@ -54,7 +54,7 @@ object AvroSpanExporter {
           }
       }
 
-  def udp[F[_]: Concurrent: ContextShift: Timer: Logger, G[_]: Traverse](
+  def udp[F[_]: Concurrent: ContextShift: Timer, G[_]: Traverse](
     blocker: Blocker,
     host: String = agentHostname,
     port: Int = agentPort,

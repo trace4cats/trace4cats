@@ -69,7 +69,7 @@ object AvroKafkaConsumer {
         .flatMap(apply[F](_, topic))
     }
 
-  def apply[F[_]: Concurrent: Timer](
+  def apply[F[_]: Concurrent](
     consumer: KafkaConsumer[F, Option[TraceId], Option[CompletedSpan]],
     topic: String,
   ): Stream[F, CompletedSpan] =

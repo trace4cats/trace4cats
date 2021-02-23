@@ -9,7 +9,7 @@ import cats.syntax.flatMap._
 import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.show._
-import cats.{Foldable, Functor, Traverse}
+import cats.{Functor, Traverse}
 import fs2.kafka._
 import io.janstenpickle.trace4cats.avro.AvroInstances
 import io.janstenpickle.trace4cats.kernel.SpanExporter
@@ -50,7 +50,7 @@ object AvroKafkaSpanExporter {
       } yield ba
     }
 
-  def apply[F[_]: ConcurrentEffect: ContextShift, G[+_]: Functor: Traverse: Foldable](
+  def apply[F[_]: ConcurrentEffect: ContextShift, G[+_]: Traverse](
     bootStrapServers: NonEmptyList[String],
     topic: String,
     modifySettings: ProducerSettings[F, TraceId, CompletedSpan] => ProducerSettings[F, TraceId, CompletedSpan] =
@@ -71,7 +71,7 @@ object AvroKafkaSpanExporter {
           .map(fromProducer[F, G](_, topic))
       }
 
-  def fromProducer[F[_]: Functor, G[+_]: Functor: Traverse: Foldable](
+  def fromProducer[F[_]: Functor, G[+_]: Traverse](
     producer: KafkaProducer[F, TraceId, CompletedSpan],
     topic: String
   ): SpanExporter[F, G] =

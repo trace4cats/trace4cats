@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.datadog
 
-import cats.effect.{Blocker, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
+import cats.effect.{Blocker, Concurrent, ConcurrentEffect, Resource, Timer}
 import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
@@ -13,7 +13,7 @@ import org.http4s.client.blaze.BlazeClientBuilder
 import scala.concurrent.duration._
 
 object DataDogSpanCompleter {
-  def blazeClient[F[_]: ConcurrentEffect: Timer: ContextShift](
+  def blazeClient[F[_]: ConcurrentEffect: Timer](
     blocker: Blocker,
     process: TraceProcess,
     host: String = "localhost",
@@ -25,7 +25,7 @@ object DataDogSpanCompleter {
     BlazeClientBuilder[F](blocker.blockingContext).resource
       .flatMap(apply[F](_, process, host, port, bufferSize, batchSize, batchTimeout))
 
-  def apply[F[_]: Concurrent: ContextShift: Timer](
+  def apply[F[_]: Concurrent: Timer](
     client: Client[F],
     process: TraceProcess,
     host: String = "localhost",
