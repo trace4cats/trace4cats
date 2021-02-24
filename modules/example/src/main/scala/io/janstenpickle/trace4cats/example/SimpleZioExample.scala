@@ -3,6 +3,7 @@ package io.janstenpickle.trace4cats.example
 import cats.effect.Blocker
 import cats.syntax.flatMap._
 import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.`export`.CompleterConfig
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{SpanKind, SpanStatus, TraceProcess}
@@ -23,7 +24,11 @@ object SimpleZioExample extends CatsApp {
   override def run(args: List[String]): URIO[zio.ZEnv, zio.ExitCode] =
     (for {
       blocker <- Blocker[Task]
-      completer <- AvroSpanCompleter.udp[Task](blocker, TraceProcess("test"), batchTimeout = 50.millis)
+      completer <- AvroSpanCompleter.udp[Task](
+        blocker,
+        TraceProcess("test"),
+        config = CompleterConfig(batchTimeout = 50.millis)
+      )
     } yield completer)
       .use { completer =>
         // Spans are surfaced as `cats.effect.Resource`s which form a timed bracket around an executed effect

@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.opentelemetry.otlp
 import java.time.Instant
 import cats.effect.IO
 import fs2.Chunk
-import io.janstenpickle.trace4cats.`export`.SemanticTags
+import io.janstenpickle.trace4cats.`export`.{CompleterConfig, SemanticTags}
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceProcess}
 import io.janstenpickle.trace4cats.test.jaeger.BaseJaegerSpec
 
@@ -18,7 +18,7 @@ class OpenTelemetryOtlpHttpSpanCompleterSpec extends BaseJaegerSpec {
 
     testCompleter(
       OpenTelemetryOtlpHttpSpanCompleter
-        .blazeClient[IO](blocker, process, "localhost", 55681, batchTimeout = 50.millis),
+        .blazeClient[IO](blocker, process, "localhost", 55681, config = CompleterConfig(batchTimeout = 50.millis)),
       updatedSpan,
       process,
       batchToJaegerResponse(

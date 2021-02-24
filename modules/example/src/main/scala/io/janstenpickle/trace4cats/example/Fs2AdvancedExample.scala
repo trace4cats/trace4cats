@@ -1,13 +1,13 @@
 package io.janstenpickle.trace4cats.example
 
 import java.util.concurrent.TimeUnit
-
 import cats.data.Kleisli
 import cats.effect.{Blocker, BracketThrow, Clock, Concurrent, ContextShift, ExitCode, IO, IOApp, Resource, Sync, Timer}
 import cats.implicits._
 import cats.{Applicative, Apply, Defer, Functor, Monad, Order, Parallel}
 import fs2.Stream
 import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.`export`.CompleterConfig
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.fs2.TracedStream
@@ -26,7 +26,7 @@ object Fs2AdvancedExample extends IOApp {
     blocker: Blocker,
     process: TraceProcess
   ): Resource[F, EntryPoint[F]] =
-    AvroSpanCompleter.udp[F](blocker, process, batchTimeout = 50.millis).map { completer =>
+    AvroSpanCompleter.udp[F](blocker, process, config = CompleterConfig(batchTimeout = 50.millis)).map { completer =>
       EntryPoint[F](SpanSampler.probabilistic[F](0.05), completer)
     }
 

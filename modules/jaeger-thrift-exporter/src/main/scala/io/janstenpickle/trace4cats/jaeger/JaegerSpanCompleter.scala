@@ -5,11 +5,10 @@ import fs2.Chunk
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.jaegertracing.thrift.internal.senders.UdpSender
-import io.janstenpickle.trace4cats.`export`.QueuedSpanCompleter
+import io.janstenpickle.trace4cats.`export`.{CompleterConfig, QueuedSpanCompleter}
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.TraceProcess
 
-import scala.concurrent.duration._
 import scala.util.Try
 
 object JaegerSpanCompleter {
@@ -20,13 +19,11 @@ object JaegerSpanCompleter {
     port: Int = Option(System.getenv("JAEGER_AGENT_PORT"))
       .flatMap(p => Try(p.toInt).toOption)
       .getOrElse(UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT),
-    bufferSize: Int = 2000,
-    batchSize: Int = 50,
-    batchTimeout: FiniteDuration = 10.seconds,
+    config: CompleterConfig = CompleterConfig(),
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
       exporter <- JaegerSpanExporter[F, Chunk](blocker, Some(process), host, port)
-      completer <- QueuedSpanCompleter[F](process, exporter, bufferSize, batchSize, batchTimeout)
+      completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 }
