@@ -27,30 +27,32 @@ object QueuedSpanCompleter {
   ): Resource[F, SpanCompleter[F]] = {
     val realBufferSize = if (bufferSize < batchSize * 5) batchSize * 5 else bufferSize
 
-    def write(inFlight: Ref[F, Int], queue: Queue[F, CompletedSpan], exporter: SpanExporter[F, Chunk]): F[Unit] =
-      queue.dequeue
-        .groupWithin(batchSize, batchTimeout)
-        .map(spans => Batch(spans))
-        .evalMap { batch =>
-          exporter.exportBatch(batch).guarantee(inFlight.update(_ - batch.spans.size))
-        }
-        .compile
-        .drain
-        .onError { case th =>
-          Logger[F].warn(th)("Failed to export spans")
-        }
-
     for {
       inFlight <- Resource.liftF(Ref.of(0))
       hasLoggedWarn <- Resource.liftF(Ref.of(false))
       queue <- Resource.liftF(Queue.bounded[F, CompletedSpan](realBufferSize))
-      _ <- Resource.make(
-        Stream
-          .retry(write(inFlight, queue, exporter), 5.seconds, _ + 1.second, Int.MaxValue)
+      _ <- Resource.make {
+        queue.dequeue
+          .groupWithin(batchSize, batchTimeout)
+          .map(spans => Batch(spans))
+          .evalMap { batch =>
+            Stream
+              .retry(
+                exporter.exportBatch(batch).onError { case th =>
+                  Logger[F].warn(th)("Failed to export spans")
+                },
+                delay = 5.seconds,
+                nextDelay = _ + 1.second,
+                maxAttempts = Int.MaxValue,
+              )
+              .compile
+              .drain
+              .guarantee(inFlight.update(_ - batch.spans.size))
+          }
           .compile
           .drain
           .start
-      )(fiber => Timer[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)
+      }(fiber => Timer[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)
     } yield new SpanCompleter[F] {
       override def complete(span: CompletedSpan.Builder): F[Unit] = {
         val enqueue = queue.enqueue1(span.build(process)) >> inFlight.update { current =>
