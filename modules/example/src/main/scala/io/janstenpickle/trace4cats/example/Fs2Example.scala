@@ -1,13 +1,13 @@
 package io.janstenpickle.trace4cats.example
 
 import java.util.concurrent.TimeUnit
-
 import cats.data.Kleisli
 import cats.effect.{Blocker, BracketThrow, Clock, Concurrent, ContextShift, ExitCode, IO, IOApp, Resource, Sync, Timer}
 import cats.implicits._
 import cats.{Applicative, Functor, Monad, Order, Parallel}
 import fs2.Stream
 import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.`export`.CompleterConfig
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.fs2.TracedStream
 import io.janstenpickle.trace4cats.fs2.syntax.all._
@@ -25,7 +25,7 @@ object Fs2Example extends IOApp {
     blocker: Blocker,
     process: TraceProcess
   ): Resource[F, EntryPoint[F]] =
-    AvroSpanCompleter.udp[F](blocker, process, batchTimeout = 50.millis).map { completer =>
+    AvroSpanCompleter.udp[F](blocker, process, config = CompleterConfig(batchTimeout = 50.millis)).map { completer =>
       EntryPoint[F](SpanSampler.probabilistic[F](0.05), completer)
     }
 
@@ -83,10 +83,7 @@ object Fs2Example extends IOApp {
   def getHeaders[F[_]](stream: TracedStream[F, Unit]): Stream[F, (TraceHeaders, Unit)] =
     stream.traceHeaders.endTrace
 
-  def continue[F[_]: BracketThrow](
-    ep: EntryPoint[F],
-    stream: Stream[F, (TraceHeaders, Unit)]
-  ): TracedStream[F, Unit] =
+  def continue[F[_]: BracketThrow](ep: EntryPoint[F], stream: Stream[F, (TraceHeaders, Unit)]): TracedStream[F, Unit] =
     // inject the entry point and extract headers from the stream element
     stream
       .injectContinue(ep, "this is the root span in a new service", SpanKind.Consumer)(_._1)

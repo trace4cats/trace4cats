@@ -14,6 +14,7 @@ import cats.syntax.functor._
 import cats.syntax.parallel._
 import cats.syntax.partialOrder._
 import cats.{Monad, Order, Parallel}
+import io.janstenpickle.trace4cats.`export`.CompleterConfig
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.inject.{Trace => T4CTrace}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
@@ -34,7 +35,7 @@ object NatchezExample extends IOApp {
     blocker: Blocker,
     process: TraceProcess
   ): Resource[F, EntryPoint[F]] =
-    AvroSpanCompleter.udp[F](blocker, process, batchTimeout = 50.millis).map { completer =>
+    AvroSpanCompleter.udp[F](blocker, process, config = CompleterConfig(batchTimeout = 50.millis)).map { completer =>
       Trace4CatsTracer.entryPoint[F](SpanSampler.probabilistic[F](0.05), completer)
     }
 

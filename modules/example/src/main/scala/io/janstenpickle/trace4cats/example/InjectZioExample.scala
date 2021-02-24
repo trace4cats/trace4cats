@@ -12,8 +12,9 @@ import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.parallel._
 import cats.syntax.partialOrder._
-import cats.{Monad, Order, Parallel, ~>}
+import cats.{~>, Monad, Order, Parallel}
 import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.`export`.CompleterConfig
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.inject.zio._
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
@@ -39,7 +40,7 @@ object InjectZioExample extends CatsApp {
     blocker: Blocker,
     process: TraceProcess
   ): Resource[F, EntryPoint[F]] =
-    AvroSpanCompleter.udp[F](blocker, process, batchTimeout = 50.millis).map { completer =>
+    AvroSpanCompleter.udp[F](blocker, process, config = CompleterConfig(batchTimeout = 50.millis)).map { completer =>
       EntryPoint[F](SpanSampler.probabilistic[F](0.05), completer)
     }
 

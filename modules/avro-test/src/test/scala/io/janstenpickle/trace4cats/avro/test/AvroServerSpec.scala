@@ -7,6 +7,7 @@ import cats.syntax.all._
 import fs2.concurrent.Queue
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import io.janstenpickle.trace4cats.`export`.CompleterConfig
 import io.janstenpickle.trace4cats.avro.{AvroSpanCompleter, AvroSpanExporter}
 import io.janstenpickle.trace4cats.avro.server.AvroServer
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceProcess}
@@ -64,7 +65,12 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
             server <- AvroServer.tcp[IO](blocker, queue.enqueue, port = 7778)
             _ <- server.compile.drain.background
             _ <- Resource.liftF(timer.sleep(2.seconds))
-            completer <- AvroSpanCompleter.tcp[IO](blocker, process, port = 7778, batchTimeout = 1.second)
+            completer <- AvroSpanCompleter.tcp[IO](
+              blocker,
+              process,
+              port = 7778,
+              config = CompleterConfig(batchTimeout = 1.second)
+            )
           } yield completer).use(c => spans.traverse(c.complete) >> timer.sleep(3.seconds)) >> queue.dequeue
             .take(spans.size.toLong)
             .compile
@@ -111,7 +117,12 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
             server <- AvroServer.udp[IO](blocker, queue.enqueue, port = 7780)
             _ <- server.compile.drain.background
             _ <- Resource.liftF(timer.sleep(2.seconds))
-            completer <- AvroSpanCompleter.udp[IO](blocker, process, port = 7780, batchTimeout = 1.second)
+            completer <- AvroSpanCompleter.udp[IO](
+              blocker,
+              process,
+              port = 7780,
+              config = CompleterConfig(batchTimeout = 1.second)
+            )
           } yield completer).use(c => spans.traverse(c.complete) >> timer.sleep(3.seconds)) >> queue.dequeue
             .take(spans.size.toLong)
             .compile

@@ -7,8 +7,8 @@ import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{SpanKind, SpanStatus, TraceProcess}
 
 import scala.concurrent.duration._
-
 import cats.syntax.flatMap._
+import io.janstenpickle.trace4cats.`export`.CompleterConfig
 
 /** This example shows how to send traces to the Avro Agent.
   *
@@ -19,7 +19,11 @@ object SimpleExample extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     (for {
       blocker <- Blocker[IO]
-      completer <- AvroSpanCompleter.udp[IO](blocker, TraceProcess("test"), batchTimeout = 50.millis)
+      completer <- AvroSpanCompleter.udp[IO](
+        blocker,
+        TraceProcess("test"),
+        config = CompleterConfig(batchTimeout = 50.millis)
+      )
     } yield completer)
       .use { completer =>
         // Spans are surfaced as `cats.effect.Resource`s which form a timed bracket around an executed effect

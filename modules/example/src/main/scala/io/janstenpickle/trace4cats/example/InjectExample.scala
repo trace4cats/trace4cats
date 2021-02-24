@@ -15,6 +15,7 @@ import cats.syntax.parallel._
 import cats.syntax.partialOrder._
 import cats.{Monad, Order, Parallel}
 import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.`export`.CompleterConfig
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
@@ -34,7 +35,7 @@ object InjectExample extends IOApp {
     blocker: Blocker,
     process: TraceProcess
   ): Resource[F, EntryPoint[F]] =
-    AvroSpanCompleter.udp[F](blocker, process, batchTimeout = 50.millis).map { completer =>
+    AvroSpanCompleter.udp[F](blocker, process, config = CompleterConfig(batchTimeout = 50.millis)).map { completer =>
       EntryPoint[F](SpanSampler.probabilistic[F](0.05), completer)
     }
 

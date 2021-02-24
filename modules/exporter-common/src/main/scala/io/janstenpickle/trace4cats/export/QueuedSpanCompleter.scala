@@ -21,11 +21,9 @@ object QueuedSpanCompleter {
   def apply[F[_]: Concurrent: Timer: Logger](
     process: TraceProcess,
     exporter: SpanExporter[F, Chunk],
-    bufferSize: Int,
-    batchSize: Int,
-    batchTimeout: FiniteDuration,
+    config: CompleterConfig
   ): Resource[F, SpanCompleter[F]] = {
-    val realBufferSize = if (bufferSize < batchSize * 5) batchSize * 5 else bufferSize
+    val realBufferSize = if (config.bufferSize < config.batchSize * 5) config.batchSize * 5 else config.bufferSize
 
     for {
       inFlight <- Resource.liftF(Ref.of(0))
@@ -33,20 +31,21 @@ object QueuedSpanCompleter {
       queue <- Resource.liftF(Queue.bounded[F, CompletedSpan](realBufferSize))
       _ <- Resource.make {
         queue.dequeue
-          .groupWithin(batchSize, batchTimeout)
+          .groupWithin(config.batchSize, config.batchTimeout)
           .map(spans => Batch(spans))
           .evalMap { batch =>
             Stream
               .retry(
-                exporter.exportBatch(batch).onError { case th =>
-                  Logger[F].warn(th)("Failed to export spans")
-                },
-                delay = 500.millis,
-                nextDelay = _ + 100.millis,
-                maxAttempts = Int.MaxValue,
+                exporter.exportBatch(batch),
+                delay = config.retryConfig.delay,
+                nextDelay = config.retryConfig.nextDelay,
+                maxAttempts = config.retryConfig.maxAttempts
               )
               .compile
               .drain
+              .onError { case th =>
+                Logger[F].warn(th)("Failed to export spans")
+              }
               .guarantee(inFlight.update(_ - batch.spans.size))
           }
           .compile
