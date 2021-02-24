@@ -41,8 +41,8 @@ object QueuedSpanCompleter {
                 exporter.exportBatch(batch).onError { case th =>
                   Logger[F].warn(th)("Failed to export spans")
                 },
-                delay = 5.seconds,
-                nextDelay = _ + 1.second,
+                delay = 500.millis,
+                nextDelay = _ + 100.millis,
                 maxAttempts = Int.MaxValue,
               )
               .compile
