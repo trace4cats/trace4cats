@@ -59,8 +59,8 @@ object QueuedSpanCompleter {
         }
 
         val warnLog = hasLoggedWarn.get.ifM(
+          Logger[F].warn(s"Failed to enqueue new span, buffer is full of $realBufferSize") >> hasLoggedWarn.set(true),
           Applicative[F].unit,
-          Logger[F].warn(s"Failed to enqueue new span, buffer is full of $realBufferSize") >> hasLoggedWarn.set(true)
         )
 
         inFlight.get
