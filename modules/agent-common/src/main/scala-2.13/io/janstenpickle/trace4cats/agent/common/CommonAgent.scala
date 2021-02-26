@@ -5,7 +5,7 @@ import cats.effect.{Blocker, Concurrent, ContextShift, ExitCode, Resource, Timer
 import cats.syntax.functor._
 import com.monovore.decline.Opts
 import fs2.{Chunk, Pipe}
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.`export`.QueuedSpanExporter
 import io.janstenpickle.trace4cats.avro.server.AvroServer
 import io.janstenpickle.trace4cats.avro.{AgentPortEnv, DefaultPort}

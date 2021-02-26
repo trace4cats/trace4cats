@@ -5,7 +5,7 @@ import cats.effect.{Blocker, Concurrent, ConcurrentEffect, Resource, Timer}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.foldable._
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.`export`.HttpSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch

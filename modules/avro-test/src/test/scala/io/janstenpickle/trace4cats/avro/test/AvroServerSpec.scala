@@ -5,8 +5,8 @@ import cats.effect.{Blocker, IO, Resource}
 import cats.kernel.Eq
 import cats.syntax.all._
 import fs2.concurrent.Queue
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.CompleterConfig
 import io.janstenpickle.trace4cats.avro.{AvroSpanCompleter, AvroSpanExporter}
 import io.janstenpickle.trace4cats.avro.server.AvroServer

@@ -13,7 +13,7 @@ import dev.profunktor.redis4cats.codecs.splits.SplitEpi
 import dev.profunktor.redis4cats.data.RedisCodec
 import dev.profunktor.redis4cats.log4cats._
 import dev.profunktor.redis4cats.{Redis, RedisCommands}
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.model.{SampleDecision, TraceId}
 import io.janstenpickle.trace4cats.sampling.tail.SampleDecisionStore
 import io.lettuce.core.ClientOptions

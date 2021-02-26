@@ -3,8 +3,8 @@ package io.janstenpickle.trace4cats.stackdriver
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Timer}
 import com.google.auth.Credentials
 import fs2.Chunk
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.{CompleterConfig, QueuedSpanCompleter}
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model._

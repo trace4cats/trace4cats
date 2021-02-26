@@ -2,8 +2,8 @@ package io.janstenpickle.trace4cats.sampling.tail.redis
 
 import cats.effect.{ContextShift, IO, Resource, Timer}
 import cats.syntax.flatMap._
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.model.{SampleDecision, TraceId}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec

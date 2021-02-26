@@ -12,7 +12,7 @@ import cats.syntax.monad._
 import cats.syntax.parallel._
 import fs2.Chunk
 import fs2.concurrent.Queue
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch
 

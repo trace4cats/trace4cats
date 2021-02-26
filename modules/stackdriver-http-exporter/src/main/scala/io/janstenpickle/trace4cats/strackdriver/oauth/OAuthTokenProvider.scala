@@ -7,7 +7,7 @@ import java.time.Instant
 
 import cats.effect.Sync
 import cats.syntax.all._
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import org.http4s.client.Client
 
 class OAuthTokenProvider[F[_]](emailAddress: String, scope: List[String], auth: OAuth[F])(implicit F: Sync[F])

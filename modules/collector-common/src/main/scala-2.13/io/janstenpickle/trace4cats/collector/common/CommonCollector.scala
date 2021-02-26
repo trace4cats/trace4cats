@@ -6,7 +6,7 @@ import cats.implicits._
 import com.monovore.decline._
 import fs2.kafka.ConsumerSettings
 import fs2.{Chunk, Pipe, Stream}
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.`export`.QueuedSpanExporter
 import io.janstenpickle.trace4cats.avro._
 import io.janstenpickle.trace4cats.avro.kafka.{AvroKafkaConsumer, AvroKafkaSpanExporter}

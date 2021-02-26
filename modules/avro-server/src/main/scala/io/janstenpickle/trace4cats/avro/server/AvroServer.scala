@@ -10,7 +10,7 @@ import cats.syntax.functor._
 import fs2.io.tcp.{SocketGroup => TCPSocketGroup}
 import fs2.io.udp.{SocketGroup => UDPSocketGroup}
 import fs2.{Chunk, Pipe, Pull, Stream}
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.avro.{agentPort, AvroInstances}
 import io.janstenpickle.trace4cats.model.CompletedSpan
 import org.apache.avro.Schema
