@@ -37,7 +37,7 @@ object Trace4CatsAttributes {
 
       override val isEmpty: Boolean = map.isEmpty
 
-      override def forEach(consumer: BiConsumer[AttributeKey[_], AnyRef]): Unit = {
+      override def forEach(consumer: BiConsumer[_ >: AttributeKey[_], _ >: AnyRef]): Unit = {
         def safeConsume[A <: AnyRef](key: AttributeKey[A])(attr: A): Unit =
           consumer.accept(key, attr)
 
