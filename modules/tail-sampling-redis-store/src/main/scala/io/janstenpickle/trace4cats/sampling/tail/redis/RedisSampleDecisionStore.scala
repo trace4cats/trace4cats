@@ -11,11 +11,11 @@ import com.github.blemale.scaffeine.Scaffeine
 import dev.profunktor.redis4cats.codecs.Codecs
 import dev.profunktor.redis4cats.codecs.splits.SplitEpi
 import dev.profunktor.redis4cats.data.RedisCodec
-import dev.profunktor.redis4cats.log4cats._
 import dev.profunktor.redis4cats.{Redis, RedisCommands}
 import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.model.{SampleDecision, TraceId}
 import io.janstenpickle.trace4cats.sampling.tail.SampleDecisionStore
+import io.janstenpickle.trace4cats.sampling.tail.redis.logAdapters._
 import io.lettuce.core.ClientOptions
 
 import scala.concurrent.duration.FiniteDuration
