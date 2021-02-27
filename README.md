@@ -199,7 +199,7 @@ This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-
 [FS2]: https://fs2.io/
 [Http4s]: https://http4s.org/
 [Jaeger]: https://www.jaegertracing.io/
-[Log4Cats]: https://github.com/ChristopherDavenport/log4cats
+[Log4Cats]: https://github.com/typelevel/log4cats
 [Natchez]: https://github.com/tpolecat/natchez
 [`native-image`]: https://www.graalvm.org/docs/reference-manual/native-image/ 
 [OpenTelemetry]: http://opentelemetry.io
