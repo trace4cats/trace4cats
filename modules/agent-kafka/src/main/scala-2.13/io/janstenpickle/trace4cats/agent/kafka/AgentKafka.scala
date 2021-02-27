@@ -6,8 +6,8 @@ import cats.implicits._
 import com.monovore.decline._
 import com.monovore.decline.effect._
 import fs2.Chunk
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.agent.common.CommonAgent
 import io.janstenpickle.trace4cats.agent.common.CommonAgent._
 import io.janstenpickle.trace4cats.avro.kafka.AvroKafkaSpanExporter

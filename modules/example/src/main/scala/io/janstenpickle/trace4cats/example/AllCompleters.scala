@@ -5,7 +5,7 @@ import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Timer}
 import cats.instances.list._
 import cats.syntax.foldable._
 import cats.syntax.parallel._
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.jaeger.JaegerSpanCompleter
 import io.janstenpickle.trace4cats.kernel.SpanCompleter

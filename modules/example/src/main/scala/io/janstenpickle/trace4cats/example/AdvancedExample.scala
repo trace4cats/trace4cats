@@ -1,8 +1,8 @@
 package io.janstenpickle.trace4cats.example
 
 import cats.effect.{Blocker, ExitCode, IO, IOApp, Resource}
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.model.{SpanKind, SpanStatus, TraceProcess}
 import io.janstenpickle.trace4cats.rate.sampling.RateSpanSampler

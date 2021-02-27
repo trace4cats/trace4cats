@@ -4,8 +4,8 @@ import cats.data.{NonEmptyMap, NonEmptySet}
 import cats.effect.{Blocker, ExitCode, IO, IOApp, Resource}
 import cats.syntax.semigroup._
 import fs2.Chunk
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.`export`.{CompleterConfig, QueuedSpanCompleter}
 import io.janstenpickle.trace4cats.avro.AvroSpanExporter
