@@ -3,8 +3,8 @@ package io.janstenpickle.trace4cats.meta
 import cats.Eq
 import cats.effect.{ContextShift, IO, Timer}
 import fs2.{Chunk, Stream}
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanSampler}
 import io.janstenpickle.trace4cats.model._
 import io.janstenpickle.trace4cats.test.ArbitraryInstances

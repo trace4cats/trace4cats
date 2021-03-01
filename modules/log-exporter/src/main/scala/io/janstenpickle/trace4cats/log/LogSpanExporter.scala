@@ -4,8 +4,8 @@ import cats.{Foldable, Functor}
 import cats.effect.Sync
 import cats.syntax.functor._
 import cats.syntax.show._
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch
 

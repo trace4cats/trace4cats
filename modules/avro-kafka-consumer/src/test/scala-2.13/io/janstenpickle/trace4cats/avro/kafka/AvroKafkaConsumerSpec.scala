@@ -6,8 +6,8 @@ import cats.Eq
 import cats.data.NonEmptyList
 import cats.effect.IO
 import fs2.kafka.{AutoOffsetReset, ConsumerSettings}
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.avro.AvroInstances
 import io.janstenpickle.trace4cats.model.{CompletedSpan, TraceId}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances

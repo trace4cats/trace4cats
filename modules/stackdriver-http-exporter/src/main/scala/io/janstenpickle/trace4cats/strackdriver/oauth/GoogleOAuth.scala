@@ -10,7 +10,7 @@ import cats.effect.Sync
 import cats.syntax.all._
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import org.http4s.Method.POST
 import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl

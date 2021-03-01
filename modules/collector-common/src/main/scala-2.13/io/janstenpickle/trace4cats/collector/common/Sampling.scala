@@ -4,7 +4,7 @@ import cats.effect.{Concurrent, ContextShift, Resource, Timer}
 import cats.syntax.traverse._
 import cats.{Parallel, Semigroup}
 import fs2.{Chunk, Pipe}
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.collector.common.config.{RedisStoreConfig, SamplingConfig}
 import io.janstenpickle.trace4cats.model.CompletedSpan
 import io.janstenpickle.trace4cats.rate.sampling.RateTailSpanSampler

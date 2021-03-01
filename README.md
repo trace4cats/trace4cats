@@ -85,8 +85,8 @@ Finally, run the following code to export some spans to the collector:
 import cats.data.Kleisli
 import cats.effect._
 import cats.implicits._
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
@@ -199,7 +199,7 @@ This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-
 [FS2]: https://fs2.io/
 [Http4s]: https://http4s.org/
 [Jaeger]: https://www.jaegertracing.io/
-[Log4Cats]: https://github.com/ChristopherDavenport/log4cats
+[Log4Cats]: https://github.com/typelevel/log4cats
 [Natchez]: https://github.com/tpolecat/natchez
 [`native-image`]: https://www.graalvm.org/docs/reference-manual/native-image/ 
 [OpenTelemetry]: http://opentelemetry.io

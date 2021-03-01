@@ -22,7 +22,7 @@ object Dependencies {
     val jwt = "3.13.0"
     val kafka = "2.7.0"
     val kittens = "2.2.1"
-    val log4cats = "1.1.1"
+    val log4cats = "1.2.0"
     val logback = "1.2.3"
     val micronaut = "2.3.3"
     val natchez = "0.0.20"
@@ -81,7 +81,7 @@ object Dependencies {
   lazy val jwt = "com.auth0"                                    % "java-jwt"                        % Versions.jwt
   lazy val kafka = "org.apache.kafka"                           % "kafka-clients"                   % Versions.kafka
   lazy val kittens = "org.typelevel"                           %% "kittens"                         % Versions.kittens
-  lazy val log4cats = "io.chrisdavenport"                      %% "log4cats-slf4j"                  % Versions.log4cats
+  lazy val log4cats = "org.typelevel"                          %% "log4cats-slf4j"                  % Versions.log4cats
   lazy val logback = "ch.qos.logback"                           % "logback-classic"                 % Versions.logback
   lazy val micronautCore = "io.micronaut"                       % "micronaut-core"                  % Versions.micronaut
   lazy val natchez = "org.tpolecat"                            %% "natchez-core"                    % Versions.natchez

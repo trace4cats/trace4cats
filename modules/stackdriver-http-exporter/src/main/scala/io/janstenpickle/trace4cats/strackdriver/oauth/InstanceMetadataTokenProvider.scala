@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.strackdriver.oauth
 import cats.effect.Sync
 import cats.syntax.applicativeError._
 import cats.syntax.functor._
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.strackdriver.oauth.GoogleOAuth.FailedRequest
 import org.http4s.Method.GET
 import org.http4s.circe.CirceEntityCodec._

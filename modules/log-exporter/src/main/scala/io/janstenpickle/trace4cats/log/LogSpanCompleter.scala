@@ -3,8 +3,8 @@ package io.janstenpickle.trace4cats.log
 import cats.effect.Sync
 import cats.syntax.functor._
 import cats.syntax.show._
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.{CompletedSpan, TraceProcess}
 

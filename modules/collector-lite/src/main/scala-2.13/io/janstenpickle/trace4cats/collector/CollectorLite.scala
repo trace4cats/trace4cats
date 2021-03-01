@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.collector
 import cats.effect.{Blocker, ExitCode, IO}
 import com.monovore.decline._
 import com.monovore.decline.effect._
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.collector.common.CommonCollector
 import io.janstenpickle.trace4cats.kernel.BuildInfo
 

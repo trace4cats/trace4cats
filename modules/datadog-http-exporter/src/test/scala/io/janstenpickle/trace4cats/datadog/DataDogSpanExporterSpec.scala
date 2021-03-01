@@ -2,8 +2,8 @@ package io.janstenpickle.trace4cats.datadog
 
 import cats.effect.{Blocker, IO}
 import fs2.Chunk
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.model.Batch
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalacheck.Shrink

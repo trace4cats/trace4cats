@@ -17,7 +17,7 @@ import fs2.concurrent.{InspectableQueue, Queue}
 import fs2.io.tcp.{Socket => TCPSocket, SocketGroup => TCPSocketGroup}
 import fs2.io.udp.{Packet, Socket => UDPSocket, SocketGroup => UDPSocketGroup}
 import fs2.{Chunk, Stream}
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan}
 import org.apache.avro.Schema
