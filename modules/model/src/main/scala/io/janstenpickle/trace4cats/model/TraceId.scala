@@ -1,8 +1,10 @@
 package io.janstenpickle.trace4cats.model
 
-import java.util.concurrent.ThreadLocalRandom
+import cats.effect.std.Random
+
+import cats.syntax.functor._
 import cats.syntax.show._
-import cats.{ApplicativeError, Defer, Eq, Show}
+import cats.{Eq, Functor, Show}
 import org.apache.commons.codec.binary.Hex
 
 import scala.util.Try
@@ -12,12 +14,8 @@ case class TraceId private (value: Array[Byte]) extends AnyVal {
 }
 
 object TraceId {
-  def apply[F[_]: Defer: ApplicativeError[*[_], Throwable]]: F[TraceId] =
-    Defer[F].defer(ApplicativeError[F, Throwable].catchNonFatal {
-      val array: Array[Byte] = Array.fill(16)(0)
-      ThreadLocalRandom.current.nextBytes(array)
-      new TraceId(array)
-    })
+  def apply[F[_]: Functor : Random]: F[TraceId] =
+    Random[F].nextBytes(16).map(new TraceId(_))
 
   def fromHexString(hex: String): Option[TraceId] =
     Try(Hex.decodeHex(hex)).toOption.flatMap(apply)

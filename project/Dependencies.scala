@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
   object Versions {
     val cats = "2.4.2"
-    val catsEffect = "2.3.3"
+    val catsEffect = "3.0.0-RC2"
     val collectionCompat = "2.4.2"
     val commonsCodec = "1.15"
     val circe = "0.13.0"
@@ -11,18 +11,18 @@ object Dependencies {
     val decline = "1.3.0"
     val embeddedRedis = "0.7.3"
     val enumeratum = "1.6.1"
-    val fs2 = "2.5.3"
-    val fs2Kafka = "1.4.1"
+    val fs2 = "3.0.0-M9"
+    val fs2Kafka = "3.0.0-M2"
     val googleCredentials = "0.24.1"
     val googleCloudTrace = "1.2.13"
     val grpc = "1.36.0"
-    val http4s = "0.21.19"
+    val http4s = "1.0.0-M16"
     val http4sJdkClient = "0.3.5"
     val jaeger = "1.5.0"
     val jwt = "3.13.0"
     val kafka = "2.7.0"
     val kittens = "2.2.1"
-    val log4cats = "1.2.0"
+    val log4cats = "2.0.0-RC1"
     val logback = "1.2.3"
     val micronaut = "2.3.3"
     val natchez = "0.0.20"
@@ -50,6 +50,8 @@ object Dependencies {
   }
 
   lazy val cats = "org.typelevel"                              %% "cats-core"                       % Versions.cats
+  lazy val catsEffectKernel = "org.typelevel"                  %% "cats-effect-kernel"              % Versions.catsEffect
+  lazy val catsEffectStd = "org.typelevel"                     %% "cats-effect-std"                 % Versions.catsEffect
   lazy val catsEffect = "org.typelevel"                        %% "cats-effect"                     % Versions.catsEffect
   lazy val commonsCodec = "commons-codec"                       % "commons-codec"                   % Versions.commonsCodec
   lazy val collectionCompat = "org.scala-lang.modules"         %% "scala-collection-compat"         % Versions.collectionCompat
@@ -109,6 +111,7 @@ object Dependencies {
 
   lazy val catsLaws = "org.typelevel"             %% "cats-laws"              % Versions.cats
   lazy val catsEffectLaws = "org.typelevel"       %% "cats-effect-laws"       % Versions.catsEffect
+  lazy val catsEffectTestkit = "org.typelevel"    %% "cats-effect-testkit"    % Versions.catsEffect
   lazy val catsTestkitScalatest = "org.typelevel" %% "cats-testkit-scalatest" % Versions.catsTestkitScalatest
   lazy val disciplineScalatest = "org.typelevel"  %% "discipline-scalatest"   % Versions.disciplineScalatest
   lazy val disciplineCore = "org.typelevel"       %% "discipline-core"        % Versions.discipline
@@ -122,6 +125,7 @@ object Dependencies {
     Seq(
       catsLaws,
       catsEffectLaws,
+      catsEffectTestkit,
       catsTestkitScalatest,
       disciplineScalatest,
       disciplineCore,

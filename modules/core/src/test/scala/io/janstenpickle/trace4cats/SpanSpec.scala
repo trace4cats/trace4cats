@@ -1,10 +1,10 @@
 package io.janstenpickle.trace4cats
 
-import java.util.concurrent.{ScheduledExecutorService, ScheduledThreadPoolExecutor}
-
-import cats.effect.concurrent.Deferred
-import cats.effect.laws.util.TestContext
-import cats.effect.{ContextShift, ExitCase, IO, Timer}
+import cats.effect.{IO, OutcomeIO}
+import cats.effect.kernel.Deferred
+import cats.effect.kernel.testkit.TestContext
+import cats.effect.std.Random
+import cats.effect.unsafe.IORuntime
 import cats.implicits._
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
@@ -18,10 +18,11 @@ import scala.concurrent.duration._
 
 class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks with ArbitraryInstances {
   val ec: TestContext = TestContext()
-  implicit val timer: Timer[IO] = ec.ioTimer
-  implicit val ctx: ContextShift[IO] = ec.ioContextShift
-
-  val sc: ScheduledExecutorService = new ScheduledThreadPoolExecutor(1)
+  implicit val ioRuntime: IORuntime = {
+    val (scheduler, sd) = IORuntime.createDefaultScheduler()
+    IORuntime(ec, ec, scheduler, sd)
+  }
+  implicit val ioRandom: Random[IO] = Random.scalaUtilRandom[IO].unsafeRunSync()
 
   behavior.of("Span.root")
 
@@ -250,15 +251,15 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
     (name: String, kind: SpanKind, status: SpanStatus, serviceName: String) =>
       val completer = RefSpanCompleter.unsafe[IO](serviceName)
 
-      Deferred[IO, ExitCase[Throwable]]
+      Deferred[IO, OutcomeIO[Unit]]
         .flatMap { stop =>
           val r = Span
             .root[IO](name, kind, SpanSampler.always, completer)
             .use(_.setStatus(status) >> IO.never: IO[Unit])
-            .guaranteeCase(stop.complete)
+            .guaranteeCase(stop.complete(_).void)
 
           r.start.flatMap { fiber =>
-            timer.sleep(200.millis) >> fiber.cancel >> stop.get
+            IO.sleep(200.millis) >> fiber.cancel >> stop.get
           }
         }
         .timeout(2.seconds)
