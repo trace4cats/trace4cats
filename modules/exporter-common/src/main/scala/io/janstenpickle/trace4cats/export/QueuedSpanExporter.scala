@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.`export`
 
 import cats.Parallel
-import cats.effect.kernel.{Ref, Resource, Temporal}
+import cats.effect.kernel.{Clock, Ref, Resource, Temporal}
 import cats.effect.std.Queue
 import cats.effect.syntax.monadCancel._
 import cats.effect.syntax.spawn._
@@ -35,7 +35,7 @@ object QueuedSpanExporter {
             .compile
             .drain
             .start
-        )(fiber => Temporal[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)
+        )(fiber => Clock[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)
       } yield new StreamSpanExporter[F] {
         override def exportBatch(batch: Batch[Chunk]): F[Unit] =
           (queue.offer(batch) >> inFlight.update { current =>

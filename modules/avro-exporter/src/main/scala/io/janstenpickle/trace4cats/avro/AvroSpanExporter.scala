@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream
 import java.net.ConnectException
 import cats.effect.kernel.syntax.monadCancel._
 import cats.effect.kernel.syntax.spawn._
-import cats.effect.kernel.{Async, Resource, Sync, Temporal}
+import cats.effect.kernel.{Async, Clock, Resource, Sync}
 import cats.effect.std.{Queue, Semaphore}
 import cats.syntax.either._
 import cats.syntax.flatMap._
@@ -83,9 +83,9 @@ object AvroSpanExporter {
 
     for {
       avroSchema <- Resource.eval(AvroInstances.completedSpanSchema[F])
-      h <- Resource.eval(IpAddress.fromString(host).liftTo[F](new IllegalArgumentException(s"invalid host $host")))
-      p <- Resource.eval(Port.fromInt(port).liftTo[F](new IllegalArgumentException(s"invalid port $port")))
-      address = SocketAddress(h, p)
+      host <- Resource.eval(IpAddress.fromString(host).liftTo[F](new IllegalArgumentException(s"invalid host $host")))
+      port <- Resource.eval(Port.fromInt(port).liftTo[F](new IllegalArgumentException(s"invalid port $port")))
+      address = SocketAddress(host, port)
       queue <- Resource.eval(
         Queue.bounded[F, Batch[G]](1)
       ) //TODO: replace with Ref of Option or Queue of Option and noneTerminate?
@@ -104,7 +104,7 @@ object AvroSpanExporter {
             throw new UnsupportedOperationException
           ) //queue.size.map(_ != 0) //TODO: fix
           semaphoreSet <- semaphore.count.map(_ == 0)
-          _ <- Temporal[F].sleep(50.millis)
+          _ <- Clock[F].sleep(50.millis)
         } yield queueNonEmpty || semaphoreSet) >> fiber.cancel
       )
     } yield new SpanExporter[F, G] {
@@ -155,9 +155,9 @@ object AvroSpanExporter {
 
     for {
       avroSchema <- Resource.eval(AvroInstances.completedSpanSchema[F])
-      h <- Resource.eval(Host.fromString(host).liftTo[F](new IllegalArgumentException(s"invalid host $host")))
-      p <- Resource.eval(Port.fromInt(port).liftTo[F](new IllegalArgumentException(s"invalid port $port")))
-      address = SocketAddress(h, p)
+      host <- Resource.eval(Host.fromString(host).liftTo[F](new IllegalArgumentException(s"invalid host $host")))
+      port <- Resource.eval(Port.fromInt(port).liftTo[F](new IllegalArgumentException(s"invalid port $port")))
+      address = SocketAddress(host, port)
       queue <- Resource.eval(Queue.bounded[F, Batch[G]](1))
       //TODO: replace queue with Ref of Option or Queue of Option and noneTerminate?
       semaphore <- Resource.eval(Semaphore[F](Long.MaxValue))
@@ -169,7 +169,7 @@ object AvroSpanExporter {
           .drain
           .start
       )(fiber =>
-        Temporal[F]
+        Clock[F]
           .sleep(50.millis)
           .whileM_(for {
             queueNonEmpty <- Sync[F]

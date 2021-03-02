@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.`export`
 import cats.Applicative
 import cats.effect.kernel.syntax.monadCancel._
 import cats.effect.kernel.syntax.spawn._
-import cats.effect.kernel.{Ref, Resource, Temporal}
+import cats.effect.kernel.{Clock, Ref, Resource, Temporal}
 import cats.effect.std.Queue
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
@@ -51,7 +51,7 @@ object QueuedSpanCompleter {
           .compile
           .drain
           .start
-      }(fiber => Temporal[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)
+      }(fiber => Clock[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)
     } yield new SpanCompleter[F] {
       override def complete(span: CompletedSpan.Builder): F[Unit] = {
         val enqueue = queue.offer(span.build(process)) >> inFlight.update { current =>
