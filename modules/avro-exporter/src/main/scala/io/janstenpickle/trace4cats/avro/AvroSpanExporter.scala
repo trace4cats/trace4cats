@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.avro
 
 import java.io.ByteArrayOutputStream
-import java.net.{ConnectException, InetSocketAddress}
+import java.net.ConnectException
 import cats.effect.kernel.syntax.monadCancel._
 import cats.effect.kernel.syntax.spawn._
 import cats.effect.kernel.{Async, Resource, Sync, Temporal}
@@ -86,9 +86,11 @@ object AvroSpanExporter {
       h <- Resource.eval(IpAddress.fromString(host).liftTo[F](new IllegalArgumentException(s"invalid host $host")))
       p <- Resource.eval(Port.fromInt(port).liftTo[F](new IllegalArgumentException(s"invalid port $port")))
       address = SocketAddress(h, p)
-      queue <- Resource.eval(Queue.bounded[F, Batch[G]](1))
+      queue <- Resource.eval(
+        Queue.bounded[F, Batch[G]](1)
+      ) //TODO: replace with Ref of Option or Queue of Option and noneTerminate?
       semaphore <- Resource.eval(Semaphore[F](Long.MaxValue))
-      socketGroup <- Network[F].datagramSocketGroup()
+      socketGroup <- Network[F].datagramSocketGroup() //TODO: maybe we should use the global datagramSocketGroup
       socket <- socketGroup.openDatagramSocket()
       _ <- Resource.make(
         Stream
@@ -157,8 +159,9 @@ object AvroSpanExporter {
       p <- Resource.eval(Port.fromInt(port).liftTo[F](new IllegalArgumentException(s"invalid port $port")))
       address = SocketAddress(h, p)
       queue <- Resource.eval(Queue.bounded[F, Batch[G]](1))
+      //TODO: replace queue with Ref of Option or Queue of Option and noneTerminate?
       semaphore <- Resource.eval(Semaphore[F](Long.MaxValue))
-      socketGroup <- Network[F].socketGroup()
+      socketGroup <- Network[F].socketGroup() //TODO: maybe we should use the global socketGroup or tweak threadCount
       _ <- Resource.make(
         Stream
           .retry(write(avroSchema, address, semaphore, queue, socketGroup), 5.seconds, _ + 1.second, Int.MaxValue)
