@@ -231,10 +231,7 @@ lazy val core =
 lazy val base =
   (project in file("modules/base"))
     .settings(publishSettings)
-    .settings(
-      name := "trace4cats-base",
-      libraryDependencies ++= Dependencies.test.map(_ % Test)
-    )
+    .settings(name := "trace4cats-base", libraryDependencies ++= Dependencies.test.map(_ % Test))
 
 lazy val `base-laws` =
   (project in file("modules/base-laws"))
@@ -500,7 +497,12 @@ lazy val `avro-server` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-avro-server",
-      libraryDependencies ++= Seq(Dependencies.catsEffectStd, Dependencies.fs2, Dependencies.fs2Io, Dependencies.log4cats)
+      libraryDependencies ++= Seq(
+        Dependencies.catsEffectStd,
+        Dependencies.fs2,
+        Dependencies.fs2Io,
+        Dependencies.log4cats
+      )
     )
     .dependsOn(model, avro)
 

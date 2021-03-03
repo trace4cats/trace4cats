@@ -70,12 +70,9 @@ object HttpSpanExporter {
       List(`Content-Type`(MediaType.application.json))
     )
 
-  def apply[F[_]: Temporal, G[_], A](
-    client: Client[F],
-    uri: String,
-    makePayload: Batch[G] => A,
-    method: Method
-  )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F, G]] =
+  def apply[F[_]: Temporal, G[_], A](client: Client[F], uri: String, makePayload: Batch[G] => A, method: Method)(
+    implicit encoder: EntityEncoder[F, A]
+  ): F[SpanExporter[F, G]] =
     apply(
       client,
       uri,

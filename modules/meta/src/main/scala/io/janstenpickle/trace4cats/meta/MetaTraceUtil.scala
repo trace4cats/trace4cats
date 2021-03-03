@@ -1,6 +1,5 @@
 package io.janstenpickle.trace4cats.meta
 
-import java.time.Instant
 import cats.Monad
 import cats.data.NonEmptyList
 import cats.effect.kernel.Resource.ExitCase

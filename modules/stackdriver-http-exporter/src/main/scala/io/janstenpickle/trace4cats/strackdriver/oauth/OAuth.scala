@@ -14,12 +14,7 @@ trait OAuth[F[_]] {
     * @param exp The expiration time of the assertion, specified as milliseconds since 00:00:00 UTC, January 1, 1970.
     * @param iat The time the assertion was issued, specified as milliseconds since 00:00:00 UTC, January 1, 1970.
     */
-  def authenticate(
-    iss: String,
-    scope: String,
-    exp: Instant,
-    iat: Instant
-  ): F[Option[AccessToken]]
+  def authenticate(iss: String, scope: String, exp: Instant, iat: Instant): F[Option[AccessToken]]
 
   def maxDuration: FiniteDuration
 }

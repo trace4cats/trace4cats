@@ -65,10 +65,7 @@ object RefreshableEffect {
       fiber <- scheduleRefresh(updateRef(ref), refreshInterval).start
     } yield new RefreshableEffect[F, A](ref.get, fiber.cancel)
 
-  private def scheduleRefresh[F[_]: Temporal, A](
-    refreshEffect: F[Unit],
-    refreshInterval: FiniteDuration,
-  ): F[Unit] =
+  private def scheduleRefresh[F[_]: Temporal, A](refreshEffect: F[Unit], refreshInterval: FiniteDuration): F[Unit] =
     Stream
       .fixedRate(refreshInterval) // Same frequency regardless of time to evaluate refresh
       .evalMap(_ => refreshEffect)

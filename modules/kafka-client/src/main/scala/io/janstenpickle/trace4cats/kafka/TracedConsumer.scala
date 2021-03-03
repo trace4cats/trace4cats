@@ -1,8 +1,8 @@
 package io.janstenpickle.trace4cats.kafka
 
-import cats.effect.{ApplicativeThrow, BracketThrow}
+import cats.effect.kernel.MonadCancelThrow
 import cats.syntax.functor._
-import cats.{Defer, Functor}
+import cats.Functor
 import fs2.Stream
 import fs2.kafka.{CommittableConsumerRecord, CommittableOffset}
 import io.janstenpickle.trace4cats.Span
@@ -14,7 +14,7 @@ import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind}
 
 object TracedConsumer extends Fs2StreamSyntax {
 
-  def inject[F[_]: BracketThrow, G[_]: Functor: Trace, K, V](stream: Stream[F, CommittableConsumerRecord[F, K, V]])(
+  def inject[F[_]: MonadCancelThrow, G[_]: Functor: Trace, K, V](stream: Stream[F, CommittableConsumerRecord[F, K, V]])(
     k: ResourceKleisli[F, SpanParams, Span[F]]
   )(implicit P: Provide[F, G, Span[F]]): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
     stream
@@ -32,7 +32,7 @@ object TracedConsumer extends Fs2StreamSyntax {
           .as(record)
       }
 
-  def injectK[F[_]: BracketThrow, G[_]: ApplicativeThrow: Defer: Trace, K, V](
+  def injectK[F[_]: MonadCancelThrow, G[_]: MonadCancelThrow: Trace, K, V](
     stream: Stream[F, CommittableConsumerRecord[F, K, V]]
   )(
     k: ResourceKleisli[F, SpanParams, Span[F]]

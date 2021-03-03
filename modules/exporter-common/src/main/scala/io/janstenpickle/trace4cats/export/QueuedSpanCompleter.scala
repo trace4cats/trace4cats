@@ -17,7 +17,7 @@ import org.typelevel.log4cats.Logger
 import scala.concurrent.duration._
 
 object QueuedSpanCompleter {
-  def apply[F[_]: Temporal : Logger](
+  def apply[F[_]: Temporal: Logger](
     process: TraceProcess,
     exporter: SpanExporter[F, Chunk],
     config: CompleterConfig

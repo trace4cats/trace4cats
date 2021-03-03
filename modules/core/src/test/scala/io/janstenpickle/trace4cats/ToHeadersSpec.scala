@@ -21,7 +21,6 @@ class ToHeadersSpec extends AnyFunSuite with ScalaCheckDrivenPropertyChecks with
   }
   implicit val ioRandom: Random[IO] = Random.scalaUtilRandom[IO].unsafeRunSync()
 
-
   val parentContext: SpanContext = SpanContext.root[IO].unsafeRunSync()
   val context: SpanContext = SpanContext.child[IO](parentContext).unsafeRunSync()
 
