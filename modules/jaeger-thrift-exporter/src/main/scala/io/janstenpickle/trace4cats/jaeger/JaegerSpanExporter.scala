@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 import alleycats.std.iterable._
 import cats.Foldable
 import cats.data.NonEmptyList
-import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync}
+import cats.effect.kernel.{Resource, Sync}
 import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.show._
@@ -31,8 +31,7 @@ import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 object JaegerSpanExporter {
-  def apply[F[_]: Concurrent: ContextShift, G[_]: Foldable](
-    blocker: Blocker,
+  def apply[F[_]: Sync, G[_]: Foldable](
     process: Option[TraceProcess],
     host: String = Option(System.getenv("JAEGER_AGENT_HOST")).getOrElse(UdpSender.DEFAULT_AGENT_UDP_HOST),
     port: Int = Option(System.getenv("JAEGER_AGENT_PORT"))
@@ -105,7 +104,7 @@ object JaegerSpanExporter {
         new SpanExporter[F, G] {
           override def exportBatch(batch: Batch[G]): F[Unit] = {
             def send(process: TraceProcess, spans: G[CompletedSpan]) =
-              blocker.delay(
+              Sync[F].blocking( //TODO: check if it needs to be blocking
                 sender.send(
                   new Process(process.serviceName).setTags(makeTags(process.attributes)),
                   spans
@@ -128,7 +127,7 @@ object JaegerSpanExporter {
                   }
 
                 grouped.traverse_ { case (service, spans) =>
-                  blocker.delay(sender.send(new Process(service), spans.asJava))
+                  Sync[F].blocking(sender.send(new Process(service), spans.asJava)) //TODO: check if blocking needed
                 }
 
               case Some(service) => send(service, batch.spans)
