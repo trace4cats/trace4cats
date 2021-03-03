@@ -2,12 +2,12 @@ package io.janstenpickle.trace4cats
 
 import cats.data.NonEmptyList
 import cats.effect.kernel.Resource.ExitCase
-import cats.effect.kernel.{Clock, MonadCancelThrow, Ref, Resource}
+import cats.effect.kernel.{Clock, MonadCancelThrow, Ref, Resource, Sync}
 import cats.effect.std.Random
 import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.{Applicative, Monad, ~>}
+import cats.{~>, Applicative}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.model._
 
@@ -26,7 +26,7 @@ trait Span[F[_]] {
     Span.mapK(fk)(this)
 }
 
-case class RefSpan[F[_]: MonadCancelThrow: Ref.Make: Random: Clock] private (
+case class RefSpan[F[_]: Sync] private (
   context: SpanContext,
   name: String,
   kind: SpanKind,
@@ -53,7 +53,7 @@ case class RefSpan[F[_]: MonadCancelThrow: Ref.Make: Random: Clock] private (
   private[trace4cats] def end: F[Unit] = status.get.flatMap(end)
   private[trace4cats] def end(status: SpanStatus): F[Unit] =
     for {
-      now <- Clock[F].realTime
+      now <- Clock[F].realTimeInstant
       attrs <- attributes.get
       lns <- links.get
       completed = CompletedSpan.Builder(
@@ -61,7 +61,7 @@ case class RefSpan[F[_]: MonadCancelThrow: Ref.Make: Random: Clock] private (
         name,
         kind,
         Instant.ofEpochMilli(start),
-        Instant.ofEpochMilli(now.toMillis),
+        now,
         attrs,
         status,
         NonEmptyList.fromList(lns)
@@ -71,16 +71,19 @@ case class RefSpan[F[_]: MonadCancelThrow: Ref.Make: Random: Clock] private (
 
 }
 
-case class EmptySpan[F[_]: Monad: Random] private (context: SpanContext) extends Span[F] {
+case class EmptySpan[F[_]: Sync] private (context: SpanContext) extends Span[F] {
   override def put(key: String, value: AttributeValue): F[Unit] = Applicative[F].unit
   override def putAll(fields: (String, AttributeValue)*): F[Unit] = Applicative[F].unit
   override def setStatus(spanStatus: SpanStatus): F[Unit] = Applicative[F].unit
   override def addLink(link: Link): F[Unit] = Applicative[F].unit
   override def addLinks(links: NonEmptyList[Link]): F[Unit] = Applicative[F].unit
-  override def child(name: String, kind: SpanKind): Resource[F, Span[F]] =
+  override def child(name: String, kind: SpanKind): Resource[F, Span[F]] = {
+    implicit val random: Random[F] = Random.javaUtilConcurrentThreadLocalRandom
     Resource.eval(SpanContext.child[F](context).map { childContext =>
       EmptySpan(childContext.setDrop())
     })
+  }
+
   override def child(name: String, kind: SpanKind, errorHandler: ErrorHandler): Resource[F, Span[F]] = child(name, kind)
 }
 
@@ -95,7 +98,7 @@ case class NoopSpan[F[_]: Applicative] private (context: SpanContext) extends Sp
 }
 
 object Span {
-  private def makeSpan[F[_]: MonadCancelThrow: Ref.Make: Random: Clock](
+  private def makeSpan[F[_]: Sync](
     name: String,
     parent: Option[SpanContext],
     context: SpanContext,
@@ -151,26 +154,30 @@ object Span {
 
   def noop[F[_]: Applicative]: Resource[F, Span[F]] = Resource.pure[F, Span[F]](NoopSpan[F](SpanContext.invalid))
 
-  def child[F[_]: MonadCancelThrow: Ref.Make: Random: Clock](
+  def child[F[_]: Sync](
     name: String,
     parent: SpanContext,
     kind: SpanKind,
     sampler: SpanSampler[F],
     completer: SpanCompleter[F],
     errorHandler: ErrorHandler = ErrorHandler.empty,
-  ): Resource[F, Span[F]] =
+  ): Resource[F, Span[F]] = {
+    implicit val random: Random[F] = Random.javaUtilConcurrentThreadLocalRandom
     Resource
       .eval(SpanContext.child[F](parent))
       .flatMap(makeSpan(name, Some(parent), _, kind, sampler, completer, errorHandler))
+  }
 
-  def root[F[_]: MonadCancelThrow: Ref.Make: Random: Clock](
+  def root[F[_]: Sync](
     name: String,
     kind: SpanKind,
     sampler: SpanSampler[F],
     completer: SpanCompleter[F],
     errorHandler: ErrorHandler = ErrorHandler.empty
-  ): Resource[F, Span[F]] =
+  ): Resource[F, Span[F]] = {
+    implicit val random: Random[F] = Random.javaUtilConcurrentThreadLocalRandom
     Resource.eval(SpanContext.root[F]).flatMap(makeSpan(name, None, _, kind, sampler, completer, errorHandler))
+  }
 
   private def mapK[F[_]: MonadCancelThrow, G[_]: MonadCancelThrow](fk: F ~> G)(span: Span[F]): Span[G] =
     new Span[G] {

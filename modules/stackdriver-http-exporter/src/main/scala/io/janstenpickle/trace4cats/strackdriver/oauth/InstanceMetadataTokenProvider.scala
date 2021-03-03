@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.strackdriver.oauth
 
-import cats.effect.Sync
+import cats.effect.kernel.Concurrent
 import cats.syntax.applicativeError._
 import cats.syntax.functor._
 import org.typelevel.log4cats.Logger
@@ -14,7 +14,7 @@ import org.http4s.{Header, Uri}
 object InstanceMetadataTokenProvider {
   final private[this] val metadataHeader = Header("Metadata-Flavor", "Google")
 
-  def apply[F[_]: Sync: Logger](httpClient: Client[F], serviceAccountName: String = "default"): TokenProvider[F] =
+  def apply[F[_]: Concurrent: Logger](httpClient: Client[F], serviceAccountName: String = "default"): TokenProvider[F] =
     new TokenProvider[F] with Http4sClientDsl[F] {
       final private[this] val tokenMetadataUri = Uri.unsafeFromString(
         s"http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/$serviceAccountName/token"

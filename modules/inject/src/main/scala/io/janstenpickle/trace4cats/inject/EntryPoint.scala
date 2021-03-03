@@ -8,7 +8,7 @@ package io.janstenpickle.trace4cats.inject
 
 import cats.Applicative
 import cats.data.Kleisli
-import cats.effect.{Clock, Resource, Sync}
+import cats.effect.kernel.{Resource, Sync}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders}
 import io.janstenpickle.trace4cats.{ErrorHandler, Span, ToHeaders}
@@ -47,7 +47,7 @@ trait EntryPoint[F[_]] {
 object EntryPoint {
   def apply[F[_]](implicit entryPoint: EntryPoint[F]): EntryPoint[F] = entryPoint
 
-  def apply[F[_]: Sync: Clock](
+  def apply[F[_]: Sync](
     sampler: SpanSampler[F],
     completer: SpanCompleter[F],
     toHeaders: ToHeaders = ToHeaders.all

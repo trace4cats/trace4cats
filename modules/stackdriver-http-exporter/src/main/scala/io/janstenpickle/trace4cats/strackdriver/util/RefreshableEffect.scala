@@ -2,9 +2,8 @@ package io.janstenpickle.trace4cats.strackdriver.util
 
 /** Code copied from https://github.com/permutive/fs2-google-pubsub
   */
-import cats.effect.concurrent.Ref
-import cats.effect.syntax.concurrent._
-import cats.effect.{CancelToken, Concurrent, MonadThrow, Resource, Sync, Timer}
+import cats.effect.kernel.syntax.spawn._
+import cats.effect.kernel.{MonadThrow, Ref, Resource, Temporal}
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -18,7 +17,7 @@ import scala.concurrent.duration.FiniteDuration
   *
   * Implementation is backed by a `cats-effect` `Ref` so evaluating the value is fast.
   */
-final class RefreshableEffect[F[_], A] private (val value: F[A], val cancelToken: CancelToken[F])
+final class RefreshableEffect[F[_], A] private (val value: F[A], val cancelToken: F[Unit])
 
 object RefreshableEffect {
 
@@ -33,7 +32,7 @@ object RefreshableEffect {
     * @param retryMaxAttempts   how many attempts to make before failing with last error
     * @param onRetriesExhausted what to do if retrying to refresh the value fails, up to user handle failing their service
     */
-  def createRetryResource[F[_]: Concurrent: Timer, A](
+  def createRetryResource[F[_]: Temporal, A](
     refresh: F[A],
     refreshInterval: FiniteDuration,
     onRefreshSuccess: F[Unit],
@@ -55,7 +54,7 @@ object RefreshableEffect {
     Resource.make(createAndSchedule(refresh, refreshInterval, updateRef))(_.cancelToken)
   }
 
-  private def createAndSchedule[F[_]: Concurrent: Timer, A](
+  private def createAndSchedule[F[_]: Temporal, A](
     refresh: F[A],
     refreshInterval: FiniteDuration,
     updateRef: Ref[F, A] => F[Unit],
@@ -66,7 +65,7 @@ object RefreshableEffect {
       fiber <- scheduleRefresh(updateRef(ref), refreshInterval).start
     } yield new RefreshableEffect[F, A](ref.get, fiber.cancel)
 
-  private def scheduleRefresh[F[_]: Sync: Timer, A](
+  private def scheduleRefresh[F[_]: Temporal, A](
     refreshEffect: F[Unit],
     refreshInterval: FiniteDuration,
   ): F[Unit] =
@@ -85,7 +84,7 @@ object RefreshableEffect {
       _ <- onRefreshSuccess.attempt // Ignore exceptions in success callback
     } yield ()
 
-  private def retry[F[_]: Sync: Timer, A](
+  private def retry[F[_]: Temporal, A](
     refreshEffect: F[Unit],
     retryDelay: FiniteDuration,
     retryNextDelay: FiniteDuration => FiniteDuration,

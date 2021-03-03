@@ -500,7 +500,7 @@ lazy val `avro-server` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-avro-server",
-      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.fs2Io, Dependencies.log4cats)
+      libraryDependencies ++= Seq(Dependencies.catsEffectStd, Dependencies.fs2, Dependencies.fs2Io, Dependencies.log4cats)
     )
     .dependsOn(model, avro)
 
@@ -510,7 +510,7 @@ lazy val `avro-kafka-consumer` =
     .settings(
       name := "trace4cats-avro-kafka-consumer",
       libraryDependencies ++= Seq(
-        Dependencies.catsEffect,
+        Dependencies.catsEffectStd,
         Dependencies.fs2,
         Dependencies.fs2Kafka,
         Dependencies.kafka,
@@ -671,7 +671,7 @@ lazy val `agent-common` = (project in file("modules/agent-common"))
   .settings(
     name := "trace4cats-agent-common",
     libraryDependencies ++= Seq(
-      Dependencies.catsEffect,
+      Dependencies.catsEffectStd,
       Dependencies.declineEffect,
       Dependencies.log4cats,
       Dependencies.logback
@@ -715,7 +715,7 @@ lazy val `tail-sampling` = (project in file("modules/tail-sampling"))
   .settings(publishSettings)
   .settings(
     name := "trace4cats-tail-sampling",
-    libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.log4cats)
+    libraryDependencies ++= Seq(Dependencies.catsEffectStd, Dependencies.log4cats)
   )
   .dependsOn(model, kernel, `exporter-stream`)
 
@@ -738,7 +738,7 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
   .settings(
     name := "trace4cats-collector-common",
     libraryDependencies ++= Seq(
-      Dependencies.catsEffect,
+      Dependencies.catsEffectStd,
       Dependencies.circeGeneric,
       Dependencies.circeYaml,
       Dependencies.declineEffect,
@@ -784,7 +784,7 @@ lazy val collector = (project in file("modules/collector"))
       "-J-XX:MaxRAMPercentage=90"
     ),
     libraryDependencies ++= Seq(
-      Dependencies.catsEffect,
+      Dependencies.catsEffectStd,
       Dependencies.declineEffect,
       Dependencies.fs2,
       Dependencies.grpcOkHttp,
@@ -815,7 +815,7 @@ lazy val `collector-lite` = (project in file("modules/collector-lite"))
   .settings(
     name := "trace4cats-collector-lite",
     libraryDependencies ++= Seq(
-      Dependencies.catsEffect,
+      Dependencies.catsEffectStd,
       Dependencies.declineEffect,
       Dependencies.fs2,
       Dependencies.log4cats,
