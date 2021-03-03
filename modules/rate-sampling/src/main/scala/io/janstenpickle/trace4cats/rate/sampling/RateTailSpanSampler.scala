@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.rate.sampling
 
-import cats.effect.{Concurrent, Timer}
+import cats.effect.kernel.Temporal
 import cats.syntax.functor._
 import cats.{Applicative, Foldable, Monad, MonoidK}
 import io.janstenpickle.trace4cats.model.{CompletedSpan, SampleDecision, TraceId}
@@ -43,7 +43,7 @@ object RateTailSpanSampler {
       }
     )
 
-  def create[F[_]: Concurrent: Timer, G[_]: Applicative: Foldable: MonoidK](
+  def create[F[_]: Temporal, G[_]: Applicative: Foldable: MonoidK](
     store: SampleDecisionStore[F],
     bucketSize: Int,
     tokenRate: FiniteDuration
