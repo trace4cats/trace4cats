@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.opentelemetry.common
 
 import cats.Foldable
-import cats.effect.{Async, Resource, Sync}
+import cats.effect.kernel.{Async, Resource, Sync}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.grpc.{ManagedChannel, ManagedChannelBuilder}
@@ -30,13 +30,13 @@ object OpenTelemetryGrpcSpanExporter {
     makeExporter: ManagedChannel => OTSpanExporter
   ): Resource[F, SpanExporter[F, G]] = {
     def handleResult(onFailure: => Throwable)(code: CompletableResultCode): F[Unit] =
-      Async[F].asyncF[Unit] { cb =>
+      Async[F].async_[Unit] { cb =>
         val complete = new Runnable {
           override def run(): Unit =
             if (code.isSuccess) cb(Right(()))
             else cb(Left(onFailure))
         }
-        Sync[F].delay(code.whenComplete(complete)).void
+        val _ = code.whenComplete(complete)
       }
 
     for {

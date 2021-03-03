@@ -4,7 +4,7 @@ import java.time.Instant
 
 import cats.Foldable
 import cats.data.NonEmptyList
-import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync}
+import cats.effect.kernel.{Resource, Sync}
 import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.show._
@@ -25,8 +25,7 @@ import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
 object StackdriverGrpcSpanExporter {
-  def apply[F[_]: Concurrent: ContextShift, G[_]: Foldable](
-    blocker: Blocker,
+  def apply[F[_]: Sync, G[_]: Foldable](
     projectId: String,
     credentials: Option[Credentials] = None,
     requestTimeout: FiniteDuration = 5.seconds
@@ -131,7 +130,7 @@ object StackdriverGrpcSpanExporter {
     }
 
     def write(client: TraceServiceClient, spans: G[CompletedSpan]) =
-      blocker.delay(
+      Sync[F].blocking(  //TODO: check if it really needs to be blocking, the client wraps grpc
         client.batchWriteSpans(
           projectName,
           spans
