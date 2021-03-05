@@ -2,6 +2,7 @@ package io.janstenpickle.trace4cats.newrelic
 
 import cats.Foldable
 import cats.effect.kernel.{Async, Resource, Temporal}
+import cats.syntax.applicative._
 import io.circe.Json
 import io.janstenpickle.trace4cats.`export`.HttpSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
@@ -15,13 +16,15 @@ import org.http4s.{Header, MediaType}
 import scala.concurrent.ExecutionContext
 
 object NewRelicSpanExporter {
-
   def blazeClient[F[_]: Async, G[_]: Foldable](
-    ec: ExecutionContext, //TODO: keep parameter or replace with EC.global as recommended?
     apiKey: String,
-    endpoint: Endpoint
-  ): Resource[F, SpanExporter[F, G]] =
-    BlazeClientBuilder[F](ec).resource.evalMap(apply[F, G](_, apiKey, endpoint))
+    endpoint: Endpoint,
+    ec: Option[ExecutionContext] = None
+  ): Resource[F, SpanExporter[F, G]] = for {
+    ec <- Resource.eval(ec.fold(Async[F].executionContext)(_.pure))
+    client <- BlazeClientBuilder[F](ec).resource
+    exporter <- Resource.eval(apply[F, G](client, apiKey, endpoint))
+  } yield exporter
 
   def apply[F[_]: Temporal, G[_]: Foldable](
     client: Client[F],
@@ -39,5 +42,4 @@ object NewRelicSpanExporter {
         Header("Data-Format-Version", "1")
       )
     )
-
 }

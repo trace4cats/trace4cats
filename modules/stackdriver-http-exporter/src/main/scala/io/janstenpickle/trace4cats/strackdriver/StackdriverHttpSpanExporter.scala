@@ -2,6 +2,7 @@ package io.janstenpickle.trace4cats.strackdriver
 
 import cats.Foldable
 import cats.effect.kernel.{Async, Resource, Temporal}
+import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.foldable._
@@ -32,17 +33,23 @@ object StackdriverHttpSpanExporter {
   private final val base = "https://cloudtrace.googleapis.com/v2/projects"
 
   def blazeClient[F[_]: Async: Logger, G[_]: Foldable](
-    ec: ExecutionContext, //TODO: keep parameter or replace with EC.global as recommended?
     projectId: String,
     serviceAccountPath: String,
-  ): Resource[F, SpanExporter[F, G]] =
-    BlazeClientBuilder[F](ec).resource.evalMap(apply[F, G](projectId, serviceAccountPath, _))
+    ec: Option[ExecutionContext] = None
+  ): Resource[F, SpanExporter[F, G]] = for {
+    ec <- Resource.eval(ec.fold(Async[F].executionContext)(_.pure))
+    client <- BlazeClientBuilder[F](ec).resource
+    exporter <- Resource.eval(apply[F, G](projectId, serviceAccountPath, client))
+  } yield exporter
 
   def blazeClient[F[_]: Async: Logger, G[_]: Foldable](
-    ec: ExecutionContext, //TODO: keep parameter or replace with EC.global as recommended?
-    serviceAccountName: String = "default"
-  ): Resource[F, SpanExporter[F, G]] =
-    BlazeClientBuilder[F](ec).resource.evalMap(apply[F, G](_, serviceAccountName))
+    serviceAccountName: String = "default",
+    ec: Option[ExecutionContext] = None
+  ): Resource[F, SpanExporter[F, G]] = for {
+    ec <- Resource.eval(ec.fold(Async[F].executionContext)(_.pure))
+    client <- BlazeClientBuilder[F](ec).resource
+    exporter <- Resource.eval(apply[F, G](serviceAccountName, client))
+  } yield exporter
 
   def apply[F[_]: Async: Logger, G[_]: Foldable](
     projectId: String,

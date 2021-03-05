@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.newrelic
 
 import cats.effect.kernel.{Async, Resource}
+import cats.syntax.applicative._
 import fs2.Chunk
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -14,21 +15,23 @@ import scala.concurrent.ExecutionContext
 
 object NewRelicSpanCompleter {
   def blazeClient[F[_]: Async](
-    ec: ExecutionContext, //TODO: keep parameter or replace with EC.global as recommended?
     process: TraceProcess,
     apiKey: String,
     endpoint: Endpoint,
     config: CompleterConfig = CompleterConfig(),
-  ): Resource[F, SpanCompleter[F]] =
-    BlazeClientBuilder[F](ec).resource
-      .flatMap(apply[F](_, process, apiKey, endpoint, config))
+    ec: Option[ExecutionContext] = None
+  ): Resource[F, SpanCompleter[F]] = for {
+    ec <- Resource.eval(ec.fold(Async[F].executionContext)(_.pure))
+    client <- BlazeClientBuilder[F](ec).resource
+    completer <- apply[F](client, process, apiKey, endpoint, config)
+  } yield completer
 
   def apply[F[_]: Async](
     client: Client[F],
     process: TraceProcess,
     apiKey: String,
     endpoint: Endpoint,
-    config: CompleterConfig = CompleterConfig(),
+    config: CompleterConfig = CompleterConfig()
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
