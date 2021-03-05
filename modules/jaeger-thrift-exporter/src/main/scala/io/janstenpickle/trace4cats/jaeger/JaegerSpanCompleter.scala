@@ -9,6 +9,7 @@ import io.janstenpickle.trace4cats.`export`.{CompleterConfig, QueuedSpanComplete
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.TraceProcess
 
+import scala.concurrent.ExecutionContext
 import scala.util.Try
 
 object JaegerSpanCompleter {
@@ -19,10 +20,11 @@ object JaegerSpanCompleter {
       .flatMap(p => Try(p.toInt).toOption)
       .getOrElse(UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT),
     config: CompleterConfig = CompleterConfig(),
+    blocker: Option[ExecutionContext] = None
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
-      exporter <- JaegerSpanExporter[F, Chunk](Some(process), host, port)
+      exporter <- JaegerSpanExporter[F, Chunk](Some(process), host, port, blocker)
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 }

@@ -2,11 +2,11 @@ package io.janstenpickle.trace4cats.jaeger
 
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
-
 import alleycats.std.iterable._
 import cats.Foldable
 import cats.data.NonEmptyList
-import cats.effect.kernel.{Resource, Sync}
+import cats.effect.kernel.{Async, Resource, Sync}
+import cats.effect.kernel.syntax.async._
 import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.show._
@@ -27,16 +27,18 @@ import io.janstenpickle.trace4cats.model.{
 }
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 object JaegerSpanExporter {
-  def apply[F[_]: Sync, G[_]: Foldable](
+  def apply[F[_]: Async, G[_]: Foldable](
     process: Option[TraceProcess],
     host: String = Option(System.getenv("JAEGER_AGENT_HOST")).getOrElse(UdpSender.DEFAULT_AGENT_UDP_HOST),
     port: Int = Option(System.getenv("JAEGER_AGENT_PORT"))
       .flatMap(p => Try(p.toInt).toOption)
-      .getOrElse(UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT)
+      .getOrElse(UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT),
+    blocker: Option[ExecutionContext] = None
   ): Resource[F, SpanExporter[F, G]] = {
     val statusTags = SemanticTags.statusTags("span.")
 
@@ -99,12 +101,15 @@ object JaegerSpanExporter {
         .setReferences(references(span.links))
     }
 
+    def blocking[A](thunk: => A): F[A] =
+      blocker.fold(Sync[F].blocking(thunk))(Sync[F].delay(thunk).evalOn)
+
     Resource.make(Sync[F].delay(new UdpSender(host, port, 0)))(sender => Sync[F].delay(sender.close()).void).map {
       sender =>
         new SpanExporter[F, G] {
           override def exportBatch(batch: Batch[G]): F[Unit] = {
             def send(process: Process, spans: java.util.List[Span]): F[Unit] =
-              Sync[F].blocking(sender.send(process, spans))
+              blocking(sender.send(process, spans))
 
             process match {
               case None =>
