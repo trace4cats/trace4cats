@@ -90,7 +90,7 @@ object AvroSpanExporter {
         Queue.bounded[F, Batch[G]](1)
       ) //TODO: replace with Ref of Option or Queue of Option and noneTerminate?
       semaphore <- Resource.eval(Semaphore[F](Long.MaxValue))
-      socketGroup <- Network[F].datagramSocketGroup() //TODO: maybe we should use the global datagramSocketGroup
+      socketGroup <- Network[F].datagramSocketGroup()
       socket <- socketGroup.openDatagramSocket()
       _ <- Resource.make(
         Stream
@@ -161,7 +161,7 @@ object AvroSpanExporter {
       queue <- Resource.eval(Queue.bounded[F, Batch[G]](1))
       //TODO: replace queue with Ref of Option or Queue of Option and noneTerminate?
       semaphore <- Resource.eval(Semaphore[F](Long.MaxValue))
-      socketGroup <- Network[F].socketGroup() //TODO: maybe we should use the global socketGroup or tweak threadCount
+      socketGroup <- Network[F].socketGroup()
       _ <- Resource.make(
         Stream
           .retry(write(avroSchema, address, semaphore, queue, socketGroup), 5.seconds, _ + 1.second, Int.MaxValue)

@@ -56,7 +56,7 @@ object AvroServer {
   ): Resource[F, Stream[F, Unit]] =
     for {
       avroSchema <- Resource.eval(AvroInstances.completedSpanSchema[F])
-      socketGroup <- Network[F].socketGroup() //TODO: configure threadCount?
+      socketGroup <- Network[F].socketGroup()
       port <- Resource.eval(Port.fromInt(port).liftTo[F](new IllegalArgumentException(s"invalid port $port")))
     } yield socketGroup
       .server(port = Some(port))
