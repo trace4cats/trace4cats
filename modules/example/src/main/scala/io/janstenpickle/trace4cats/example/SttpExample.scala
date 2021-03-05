@@ -1,11 +1,11 @@
 package io.janstenpickle.trace4cats.example
 
 import cats.effect.{Blocker, ExitCode, IO, IOApp}
-import io.janstenpickle.trace4cats.sttp.client.syntax._
+import io.janstenpickle.trace4cats.sttp.client3.syntax._
 import org.http4s.EntityBody
 import org.http4s.client.blaze.BlazeClientBuilder
-import sttp.client.SttpBackend
-import sttp.client.http4s.Http4sBackend
+import sttp.client3.SttpBackend
+import sttp.client3.http4s.Http4sBackend
 
 object SttpExample extends IOApp {
 

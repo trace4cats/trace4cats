@@ -25,14 +25,13 @@ object Dependencies {
     val log4cats = "2.0.0-RC1"
     val logback = "1.2.3"
     val micronaut = "2.3.3"
-    val natchez = "0.0.20"
+    val natchez = "0.1.0-M4"
     val openTelemetry = "1.0.0"
     val redis4cats = "0.11.1"
     val scaffeine = "4.0.2"
     val scala212 = "2.12.13"
     val scala213 = "2.13.5"
     val scalapb = "0.10.3"
-    val sttpClient2 = "2.2.9"
     val sttpClient3 = "3.1.6"
     val sttpModel = "1.3.3"
     val sttpTapir = "0.17.13"
@@ -95,8 +94,6 @@ object Dependencies {
   lazy val redis4catsLog4cats = "dev.profunktor"               %% "redis4cats-log4cats"             % Versions.redis4cats
   lazy val scaffeine = "com.github.blemale"                    %% "scaffeine"                       % Versions.scaffeine
   lazy val scalapbJson = "com.thesamet.scalapb"                %% "scalapb-json4s"                  % Versions.scalapb
-  lazy val sttpClient2 = "com.softwaremill.sttp.client"        %% "cats"                            % Versions.sttpClient2
-  lazy val sttpClient2Http4s = "com.softwaremill.sttp.client"  %% "http4s-backend"                  % Versions.sttpClient2
   lazy val sttpClient3 = "com.softwaremill.sttp.client3"       %% "cats"                            % Versions.sttpClient3
   lazy val sttpClient3Http4s = "com.softwaremill.sttp.client3" %% "http4s-backend"                  % Versions.sttpClient3
   lazy val sttpModel = "com.softwaremill.sttp.model"           %% "core"                            % Versions.sttpModel

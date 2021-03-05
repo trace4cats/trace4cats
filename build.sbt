@@ -91,7 +91,7 @@ lazy val root = (project in file("."))
   .aggregate(
     model,
     base,
-    //`base-zio`,
+    `base-zio`,
     core,
     kernel,
     meta,
@@ -123,13 +123,12 @@ lazy val root = (project in file("."))
     `stackdriver-common`,
     `stackdriver-grpc-exporter`,
     `stackdriver-http-exporter`,
-    //`sttp-client`,
     //`sttp-client3`,
     //`sttp-common`,
     //`sttp-tapir`,
     `kafka-client`,
     `graal-kafka`,
-    //natchez,
+    natchez,
     `tail-sampling`,
     `tail-sampling-cache-store`,
     //`tail-sampling-redis-store`,
@@ -162,7 +161,7 @@ lazy val example = (project in file("modules/example"))
       Dependencies.http4sBlazeClient,
       Dependencies.http4sBlazeServer,
       Dependencies.http4sDsl,
-      Dependencies.sttpClient2Http4s
+      Dependencies.sttpClient3Http4s
     )
   )
   .dependsOn(
@@ -183,7 +182,7 @@ lazy val example = (project in file("modules/example"))
     `opentelemetry-otlp-http-exporter`,
     `stackdriver-grpc-exporter`,
     `stackdriver-http-exporter`,
-    `sttp-client`,
+    `sttp-client3`,
     `tail-sampling`,
     `tail-sampling-cache-store`,
     filtering,
@@ -584,24 +583,6 @@ lazy val `http4s-server` = (project in file("modules/http4s-server"))
     inject,
     `http4s-common`   % "compile->compile;test->test",
     `exporter-common` % "test->compile"
-  )
-
-lazy val `sttp-client` = (project in file("modules/sttp-client"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-sttp-client",
-    libraryDependencies ++= Seq(Dependencies.sttpClient2),
-    libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.http4sDsl, Dependencies.sttpClient2Http4s))
-      .map(_ % Test)
-  )
-  .dependsOn(
-    model,
-    kernel,
-    core,
-    inject,
-    test              % "test->compile",
-    `exporter-common` % "test->compile",
-    `http4s-common`   % "test->test"
   )
 
 lazy val `sttp-client3` = (project in file("modules/sttp-client3"))
