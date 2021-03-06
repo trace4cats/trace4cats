@@ -9,6 +9,7 @@ import io.janstenpickle.trace4cats.`export`.{CompleterConfig, QueuedSpanComplete
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model._
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 object StackdriverGrpcSpanCompleter {
@@ -18,10 +19,11 @@ object StackdriverGrpcSpanCompleter {
     credentials: Option[Credentials] = None,
     requestTimeout: FiniteDuration = 5.seconds,
     config: CompleterConfig = CompleterConfig(),
+    ec: Option[ExecutionContext] = None
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
-      exporter <- StackdriverGrpcSpanExporter[F, Chunk](projectId, credentials, requestTimeout)
+      exporter <- StackdriverGrpcSpanExporter[F, Chunk](projectId, credentials, requestTimeout, ec)
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 }

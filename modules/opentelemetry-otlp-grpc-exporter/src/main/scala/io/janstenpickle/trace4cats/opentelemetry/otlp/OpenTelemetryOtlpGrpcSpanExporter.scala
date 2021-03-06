@@ -6,10 +6,13 @@ import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.common.OpenTelemetryGrpcSpanExporter
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
 
+import scala.concurrent.ExecutionContext
+
 object OpenTelemetryOtlpGrpcSpanExporter {
   def apply[F[_]: Async, G[_]: Foldable](
     host: String = "localhost",
-    port: Int = 55680
+    port: Int = 55680,
+    ec: Option[ExecutionContext] = None
   ): Resource[F, SpanExporter[F, G]] =
-    OpenTelemetryGrpcSpanExporter(host, port, channel => OtlpGrpcSpanExporter.builder().setChannel(channel).build())
+    OpenTelemetryGrpcSpanExporter(host, port, channel => OtlpGrpcSpanExporter.builder().setChannel(channel).build(), ec)
 }
