@@ -4,7 +4,6 @@ import java.time.Instant
 import cats.Foldable
 import cats.data.NonEmptyList
 import cats.effect.kernel.{Async, Resource, Sync}
-import cats.effect.syntax.async._
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
 import cats.syntax.functor._
@@ -23,7 +22,6 @@ import io.janstenpickle.trace4cats.model._
 import io.janstenpickle.trace4cats.stackdriver.common.StackdriverConstants._
 import io.janstenpickle.trace4cats.stackdriver.common.TruncatableString
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
@@ -31,8 +29,7 @@ object StackdriverGrpcSpanExporter {
   def apply[F[_]: Async, G[_]: Foldable](
     projectId: String,
     credentials: Option[Credentials] = None,
-    requestTimeout: FiniteDuration = 5.seconds,
-    ec: Option[ExecutionContext] = None
+    requestTimeout: FiniteDuration = 5.seconds
   ): Resource[F, SpanExporter[F, G]] = {
     val projectName = ProjectName.of(projectId)
 
@@ -165,8 +162,7 @@ object StackdriverGrpcSpanExporter {
             )
             .build()
         )
-        call = liftApiFuture(Sync[F].delay(client.batchWriteSpansCallable().futureCall(request)))
-        _ <- ec.fold(call)(call.evalOn)
+        _ <- liftApiFuture(Sync[F].delay(client.batchWriteSpansCallable().futureCall(request)))
       } yield ()
 
     Resource.make(traceClient)(client => Sync[F].delay(client.shutdown())).map { client =>

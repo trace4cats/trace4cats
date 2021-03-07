@@ -2,7 +2,6 @@ package io.janstenpickle.trace4cats.opentelemetry.common
 
 import cats.Foldable
 import cats.effect.kernel.{Async, Resource, Sync}
-import cats.effect.syntax.async._
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
 import cats.syntax.functor._
@@ -14,7 +13,6 @@ import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.export.{SpanExporter => OTSpanExporter}
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters._
 
 object OpenTelemetryGrpcSpanExporter {
@@ -28,8 +26,7 @@ object OpenTelemetryGrpcSpanExporter {
   def apply[F[_]: Async, G[_]: Foldable](
     host: String,
     port: Int,
-    makeExporter: ManagedChannel => OTSpanExporter,
-    ec: Option[ExecutionContext] = None
+    makeExporter: ManagedChannel => OTSpanExporter
   ): Resource[F, SpanExporter[F, G]] = {
     def liftCompletableResultCode(fa: F[CompletableResultCode])(onFailure: => Throwable): F[Unit] =
       fa.flatMap { result =>
@@ -50,8 +47,7 @@ object OpenTelemetryGrpcSpanExporter {
             }
             .asJavaCollection
         )
-        call = liftCompletableResultCode(Sync[F].delay(exporter.`export`(spans)))(ExportFailure(host, port))
-        _ <- ec.fold(call)(call.evalOn)
+        _ <- liftCompletableResultCode(Sync[F].delay(exporter.`export`(spans)))(ExportFailure(host, port))
       } yield ()
     }
 

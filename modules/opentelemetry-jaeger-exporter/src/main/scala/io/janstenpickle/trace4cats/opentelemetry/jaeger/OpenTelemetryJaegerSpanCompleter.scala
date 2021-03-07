@@ -8,19 +8,16 @@ import io.janstenpickle.trace4cats.`export`.{CompleterConfig, QueuedSpanComplete
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.TraceProcess
 
-import scala.concurrent.ExecutionContext
-
 object OpenTelemetryJaegerSpanCompleter {
   def apply[F[_]: Async](
     process: TraceProcess,
     host: String = "localhost",
     port: Int = 14250,
-    config: CompleterConfig = CompleterConfig(),
-    ec: Option[ExecutionContext] = None
+    config: CompleterConfig = CompleterConfig()
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
-      exporter <- OpenTelemetryJaegerSpanExporter[F, Chunk](host, port, ec)
+      exporter <- OpenTelemetryJaegerSpanExporter[F, Chunk](host, port)
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 }
