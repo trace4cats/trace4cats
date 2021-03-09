@@ -2,7 +2,6 @@ package io.janstenpickle.trace4cats.avro
 
 import java.io.ByteArrayOutputStream
 import java.net.ConnectException
-import cats.effect.kernel.syntax.monadCancel._
 import cats.effect.kernel.syntax.spawn._
 import cats.effect.kernel.{Async, Clock, Resource, Sync}
 import cats.effect.std.{Queue, Semaphore}
@@ -12,7 +11,7 @@ import cats.syntax.functor._
 import cats.syntax.monad._
 import cats.syntax.option._
 import cats.syntax.traverse._
-import cats.{Applicative, Traverse}
+import cats.Traverse
 import com.comcast.ip4s.{Host, IpAddress, Port, SocketAddress}
 import fs2.io.net.{Datagram, DatagramSocket, Network, Socket, SocketGroup}
 import fs2.{Chunk, Stream}
@@ -57,6 +56,8 @@ object AvroSpanExporter {
     host: String = agentHostname,
     port: Int = agentPort,
   ): Resource[F, SpanExporter[F, G]] = {
+    val queueCapacity = 1
+    val maxPermits = 1L
 
     def write(
       schema: Schema,
@@ -67,16 +68,17 @@ object AvroSpanExporter {
     ): F[Unit] =
       Stream
         .repeatEval {
-          (for {
+          for {
             batch <- queue.take
-            _ <- semaphore.acquire
-            _ <- batch.spans.traverse { span =>
-              for {
-                ba <- encode[F](schema)(span)
-                _ <- socket.write(Datagram(address, Chunk.array(ba)))
-              } yield ()
+            _ <- semaphore.permit.use { _ =>
+              batch.spans.traverse { span =>
+                for {
+                  ba <- encode[F](schema)(span)
+                  _ <- socket.write(Datagram(address, Chunk.array(ba)))
+                } yield ()
+              }
             }
-          } yield ()).guarantee(semaphore.release)
+          } yield ()
         }
         .compile
         .drain
@@ -86,27 +88,21 @@ object AvroSpanExporter {
       host <- Resource.eval(IpAddress.fromString(host).liftTo[F](new IllegalArgumentException(s"invalid host $host")))
       port <- Resource.eval(Port.fromInt(port).liftTo[F](new IllegalArgumentException(s"invalid port $port")))
       address = SocketAddress(host, port)
-      queue <- Resource.eval(
-        Queue.bounded[F, Batch[G]](1)
-      ) //TODO: replace with Ref of Option or Queue of Option and noneTerminate?
-      semaphore <- Resource.eval(Semaphore[F](Long.MaxValue))
+      queue <- Resource.eval(Queue.bounded[F, Batch[G]](queueCapacity))
+      semaphore <- Resource.eval(Semaphore[F](maxPermits))
       socketGroup <- Network[F].datagramSocketGroup()
       socket <- socketGroup.openDatagramSocket()
-      _ <- Resource.make(
-        Stream
-          .retry(write(avroSchema, address, semaphore, queue, socket), 5.seconds, _ + 1.second, Int.MaxValue)
-          .compile
-          .drain
-          .start
-      )(fiber =>
-        Applicative[F].unit.whileM_(for {
-          queueNonEmpty <- Sync[F].delay[Boolean](
-            throw new UnsupportedOperationException
-          ) //queue.size.map(_ != 0) //TODO: fix
-          semaphoreSet <- semaphore.count.map(_ == 0)
-          _ <- Clock[F].sleep(50.millis)
-        } yield queueNonEmpty || semaphoreSet) >> fiber.cancel
-      )
+      _ <- Resource
+        .make(
+          Stream
+            .retry(write(avroSchema, address, semaphore, queue, socket), 5.seconds, _ + 1.second, Int.MaxValue)
+            .compile
+            .drain
+            .start
+        )(fiber =>
+          Clock[F].sleep(50.millis).whileM_(semaphore.available.map(_ < maxPermits)) >>
+            fiber.cancel
+        )
     } yield new SpanExporter[F, G] {
       override def exportBatch(batch: Batch[G]): F[Unit] = queue.offer(batch)
     }
@@ -116,6 +112,9 @@ object AvroSpanExporter {
     host: String = agentHostname,
     port: Int = agentPort,
   ): Resource[F, SpanExporter[F, G]] = {
+    val queueCapacity = 1
+    val maxPermits = 1L
+
     def connect(socketGroup: SocketGroup[F], address: SocketAddress[Host]): Stream[F, Socket[F]] =
       Stream
         .resource(socketGroup.client(address))
@@ -137,17 +136,18 @@ object AvroSpanExporter {
         .flatMap { socket =>
           Stream
             .repeatEval {
-              (for {
+              for {
                 batch <- queue.take
-                _ <- semaphore.acquire
-                _ <- batch.spans.traverse { span =>
-                  for {
-                    ba <- encode[F](schema)(span)
-                    withTerminator = ba ++ Array(0xc4.byteValue, 0x02.byteValue)
-                    _ <- socket.write(Chunk.array(withTerminator))
-                  } yield ()
+                _ <- semaphore.permit.use { _ =>
+                  batch.spans.traverse { span =>
+                    for {
+                      ba <- encode[F](schema)(span)
+                      withTerminator = ba ++ Array(0xc4.byteValue, 0x02.byteValue)
+                      _ <- socket.write(Chunk.array(withTerminator))
+                    } yield ()
+                  }
                 }
-              } yield ()).guarantee(semaphore.release)
+              } yield ()
             }
         }
         .compile
@@ -158,9 +158,8 @@ object AvroSpanExporter {
       host <- Resource.eval(Host.fromString(host).liftTo[F](new IllegalArgumentException(s"invalid host $host")))
       port <- Resource.eval(Port.fromInt(port).liftTo[F](new IllegalArgumentException(s"invalid port $port")))
       address = SocketAddress(host, port)
-      queue <- Resource.eval(Queue.bounded[F, Batch[G]](1))
-      //TODO: replace queue with Ref of Option or Queue of Option and noneTerminate?
-      semaphore <- Resource.eval(Semaphore[F](Long.MaxValue))
+      queue <- Resource.eval(Queue.bounded[F, Batch[G]](queueCapacity))
+      semaphore <- Resource.eval(Semaphore[F](maxPermits))
       socketGroup <- Network[F].socketGroup()
       _ <- Resource.make(
         Stream
@@ -169,13 +168,8 @@ object AvroSpanExporter {
           .drain
           .start
       )(fiber =>
-        Clock[F]
-          .sleep(50.millis)
-          .whileM_(for {
-            queueNonEmpty <- Sync[F]
-              .delay[Boolean](throw new UnsupportedOperationException) //queue.size.map(_ != 0) //TODO: fix
-            semaphoreSet <- semaphore.count.map(_ == 0)
-          } yield queueNonEmpty || semaphoreSet) >> fiber.cancel
+        Clock[F].sleep(50.millis).whileM_(semaphore.available.map(_ < maxPermits)) >>
+          fiber.cancel
       )
     } yield new SpanExporter[F, G] {
       override def exportBatch(batch: Batch[G]): F[Unit] = queue.offer(batch)
