@@ -23,7 +23,7 @@ object StackdriverHttpSpanCompleter {
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
-      exporter <- StackdriverHttpSpanExporter.blazeClient[F, Chunk](projectId, serviceAccountPath, ec)
+      exporter <- StackdriverHttpSpanExporter.serviceAccountBlazeClient[F, Chunk](projectId, serviceAccountPath, ec)
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 

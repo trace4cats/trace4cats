@@ -35,11 +35,11 @@ object NewRelicSpanExporter {
       client,
       endpoint.url,
       (batch: Batch[G]) => Convert.toJson(batch),
-      List(
+      List[Header.ToRaw](
         `Content-Type`(MediaType.application.json),
-        Header("Api-Key", apiKey),
-        Header("Data-Format", "newrelic"),
-        Header("Data-Format-Version", "1")
+        "Api-Key" -> apiKey,
+        "Data-Format" -> "newrelic",
+        "Data-Format-Version" -> "1"
       )
     )
 }

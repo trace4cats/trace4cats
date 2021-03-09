@@ -32,7 +32,7 @@ object ClientTracer {
             .flatMap { childSpan =>
               val childCtx = spanLens.set(childSpan)(parentCtx)
               val headers = headersGetter.get(childCtx)
-              val req = request.putHeaders(Http4sHeaders.converter.to(headers).toList: _*)
+              val req = request.putHeaders(Http4sHeaders.converter.to(headers).headers)
 
               client
                 .run(req.mapK(P.provideK(childCtx)))

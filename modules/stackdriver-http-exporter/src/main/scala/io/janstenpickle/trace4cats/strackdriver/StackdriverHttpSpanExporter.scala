@@ -32,7 +32,7 @@ import scala.concurrent.ExecutionContext
 object StackdriverHttpSpanExporter {
   private final val base = "https://cloudtrace.googleapis.com/v2/projects"
 
-  def blazeClient[F[_]: Async: Logger, G[_]: Foldable](
+  def serviceAccountBlazeClient[F[_]: Async: Logger, G[_]: Foldable](
     projectId: String,
     serviceAccountPath: String,
     ec: Option[ExecutionContext] = None
@@ -48,7 +48,7 @@ object StackdriverHttpSpanExporter {
   ): Resource[F, SpanExporter[F, G]] = for {
     ec <- Resource.eval(ec.fold(Async[F].executionContext)(_.pure))
     client <- BlazeClientBuilder[F](ec).resource
-    exporter <- Resource.eval(apply[F, G](serviceAccountName, client))
+    exporter <- Resource.eval(apply[F, G](client, serviceAccountName))
   } yield exporter
 
   def apply[F[_]: Async: Logger, G[_]: Foldable](

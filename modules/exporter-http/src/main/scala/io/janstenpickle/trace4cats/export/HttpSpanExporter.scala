@@ -33,7 +33,7 @@ object HttpSpanExporter {
       uri,
       makePayload,
       Applicative[F].pure(_),
-      Applicative[F].pure(List.empty[Header]),
+      Applicative[F].pure(List.empty[Header.ToRaw]),
       Method.POST,
       List(`Content-Type`(MediaType.application.json))
     )
@@ -42,14 +42,14 @@ object HttpSpanExporter {
     client: Client[F],
     uri: String,
     makePayload: Batch[G] => A,
-    staticHeaders: List[Header]
+    staticHeaders: List[Header.ToRaw]
   )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F, G]] =
     apply(
       client,
       uri,
       makePayload,
       Applicative[F].pure(_),
-      Applicative[F].pure(List.empty[Header]),
+      Applicative[F].pure(List.empty[Header.ToRaw]),
       Method.POST,
       staticHeaders
     )
@@ -65,7 +65,7 @@ object HttpSpanExporter {
       uri,
       makePayload,
       updatedUri,
-      Applicative[F].pure(List.empty[Header]),
+      Applicative[F].pure(List.empty[Header.ToRaw]),
       Method.POST,
       List(`Content-Type`(MediaType.application.json))
     )
@@ -78,7 +78,7 @@ object HttpSpanExporter {
       uri,
       makePayload,
       Applicative[F].pure(_),
-      Applicative[F].pure(List.empty[Header]),
+      Applicative[F].pure(List.empty[Header.ToRaw]),
       method,
       List(`Content-Type`(MediaType.application.json))
     )
@@ -87,7 +87,7 @@ object HttpSpanExporter {
     client: Client[F],
     uri: String,
     makePayload: Batch[G] => A,
-    dynamicHeaders: F[List[Header]]
+    dynamicHeaders: F[List[Header.ToRaw]]
   )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F, G]] =
     apply(
       client,
@@ -104,9 +104,9 @@ object HttpSpanExporter {
     uri: String,
     makePayload: Batch[G] => A,
     updatedUri: Uri => F[Uri],
-    dynamicHeaders: F[List[Header]],
+    dynamicHeaders: F[List[Header.ToRaw]],
     method: Method,
-    staticHeaders: List[Header]
+    staticHeaders: List[Header.ToRaw]
   )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F, G]] =
     Uri.fromString(uri).liftTo[F].map { parsedUri =>
       new SpanExporter[F, G] with Http4sClientDsl[F] {
