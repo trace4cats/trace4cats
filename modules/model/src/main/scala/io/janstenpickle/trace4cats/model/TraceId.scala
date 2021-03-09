@@ -1,7 +1,6 @@
 package io.janstenpickle.trace4cats.model
 
 import cats.effect.std.Random
-
 import cats.syntax.functor._
 import cats.syntax.show._
 import cats.{Eq, Functor, Show}
