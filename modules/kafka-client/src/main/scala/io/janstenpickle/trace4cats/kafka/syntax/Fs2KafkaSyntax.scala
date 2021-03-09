@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.kafka.syntax
 
-import cats.effect.MonadCancelThrow
+import cats.effect.kernel.MonadCancelThrow
 import cats.{Functor, Monad}
 import fs2.Stream
 import fs2.kafka.{CommittableConsumerRecord, KafkaProducer}
