@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.example
 
 import cats.data.NonEmptySet
-import cats.effect.{Blocker, ExitCode, IO, IOApp, Resource}
+import cats.effect.{ExitCode, IO, IOApp, Resource}
 import cats.syntax.semigroup._
 import fs2.Chunk
 import org.typelevel.log4cats.Logger
@@ -20,20 +20,19 @@ import scala.concurrent.duration._
 object TailSampling extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     (for {
-      blocker <- Blocker[IO]
-      implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
-      exporter <- AvroSpanExporter.udp[IO, Chunk](blocker)
+      implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
+      exporter <- AvroSpanExporter.udp[IO, Chunk]()
 
       nameSampleDecisionStore <-
-        Resource.liftF(LocalCacheSampleDecisionStore[IO](ttl = 10.minutes, maximumSize = Some(200000)))
+        Resource.eval(LocalCacheSampleDecisionStore[IO](ttl = 10.minutes, maximumSize = Some(200000)))
       rateSampleDecisionStore <-
-        Resource.liftF(LocalCacheSampleDecisionStore[IO](ttl = 10.minutes, maximumSize = Some(200000)))
+        Resource.eval(LocalCacheSampleDecisionStore[IO](ttl = 10.minutes, maximumSize = Some(200000)))
 
       probSampler = TailSpanSampler.probabilistic[IO, Chunk](probability = 0.05)
       nameSampler =
         TailSpanSampler
           .spanNameDrop[IO, Chunk](nameSampleDecisionStore, NonEmptySet.of("/healthcheck", "/readiness", "/metrics"))
-      rateSampler <- Resource.liftF(
+      rateSampler <- Resource.eval(
         RateTailSpanSampler.create[IO, Chunk](rateSampleDecisionStore, bucketSize = 100, tokenRate = 100.millis)
       )
 
