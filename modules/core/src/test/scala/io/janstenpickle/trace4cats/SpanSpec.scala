@@ -17,12 +17,12 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scala.concurrent.duration._
 
 class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks with ArbitraryInstances {
-  val ec: TestContext = TestContext()
-  implicit val ioRuntime: IORuntime = {
-    val (scheduler, sd) = IORuntime.createDefaultScheduler()
-    IORuntime(ec, ec, scheduler, sd)
-  }
-  implicit val ioRandom: Random[IO] = Random.scalaUtilRandom[IO].unsafeRunSync()
+//  val ec: TestContext = TestContext()
+//  implicit val ioRuntime: IORuntime = {
+//    val (scheduler, sd) = IORuntime.createDefaultScheduler()
+//    IORuntime(ec, ec, scheduler, sd)
+//  }
+//  implicit val ioRandom: Random[IO] = Random.scalaUtilRandom[IO].unsafeRunSync()
 
   behavior.of("Span.root")
 

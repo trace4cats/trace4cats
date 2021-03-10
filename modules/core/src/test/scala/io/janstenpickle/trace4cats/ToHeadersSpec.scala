@@ -14,12 +14,12 @@ import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 import scala.concurrent.ExecutionContext
 
 class ToHeadersSpec extends AnyFunSuite with ScalaCheckDrivenPropertyChecks with FunSuiteDiscipline {
-  val ec: ExecutionContext = ExecutionContext.global
-  implicit val ioRuntime: IORuntime = {
-    val (scheduler, sd) = IORuntime.createDefaultScheduler()
-    IORuntime(ec, ec, scheduler, sd)
-  }
-  implicit val ioRandom: Random[IO] = Random.scalaUtilRandom[IO].unsafeRunSync()
+//  val ec: ExecutionContext = ExecutionContext.global
+//  implicit val ioRuntime: IORuntime = {
+//    val (scheduler, sd) = IORuntime.createDefaultScheduler()
+//    IORuntime(ec, ec, scheduler, sd)
+//  }
+//  implicit val ioRandom: Random[IO] = Random.scalaUtilRandom[IO].unsafeRunSync()
 
   val parentContext: SpanContext = SpanContext.root[IO].unsafeRunSync()
   val context: SpanContext = SpanContext.child[IO](parentContext).unsafeRunSync()
