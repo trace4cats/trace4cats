@@ -1,19 +1,19 @@
 package io.janstenpickle.trace4cats.agent
 
-import cats.effect.{Blocker, ExitCode, IO, Resource}
+import cats.effect.{ExitCode, IO, Resource}
 import cats.implicits._
 import com.monovore.decline._
-import com.monovore.decline.effect._
+//import com.monovore.decline.effect._
 import fs2.Chunk
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.agent.common.CommonAgent
 import io.janstenpickle.trace4cats.agent.common.CommonAgent._
 import io.janstenpickle.trace4cats.avro._
-import io.janstenpickle.trace4cats.kernel.BuildInfo
+//import io.janstenpickle.trace4cats.kernel.BuildInfo
 
-object Agent
-    extends CommandIOApp(name = "trace4cats-agent", header = "Trace 4 Cats Agent", version = BuildInfo.version) {
+object Agent //TODO: upgrade decline
+/*extends CommandIOApp(name = "trace4cats-agent", header = "Trace 4 Cats Agent", version = BuildInfo.version)*/ {
 
   val collectorHostOpt: Opts[String] =
     Opts
@@ -26,7 +26,8 @@ object Agent
       .orElse(Opts.option[Int]("collector-port", "Collector port"))
       .withDefault(DefaultPort)
 
-  override def main: Opts[IO[ExitCode]] =
+  /*override*/
+  def main: Opts[IO[ExitCode]] =
     (portOpt, collectorHostOpt, collectorPortOpt, bufferSizeOpt, traceOpt, traceSampleOpt).mapN(run)
 
   def run(
@@ -38,14 +39,9 @@ object Agent
     traceRate: Option[Double]
   ): IO[ExitCode] =
     (for {
-      blocker <- Blocker[IO]
-      implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
-
-      avroExporter <-
-        AvroSpanExporter
-          .tcp[IO, Chunk](blocker, host = collectorHost, port = collectorPort)
+      implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
+      avroExporter <- AvroSpanExporter.tcp[IO, Chunk](host = collectorHost, port = collectorPort)
     } yield CommonAgent.run[IO](
-      blocker,
       port,
       bufferSize,
       "Avro TCP",
