@@ -15,9 +15,7 @@ import io.janstenpickle.trace4cats.sampling.tail.{TailSamplingPipe, TailSpanSamp
 import scala.concurrent.duration._
 
 object Sampling {
-  def pipe[F[_]: Async](
-    config: SamplingConfig,
-  ): Resource[F, Pipe[F, CompletedSpan, CompletedSpan]] = {
+  def pipe[F[_]: Async](config: SamplingConfig): Resource[F, Pipe[F, CompletedSpan, CompletedSpan]] = {
     def makeDecisionStore(keyPrefix: Short) =
       config.redis match {
         case None =>
