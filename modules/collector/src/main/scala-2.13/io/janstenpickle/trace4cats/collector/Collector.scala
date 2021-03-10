@@ -1,46 +1,46 @@
 package io.janstenpickle.trace4cats.collector
 
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, ExitCode, IO, Resource}
+import cats.effect.{ExitCode, IO}
+import cats.effect.kernel.{Async, Resource}
 import cats.implicits._
 import com.monovore.decline._
-import com.monovore.decline.effect._
+//import com.monovore.decline.effect._
 import fs2.Chunk
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.collector.common.CommonCollector
 import io.janstenpickle.trace4cats.collector.common.config.ConfigParser
 import io.janstenpickle.trace4cats.collector.config.CollectorConfig
-import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanExporter}
+import io.janstenpickle.trace4cats.kernel.SpanExporter //BuildInfo
 import io.janstenpickle.trace4cats.model.AttributeValue
 import io.janstenpickle.trace4cats.opentelemetry.jaeger.OpenTelemetryJaegerSpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpGrpcSpanExporter
 import io.janstenpickle.trace4cats.stackdriver.StackdriverGrpcSpanExporter
 
-object Collector
-    extends CommandIOApp(
+object Collector //TODO: upgrade decline
+/*extends CommandIOApp(
       name = "trace4cats-collector",
       header = "Trace 4 Cats Collector",
       version = BuildInfo.version
-    ) {
+    )*/ {
 
-  override def main: Opts[IO[ExitCode]] =
+  /*override*/
+  def main: Opts[IO[ExitCode]] =
     CommonCollector.configFileOpt.map { configFile =>
       Slf4jLogger.create[IO].flatMap { implicit logger =>
         (for {
-          blocker <- Blocker[IO]
-          oth <- others[IO](blocker, configFile)
-          stream <- CommonCollector[IO](blocker, configFile, oth)
+          oth <- others[IO](configFile)
+          stream <- CommonCollector[IO](configFile, oth)
         } yield stream).use(_.compile.drain.as(ExitCode.Success)).handleErrorWith { th =>
           logger.error(th)("Trace 4 Cats collector failed").as(ExitCode.Error)
         }
       }
     }
 
-  def others[F[_]: ConcurrentEffect: ContextShift](
-    blocker: Blocker,
+  def others[F[_]: Async](
     configFile: String
   ): Resource[F, List[(String, List[(String, AttributeValue)], SpanExporter[F, Chunk])]] =
     for {
-      config <- Resource.liftF(ConfigParser.parse[F, CollectorConfig](configFile))
+      config <- Resource.eval(ConfigParser.parse[F, CollectorConfig](configFile))
       jaegerProtoExporters <- config.jaegerProto.traverse { jaeger =>
         OpenTelemetryJaegerSpanExporter[F, Chunk](jaeger.host, jaeger.port).map(
           (
@@ -66,7 +66,7 @@ object Collector
       }
 
       stackdriverExporters <- config.stackdriverGrpc.traverse { stackdriver =>
-        StackdriverGrpcSpanExporter[F, Chunk](blocker, projectId = stackdriver.projectId)
+        StackdriverGrpcSpanExporter[F, Chunk](projectId = stackdriver.projectId)
           .map(
             (
               "Stackdriver GRPC",

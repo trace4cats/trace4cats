@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.collector.common.config
 import java.nio.file.{Files, NoSuchFileException, Paths}
 
 import cats.data.NonEmptyList
-import cats.effect.Sync
+import cats.effect.kernel.Sync
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
@@ -24,7 +24,7 @@ object ConfigParser {
   }
 
   private def loadFile[F[_]: Sync](file: String): F[String] =
-    Sync[F].adaptError(Sync[F].delay(Files.readString(Paths.get(file)))) { case _: NoSuchFileException =>
+    Sync[F].adaptError(Sync[F].blocking(Files.readString(Paths.get(file)))) { case _: NoSuchFileException =>
       FileNotFound(file)
     }
 
