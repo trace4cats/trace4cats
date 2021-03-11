@@ -320,7 +320,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-
     strategy:
       matrix:
         scala-version:
@@ -360,4 +359,4 @@ jobs:
 
       - name: scala build
         run: |
-          sbt -Dsbt.coursier.home=~/.sbt/coursier/ ++${{ matrix.scala-version }} '; scalafmtCheckAll; scalafmtSbtCheck; compile; test' -J-Xms3G -J-Xmx6G -J-Xss4m
+          sbt -Dsbt.coursier.home=~/.sbt/coursier/ ++${{ matrix.scala-version }} '; scalafmtCheckAll; scalafmtSbtCheck; compile; test; project agent; compile; project agent-kafka; compile; project collector; compile; project collector-lite; compile; project example; compile' -J-Xms3G -J-Xmx6G -J-Xss4m
