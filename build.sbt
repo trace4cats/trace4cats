@@ -28,7 +28,6 @@ lazy val commonSettings = Seq(
     }
   },
   fork in Test := true,
-  testFrameworks += TestFramework("munit.Framework"), //TODO: change to TestFrameworks.MUnit
   bintrayRepository := "trace4cats",
   releaseEarlyWith in Global := SonatypePublisher,
   credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials"),
