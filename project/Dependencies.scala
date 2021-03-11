@@ -26,7 +26,7 @@ object Dependencies {
     val logback = "1.2.3"
     val micronaut = "2.4.0"
     val natchez = "0.0.20"
-    val openTelemetry = "1.0.0"
+    val openTelemetry = "1.0.1"
     val redis4cats = "0.12.0"
     val scaffeine = "4.0.2"
     val scala212 = "2.12.13"
