@@ -47,7 +47,7 @@ Trace4Cats supports publishing spans to the following systems:
 Instrumentation for trace propagation and continuation is available for the following libraries
 
 - [Http4s] client and server
-- [Sttp] client v2 and v3
+- [Sttp] client v3
 - [Tapir]
 - [FS2 Kafka] consumer and producer
 - [FS2]
@@ -88,18 +88,17 @@ import cats.implicits._
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.`export`.CompleterConfig
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{SpanKind, SpanStatus, TraceProcess}
+
 import scala.concurrent.duration._
 
 object Trace4CatsQuickStart extends IOApp {
-  def entryPoint[F[_]: Concurrent: ContextShift: Timer: Logger](
-    blocker: Blocker,
-    process: TraceProcess
-  ): Resource[F, EntryPoint[F]] =
-    AvroSpanCompleter.udp[F](blocker, process, batchTimeout = 50.millis).map { completer =>
+  def entryPoint[F[_]: Async: Logger](process: TraceProcess): Resource[F, EntryPoint[F]] =
+    AvroSpanCompleter.udp[F](process, config = CompleterConfig(batchTimeout = 50.millis)).map { completer =>
       EntryPoint[F](SpanSampler.always[F], completer)
     }
 
@@ -116,9 +115,8 @@ object Trace4CatsQuickStart extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] =
     (for {
-      blocker <- Blocker[IO]
-      implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
-      ep <- entryPoint[IO](blocker, TraceProcess("trace4cats"))
+      implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
+      ep <- entryPoint[IO](TraceProcess("trace4cats"))
     } yield ep)
       .use { ep =>
         ep.root("this is the root span").use { span =>

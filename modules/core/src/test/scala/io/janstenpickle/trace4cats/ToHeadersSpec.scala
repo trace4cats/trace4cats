@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats
 import cats.Eq
 import cats.effect.IO
 import cats.effect.std.Random
-import cats.effect.unsafe.IORuntime
+import cats.effect.unsafe.implicits.global
 import cats.kernel.laws.discipline.SemigroupTests
 import io.janstenpickle.trace4cats.model.SpanContext
 import org.scalacheck.{Arbitrary, Gen}
@@ -11,15 +11,8 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 
-import scala.concurrent.ExecutionContext
-
 class ToHeadersSpec extends AnyFunSuite with ScalaCheckDrivenPropertyChecks with FunSuiteDiscipline {
-//  val ec: ExecutionContext = ExecutionContext.global
-//  implicit val ioRuntime: IORuntime = {
-//    val (scheduler, sd) = IORuntime.createDefaultScheduler()
-//    IORuntime(ec, ec, scheduler, sd)
-//  }
-//  implicit val ioRandom: Random[IO] = Random.scalaUtilRandom[IO].unsafeRunSync()
+  implicit val ioRandom: Random[IO] = Random.javaUtilConcurrentThreadLocalRandom[IO]
 
   val parentContext: SpanContext = SpanContext.root[IO].unsafeRunSync()
   val context: SpanContext = SpanContext.child[IO](parentContext).unsafeRunSync()

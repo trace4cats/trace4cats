@@ -28,6 +28,7 @@ lazy val commonSettings = Seq(
     }
   },
   fork in Test := true,
+  testFrameworks += TestFramework("munit.Framework"), //TODO: change to TestFrameworks.MUnit
   bintrayRepository := "trace4cats",
   releaseEarlyWith in Global := SonatypePublisher,
   credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials"),
@@ -91,7 +92,7 @@ lazy val root = (project in file("."))
   .aggregate(
     model,
     base,
-    `base-zio`,
+    //`base-zio`,
     core,
     kernel,
     meta,
@@ -523,7 +524,7 @@ lazy val `avro-kafka-consumer` =
 
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-inject")
+  .settings(name := "trace4cats-inject", libraryDependencies ++= Seq(Dependencies.catsEffect).map(_ % Test))
   .dependsOn(model, kernel, core, base)
 
 lazy val `inject-zio` = (project in file("modules/inject-zio"))

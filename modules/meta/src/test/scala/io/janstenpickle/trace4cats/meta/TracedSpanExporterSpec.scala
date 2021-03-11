@@ -1,9 +1,10 @@
 package io.janstenpickle.trace4cats.meta
 
 import cats.Eq
-import cats.effect.{ContextShift, IO, Resource, Timer}
+import cats.effect.{IO, Resource}
+import cats.effect.std.Queue
+import cats.effect.unsafe.implicits.global
 import fs2.{Chunk, Stream}
-import fs2.concurrent.Queue
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanExporter, SpanSampler}
@@ -14,16 +15,11 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import scala.concurrent.ExecutionContext
-
 class TracedSpanExporterSpec
     extends AnyFlatSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks
     with ArbitraryInstances {
-
-  implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
-  implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
@@ -96,15 +92,17 @@ class TracedSpanExporterSpec
         val batch = mapBatch(spans)
 
         (for {
-          queue <- Resource.liftF(Queue.circularBuffer[IO, CompletedSpan](batch.spans.size + 100))
+          queue <- Resource.eval(Queue.circularBuffer[IO, CompletedSpan](batch.spans.size + 100))
           exporter = new SpanExporter[IO, Chunk] {
             override def exportBatch(batch: Batch[Chunk]): IO[Unit] =
-              Stream.chunk(batch.spans).covary[IO].through(queue.enqueue).compile.drain
+              Stream.chunk(batch.spans).covary[IO].through(_.evalMap(queue.offer)).compile.drain
           }
           tracedExporter = TracedSpanExporter[IO](exporterName, attributes, process, sampler, exporter)
-          _ <- Resource.liftF(tracedExporter.exportBatch(batch))
+          _ <- Resource.eval(tracedExporter.exportBatch(batch))
 
-          allSpans <- Resource.liftF(queue.dequeue.take(batch.spans.size + expectedMetaSpans).compile.to(Chunk))
+          allSpans <- Resource.eval(
+            Stream.fromQueueUnterminated(queue).take(batch.spans.size + expectedMetaSpans).compile.to(Chunk)
+          )
         } yield allSpans)
           .use { spans =>
             IO(test(exporterName, attributes, process, batch, spans))

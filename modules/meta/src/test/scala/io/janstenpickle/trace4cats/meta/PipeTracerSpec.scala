@@ -1,7 +1,8 @@
 package io.janstenpickle.trace4cats.meta
 
 import cats.Eq
-import cats.effect.{ContextShift, IO, Timer}
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import fs2.{Chunk, Stream}
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -13,12 +14,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import scala.concurrent.ExecutionContext
-
 class PipeTracerSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks with ArbitraryInstances {
-
-  implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
-  implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 

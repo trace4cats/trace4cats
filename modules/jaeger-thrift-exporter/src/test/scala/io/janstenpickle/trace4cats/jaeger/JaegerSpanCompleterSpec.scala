@@ -15,7 +15,7 @@ class JaegerSpanCompleterSpec extends BaseJaegerSpec {
     val batch = Batch(Chunk(updatedSpan.build(process)))
 
     testCompleter(
-      JaegerSpanCompleter[IO](blocker, process, "localhost", 6831, config = CompleterConfig(batchTimeout = 50.millis)),
+      JaegerSpanCompleter[IO](process, "localhost", 6831, config = CompleterConfig(batchTimeout = 50.millis)),
       updatedSpan,
       process,
       batchToJaegerResponse(

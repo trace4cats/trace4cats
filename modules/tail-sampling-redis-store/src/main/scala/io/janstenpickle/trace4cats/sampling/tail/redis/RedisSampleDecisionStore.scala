@@ -112,9 +112,9 @@ object RedisSampleDecisionStore {
     modifyOptions: ClientOptions => ClientOptions = identity
   ): Resource[F, SampleDecisionStore[F]] =
     for {
-      opts <- Resource.liftF(Sync[F].delay(modifyOptions(ClientOptions.create())))
+      opts <- Resource.eval(Sync[F].delay(modifyOptions(ClientOptions.create())))
       cmd <- Redis[F].withOptions(redisUrl(host, port), opts, codec)
-      sampler <- Resource.liftF(apply[F](cmd, keyPrefix, ttl, maximumLocalCacheSize))
+      sampler <- Resource.eval(apply[F](cmd, keyPrefix, ttl, maximumLocalCacheSize))
     } yield sampler
 
   def cluster[F[_]: Concurrent: ContextShift: Parallel: Logger](
@@ -125,6 +125,6 @@ object RedisSampleDecisionStore {
   ): Resource[F, SampleDecisionStore[F]] =
     for {
       cmd <- Redis[F].cluster(codec, servers.map((redisUrl _).tupled).toList: _*)
-      sampler <- Resource.liftF(apply[F](cmd, keyPrefix, ttl, maximumLocalCacheSize))
+      sampler <- Resource.eval(apply[F](cmd, keyPrefix, ttl, maximumLocalCacheSize))
     } yield sampler
 }
