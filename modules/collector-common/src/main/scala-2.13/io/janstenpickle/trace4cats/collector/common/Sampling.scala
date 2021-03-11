@@ -49,7 +49,7 @@ object Sampling {
 
       rate <- config.rate.traverse { rate =>
         makeDecisionStore(1)
-          .evalMap(RateTailSpanSampler.create[F, Chunk](_, rate.maxBatchSize, rate.tokenRateMillis.millis))
+          .flatMap(RateTailSpanSampler.create[F, Chunk](_, rate.maxBatchSize, rate.tokenRateMillis.millis))
       }
     } yield Semigroup[TailSpanSampler[F, Chunk]]
       .combineAllOption(List(prob, name, rate).flatten)

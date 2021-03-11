@@ -45,7 +45,7 @@ object CommonCollector {
       )(_ => Logger[F].info("Shutting down Trace 4 Cats Collector"))
 
       process <- Resource.eval(Tracing.process[F])
-      traceSampler <- Resource.eval(Tracing.sampler[F](config.tracing, config.bufferSize))
+      traceSampler <- Tracing.sampler[F](config.tracing, config.bufferSize)
 
       client <- Http4sJdkClient[F]()
 

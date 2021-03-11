@@ -1,8 +1,7 @@
 package io.janstenpickle.trace4cats.rate
 
 import cats.effect.kernel.syntax.spawn._
-import cats.effect.kernel.{Ref, Temporal}
-import cats.syntax.flatMap._
+import cats.effect.kernel.{Ref, Resource, Temporal}
 import cats.syntax.functor._
 import fs2.Stream
 
@@ -16,9 +15,9 @@ trait TokenBucket[F[_]] {
 object TokenBucket {
   def apply[F[_]](implicit tokenBucket: TokenBucket[F]): TokenBucket[F] = tokenBucket
 
-  def apply[F[_]: Temporal](bucketSize: Int, tokenRate: FiniteDuration): F[TokenBucket[F]] =
+  def create[F[_]: Temporal](bucketSize: Int, tokenRate: FiniteDuration): Resource[F, TokenBucket[F]] =
     for {
-      tokens <- Ref.of(bucketSize)
+      tokens <- Resource.eval(Ref.of(bucketSize))
       _ <-
         Stream
           .fixedRate[F](tokenRate)
@@ -30,7 +29,7 @@ object TokenBucket {
           )
           .compile
           .drain
-          .start
+          .background
     } yield new TokenBucket[F] {
       override def request1: F[Boolean] =
         tokens

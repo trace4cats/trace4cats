@@ -1,7 +1,6 @@
 package io.janstenpickle.trace4cats.stackdriver.oauth
 
 import cats.effect.IO
-import cats.effect.kernel.Outcome
 import cats.effect.testkit.TestInstances
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.ScalacheckShapeless._
@@ -10,6 +9,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.concurrent.duration._
+import scala.util.Success
 
 class CachedTokenProviderSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks with TestInstances {
   implicit val longArb: Arbitrary[Long] = Arbitrary(Gen.posNum[Long])
@@ -33,8 +33,9 @@ class CachedTokenProviderSpec extends AnyFlatSpec with Matchers with ScalaCheckD
         ()
       }
 
-      ticker.ctx.tick(10.seconds)
-      unsafeRun(test) should be(Outcome.Succeeded(Some(())))
+      val result = test.unsafeToFuture()
+      ticker.ctx.tickAll(10.seconds)
+      result.value shouldEqual Some(Success(()))
   }
 
   it should "return a new token when clock tick is greater than expiry" in forAll {
@@ -55,8 +56,9 @@ class CachedTokenProviderSpec extends AnyFlatSpec with Matchers with ScalaCheckD
         ()
       }
 
-      ticker.ctx.tick(10.seconds)
-      unsafeRun(test) should be(Outcome.Succeeded(Some(())))
+      val result = test.unsafeToFuture()
+      ticker.ctx.tickAll(10.seconds)
+      result.value shouldEqual Some(Success(()))
   }
 
   def testTokenProvider(first: AccessToken, second: AccessToken): TokenProvider[IO] =

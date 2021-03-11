@@ -32,9 +32,8 @@ object TailSampling extends IOApp {
       nameSampler =
         TailSpanSampler
           .spanNameDrop[IO, Chunk](nameSampleDecisionStore, NonEmptySet.of("/healthcheck", "/readiness", "/metrics"))
-      rateSampler <- Resource.eval(
+      rateSampler <-
         RateTailSpanSampler.create[IO, Chunk](rateSampleDecisionStore, bucketSize = 100, tokenRate = 100.millis)
-      )
 
       combinedSampler =
         probSampler |+| nameSampler |+| rateSampler // TailSpanSampler.combined may also be used to combine two samplers

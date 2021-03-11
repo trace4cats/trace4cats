@@ -1,8 +1,7 @@
 package io.janstenpickle.trace4cats.collector.common
 
-import cats.Applicative
 import cats.data.NonEmptyList
-import cats.effect.kernel.{Async, Sync, Temporal}
+import cats.effect.kernel.{Async, Resource, Sync, Temporal}
 import cats.syntax.functor._
 import cats.syntax.semigroup._
 import cats.syntax.traverse._
@@ -22,9 +21,11 @@ object Tracing {
     TraceProcess("trace4cats-collector", Map("hostname" -> hostname))
   }
 
-  def sampler[F[_]: Temporal](config: Option[TracingConfig], bufferSize: Int): F[Option[SpanSampler[F]]] =
+  def sampler[F[_]: Temporal](config: Option[TracingConfig], bufferSize: Int): Resource[F, Option[SpanSampler[F]]] =
     config.traverse(
-      _.sampleRate.fold(Applicative[F].pure(SpanSampler.always[F]))(rate => RateSpanSampler.create[F](bufferSize, rate))
+      _.sampleRate.fold(Resource.pure[F, SpanSampler[F]](SpanSampler.always[F]))(rate =>
+        RateSpanSampler.create[F](bufferSize, rate)
+      )
     )
 
   def pipe[F[_]: Async](

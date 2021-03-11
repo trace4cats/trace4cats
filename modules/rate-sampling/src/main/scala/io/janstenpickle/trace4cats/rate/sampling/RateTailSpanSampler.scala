@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.rate.sampling
 
-import cats.effect.kernel.Temporal
+import cats.effect.kernel.{Resource, Temporal}
 import cats.syntax.functor._
 import cats.{Applicative, Foldable, Monad, MonoidK}
 import io.janstenpickle.trace4cats.model.{CompletedSpan, SampleDecision, TraceId}
@@ -47,5 +47,6 @@ object RateTailSpanSampler {
     store: SampleDecisionStore[F],
     bucketSize: Int,
     tokenRate: FiniteDuration
-  ): F[TailSpanSampler[F, G]] = TokenBucket[F](bucketSize, tokenRate).map(implicit tb => apply[F, G](store))
+  ): Resource[F, TailSpanSampler[F, G]] =
+    TokenBucket.create[F](bucketSize, tokenRate).map(implicit tb => apply[F, G](store))
 }

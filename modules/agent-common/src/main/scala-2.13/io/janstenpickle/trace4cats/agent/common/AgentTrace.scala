@@ -1,9 +1,6 @@
 package io.janstenpickle.trace4cats.agent.common
 
-import cats.Applicative
-import cats.effect.kernel.{Async, Sync}
-import cats.syntax.flatMap._
-import cats.syntax.functor._
+import cats.effect.kernel.{Async, Resource, Sync}
 import fs2.{Chunk, Pipe}
 import io.janstenpickle.trace4cats.kernel.{SpanExporter, SpanSampler}
 import io.janstenpickle.trace4cats.meta.{PipeTracer, TracedSpanExporter}
@@ -20,11 +17,11 @@ object AgentTrace {
     sampleRate: Option[Double],
     bufferSize: Int,
     exporter: SpanExporter[F, Chunk]
-  ): F[(Pipe[F, CompletedSpan, CompletedSpan], SpanExporter[F, Chunk])] = for {
-    hostname <- Sync[F].blocking(InetAddress.getLocalHost.getHostName)
+  ): Resource[F, (Pipe[F, CompletedSpan, CompletedSpan], SpanExporter[F, Chunk])] = for {
+    hostname <- Resource.eval(Sync[F].blocking(InetAddress.getLocalHost.getHostName))
     process = TraceProcess("trace4cats-agent", Map("hostname" -> hostname))
 
-    sampler <- sampleRate.fold(Applicative[F].pure(SpanSampler.always[F]))(rate =>
+    sampler <- sampleRate.fold(Resource.pure[F, SpanSampler[F]](SpanSampler.always[F]))(rate =>
       RateSpanSampler.create[F](bufferSize, rate)
     )
 

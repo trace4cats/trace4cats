@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats
 
-import cats.effect.{IO, Outcome, OutcomeIO}
+import cats.effect.{IO, OutcomeIO}
 import cats.effect.kernel.Deferred
 import cats.effect.std.Random
 import cats.effect.testkit.TestInstances
@@ -15,6 +15,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.concurrent.duration._
+import scala.util.Success
 
 class SpanSpec
     extends AnyFlatSpec
@@ -266,12 +267,11 @@ class SpanSpec
           .timeout(2.seconds)
         queue <- completer.get
         span = queue.head
-      } yield span
+      } yield span.status
 
+      val result = io.unsafeToFuture()(materializeRuntime)
       ticker.ctx.tickAll(3.seconds)
-      val result = unsafeRun(io).map(_.status)
-
-      result should be(Outcome.succeeded(Some(SpanStatus.Cancelled)))
+      result.value shouldEqual Some(Success(SpanStatus.Cancelled))
     }
   }
 
