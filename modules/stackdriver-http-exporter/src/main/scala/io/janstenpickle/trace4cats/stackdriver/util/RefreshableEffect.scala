@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.strackdriver.util
+package io.janstenpickle.trace4cats.stackdriver.util
 
 /** Code copied from https://github.com/permutive/fs2-google-pubsub
   */

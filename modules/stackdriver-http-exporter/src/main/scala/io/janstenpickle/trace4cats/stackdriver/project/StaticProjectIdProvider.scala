@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.strackdriver.project
+package io.janstenpickle.trace4cats.stackdriver.project
 
 import cats.Applicative
 

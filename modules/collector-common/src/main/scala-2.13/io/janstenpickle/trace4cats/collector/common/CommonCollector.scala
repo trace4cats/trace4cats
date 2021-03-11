@@ -24,7 +24,7 @@ import io.janstenpickle.trace4cats.log.LogSpanExporter
 import io.janstenpickle.trace4cats.model.{AttributeValue, CompletedSpan, TraceId}
 import io.janstenpickle.trace4cats.newrelic.NewRelicSpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpHttpSpanExporter
-import io.janstenpickle.trace4cats.strackdriver.StackdriverHttpSpanExporter
+import io.janstenpickle.trace4cats.stackdriver.StackdriverHttpSpanExporter
 
 import scala.concurrent.duration._
 
