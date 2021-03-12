@@ -1,12 +1,12 @@
-package io.janstenpickle.trace4cats.strackdriver
+package io.janstenpickle.trace4cats.stackdriver
 
 import cats.effect.{Concurrent, ConcurrentEffect, Resource, Timer}
 import fs2.Chunk
 import io.janstenpickle.trace4cats.`export`.{CompleterConfig, QueuedSpanCompleter}
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.TraceProcess
-import io.janstenpickle.trace4cats.strackdriver.oauth.TokenProvider
-import io.janstenpickle.trace4cats.strackdriver.project.ProjectIdProvider
+import io.janstenpickle.trace4cats.stackdriver.oauth.TokenProvider
+import io.janstenpickle.trace4cats.stackdriver.project.ProjectIdProvider
 import org.http4s.client.Client
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger

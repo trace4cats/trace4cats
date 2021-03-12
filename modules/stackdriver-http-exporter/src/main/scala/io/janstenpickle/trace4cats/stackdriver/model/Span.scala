@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.strackdriver.model
+package io.janstenpickle.trace4cats.stackdriver.model
 
 import java.time.Instant
 import java.util.concurrent.TimeUnit

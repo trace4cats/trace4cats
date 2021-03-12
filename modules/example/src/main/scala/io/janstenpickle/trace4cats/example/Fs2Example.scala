@@ -13,7 +13,7 @@ import io.janstenpickle.trace4cats.fs2.TracedStream
 import io.janstenpickle.trace4cats.fs2.syntax.all._
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
-import io.janstenpickle.trace4cats.model.AttributeValue.LongValue
+import io.janstenpickle.trace4cats.model.AttributeValue.{BooleanValue, LongValue}
 import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders, TraceProcess}
 
 import scala.concurrent.duration._
@@ -62,9 +62,12 @@ object Fs2Example extends IOApp {
   def doWork[F[_]: BracketThrow: Clock](stream: TracedStream[F, FiniteDuration]): TracedStream[F, Long] =
     stream
       // eval some effect within a span
-      .evalMap("this is child of the initial injected root span", SpanKind.Internal, "optional-attribute" -> true) {
-        dur =>
-          Clock[F].realTime(TimeUnit.MILLISECONDS).map(_ + dur.toMillis)
+      .evalMap(
+        "this is child of the initial injected root span",
+        SpanKind.Internal,
+        "optional-attribute" -> BooleanValue(true)
+      ) { dur =>
+        Clock[F].realTime(TimeUnit.MILLISECONDS).map(_ + dur.toMillis)
       }
 
   // perform a map operation on the underlying stream where each element is traced

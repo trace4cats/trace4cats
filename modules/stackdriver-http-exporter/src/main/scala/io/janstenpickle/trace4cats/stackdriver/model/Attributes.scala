@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.strackdriver.model
+package io.janstenpickle.trace4cats.stackdriver.model
 
 import cats.syntax.show._
 import io.circe.Encoder

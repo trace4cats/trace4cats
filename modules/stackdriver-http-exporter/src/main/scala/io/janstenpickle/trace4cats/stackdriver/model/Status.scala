@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.strackdriver.model
+package io.janstenpickle.trace4cats.stackdriver.model
 
 import io.circe.{Encoder, JsonObject}
 import io.circe.generic.semiauto._

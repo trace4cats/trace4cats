@@ -1,10 +1,10 @@
-package io.janstenpickle.trace4cats.strackdriver.oauth
+package io.janstenpickle.trace4cats.stackdriver.oauth
 
 import cats.effect.Sync
 import cats.syntax.applicativeError._
 import cats.syntax.functor._
 import org.typelevel.log4cats.Logger
-import io.janstenpickle.trace4cats.strackdriver.oauth.GoogleOAuth.FailedRequest
+import io.janstenpickle.trace4cats.stackdriver.oauth.GoogleOAuth.FailedRequest
 import org.http4s.Method.GET
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.Client

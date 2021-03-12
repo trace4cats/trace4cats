@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.strackdriver.project
+package io.janstenpickle.trace4cats.stackdriver.project
 
 trait ProjectIdProvider[F[_]] {
   def projectId: F[String]
