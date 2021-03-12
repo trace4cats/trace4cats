@@ -15,6 +15,8 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
 
+import scala.concurrent.ExecutionContext
+
 object Http4sExample extends IOApp {
 
   def makeRoutes[F[_]: Sync](client: Client[Kleisli[F, Span[F], *]]): HttpRoutes[Kleisli[F, Span[F], *]] = {
@@ -31,12 +33,12 @@ object Http4sExample extends IOApp {
       blocker <- Blocker[IO]
       ep <- entryPoint[IO](blocker, TraceProcess("trace4catsHttp4s"))
 
-      client <- BlazeClientBuilder[IO](blocker.blockingContext).resource
+      client <- BlazeClientBuilder[IO](ExecutionContext.global).resource
 
       routes = makeRoutes[IO](client.liftTrace()) // use implicit syntax to lift http client to the trace context
 
       server <-
-        BlazeServerBuilder[IO](blocker.blockingContext)
+        BlazeServerBuilder[IO](ExecutionContext.global)
           .bindHttp(8080, "0.0.0.0")
           .withHttpApp(
             routes.inject(ep, requestFilter = Http4sRequestFilter.kubernetesPrometheus).orNotFound

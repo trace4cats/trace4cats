@@ -34,9 +34,9 @@ object AllCompleters {
       JaegerSpanCompleter[F](blocker, process),
       OpenTelemetryJaegerSpanCompleter[F](process),
       OpenTelemetryOtlpGrpcSpanCompleter[F](process),
-      OpenTelemetryOtlpHttpSpanCompleter.blazeClient[F](blocker, process),
-      StackdriverGrpcSpanCompleter[F](blocker, process, "gcp-project-id-123"),
-      StackdriverHttpSpanCompleter.blazeClient[F](blocker, process)
+      OpenTelemetryOtlpHttpSpanCompleter.blazeClient[F](process),
+      StackdriverGrpcSpanCompleter[F](process, "gcp-project-id-123"),
+      StackdriverHttpSpanCompleter.blazeClient[F](process)
     ).parSequence.map { completers =>
       (LogSpanCompleter[F](process) :: completers).combineAll
     }
