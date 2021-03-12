@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.sttp.client3
 
-import cats.effect.{BracketThrow, Concurrent}
+import cats.effect.kernel.{Async, MonadCancelThrow}
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.base.optics.{Getter, Lens}
 import io.janstenpickle.trace4cats.model.TraceHeaders
@@ -13,7 +13,7 @@ trait SttpBackendSyntax {
     def liftTrace[G[_]](
       toHeaders: ToHeaders = ToHeaders.all,
       spanNamer: SttpSpanNamer = SttpSpanNamer.methodWithPath
-    )(implicit P: Provide[F, G, Span[F]], F: BracketThrow[F], G: Concurrent[G]): SttpBackend[G, P] =
+    )(implicit P: Provide[F, G, Span[F]], F: MonadCancelThrow[F], G: Async[G]): SttpBackend[G, P] =
       new SttpBackendTracer[F, G, P, Span[F]](
         backend,
         Lens.id,
@@ -25,7 +25,7 @@ trait SttpBackendSyntax {
       spanLens: Lens[Ctx, Span[F]],
       headersGetter: Getter[Ctx, TraceHeaders],
       spanNamer: SttpSpanNamer = SttpSpanNamer.methodWithPath
-    )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F], G: Concurrent[G]): SttpBackend[G, P] =
+    )(implicit P: Provide[F, G, Ctx], F: MonadCancelThrow[F], G: Async[G]): SttpBackend[G, P] =
       new SttpBackendTracer[F, G, P, Ctx](backend, spanLens, headersGetter, spanNamer)
   }
 
