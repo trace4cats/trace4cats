@@ -6,13 +6,14 @@ import cats.effect.kernel.syntax.spawn._
 import cats.effect.kernel.{Async, Clock, Resource, Sync}
 import cats.effect.std.{Queue, Semaphore}
 import cats.syntax.applicative._
+import cats.syntax.apply._
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.monad._
 import cats.syntax.option._
 import cats.syntax.traverse._
-import cats.Traverse
+import cats.{Applicative, Traverse}
 import com.comcast.ip4s.{Dns, Host, Hostname, IDN, IpAddress, Port, SocketAddress}
 import fs2.io.net.{Datagram, DatagramSocket, Network, Socket, SocketGroup}
 import fs2.{Chunk, Stream}
@@ -26,6 +27,10 @@ import org.apache.avro.io.EncoderFactory
 import scala.concurrent.duration._
 
 object AvroSpanExporter {
+  //TODO: use one from cats-core when it's merged https://github.com/typelevel/cats/pull/3705
+  private def replicateA_[F[_]: Applicative, A](fa: F[A])(n: Int): F[Unit] =
+    (1 to n).map(_ => fa).foldLeft(Applicative[F].unit)(_ <* _)
+
   private def encode[F[_]: Sync](schema: Schema)(span: CompletedSpan): F[Array[Byte]] =
     Sync[F]
       .fromEither(AvroInstances.completedSpanCodec.encode(span).leftMap(_.throwable))
@@ -56,9 +61,10 @@ object AvroSpanExporter {
   def udp[F[_]: Async, G[_]: Traverse](
     host: String = agentHostname,
     port: Int = agentPort,
+    numFibers: Int = 1
   ): Resource[F, SpanExporter[F, G]] = {
-    val queueCapacity = 1
-    val maxPermits = 1L
+    val queueCapacity = numFibers
+    val maxPermits = numFibers.toLong
 
     def write(
       schema: Schema,
@@ -98,7 +104,7 @@ object AvroSpanExporter {
       semaphore <- Resource.eval(Semaphore[F](maxPermits))
       socketGroup <- Network[F].datagramSocketGroup()
       socket <- socketGroup.openDatagramSocket()
-      _ <- Resource
+      writer = Resource
         .make(
           Stream
             .retry(write(avroSchema, address, semaphore, queue, socket), 5.seconds, _ + 1.second, Int.MaxValue)
@@ -109,6 +115,7 @@ object AvroSpanExporter {
           Clock[F].sleep(50.millis).whileM_(semaphore.available.map(_ < maxPermits)) >>
             fiber.cancel
         )
+      _ <- replicateA_(writer)(numFibers)
     } yield new SpanExporter[F, G] {
       override def exportBatch(batch: Batch[G]): F[Unit] = queue.offer(batch)
     }
@@ -117,9 +124,10 @@ object AvroSpanExporter {
   def tcp[F[_]: Async: Logger, G[_]: Traverse](
     host: String = agentHostname,
     port: Int = agentPort,
+    numFibers: Int = 1
   ): Resource[F, SpanExporter[F, G]] = {
-    val queueCapacity = 1
-    val maxPermits = 1L
+    val queueCapacity = numFibers
+    val maxPermits = numFibers.toLong
 
     def connect(socketGroup: SocketGroup[F], address: SocketAddress[Host]): Stream[F, Socket[F]] =
       Stream
@@ -167,7 +175,7 @@ object AvroSpanExporter {
       queue <- Resource.eval(Queue.bounded[F, Batch[G]](queueCapacity))
       semaphore <- Resource.eval(Semaphore[F](maxPermits))
       socketGroup <- Network[F].socketGroup()
-      _ <- Resource.make(
+      writer = Resource.make(
         Stream
           .retry(write(avroSchema, address, semaphore, queue, socketGroup), 5.seconds, _ + 1.second, Int.MaxValue)
           .compile
@@ -177,6 +185,7 @@ object AvroSpanExporter {
         Clock[F].sleep(50.millis).whileM_(semaphore.available.map(_ < maxPermits)) >>
           fiber.cancel
       )
+      _ <- replicateA_(writer)(numFibers)
     } yield new SpanExporter[F, G] {
       override def exportBatch(batch: Batch[G]): F[Unit] = queue.offer(batch)
     }
