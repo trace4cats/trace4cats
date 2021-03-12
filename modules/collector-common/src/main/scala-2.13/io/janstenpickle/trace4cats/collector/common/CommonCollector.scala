@@ -46,7 +46,7 @@ object CommonCollector {
       )(_ => Logger[F].info("Shutting down Trace 4 Cats Collector"))
 
       process <- Resource.liftF(Tracing.process[F])
-      traceSampler <- Resource.liftF(Tracing.sampler[F](config.tracing, config.bufferSize))
+      traceSampler <- Tracing.sampler[F](config.tracing, config.bufferSize)
 
       client <- Resource.liftF(Http4sJdkClient[F](blocker))
 
