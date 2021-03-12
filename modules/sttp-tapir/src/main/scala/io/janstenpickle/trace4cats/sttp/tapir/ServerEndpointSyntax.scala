@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.sttp.tapir
 
 import cats.Monad
-import cats.effect.BracketThrow
+import cats.effect.kernel.MonadCancelThrow
 import cats.syntax.either._
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.base.context.Provide
@@ -23,7 +23,7 @@ trait ServerEndpointSyntax {
       errorToSpanStatus: TapirStatusMapping[E] = TapirStatusMapping.errorStringToInternal
     )(implicit
       P: Provide[F, G, Span[F]],
-      F: BracketThrow[F],
+      F: MonadCancelThrow[F],
       G: Monad[G],
       T: Trace[G]
     ): ServerEndpoint[I, E, O, R, F] = {
@@ -47,7 +47,7 @@ trait ServerEndpointSyntax {
       outHeadersGetter: Getter[O, Headers] = _ => Headers(Nil),
       dropHeadersWhen: String => Boolean = HeaderNames.isSensitive,
       errorToSpanStatus: TapirStatusMapping[E] = TapirStatusMapping.errorStringToInternal
-    )(implicit P: Provide[F, G, Span[F]], F: BracketThrow[F], G: Monad[G], T: Trace[G]): ServerEndpoint[I, E, O, R, F] =
+    )(implicit P: Provide[F, G, Span[F]], F: MonadCancelThrow[F], G: Monad[G], T: Trace[G]): ServerEndpoint[I, E, O, R, F] =
       ServerEndpointTracer.inject(
         serverEndpoint,
         k.map(_.asRight[E]),
@@ -65,7 +65,7 @@ trait ServerEndpointSyntax {
       spanNamer: TapirSpanNamer[I] = TapirSpanNamer.methodWithPathTemplate,
       dropHeadersWhen: String => Boolean = HeaderNames.isSensitive,
       errorToSpanStatus: TapirStatusMapping[E] = TapirStatusMapping.errorStringToInternal
-    )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F], G: Monad[G], T: Trace[G]): ServerEndpoint[I, E, O, R, F] = {
+    )(implicit P: Provide[F, G, Ctx], F: MonadCancelThrow[F], G: Monad[G], T: Trace[G]): ServerEndpoint[I, E, O, R, F] = {
       val inputSpanNamer = spanNamer(serverEndpoint.endpoint, _)
       val context = TapirResourceKleislis.fromHeadersContext(
         makeContext,
@@ -90,7 +90,7 @@ trait ServerEndpointSyntax {
       outHeadersGetter: Getter[O, Headers] = _ => Headers(Nil),
       dropHeadersWhen: String => Boolean = HeaderNames.isSensitive,
       errorToSpanStatus: TapirStatusMapping[E] = TapirStatusMapping.errorStringToInternal
-    )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F], G: Monad[G], T: Trace[G]): ServerEndpoint[I, E, O, R, F] =
+    )(implicit P: Provide[F, G, Ctx], F: MonadCancelThrow[F], G: Monad[G], T: Trace[G]): ServerEndpoint[I, E, O, R, F] =
       ServerEndpointTracer.inject(
         serverEndpoint,
         k,
@@ -114,7 +114,7 @@ trait ServerEndpointSyntax {
       errorToSpanStatus: TapirStatusMapping[E] = TapirStatusMapping.errorMessageToInternal
     )(implicit
       P: Provide[F, G, Ctx],
-      F: BracketThrow[F],
+      F: MonadCancelThrow[F],
       G: Monad[G],
       T: Trace[G],
       eClassTag: ClassTag[E]
@@ -146,7 +146,7 @@ trait ServerEndpointSyntax {
       errorToSpanStatus: TapirStatusMapping[E] = TapirStatusMapping.errorStringToInternal
     )(implicit
       P: Provide[F, G, Ctx],
-      F: BracketThrow[F],
+      F: MonadCancelThrow[F],
       G: Monad[G],
       T: Trace[G],
       eClassTag: ClassTag[E]

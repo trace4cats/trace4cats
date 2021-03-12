@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.sttp.tapir
 
 import cats.data.NonEmptyList
-import cats.effect.{Concurrent, ContextShift, Resource, Timer}
+import cats.effect.kernel.{Async, Resource}
 import cats.syntax.all._
 import cats.{~>, Id}
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
@@ -11,7 +11,7 @@ import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind, SpanStatus}
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.Http4sDsl
 import org.http4s.syntax.kleisli._
-import org.http4s.{Header, Headers, Uri}
+import org.http4s.{Headers, Uri}
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -21,7 +21,7 @@ import sttp.tapir.server.http4s._
 
 import scala.collection.immutable.Queue
 
-abstract class BaseServerEndpointTracerSpec[F[_]: Concurrent: ContextShift: Timer](
+abstract class BaseServerEndpointTracerSpec[F[_]: Async](
   unsafeRunK: F ~> Id,
   injectEndpoints: EntryPoint[F] => List[ServerEndpoint[_, _, _, Any, F]],
   checkMkContextErrors: Boolean
@@ -30,7 +30,7 @@ abstract class BaseServerEndpointTracerSpec[F[_]: Concurrent: ContextShift: Time
     with Matchers
     with Http4sDsl[F] {
 
-  private val authHeader = Headers.of(Header("X-Auth-Token", "aa89bba323bf4c7b929264b0c177e2c5"))
+  private val authHeader = Headers("X-Auth-Token" -> "aa89bba323bf4c7b929264b0c177e2c5")
 
   it should "record a span when the response is OK" in {
     evaluateTrace(NonEmptyList.one("devices/1"), authHeader) { spans =>
@@ -94,12 +94,7 @@ abstract class BaseServerEndpointTracerSpec[F[_]: Concurrent: ContextShift: Time
       } yield (app, completer))
         .use { case (app, completer) =>
           for {
-            _ <- paths.traverse(path =>
-              GET(Uri.unsafeFromString(s"/$path"))
-                .map(_.withHeaders(headers))
-                .flatMap(app.run)
-                .attempt
-            )
+            _ <- paths.traverse(path => app.run(GET(Uri.unsafeFromString(s"/$path")).withHeaders(headers)).attempt)
             spans <- completer.get
           } yield fa(spans)
         }
