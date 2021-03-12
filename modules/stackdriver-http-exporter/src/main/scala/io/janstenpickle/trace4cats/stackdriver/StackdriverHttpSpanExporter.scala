@@ -1,11 +1,10 @@
 package io.janstenpickle.trace4cats.stackdriver
 
 import cats.Foldable
-import cats.effect.{Blocker, Concurrent, ConcurrentEffect, Resource, Timer}
+import cats.effect.{Concurrent, ConcurrentEffect, Resource, Timer}
 import cats.syntax.flatMap._
-import cats.syntax.functor._
 import cats.syntax.foldable._
-import org.typelevel.log4cats.Logger
+import cats.syntax.functor._
 import io.janstenpickle.trace4cats.`export`.HttpSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch
@@ -24,24 +23,34 @@ import org.http4s.Uri
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
+import org.typelevel.log4cats.Logger
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.ExecutionContext
 
 object StackdriverHttpSpanExporter {
   private final val base = "https://cloudtrace.googleapis.com/v2/projects"
 
   def blazeClient[F[_]: ConcurrentEffect: Timer: Logger, G[_]: Foldable](
-    blocker: Blocker,
     projectId: String,
     serviceAccountPath: String,
-  ): Resource[F, SpanExporter[F, G]] =
-    BlazeClientBuilder[F](blocker.blockingContext).resource.evalMap(apply[F, G](projectId, serviceAccountPath, _))
+  ): Resource[F, SpanExporter[F, G]] = blazeClient(projectId, serviceAccountPath, None)
 
   def blazeClient[F[_]: ConcurrentEffect: Timer: Logger, G[_]: Foldable](
-    blocker: Blocker,
-    serviceAccountName: String = "default"
+    projectId: String,
+    serviceAccountPath: String,
+    ec: Option[ExecutionContext]
   ): Resource[F, SpanExporter[F, G]] =
-    BlazeClientBuilder[F](blocker.blockingContext).resource.evalMap(apply[F, G](_, serviceAccountName))
+    // TODO: CE3 - use Async[F].executionContext
+    BlazeClientBuilder[F](ec.getOrElse(ExecutionContext.global)).resource
+      .evalMap(apply[F, G](projectId, serviceAccountPath, _))
+
+  def blazeClient[F[_]: ConcurrentEffect: Timer: Logger, G[_]: Foldable](
+    serviceAccountName: String = "default",
+    ec: Option[ExecutionContext] = None
+  ): Resource[F, SpanExporter[F, G]] =
+    // TODO: CE3 - use Async[F].executionContext
+    BlazeClientBuilder[F](ec.getOrElse(ExecutionContext.global)).resource.evalMap(apply[F, G](_, serviceAccountName))
 
   def apply[F[_]: Concurrent: Timer: Logger, G[_]: Foldable](
     projectId: String,

@@ -1,9 +1,7 @@
 package io.janstenpickle.trace4cats.test.jaeger
 
-import java.util.concurrent.TimeUnit
-
 import cats.data.NonEmptyList
-import cats.effect.{Blocker, IO, Resource}
+import cats.effect.{IO, Resource}
 import cats.implicits._
 import fs2.Chunk
 import io.circe.generic.auto._
@@ -17,6 +15,7 @@ import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
@@ -24,8 +23,6 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
 
   implicit val contextShift = IO.contextShift(ExecutionContext.global)
   implicit val timer = IO.timer(ExecutionContext.global)
-
-  val blocker = Blocker.liftExecutionContext(ExecutionContext.global)
 
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 3, maxDiscardedFactor = 50.0)
@@ -103,7 +100,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
     expectedResponse: List[JaegerTraceResponse]
   ): Assertion = {
     val res =
-      BlazeClientBuilder[IO](blocker.blockingContext).resource
+      BlazeClientBuilder[IO](ExecutionContext.global).resource
         .use { client =>
           exporter.use(_.exportBatch(batch)) >> timer
             .sleep(1.second) >> batch.spans
@@ -137,7 +134,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
     val batch = Batch(List(span.build(process)))
 
     val res =
-      BlazeClientBuilder[IO](blocker.blockingContext).resource
+      BlazeClientBuilder[IO](ExecutionContext.global).resource
         .use { client =>
           completer.use(_.complete(span)) >> timer
             .sleep(1.second) >> batch.spans

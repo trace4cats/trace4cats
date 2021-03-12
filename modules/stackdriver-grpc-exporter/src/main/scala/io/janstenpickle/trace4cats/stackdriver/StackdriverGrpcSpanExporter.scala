@@ -1,13 +1,13 @@
 package io.janstenpickle.trace4cats.stackdriver
 
-import java.time.Instant
-
 import cats.Foldable
 import cats.data.NonEmptyList
-import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync}
+import cats.effect.{Async, Resource, Sync}
+import cats.syntax.flatMap._
 import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.show._
+import com.google.api.core.{ApiFuture, ApiFutureCallback, ApiFutures}
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.auth.Credentials
 import com.google.auth.oauth2.GoogleCredentials
@@ -21,12 +21,12 @@ import io.janstenpickle.trace4cats.model._
 import io.janstenpickle.trace4cats.stackdriver.common.StackdriverConstants._
 import io.janstenpickle.trace4cats.stackdriver.common.TruncatableString
 
+import java.time.Instant
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
 object StackdriverGrpcSpanExporter {
-  def apply[F[_]: Concurrent: ContextShift, G[_]: Foldable](
-    blocker: Blocker,
+  def apply[F[_]: Async, G[_]: Foldable](
     projectId: String,
     credentials: Option[Credentials] = None,
     requestTimeout: FiniteDuration = 5.seconds
@@ -130,21 +130,45 @@ object StackdriverGrpcSpanExporter {
       builder.build()
     }
 
-    def write(client: TraceServiceClient, spans: G[CompletedSpan]) =
-      blocker.delay(
-        client.batchWriteSpans(
-          projectName,
-          spans
-            .foldLeft(scala.collection.mutable.ListBuffer.empty[Span]) { (buf, span) =>
-              buf += convert(span)
-            }
-            .asJava
+    def liftApiFuture[A](ffa: F[ApiFuture[A]]): F[A] = {
+      for {
+        fut <- ffa
+        ec = com.google.common.util.concurrent.MoreExecutors
+          .directExecutor() // TODO: CE3 - use Async[F].executionContext
+        a <- Async[F].async[A] { cb =>
+          ApiFutures.addCallback(
+            fut,
+            new ApiFutureCallback[A] {
+              def onFailure(t: Throwable): Unit = cb(Left(t))
+              def onSuccess(result: A): Unit = cb(Right(result))
+            },
+            ec.execute _
+          )
+        }
+      } yield a
+    }
+
+    def write(client: TraceServiceClient, spans: G[CompletedSpan]): F[Unit] =
+      for {
+        request <- Sync[F].delay(
+          BatchWriteSpansRequest
+            .newBuilder()
+            .setName(projectName.toString)
+            .addAllSpans(
+              spans
+                .foldLeft(scala.collection.mutable.ListBuffer.empty[Span]) { (buf, span) =>
+                  buf += convert(span)
+                }
+                .asJava
+            )
+            .build()
         )
-      )
+        _ <- liftApiFuture(Sync[F].delay(client.batchWriteSpansCallable().futureCall(request)))
+      } yield ()
 
     Resource.make(traceClient)(client => Sync[F].delay(client.shutdown())).map { client =>
       new SpanExporter[F, G] {
-        override def exportBatch(batch: Batch[G]): F[Unit] = write(client, batch.spans).void
+        override def exportBatch(batch: Batch[G]): F[Unit] = write(client, batch.spans)
       }
     }
   }

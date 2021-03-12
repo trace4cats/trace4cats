@@ -11,12 +11,14 @@ import sttp.client.http4s.Http4sBackend
 import zio._
 import zio.interop.catz._
 
+import scala.concurrent.ExecutionContext
+
 object SttpZioExample extends CatsApp {
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
     (for {
       blocker <- Blocker[Task]
-      client <- BlazeClientBuilder[Task](blocker.blockingContext).resource
+      client <- BlazeClientBuilder[Task](ExecutionContext.global).resource
       sttpBackend = Http4sBackend.usingClient(client, blocker): SttpBackend[Task, EntityBody[Task], INothingT]
       tracedBackend = sttpBackend.liftTrace[RIO[Span[Task], *]]()
     } yield tracedBackend)

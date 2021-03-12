@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.jaeger
 
 import java.time.Instant
-import cats.effect.IO
+import cats.effect.{Blocker, IO}
 import fs2.Chunk
 import io.janstenpickle.trace4cats.`export`.{CompleterConfig, SemanticTags}
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceProcess}
@@ -15,7 +15,9 @@ class JaegerSpanCompleterSpec extends BaseJaegerSpec {
     val batch = Batch(Chunk(updatedSpan.build(process)))
 
     testCompleter(
-      JaegerSpanCompleter[IO](blocker, process, "localhost", 6831, config = CompleterConfig(batchTimeout = 50.millis)),
+      Blocker[IO].flatMap(
+        JaegerSpanCompleter[IO](_, process, "localhost", 6831, config = CompleterConfig(batchTimeout = 50.millis))
+      ),
       updatedSpan,
       process,
       batchToJaegerResponse(

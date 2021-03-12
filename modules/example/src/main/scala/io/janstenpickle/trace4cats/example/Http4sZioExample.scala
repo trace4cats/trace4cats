@@ -17,6 +17,8 @@ import zio._
 import zio.interop.catz._
 import zio.interop.catz.implicits._
 
+import scala.concurrent.ExecutionContext
+
 object Http4sZioExample extends CatsApp {
 
   def makeRoutes(client: Client[SpannedRIO]): HttpRoutes[SpannedRIO] = {
@@ -33,12 +35,12 @@ object Http4sZioExample extends CatsApp {
       blocker <- Blocker[Task]
       ep <- entryPoint[Task](blocker, TraceProcess("trace4catsHttp4s"))
 
-      client <- BlazeClientBuilder[Task](blocker.blockingContext).resource
+      client <- BlazeClientBuilder[Task](ExecutionContext.global).resource
 
       routes = makeRoutes(client.liftTrace()) // use implicit syntax to lift http client to the trace context
 
       server <-
-        BlazeServerBuilder[Task](blocker.blockingContext)
+        BlazeServerBuilder[Task](ExecutionContext.global)
           .bindHttp(8080, "0.0.0.0")
           .withHttpApp(
             routes.inject(ep, requestFilter = Http4sRequestFilter.kubernetesPrometheus).orNotFound
