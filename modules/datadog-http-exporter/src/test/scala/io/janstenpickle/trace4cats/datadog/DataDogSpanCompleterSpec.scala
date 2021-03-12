@@ -1,14 +1,14 @@
 package io.janstenpickle.trace4cats.datadog
 
 import cats.effect.{Blocker, IO}
-import org.typelevel.log4cats.Logger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.CompleterConfig
 import io.janstenpickle.trace4cats.model.{CompletedSpan, TraceProcess}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalacheck.Shrink
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -32,7 +32,7 @@ class DataDogSpanCompleterSpec extends AnyFlatSpec with ScalaCheckDrivenProperty
     (process: TraceProcess, span: CompletedSpan.Builder) =>
       assertResult(())(
         DataDogSpanCompleter
-          .blazeClient[IO](blocker, process, config = CompleterConfig(batchTimeout = 100.millis))
+          .blazeClient[IO](process, config = CompleterConfig(batchTimeout = 100.millis))
           .use(_.complete(span))
           .unsafeRunSync()
       )

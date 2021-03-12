@@ -1,39 +1,41 @@
 package io.janstenpickle.trace4cats.strackdriver
 
-import cats.effect.{Blocker, Concurrent, ConcurrentEffect, Resource, Timer}
+import cats.effect.{Concurrent, ConcurrentEffect, Resource, Timer}
 import fs2.Chunk
-import org.typelevel.log4cats.Logger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.{CompleterConfig, QueuedSpanCompleter}
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.TraceProcess
 import io.janstenpickle.trace4cats.strackdriver.oauth.TokenProvider
 import io.janstenpickle.trace4cats.strackdriver.project.ProjectIdProvider
 import org.http4s.client.Client
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
+
+import scala.concurrent.ExecutionContext
 
 object StackdriverHttpSpanCompleter {
   def serviceAccountBlazeClient[F[_]: ConcurrentEffect: Timer](
-    blocker: Blocker,
     process: TraceProcess,
     projectId: String,
     serviceAccountPath: String,
     config: CompleterConfig = CompleterConfig(),
+    ec: Option[ExecutionContext] = None
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- StackdriverHttpSpanExporter.blazeClient[F, Chunk](blocker, projectId, serviceAccountPath)
+      exporter <- StackdriverHttpSpanExporter.blazeClient[F, Chunk](projectId, serviceAccountPath, ec)
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 
   def blazeClient[F[_]: ConcurrentEffect: Timer](
-    blocker: Blocker,
     process: TraceProcess,
     serviceAccountName: String = "default",
     config: CompleterConfig = CompleterConfig(),
+    ec: Option[ExecutionContext] = None,
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- StackdriverHttpSpanExporter.blazeClient[F, Chunk](blocker, serviceAccountName)
+      exporter <- StackdriverHttpSpanExporter.blazeClient[F, Chunk](serviceAccountName, ec)
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 

@@ -28,6 +28,6 @@ class DataDogSpanExporterSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyC
   behavior.of("DataDogSpanExporter")
 
   it should "send spans to datadog agent without error" in forAll { batch: Batch[Chunk] =>
-    assertResult(())(DataDogSpanExporter.blazeClient[IO, Chunk](blocker).use(_.exportBatch(batch)).unsafeRunSync())
+    assertResult(())(DataDogSpanExporter.blazeClient[IO, Chunk]().use(_.exportBatch(batch)).unsafeRunSync())
   }
 }

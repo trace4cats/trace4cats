@@ -6,7 +6,7 @@ import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.grpc.{ManagedChannel, ManagedChannelBuilder}
 import io.janstenpickle.trace4cats.kernel.SpanExporter
-import io.janstenpickle.trace4cats.model.Batch
+import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan}
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.export.{SpanExporter => OTSpanExporter}
 
@@ -29,35 +29,38 @@ object OpenTelemetryGrpcSpanExporter {
     port: Int,
     makeExporter: ManagedChannel => OTSpanExporter
   ): Resource[F, SpanExporter[F, G]] = {
-    def handleResult(onFailure: => Throwable)(code: CompletableResultCode): F[Unit] =
-      Async[F].asyncF[Unit] { cb =>
-        val complete = new Runnable {
-          override def run(): Unit =
-            if (code.isSuccess) cb(Right(()))
+    def liftCompletableResultCode(fa: F[CompletableResultCode])(onFailure: => Throwable): F[Unit] =
+      fa.flatMap { result =>
+        Async[F].async[Unit] { cb =>
+          val _ = result.whenComplete { () =>
+            if (result.isSuccess) cb(Right(()))
             else cb(Left(onFailure))
+          }
         }
-        Sync[F].delay(code.whenComplete(complete)).void
       }
+
+    def write(exporter: OTSpanExporter, spans: G[CompletedSpan]): F[Unit] = {
+      for {
+        spans <- Sync[F].delay(
+          spans
+            .foldLeft(ListBuffer.empty[SpanData]) { (buf, span) =>
+              buf += Trace4CatsSpanData(Trace4CatsResource(span.serviceName), span)
+            }
+            .asJavaCollection
+        )
+        _ <- liftCompletableResultCode(Sync[F].delay(exporter.`export`(spans)))(ExportFailure(host, port))
+      } yield ()
+    }
 
     for {
       channel <- Resource.make[F, ManagedChannel](
         Sync[F].delay(ManagedChannelBuilder.forAddress(host, port).usePlaintext().build())
       )(channel => Sync[F].delay(channel.shutdown()).void)
       exporter <- Resource.make(Sync[F].delay(makeExporter(channel)))(exporter =>
-        Sync[F].delay(exporter.shutdown()).flatMap(handleResult(ShutdownFailure(host, port)))
+        liftCompletableResultCode(Sync[F].delay(exporter.shutdown()))(ShutdownFailure(host, port))
       )
     } yield new SpanExporter[F, G] {
-      override def exportBatch(batch: Batch[G]): F[Unit] =
-        handleResult(ExportFailure(host, port))(
-          exporter
-            .`export`(
-              batch.spans
-                .foldLeft(ListBuffer.empty[SpanData]) { (buf, span) =>
-                  buf += Trace4CatsSpanData(Trace4CatsResource(span.serviceName), span)
-                }
-                .asJavaCollection
-            )
-        )
+      override def exportBatch(batch: Batch[G]): F[Unit] = write(exporter, batch.spans)
     }
   }
 }
