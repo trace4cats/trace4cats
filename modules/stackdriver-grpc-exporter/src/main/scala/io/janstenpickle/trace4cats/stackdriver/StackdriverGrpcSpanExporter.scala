@@ -22,7 +22,6 @@ import io.janstenpickle.trace4cats.stackdriver.common.StackdriverConstants._
 import io.janstenpickle.trace4cats.stackdriver.common.TruncatableString
 
 import java.time.Instant
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
