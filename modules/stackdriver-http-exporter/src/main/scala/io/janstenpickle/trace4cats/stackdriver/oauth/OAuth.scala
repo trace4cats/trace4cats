@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.strackdriver.oauth
+package io.janstenpickle.trace4cats.stackdriver.oauth
 
 /** Code adapted from https://github.com/permutive/fs2-google-pubsub
   */

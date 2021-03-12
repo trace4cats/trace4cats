@@ -16,8 +16,7 @@ import io.janstenpickle.trace4cats.opentelemetry.otlp.{
   OpenTelemetryOtlpGrpcSpanCompleter,
   OpenTelemetryOtlpHttpSpanCompleter
 }
-import io.janstenpickle.trace4cats.stackdriver.StackdriverGrpcSpanCompleter
-import io.janstenpickle.trace4cats.strackdriver.StackdriverHttpSpanCompleter
+import io.janstenpickle.trace4cats.stackdriver.{StackdriverGrpcSpanCompleter, StackdriverHttpSpanCompleter}
 
 /** This example shows how many different completers may be combined into a single completer using
   * the provided monoid instance.
