@@ -60,10 +60,12 @@ object CommonAgent {
           .info(s"Starting Trace 4 Cats Agent v${BuildInfo.version} on udp://::$port. Forwarding to $exporterText")
       )(_ => Logger[F].info("Shutting down Trace 4 Cats Agent"))
 
-      (pipe, exp) <- Resource.liftF(
+      (pipe, exp) <-
         if (trace) AgentTrace[F](exporterName, exporterAttributes, port, traceRate, bufferSize, exporter)
-        else Applicative[F].pure[(Pipe[F, CompletedSpan, CompletedSpan], SpanExporter[F, Chunk])]((identity, exporter))
-      )
+        else
+          Applicative[Resource[F, *]].pure[(Pipe[F, CompletedSpan, CompletedSpan], SpanExporter[F, Chunk])](
+            (identity, exporter)
+          )
 
       queuedExporter <- QueuedSpanExporter(bufferSize, List(exporterName -> exp))
 

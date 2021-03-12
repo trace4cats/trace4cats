@@ -1,10 +1,8 @@
 package io.janstenpickle.trace4cats.collector.common
 
 import java.net.InetAddress
-
-import cats.Applicative
 import cats.data.NonEmptyList
-import cats.effect.{Concurrent, Sync, Timer}
+import cats.effect.{Concurrent, Resource, Sync, Timer}
 import cats.syntax.functor._
 import cats.syntax.traverse._
 import cats.syntax.semigroup._
@@ -22,9 +20,14 @@ object Tracing {
     TraceProcess("trace4cats-collector", Map("hostname" -> hostname))
   }
 
-  def sampler[F[_]: Concurrent: Timer](config: Option[TracingConfig], bufferSize: Int): F[Option[SpanSampler[F]]] =
+  def sampler[F[_]: Concurrent: Timer](
+    config: Option[TracingConfig],
+    bufferSize: Int
+  ): Resource[F, Option[SpanSampler[F]]] =
     config.traverse(
-      _.sampleRate.fold(Applicative[F].pure(SpanSampler.always[F]))(rate => RateSpanSampler.create[F](bufferSize, rate))
+      _.sampleRate.fold(Resource.pure[F, SpanSampler[F]](SpanSampler.always[F]))(rate =>
+        RateSpanSampler.create[F](bufferSize, rate)
+      )
     )
 
   def pipe[F[_]: Concurrent: Timer](

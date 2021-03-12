@@ -2,8 +2,7 @@ package io.janstenpickle.trace4cats.rate
 
 import cats.effect.concurrent.Ref
 import cats.effect.syntax.concurrent._
-import cats.effect.{Concurrent, Timer}
-import cats.syntax.flatMap._
+import cats.effect.{Concurrent, Resource, Timer}
 import cats.syntax.functor._
 import fs2.Stream
 
@@ -17,9 +16,9 @@ trait TokenBucket[F[_]] {
 object TokenBucket {
   def apply[F[_]](implicit tokenBucket: TokenBucket[F]): TokenBucket[F] = tokenBucket
 
-  def apply[F[_]: Concurrent: Timer](bucketSize: Int, tokenRate: FiniteDuration): F[TokenBucket[F]] =
+  def create[F[_]: Concurrent: Timer](bucketSize: Int, tokenRate: FiniteDuration): Resource[F, TokenBucket[F]] =
     for {
-      tokens <- Ref.of(bucketSize)
+      tokens <- Resource.liftF(Ref.of(bucketSize))
       _ <-
         Stream
           .fixedRate[F](tokenRate)
@@ -31,7 +30,7 @@ object TokenBucket {
           )
           .compile
           .drain
-          .start
+          .background
     } yield new TokenBucket[F] {
       override def request1: F[Boolean] =
         tokens

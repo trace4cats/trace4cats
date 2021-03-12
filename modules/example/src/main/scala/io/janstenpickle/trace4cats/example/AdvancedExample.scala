@@ -21,7 +21,7 @@ object AdvancedExample extends IOApp {
       completer <- AllCompleters[IO](blocker, TraceProcess("test"))
 
       // Set up rate sampler
-      rateSampler <- Resource.liftF(RateSpanSampler.create[IO](bucketSize = 100, tokenInterval = 100.millis))
+      rateSampler <- RateSpanSampler.create[IO](bucketSize = 100, tokenInterval = 100.millis)
 
       // as shown in the simple example, Spans are `cats.effect.Resource`s so may be flatMapped with others
       root <- Span.root[IO]("root", SpanKind.Client, rateSampler, completer)
