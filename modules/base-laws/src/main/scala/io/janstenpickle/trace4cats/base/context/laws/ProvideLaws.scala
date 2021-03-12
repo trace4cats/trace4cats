@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.base.context
 package laws
 
-import cats.{Monad, ~>}
+import cats.{~>, Monad}
 import cats.laws.{IsEq, IsEqArrow}
 
 trait ProvideLaws[Low[_], F[_], R] extends LocalLaws[F, R] with UnliftLaws[Low, F] {

@@ -89,37 +89,49 @@ lazy val root = (project in file("."))
   .settings(noPublishSettings)
   .settings(name := "Trace4Cats")
   .aggregate(
-    model,
-    base,
-    `base-zio`,
-    core,
-    kernel,
-    meta,
+    agent,
+    `agent-common`,
+    `agent-kafka`,
     avro,
-    inject,
-    `inject-zio`,
-    fs2,
-    `http4s-common`,
-    `http4s-client`,
-    `http4s-server`,
     `avro-exporter`,
     `avro-kafka-exporter`,
-    `avro-server`,
     `avro-kafka-consumer`,
+    `avro-server`,
     `avro-test`,
-    `agent-common`,
+    base,
+    `base-laws`,
+    `base-zio`,
+    collector,
     `collector-common`,
+    `collector-lite`,
+    core,
     `datadog-http-exporter`,
-    `exporter-stream`,
+    example,
     `exporter-common`,
     `exporter-http`,
-    `log-exporter`,
+    `exporter-stream`,
+    filtering,
+    fs2,
+    `graal-kafka`,
+    `http4s-client`,
+    `http4s-common`,
+    `http4s-server`,
+    inject,
+    `inject-zio`,
+    `jaeger-integration-test`,
     `jaeger-thrift-exporter`,
+    `kafka-client`,
+    kernel,
+    `log-exporter`,
+    meta,
+    model,
+    natchez,
     `newrelic-http-exporter`,
     `opentelemetry-common`,
     `opentelemetry-jaeger-exporter`,
     `opentelemetry-otlp-grpc-exporter`,
     `opentelemetry-otlp-http-exporter`,
+    `rate-sampling`,
     `stackdriver-common`,
     `stackdriver-grpc-exporter`,
     `stackdriver-http-exporter`,
@@ -127,14 +139,10 @@ lazy val root = (project in file("."))
     `sttp-client3`,
     `sttp-common`,
     `sttp-tapir`,
-    `kafka-client`,
-    `graal-kafka`,
-    natchez,
     `tail-sampling`,
     `tail-sampling-cache-store`,
     `tail-sampling-redis-store`,
-    filtering,
-    `rate-sampling`
+    test
   )
 
 lazy val model =
@@ -299,7 +307,6 @@ lazy val `jaeger-thrift-exporter` =
 lazy val `opentelemetry-common` =
   (project in file("modules/opentelemetry-common"))
     .settings(publishSettings)
-    .settings(commonSettings)
     .settings(
       name := "trace4cats-opentelemetry-common",
       libraryDependencies ++= Seq(
@@ -314,7 +321,6 @@ lazy val `opentelemetry-common` =
 lazy val `opentelemetry-jaeger-exporter` =
   (project in file("modules/opentelemetry-jaeger-exporter"))
     .settings(publishSettings)
-    .settings(commonSettings)
     .settings(
       name := "trace4cats-opentelemetry-jaeger-exporter",
       libraryDependencies ++= Seq(
@@ -329,7 +335,6 @@ lazy val `opentelemetry-jaeger-exporter` =
 lazy val `opentelemetry-otlp-grpc-exporter` =
   (project in file("modules/opentelemetry-otlp-grpc-exporter"))
     .settings(publishSettings)
-    .settings(commonSettings)
     .settings(
       name := "trace4cats-opentelemetry-otlp-grpc-exporter",
       libraryDependencies ++= Seq(
@@ -344,7 +349,6 @@ lazy val `opentelemetry-otlp-grpc-exporter` =
 lazy val `opentelemetry-otlp-http-exporter` =
   (project in file("modules/opentelemetry-otlp-http-exporter"))
     .settings(publishSettings)
-    .settings(commonSettings)
     .settings(
       name := "trace4cats-opentelemetry-otlp-http-exporter",
       libraryDependencies ++= Seq(
