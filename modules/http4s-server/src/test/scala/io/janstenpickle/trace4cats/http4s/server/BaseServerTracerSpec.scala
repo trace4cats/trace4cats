@@ -23,12 +23,11 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import scala.annotation.unused
 import scala.collection.immutable.Queue
 
 abstract class BaseServerTracerSpec[F[_]: Async, G[_]: Async](
   unsafeRunK: F ~> Id,
-  @unused noopProvideK: G ~> F,
+  noopProvideK: G ~> F,
   injectRoutes: (HttpRoutes[G], Http4sRequestFilter, EntryPoint[F]) => HttpRoutes[F],
   injectApp: (HttpApp[G], Http4sRequestFilter, EntryPoint[F]) => HttpApp[F]
 ) extends AnyFlatSpec
