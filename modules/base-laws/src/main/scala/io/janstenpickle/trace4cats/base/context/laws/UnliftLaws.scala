@@ -3,7 +3,7 @@ package laws
 
 import cats.laws.{IsEq, IsEqArrow}
 import cats.syntax.flatMap._
-import cats.{Monad, ~>}
+import cats.{~>, Monad}
 
 trait UnliftLaws[Low[_], F[_]] extends LiftLaws[Low, F] {
   override implicit def instance: Unlift[Low, F]
@@ -27,4 +27,3 @@ object UnliftLaws {
     }
   }
 }
-
