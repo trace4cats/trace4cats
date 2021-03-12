@@ -46,7 +46,7 @@ object Dependencies {
     val scalaCheck = "1.15.3"
     val scalaCheckShapeless = "1.2.5"
     val scalaTest = "3.2.6"
-    val testContainers = "0.37.0"
+    val testContainers = "0.39.3"
   }
 
   lazy val cats = "org.typelevel"                              %% "cats-core"                       % Versions.cats
