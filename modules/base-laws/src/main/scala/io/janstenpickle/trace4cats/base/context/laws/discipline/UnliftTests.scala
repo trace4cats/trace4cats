@@ -3,7 +3,7 @@ package laws
 package discipline
 
 import cats.kernel.laws.discipline.catsLawsIsEqToProp
-import cats.{Eq, ~>}
+import cats.{~>, Eq}
 import org.scalacheck.Prop.{forAll => ∀}
 import org.scalacheck.{Arbitrary, Cogen}
 
