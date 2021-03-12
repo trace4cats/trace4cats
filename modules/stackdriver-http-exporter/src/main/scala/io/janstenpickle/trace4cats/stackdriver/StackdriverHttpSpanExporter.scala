@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.strackdriver
+package io.janstenpickle.trace4cats.stackdriver
 
 import cats.Foldable
 import cats.effect.{Blocker, Concurrent, ConcurrentEffect, Resource, Timer}
@@ -9,13 +9,13 @@ import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.`export`.HttpSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch
-import io.janstenpickle.trace4cats.strackdriver.oauth.{
+import io.janstenpickle.trace4cats.stackdriver.oauth.{
   CachedTokenProvider,
   InstanceMetadataTokenProvider,
   OAuthTokenProvider,
   TokenProvider
 }
-import io.janstenpickle.trace4cats.strackdriver.project.{
+import io.janstenpickle.trace4cats.stackdriver.project.{
   InstanceMetadataProjectIdProvider,
   ProjectIdProvider,
   StaticProjectIdProvider

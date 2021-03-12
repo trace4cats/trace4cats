@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.strackdriver.oauth
+package io.janstenpickle.trace4cats.stackdriver.oauth
 
 import java.util.concurrent.TimeUnit
 
