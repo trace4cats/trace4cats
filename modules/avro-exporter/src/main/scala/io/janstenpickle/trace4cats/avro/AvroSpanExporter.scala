@@ -12,7 +12,7 @@ import cats.syntax.functor._
 import cats.syntax.monad._
 import cats.syntax.traverse._
 import cats.{Applicative, Traverse}
-import fs2.concurrent.{InspectableQueue, Queue}
+import fs2.concurrent.Queue
 import fs2.io.tcp.{Socket => TCPSocket, SocketGroup => TCPSocketGroup}
 import fs2.io.udp.{Packet, Socket => UDPSocket, SocketGroup => UDPSocketGroup}
 import fs2.{Chunk, Stream}
@@ -93,7 +93,7 @@ object AvroSpanExporter {
     for {
       avroSchema <- Resource.liftF(AvroInstances.completedSpanSchema[F])
       address <- Resource.liftF(Sync[F].delay(new InetSocketAddress(host, port)))
-      queue <- Resource.liftF(InspectableQueue.bounded[F, Batch[G]](queueCapacity))
+      queue <- Resource.liftF(Queue.bounded[F, Batch[G]](queueCapacity))
       semaphore <- Resource.liftF(Semaphore[F](maxPermits))
       socketGroup <- UDPSocketGroup(blocker)
       socket <- socketGroup.open()
@@ -163,7 +163,7 @@ object AvroSpanExporter {
     for {
       avroSchema <- Resource.liftF(AvroInstances.completedSpanSchema[F])
       address <- Resource.liftF(Sync[F].delay(new InetSocketAddress(host, port)))
-      queue <- Resource.liftF(InspectableQueue.bounded[F, Batch[G]](queueCapacity))
+      queue <- Resource.liftF(Queue.bounded[F, Batch[G]](queueCapacity))
       semaphore <- Resource.liftF(Semaphore[F](maxPermits))
       socketGroup <- TCPSocketGroup(blocker)
       writer = Resource.make(
