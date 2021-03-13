@@ -1,8 +1,7 @@
 package io.janstenpickle.trace4cats.sampling.tail.redis
 
 import cats.data.NonEmptyList
-import cats.effect.syntax.concurrent._
-import cats.effect.{Concurrent, ContextShift, Fiber, Resource, Sync}
+import cats.effect.{Concurrent, ContextShift, Resource, Sync}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.parallel._
@@ -41,7 +40,7 @@ object RedisSampleDecisionStore {
   private val codec: RedisCodec[(Short, TraceId), SampleDecision] =
     Codecs.derive(RedisCodec.Bytes, traceIdSplit, booleanSplit)
 
-  def apply[F[_]: Concurrent: Parallel](
+  def apply[F[_]: Sync: Parallel](
     cmd: RedisCommands[F, (Short, TraceId), SampleDecision],
     keyPrefix: Short,
     ttl: FiniteDuration,
@@ -89,14 +88,9 @@ object RedisSampleDecisionStore {
           override def storeDecisions(decisions: Map[TraceId, SampleDecision]): F[Unit] = if (decisions.isEmpty)
             Applicative[F].unit
           else
-            for {
-              results <- decisions.foldLeft(Applicative[F].pure(List.empty[Fiber[F, Unit]])) {
-                case (acc, (traceId, decision)) =>
-                  cmd.setEx(keyPrefix -> traceId, decision, ttl).start.flatMap(fiber => acc.map(fiber :: _))
-              }
-              _ <- results.parTraverse_(_.join)
-              _ <- Sync[F].delay(cache.putAll(decisions))
-            } yield ()
+            decisions.toList.parTraverse_ { case (traceId, decision) =>
+              cmd.setEx(keyPrefix -> traceId, decision, ttl)
+            } >> Sync[F].delay(cache.putAll(decisions))
         }
 
       }
