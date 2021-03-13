@@ -88,12 +88,9 @@ object RedisSampleDecisionStore {
           override def storeDecisions(decisions: Map[TraceId, SampleDecision]): F[Unit] = if (decisions.isEmpty)
             Applicative[F].unit
           else
-            for {
-              _ <- decisions.toList.parTraverse_ { case (traceId, decision) =>
-                cmd.setEx(keyPrefix -> traceId, decision, ttl)
-              }
-              _ <- Sync[F].delay(cache.putAll(decisions))
-            } yield ()
+            decisions.toList.parTraverse_ { case (traceId, decision) =>
+              cmd.setEx(keyPrefix -> traceId, decision, ttl)
+            } >> Sync[F].delay(cache.putAll(decisions))
         }
 
       }
