@@ -35,7 +35,7 @@ lazy val commonSettings = Seq(
   pgpPublicRing := file("./.github/git adlocal.pubring.asc"),
   pgpSecretRing := file("./.github/local.secring.asc"),
   crossScalaVersions := Seq(Dependencies.Versions.scala213, Dependencies.Versions.scala212),
-  resolvers ++= Seq(Resolver.sonatypeRepo("releases"), Resolver.sonatypeRepo("snapshots")), //TODO
+  resolvers += Resolver.sonatypeRepo("releases"),
 )
 
 lazy val noPublishSettings = commonSettings ++ Seq(publish := {}, publishArtifact := false, publishTo := None)
