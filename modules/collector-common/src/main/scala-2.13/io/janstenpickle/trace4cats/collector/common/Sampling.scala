@@ -2,40 +2,36 @@ package io.janstenpickle.trace4cats.collector.common
 
 import cats.effect.kernel.{Async, Resource}
 import cats.syntax.traverse._
-import cats.Semigroup
+import cats.{Parallel, Semigroup}
 import fs2.{Chunk, Pipe}
-//import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.collector.common.config.{RedisStoreConfig, SamplingConfig}
 import io.janstenpickle.trace4cats.model.CompletedSpan
 import io.janstenpickle.trace4cats.rate.sampling.RateTailSpanSampler
 import io.janstenpickle.trace4cats.sampling.tail.cache.LocalCacheSampleDecisionStore
-//import io.janstenpickle.trace4cats.sampling.tail.redis.RedisSampleDecisionStore
+import io.janstenpickle.trace4cats.sampling.tail.redis.RedisSampleDecisionStore
 import io.janstenpickle.trace4cats.sampling.tail.{TailSamplingPipe, TailSpanSampler}
 
 import scala.concurrent.duration._
 
 object Sampling {
-  def pipe[F[_]: Async](config: SamplingConfig): Resource[F, Pipe[F, CompletedSpan, CompletedSpan]] = {
+  def pipe[F[_]: Async: Parallel: Logger](
+    config: SamplingConfig
+  ): Resource[F, Pipe[F, CompletedSpan, CompletedSpan]] = {
     def makeDecisionStore(keyPrefix: Short) =
       config.redis match {
         case None =>
           Resource.eval(LocalCacheSampleDecisionStore[F](config.cacheTtlMinutes.minutes, Some(config.maxCacheSize)))
         case Some(RedisStoreConfig.RedisServer(host, port)) =>
-          val _ = host
-          val _ = port
-          ??? //TODO: fix
-//          RedisSampleDecisionStore[F](host, port, keyPrefix, config.cacheTtlMinutes.minutes, Some(config.maxCacheSize))
+          RedisSampleDecisionStore[F](host, port, keyPrefix, config.cacheTtlMinutes.minutes, Some(config.maxCacheSize))
         case Some(RedisStoreConfig.RedisCluster(servers)) =>
-          val _ = servers
-          val _ = keyPrefix
-          ??? //TODO: fix
-//          RedisSampleDecisionStore
-//            .cluster[F](
-//              servers.map(s => s.host -> s.port),
-//              keyPrefix,
-//              config.cacheTtlMinutes.minutes,
-//              Some(config.maxCacheSize)
-//            )
+          RedisSampleDecisionStore
+            .cluster[F](
+              servers.map(s => s.host -> s.port),
+              keyPrefix,
+              config.cacheTtlMinutes.minutes,
+              Some(config.maxCacheSize)
+            )
       }
 
     val prob: Option[TailSpanSampler[F, Chunk]] = config.sampleProbability.map { probability =>

@@ -1,8 +1,7 @@
 package io.janstenpickle.trace4cats.sampling.tail.redis
 
 import cats.data.NonEmptyList
-import cats.effect.syntax.concurrent._
-import cats.effect.{Concurrent, ContextShift, Fiber, Resource, Sync}
+import cats.effect.kernel.{Async, Resource, Sync}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.parallel._
@@ -11,12 +10,12 @@ import com.github.blemale.scaffeine.Scaffeine
 import dev.profunktor.redis4cats.codecs.Codecs
 import dev.profunktor.redis4cats.codecs.splits.SplitEpi
 import dev.profunktor.redis4cats.data.RedisCodec
+import dev.profunktor.redis4cats.log4cats._
 import dev.profunktor.redis4cats.{Redis, RedisCommands}
-import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.model.{SampleDecision, TraceId}
 import io.janstenpickle.trace4cats.sampling.tail.SampleDecisionStore
-import io.janstenpickle.trace4cats.sampling.tail.redis.logAdapters._
 import io.lettuce.core.ClientOptions
+import org.typelevel.log4cats.Logger
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -41,7 +40,7 @@ object RedisSampleDecisionStore {
   private val codec: RedisCodec[(Short, TraceId), SampleDecision] =
     Codecs.derive(RedisCodec.Bytes, traceIdSplit, booleanSplit)
 
-  def apply[F[_]: Concurrent: Parallel](
+  def apply[F[_]: Sync: Parallel](
     cmd: RedisCommands[F, (Short, TraceId), SampleDecision],
     keyPrefix: Short,
     ttl: FiniteDuration,
@@ -90,11 +89,9 @@ object RedisSampleDecisionStore {
             Applicative[F].unit
           else
             for {
-              results <- decisions.foldLeft(Applicative[F].pure(List.empty[Fiber[F, Unit]])) {
-                case (acc, (traceId, decision)) =>
-                  cmd.setEx(keyPrefix -> traceId, decision, ttl).start.flatMap(fiber => acc.map(fiber :: _))
+              _ <- decisions.toList.parTraverse_ { case (traceId, decision) =>
+                cmd.setEx(keyPrefix -> traceId, decision, ttl)
               }
-              _ <- results.parTraverse_(_.join)
               _ <- Sync[F].delay(cache.putAll(decisions))
             } yield ()
         }
@@ -103,7 +100,7 @@ object RedisSampleDecisionStore {
 
   private def redisUrl(host: String, port: Int): String = s"redis://$host:$port"
 
-  def apply[F[_]: Concurrent: ContextShift: Parallel: Logger](
+  def apply[F[_]: Async: Parallel: Logger](
     host: String,
     port: Int,
     keyPrefix: Short,
@@ -117,14 +114,14 @@ object RedisSampleDecisionStore {
       sampler <- Resource.eval(apply[F](cmd, keyPrefix, ttl, maximumLocalCacheSize))
     } yield sampler
 
-  def cluster[F[_]: Concurrent: ContextShift: Parallel: Logger](
+  def cluster[F[_]: Async: Parallel: Logger](
     servers: NonEmptyList[(String, Int)],
     keyPrefix: Short,
     ttl: FiniteDuration,
     maximumLocalCacheSize: Option[Long],
   ): Resource[F, SampleDecisionStore[F]] =
     for {
-      cmd <- Redis[F].cluster(codec, servers.map((redisUrl _).tupled).toList: _*)
+      cmd <- Redis[F].cluster(codec, servers.map((redisUrl _).tupled).toList: _*)()
       sampler <- Resource.eval(apply[F](cmd, keyPrefix, ttl, maximumLocalCacheSize))
     } yield sampler
 }

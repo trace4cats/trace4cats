@@ -35,7 +35,7 @@ lazy val commonSettings = Seq(
   pgpPublicRing := file("./.github/git adlocal.pubring.asc"),
   pgpSecretRing := file("./.github/local.secring.asc"),
   crossScalaVersions := Seq(Dependencies.Versions.scala213, Dependencies.Versions.scala212),
-  resolvers += Resolver.sonatypeRepo("releases"),
+  resolvers ++= Seq(Resolver.sonatypeRepo("releases"), Resolver.sonatypeRepo("snapshots")), //TODO
 )
 
 lazy val noPublishSettings = commonSettings ++ Seq(publish := {}, publishArtifact := false, publishTo := None)
@@ -140,7 +140,7 @@ lazy val root = (project in file("."))
     //`sttp-tapir`,
     `tail-sampling`,
     `tail-sampling-cache-store`,
-    //`tail-sampling-redis-store`,
+    `tail-sampling-redis-store`,
     test
   )
 
@@ -750,7 +750,7 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
     `avro-kafka-consumer`,
     `tail-sampling`,
     `tail-sampling-cache-store`,
-    //`tail-sampling-redis-store`,
+    `tail-sampling-redis-store`,
     filtering,
     `rate-sampling`
   )
