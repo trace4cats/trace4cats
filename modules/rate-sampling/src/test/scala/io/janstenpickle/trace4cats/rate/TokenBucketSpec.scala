@@ -24,7 +24,7 @@ class TokenBucketSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPro
     }
 
     val result = test.unsafeToFuture()
-    ticker.ctx.tickAll(10.seconds)
+    ticker.ctx.tick(10.seconds)
     result.value shouldEqual Some(Success(true))
   }
 
@@ -36,7 +36,7 @@ class TokenBucketSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPro
     }
 
     val result = test.unsafeToFuture()
-    ticker.ctx.tickAll((maxSize + 10).seconds)
+    ticker.ctx.tick((maxSize + 10).seconds)
     result.value shouldEqual Some(Success(true))
   }
 
@@ -51,7 +51,7 @@ class TokenBucketSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPro
     }
 
     val result = test.unsafeToFuture()
-    ticker.ctx.tickAll((tokenCount * 2 + 10).seconds)
+    ticker.ctx.tick((tokenCount * 2 + 10).seconds)
     result.value shouldEqual Some(Success((tokenCount, tokenCount)))
   }
 
@@ -67,7 +67,7 @@ class TokenBucketSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPro
     }
 
     val result = test.unsafeToFuture()
-    ticker.ctx.tickAll((maxSize + extras + 10).seconds)
+    ticker.ctx.tick((maxSize + extras + 10).seconds)
     result.value shouldEqual Some(Success((maxSize, extras)))
   }
 
@@ -86,7 +86,7 @@ class TokenBucketSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPro
     }
 
     val result = test.unsafeToFuture()
-    ticker.ctx.tickAll(10.seconds)
+    ticker.ctx.tick(10.seconds)
     result.value shouldEqual Some(Success((tokenCount, tokenCount, true)))
   }
 
@@ -100,7 +100,7 @@ class TokenBucketSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPro
     }
 
     val result = test.unsafeToFuture()
-    ticker.ctx.tickAll()
+    ticker.ctx.tick()
     result.value shouldEqual Some(Success(maxSize))
   }
 
@@ -112,7 +112,7 @@ class TokenBucketSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPro
     }
 
     val result = test.unsafeToFuture()
-    ticker.ctx.tickAll()
+    ticker.ctx.tick()
     result.value shouldEqual Some(Success(tokenCount))
   }
 
@@ -128,7 +128,7 @@ class TokenBucketSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPro
     }
 
     val result = test.unsafeToFuture()
-    ticker.ctx.tickAll((tokenCount + 10).seconds)
+    ticker.ctx.tick((tokenCount + 10).seconds)
     result.value shouldEqual Some(Success((tokenCount, tokenCount)))
   }
 }

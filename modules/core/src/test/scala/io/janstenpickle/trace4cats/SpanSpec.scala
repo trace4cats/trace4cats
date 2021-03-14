@@ -270,7 +270,7 @@ class SpanSpec
       } yield span.status
 
       val result = io.unsafeToFuture()(materializeRuntime)
-      ticker.ctx.tickAll(3.seconds)
+      ticker.ctx.tick(3.seconds)
       result.value shouldEqual Some(Success(SpanStatus.Cancelled))
     }
   }

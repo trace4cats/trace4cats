@@ -34,7 +34,7 @@ class CachedTokenProviderSpec extends AnyFlatSpec with Matchers with ScalaCheckD
       }
 
       val result = test.unsafeToFuture()
-      ticker.ctx.tickAll(10.seconds)
+      ticker.ctx.tick(10.seconds)
       result.value shouldEqual Some(Success(()))
   }
 
@@ -57,7 +57,7 @@ class CachedTokenProviderSpec extends AnyFlatSpec with Matchers with ScalaCheckD
       }
 
       val result = test.unsafeToFuture()
-      ticker.ctx.tickAll(10.seconds)
+      ticker.ctx.tick(10.seconds)
       result.value shouldEqual Some(Success(()))
   }
 
