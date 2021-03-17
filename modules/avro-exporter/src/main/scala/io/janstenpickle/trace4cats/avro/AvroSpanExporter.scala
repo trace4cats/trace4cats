@@ -6,6 +6,7 @@ import cats.effect.concurrent.Semaphore
 import cats.effect.syntax.concurrent._
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
 import cats.syntax.applicativeError._
+import cats.syntax.apply._
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
