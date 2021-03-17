@@ -6,6 +6,7 @@ import cats.effect.kernel.syntax.spawn._
 import cats.effect.kernel.{Async, Clock, Resource, Sync}
 import cats.effect.std.{Queue, Semaphore}
 import cats.syntax.applicative._
+import cats.syntax.applicativeError._
 import cats.syntax.apply._
 import cats.syntax.either._
 import cats.syntax.flatMap._
@@ -132,7 +133,7 @@ object AvroSpanExporter {
     def connect(socketGroup: SocketGroup[F], address: SocketAddress[Host]): Stream[F, Socket[F]] =
       Stream
         .resource(socketGroup.client(address))
-        .handleErrorWith { case _: ConnectException =>
+        .recoverWith { case _: ConnectException =>
           Stream.eval(Logger[F].warn(s"Failed to connect to tcp://$host:$port, retrying in 5s")) >> connect(
             socketGroup,
             address
