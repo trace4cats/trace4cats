@@ -7,6 +7,7 @@ import cats.effect.concurrent.Semaphore
 import cats.effect.syntax.bracket._
 import cats.effect.syntax.concurrent._
 import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
+import cats.syntax.applicativeError._
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -116,7 +117,7 @@ object AvroSpanExporter {
     def connect(socketGroup: TCPSocketGroup, address: InetSocketAddress): Stream[F, TCPSocket[F]] =
       Stream
         .resource(socketGroup.client(address))
-        .handleErrorWith { case _: ConnectException =>
+        .recoverWith { case _: ConnectException =>
           Stream.eval(Logger[F].warn(s"Failed to connect to tcp://$host:$port, retrying in 5s")) >> connect(
             socketGroup,
             address
