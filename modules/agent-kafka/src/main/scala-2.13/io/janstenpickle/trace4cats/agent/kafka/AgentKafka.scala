@@ -4,22 +4,22 @@ import cats.data.NonEmptyList
 import cats.effect.{ExitCode, IO, Resource}
 import cats.implicits._
 import com.monovore.decline._
-//import com.monovore.decline.effect._
+import com.monovore.decline.effect._
 import fs2.Chunk
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.agent.common.CommonAgent
 import io.janstenpickle.trace4cats.agent.common.CommonAgent._
 import io.janstenpickle.trace4cats.avro.kafka.AvroKafkaSpanExporter
-//import io.janstenpickle.trace4cats.kernel.BuildInfo
+import io.janstenpickle.trace4cats.kernel.BuildInfo
 import io.janstenpickle.trace4cats.model.AttributeValue
 
-object AgentKafka //TODO: upgrade decline
-/*extends CommandIOApp(
+object AgentKafka
+    extends CommandIOApp(
       name = "trace4cats-agent-kafka",
       header = "Trace 4 Cats Kafka Agent",
       version = BuildInfo.version
-    )*/ {
+    ) {
 
   val kafkaBootstrapServersHelp = "Kafka bootstrap servers"
 
@@ -36,8 +36,7 @@ object AgentKafka //TODO: upgrade decline
   val kafkaTopicOpt: Opts[String] =
     Opts.env[String]("T4C_AGENT_KAFKA_TOPIC", kafkaTopicHelp).orElse(Opts.option[String]("kafka-topic", kafkaTopicHelp))
 
-  /*override*/
-  def main: Opts[IO[ExitCode]] =
+  override def main: Opts[IO[ExitCode]] =
     (portOpt, kafkaBootstrapServersOpt, kafkaTopicOpt, bufferSizeOpt, traceOpt, traceSampleOpt).mapN(run)
 
   def run(

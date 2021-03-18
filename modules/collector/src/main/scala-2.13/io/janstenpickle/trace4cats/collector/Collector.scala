@@ -4,27 +4,26 @@ import cats.effect.{ExitCode, IO}
 import cats.effect.kernel.{Async, Resource}
 import cats.implicits._
 import com.monovore.decline._
-//import com.monovore.decline.effect._
+import com.monovore.decline.effect._
 import fs2.Chunk
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.collector.common.CommonCollector
 import io.janstenpickle.trace4cats.collector.common.config.ConfigParser
 import io.janstenpickle.trace4cats.collector.config.CollectorConfig
-import io.janstenpickle.trace4cats.kernel.SpanExporter //BuildInfo
+import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanExporter}
 import io.janstenpickle.trace4cats.model.AttributeValue
 import io.janstenpickle.trace4cats.opentelemetry.jaeger.OpenTelemetryJaegerSpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpGrpcSpanExporter
 import io.janstenpickle.trace4cats.stackdriver.StackdriverGrpcSpanExporter
 
-object Collector //TODO: upgrade decline
-/*extends CommandIOApp(
+object Collector
+    extends CommandIOApp(
       name = "trace4cats-collector",
       header = "Trace 4 Cats Collector",
       version = BuildInfo.version
-    )*/ {
+    ) {
 
-  /*override*/
-  def main: Opts[IO[ExitCode]] =
+  override def main: Opts[IO[ExitCode]] =
     CommonCollector.configFileOpt.map { configFile =>
       Slf4jLogger.create[IO].flatMap { implicit logger =>
         (for {
