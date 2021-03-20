@@ -2,7 +2,6 @@ package io.janstenpickle.trace4cats
 
 import cats.Eq
 import cats.effect.IO
-import cats.effect.std.Random
 import cats.effect.unsafe.implicits.global
 import cats.kernel.laws.discipline.SemigroupTests
 import io.janstenpickle.trace4cats.model.SpanContext
@@ -12,7 +11,6 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 
 class ToHeadersSpec extends AnyFunSuite with ScalaCheckDrivenPropertyChecks with FunSuiteDiscipline {
-  implicit val ioRandom: Random[IO] = Random.javaUtilConcurrentThreadLocalRandom[IO]
 
   val parentContext: SpanContext = SpanContext.root[IO].unsafeRunSync()
   val context: SpanContext = SpanContext.child[IO](parentContext).unsafeRunSync()

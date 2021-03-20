@@ -2,7 +2,6 @@ package io.janstenpickle.trace4cats.meta
 
 import cats.Applicative
 import cats.effect.kernel.{Async, Deferred}
-import cats.effect.std.Random
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.Chunk
@@ -20,8 +19,7 @@ object TracedSpanExporter {
     process: TraceProcess,
     sampler: SpanSampler[F],
     underlying: SpanExporter[F, Chunk],
-  ): StreamSpanExporter[F] = {
-    implicit val random: Random[F] = Random.javaUtilConcurrentThreadLocalRandom
+  ): StreamSpanExporter[F] =
     new StreamSpanExporter[F] {
       override def exportBatch(batch: Batch[Chunk]): F[Unit] = for {
         context <- SpanContext.root[F]
@@ -62,5 +60,4 @@ object TracedSpanExporter {
         }
       } yield ()
     }
-  }
 }

@@ -2,7 +2,6 @@ package io.janstenpickle.trace4cats
 
 import cats.effect.{IO, OutcomeIO}
 import cats.effect.kernel.Deferred
-import cats.effect.std.Random
 import cats.effect.testkit.TestInstances
 import cats.effect.unsafe.implicits.global
 import cats.implicits._
@@ -23,7 +22,6 @@ class SpanSpec
     with ScalaCheckDrivenPropertyChecks
     with ArbitraryInstances
     with TestInstances {
-  implicit val ioRandom: Random[IO] = Random.javaUtilConcurrentThreadLocalRandom[IO]
 
   behavior.of("Span.root")
 

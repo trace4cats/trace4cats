@@ -151,7 +151,7 @@ lazy val model =
       name := "trace4cats-model",
       libraryDependencies ++= Dependencies.test.map(_ % Test),
       libraryDependencies ++= Seq(
-        Dependencies.catsEffectStd,
+        Dependencies.catsEffectKernel,
         Dependencies.enumeratum,
         Dependencies.enumeratumCats,
         Dependencies.commonsCodec,
@@ -228,11 +228,7 @@ lazy val kernel =
 lazy val core =
   (project in file("modules/core"))
     .settings(publishSettings)
-    .settings(
-      name := "trace4cats-core",
-      libraryDependencies ++= Dependencies.test.map(_ % Test),
-      libraryDependencies ++= Seq(Dependencies.catsEffectStd)
-    )
+    .settings(name := "trace4cats-core", libraryDependencies ++= Dependencies.test.map(_ % Test))
     .dependsOn(model, kernel, test % "test->compile", `exporter-common` % "test->compile")
 
 lazy val base =
@@ -268,10 +264,7 @@ lazy val avro =
 lazy val `log-exporter` =
   (project in file("modules/log-exporter"))
     .settings(publishSettings)
-    .settings(
-      name := "trace4cats-log-exporter",
-      libraryDependencies ++= Seq(Dependencies.catsEffectStd, Dependencies.log4cats)
-    )
+    .settings(name := "trace4cats-log-exporter", libraryDependencies ++= Seq(Dependencies.log4cats))
     .dependsOn(model, kernel)
 
 lazy val `jaeger-integration-test` =
@@ -293,10 +286,7 @@ lazy val `jaeger-integration-test` =
 lazy val `jaeger-thrift-exporter` =
   (project in file("modules/jaeger-thrift-exporter"))
     .settings(publishSettings)
-    .settings(
-      name := "trace4cats-jaeger-thrift-exporter",
-      libraryDependencies ++= Seq(Dependencies.catsEffectStd, Dependencies.fs2, Dependencies.jaegerThrift)
-    )
+    .settings(name := "trace4cats-jaeger-thrift-exporter", libraryDependencies ++= Seq(Dependencies.jaegerThrift))
     .dependsOn(model, kernel, `exporter-common`, `jaeger-integration-test` % "test->compile")
 
 lazy val `opentelemetry-common` =
@@ -304,12 +294,7 @@ lazy val `opentelemetry-common` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-opentelemetry-common",
-      libraryDependencies ++= Seq(
-        Dependencies.catsEffectStd,
-        Dependencies.fs2,
-        Dependencies.openTelemetrySdk,
-        Dependencies.grpcApi
-      )
+      libraryDependencies ++= Seq(Dependencies.openTelemetrySdk, Dependencies.grpcApi)
     )
     .dependsOn(model, kernel, `exporter-common`)
 
@@ -318,12 +303,7 @@ lazy val `opentelemetry-jaeger-exporter` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-opentelemetry-jaeger-exporter",
-      libraryDependencies ++= Seq(
-        Dependencies.catsEffectStd,
-        Dependencies.fs2,
-        Dependencies.openTelemetryJaegerExporter,
-        Dependencies.grpcOkHttp % Test
-      )
+      libraryDependencies ++= Seq(Dependencies.openTelemetryJaegerExporter, Dependencies.grpcOkHttp % Test)
     )
     .dependsOn(model, kernel, `exporter-common`, `opentelemetry-common`, `jaeger-integration-test` % "test->compile")
 
@@ -332,12 +312,7 @@ lazy val `opentelemetry-otlp-grpc-exporter` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-opentelemetry-otlp-grpc-exporter",
-      libraryDependencies ++= Seq(
-        Dependencies.catsEffectStd,
-        Dependencies.fs2,
-        Dependencies.openTelemetryOtlpExporter,
-        Dependencies.grpcOkHttp % Test
-      )
+      libraryDependencies ++= Seq(Dependencies.openTelemetryOtlpExporter, Dependencies.grpcOkHttp % Test)
     )
     .dependsOn(model, kernel, `exporter-common`, `opentelemetry-common`, `jaeger-integration-test` % "test->compile")
 
@@ -347,9 +322,7 @@ lazy val `opentelemetry-otlp-http-exporter` =
     .settings(
       name := "trace4cats-opentelemetry-otlp-http-exporter",
       libraryDependencies ++= Seq(
-        Dependencies.catsEffectStd,
         Dependencies.circeGeneric,
-        Dependencies.fs2,
         Dependencies.http4sClient,
         Dependencies.http4sBlazeClient,
         (Dependencies.openTelemetryProto % "protobuf").intransitive(),
@@ -370,12 +343,7 @@ lazy val `stackdriver-grpc-exporter` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-stackdriver-grpc-exporter",
-      libraryDependencies ++= Seq(
-        Dependencies.catsEffectStd,
-        Dependencies.fs2,
-        Dependencies.googleCredentials,
-        Dependencies.googleCloudTrace
-      )
+      libraryDependencies ++= Seq(Dependencies.googleCredentials, Dependencies.googleCloudTrace)
     )
     .dependsOn(model, kernel, `exporter-common`, `stackdriver-common`)
 
@@ -386,11 +354,9 @@ lazy val `stackdriver-http-exporter` =
       name := "trace4cats-stackdriver-http-exporter",
       libraryDependencies ++= Dependencies.test.map(_ % Test),
       libraryDependencies ++= Seq(
-        Dependencies.catsEffectStd,
         Dependencies.circeGeneric,
         Dependencies.circeParser,
         Dependencies.enumeratumCirce,
-        Dependencies.fs2,
         Dependencies.http4sClient,
         Dependencies.http4sCirce,
         Dependencies.http4sBlazeClient,
@@ -407,10 +373,8 @@ lazy val `datadog-http-exporter` =
       name := "trace4cats-datadog-http-exporter",
       libraryDependencies ++= Dependencies.test.map(_ % Test),
       libraryDependencies ++= Seq(
-        Dependencies.catsEffectStd,
         Dependencies.circeGeneric,
         Dependencies.circeParser,
-        Dependencies.fs2,
         Dependencies.http4sClient,
         Dependencies.http4sCirce,
         Dependencies.http4sBlazeClient
@@ -424,10 +388,8 @@ lazy val `newrelic-http-exporter` =
     .settings(
       name := "trace4cats-newrelic-http-exporter",
       libraryDependencies ++= Seq(
-        Dependencies.catsEffectStd,
         Dependencies.circeGeneric,
         Dependencies.circeParser,
-        Dependencies.fs2,
         Dependencies.http4sClient,
         Dependencies.http4sCirce,
         Dependencies.http4sBlazeClient
@@ -440,13 +402,7 @@ lazy val `avro-kafka-exporter` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-avro-kafka-exporter",
-      libraryDependencies ++= Seq(
-        Dependencies.catsEffectStd,
-        Dependencies.fs2,
-        Dependencies.fs2Kafka,
-        Dependencies.kafka,
-        Dependencies.log4cats
-      ),
+      libraryDependencies ++= Seq(Dependencies.fs2Kafka, Dependencies.kafka, Dependencies.log4cats),
       libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.embeddedKafka)).map(_ % Test),
       classLoaderLayeringStrategy in Test := ClassLoaderLayeringStrategy.ScalaLibrary,
       classLoaderLayeringStrategy in Test := ClassLoaderLayeringStrategy.Flat
@@ -456,25 +412,19 @@ lazy val `avro-kafka-exporter` =
 lazy val `exporter-stream` =
   (project in file("modules/exporter-stream"))
     .settings(publishSettings)
-    .settings(
-      name := "trace4cats-exporter-stream",
-      libraryDependencies ++= Seq(Dependencies.catsEffectStd, Dependencies.fs2)
-    )
+    .settings(name := "trace4cats-exporter-stream", libraryDependencies ++= Seq(Dependencies.fs2))
     .dependsOn(model, kernel)
 
 lazy val `exporter-common` =
   (project in file("modules/exporter-common"))
     .settings(publishSettings)
-    .settings(
-      name := "trace4cats-exporter-common",
-      libraryDependencies ++= Seq(Dependencies.catsEffectStd, Dependencies.fs2, Dependencies.log4cats)
-    )
+    .settings(name := "trace4cats-exporter-common", libraryDependencies ++= Seq(Dependencies.log4cats))
     .dependsOn(model, kernel, `exporter-stream`)
 
 lazy val meta =
   (project in file("modules/meta"))
     .settings(publishSettings)
-    .settings(name := "trace4cats-meta", libraryDependencies ++= Seq(Dependencies.catsEffectStd, Dependencies.log4cats))
+    .settings(name := "trace4cats-meta", libraryDependencies ++= Seq(Dependencies.log4cats))
     .dependsOn(model, kernel, core, `exporter-stream`, `exporter-common` % "test->compile", test % "test->compile")
 
 lazy val `exporter-http` =
@@ -482,17 +432,14 @@ lazy val `exporter-http` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-exporter-http",
-      libraryDependencies ++= Seq(Dependencies.catsEffectStd, Dependencies.fs2, Dependencies.http4sClient)
+      libraryDependencies ++= Seq(Dependencies.fs2, Dependencies.http4sClient)
     )
     .dependsOn(model, kernel)
 
 lazy val `avro-exporter` =
   (project in file("modules/avro-exporter"))
     .settings(publishSettings)
-    .settings(
-      name := "trace4cats-avro-exporter",
-      libraryDependencies ++= Seq(Dependencies.catsEffectStd, Dependencies.fs2, Dependencies.fs2Io)
-    )
+    .settings(name := "trace4cats-avro-exporter", libraryDependencies ++= Seq(Dependencies.fs2, Dependencies.fs2Io))
     .dependsOn(model, kernel, avro, `exporter-common`)
 
 lazy val `avro-server` =
@@ -500,12 +447,7 @@ lazy val `avro-server` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-avro-server",
-      libraryDependencies ++= Seq(
-        Dependencies.catsEffectStd,
-        Dependencies.fs2,
-        Dependencies.fs2Io,
-        Dependencies.log4cats
-      )
+      libraryDependencies ++= Seq(Dependencies.fs2, Dependencies.fs2Io, Dependencies.log4cats)
     )
     .dependsOn(model, avro)
 
@@ -514,13 +456,7 @@ lazy val `avro-kafka-consumer` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-avro-kafka-consumer",
-      libraryDependencies ++= Seq(
-        Dependencies.catsEffectStd,
-        Dependencies.fs2,
-        Dependencies.fs2Kafka,
-        Dependencies.kafka,
-        Dependencies.log4cats
-      ),
+      libraryDependencies ++= Seq(Dependencies.fs2, Dependencies.fs2Kafka, Dependencies.kafka, Dependencies.log4cats),
       libraryDependencies ++= Seq(Dependencies.embeddedKafka, Dependencies.logback).map(_ % Test)
     )
     .dependsOn(model, avro, test % "test->compile")
@@ -657,12 +593,7 @@ lazy val `agent-common` = (project in file("modules/agent-common"))
   .settings(publishSettings)
   .settings(
     name := "trace4cats-agent-common",
-    libraryDependencies ++= Seq(
-      Dependencies.catsEffectStd,
-      Dependencies.declineEffect,
-      Dependencies.log4cats,
-      Dependencies.logback
-    )
+    libraryDependencies ++= Seq(Dependencies.declineEffect, Dependencies.log4cats, Dependencies.logback)
   )
   .dependsOn(model, `avro-server`, `exporter-common`, meta, `rate-sampling`)
 
@@ -682,28 +613,17 @@ lazy val `agent-kafka` = (project in file("modules/agent-kafka"))
 
 lazy val filtering = (project in file("modules/filtering"))
   .settings(publishSettings)
-  .settings(
-    name := "trace4cats-filtering",
-    libraryDependencies ++= Seq(Dependencies.cats, Dependencies.fs2),
-    libraryDependencies ++= Dependencies.test.map(_ % Test)
-  )
+  .settings(name := "trace4cats-filtering", libraryDependencies ++= Dependencies.test.map(_ % Test))
   .dependsOn(model, kernel, `exporter-stream`)
 
 lazy val `rate-sampling` = (project in file("modules/rate-sampling"))
   .settings(publishSettings)
-  .settings(
-    name := "trace4cats-rate-sampling",
-    libraryDependencies ++= Seq(Dependencies.cats, Dependencies.fs2),
-    libraryDependencies ++= Dependencies.test.map(_ % Test)
-  )
+  .settings(name := "trace4cats-rate-sampling", libraryDependencies ++= Dependencies.test.map(_ % Test))
   .dependsOn(model, kernel, `tail-sampling`)
 
 lazy val `tail-sampling` = (project in file("modules/tail-sampling"))
   .settings(publishSettings)
-  .settings(
-    name := "trace4cats-tail-sampling",
-    libraryDependencies ++= Seq(Dependencies.catsEffectStd, Dependencies.log4cats)
-  )
+  .settings(name := "trace4cats-tail-sampling", libraryDependencies ++= Seq(Dependencies.log4cats))
   .dependsOn(model, kernel, `exporter-stream`)
 
 lazy val `tail-sampling-cache-store` = (project in file("modules/tail-sampling-cache-store"))
@@ -725,11 +645,9 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
   .settings(
     name := "trace4cats-collector-common",
     libraryDependencies ++= Seq(
-      Dependencies.catsEffectStd,
       Dependencies.circeGeneric,
       Dependencies.circeYaml,
       Dependencies.declineEffect,
-      Dependencies.fs2,
       Dependencies.http4sJdkClient,
       Dependencies.log4cats
     )
@@ -771,9 +689,7 @@ lazy val collector = (project in file("modules/collector"))
       "-J-XX:MaxRAMPercentage=90"
     ),
     libraryDependencies ++= Seq(
-      Dependencies.catsEffectStd,
       Dependencies.declineEffect,
-      Dependencies.fs2,
       Dependencies.grpcOkHttp,
       Dependencies.log4cats,
       Dependencies.logback
@@ -801,13 +717,7 @@ lazy val `collector-lite` = (project in file("modules/collector-lite"))
   .settings(graalSettings)
   .settings(
     name := "trace4cats-collector-lite",
-    libraryDependencies ++= Seq(
-      Dependencies.catsEffectStd,
-      Dependencies.declineEffect,
-      Dependencies.fs2,
-      Dependencies.log4cats,
-      Dependencies.logback
-    )
+    libraryDependencies ++= Seq(Dependencies.declineEffect, Dependencies.log4cats, Dependencies.logback)
   )
   .dependsOn(
     model,

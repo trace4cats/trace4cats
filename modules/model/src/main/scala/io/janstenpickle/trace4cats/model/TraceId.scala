@@ -1,9 +1,9 @@
 package io.janstenpickle.trace4cats.model
 
-import cats.effect.std.Random
 import cats.syntax.functor._
 import cats.syntax.show._
 import cats.{Eq, Functor, Show}
+import io.janstenpickle.trace4cats.model.random.Random
 import org.apache.commons.codec.binary.Hex
 
 import scala.util.Try
@@ -14,7 +14,7 @@ case class TraceId private (value: Array[Byte]) extends AnyVal {
 
 object TraceId {
   def apply[F[_]: Functor: Random]: F[TraceId] =
-    Random[F].nextBytes(16).map(new TraceId(_))
+    Random[F].bytes(16).map(new TraceId(_))
 
   def fromHexString(hex: String): Option[TraceId] =
     Try(Hex.decodeHex(hex)).toOption.flatMap(apply)

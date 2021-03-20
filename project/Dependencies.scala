@@ -50,7 +50,6 @@ object Dependencies {
 
   lazy val cats = "org.typelevel"                              %% "cats-core"                       % Versions.cats
   lazy val catsEffectKernel = "org.typelevel"                  %% "cats-effect-kernel"              % Versions.catsEffect
-  lazy val catsEffectStd = "org.typelevel"                     %% "cats-effect-std"                 % Versions.catsEffect
   lazy val catsEffect = "org.typelevel"                        %% "cats-effect"                     % Versions.catsEffect
   lazy val commonsCodec = "commons-codec"                       % "commons-codec"                   % Versions.commonsCodec
   lazy val collectionCompat = "org.scala-lang.modules"         %% "scala-collection-compat"         % Versions.collectionCompat

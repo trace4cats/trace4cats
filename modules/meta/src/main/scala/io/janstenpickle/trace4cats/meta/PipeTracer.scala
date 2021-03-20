@@ -2,7 +2,6 @@ package io.janstenpickle.trace4cats.meta
 
 import cats.Applicative
 import cats.effect.kernel.{Async, Deferred}
-import cats.effect.std.Random
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.{Chunk, Pipe, Stream}
@@ -17,8 +16,7 @@ object PipeTracer {
     attributes: Map[String, AttributeValue],
     process: TraceProcess,
     sampler: SpanSampler[F],
-  ): Pipe[F, CompletedSpan, CompletedSpan] = {
-    implicit val random: Random[F] = Random.javaUtilConcurrentThreadLocalRandom
+  ): Pipe[F, CompletedSpan, CompletedSpan] =
     _.chunks
       .flatMap { batch =>
         Stream.evalUnChunk(for {
@@ -46,6 +44,4 @@ object PipeTracer {
           }
         } yield spans)
       }
-  }
-
 }
