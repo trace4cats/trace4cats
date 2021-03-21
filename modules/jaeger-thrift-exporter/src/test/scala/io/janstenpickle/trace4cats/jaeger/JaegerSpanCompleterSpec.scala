@@ -11,7 +11,11 @@ import scala.concurrent.duration._
 
 class JaegerSpanCompleterSpec extends BaseJaegerSpec {
   it should "Send a span to jaeger" in forAll { (span: CompletedSpan.Builder, process: TraceProcess) =>
-    val updatedSpan = span.copy(start = Instant.now(), end = Instant.now())
+    val updatedSpan = span.copy(
+      start = Instant.now(),
+      end = Instant.now(),
+      attributes = span.attributes.filterNot { case (key, _) => key == "ip" }
+    )
     val batch = Batch(Chunk(updatedSpan.build(process)))
 
     testCompleter(

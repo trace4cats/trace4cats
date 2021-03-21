@@ -13,7 +13,11 @@ class OpenTelemetryOtlpHttpSpanCompleterSpec extends BaseJaegerSpec {
   it should "Send a span to jaeger" in forAll { (span: CompletedSpan.Builder, serviceName: String) =>
     val process = TraceProcess(serviceName)
 
-    val updatedSpan = span.copy(start = Instant.now(), end = Instant.now(), links = span.links)
+    val updatedSpan = span.copy(
+      start = Instant.now(),
+      end = Instant.now(),
+      attributes = span.attributes.filterNot { case (key, _) => key == "ip" }
+    )
     val batch = Batch(Chunk(updatedSpan.build(process)))
 
     testCompleter(
