@@ -32,8 +32,8 @@ object OpenTelemetryOtlpHttpSpanCompleter {
     config: CompleterConfig = CompleterConfig(),
   ): Resource[F, SpanCompleter[F]] =
     for {
-      implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- Resource.liftF(OpenTelemetryOtlpHttpSpanExporter[F, Chunk](client, host, port))
+      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
+      exporter <- Resource.eval(OpenTelemetryOtlpHttpSpanExporter[F, Chunk](client, host, port))
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 }

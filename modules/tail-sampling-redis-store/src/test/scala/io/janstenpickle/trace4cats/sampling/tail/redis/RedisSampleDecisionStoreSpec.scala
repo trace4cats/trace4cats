@@ -35,8 +35,8 @@ class RedisSampleDecisionStoreSpec
       (for {
         store0 <- RedisSampleDecisionStore[IO]("localhost", redisPort, keyPrefix, 5.minutes, None)
         store1 <- RedisSampleDecisionStore[IO]("localhost", redisPort, keyPrefix, 5.minutes, None)
-        _ <- Resource.liftF(store0.storeDecision(traceId, sampleDecision))
-        res <- Resource.liftF(store1.getDecision(traceId))
+        _ <- Resource.eval(store0.storeDecision(traceId, sampleDecision))
+        res <- Resource.eval(store1.getDecision(traceId))
       } yield res).use(res => IO(res should be(Some(sampleDecision)))).unsafeRunSync()
 
     }
@@ -69,8 +69,8 @@ class RedisSampleDecisionStoreSpec
       (for {
         store0 <- RedisSampleDecisionStore[IO]("localhost", redisPort, keyPrefix, 5.minutes, None)
         store1 <- RedisSampleDecisionStore[IO]("localhost", redisPort, keyPrefix, 5.minutes, None)
-        _ <- Resource.liftF(store0.storeDecisions(decisions))
-        res <- Resource.liftF(store1.batch(decisions.keySet))
+        _ <- Resource.eval(store0.storeDecisions(decisions))
+        res <- Resource.eval(store1.batch(decisions.keySet))
       } yield res).use(res => IO(res should contain theSameElementsAs decisions)).unsafeRunSync()
 
     }

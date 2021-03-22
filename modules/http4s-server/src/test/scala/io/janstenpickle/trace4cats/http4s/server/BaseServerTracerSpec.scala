@@ -155,7 +155,7 @@ abstract class BaseServerTracerSpec[F[_]: Sync: Timer, G[_]: Sync](
     def test(f: EntryPoint[F] => HttpApp[F]): Assertion =
       unsafeRunK.apply(
         (for {
-          completer <- Resource.liftF(RefSpanCompleter[F]("test"))
+          completer <- Resource.eval(RefSpanCompleter[F]("test"))
           ep = EntryPoint[F](SpanSampler.always[F], completer)
         } yield (f(ep), completer))
           .use { case (app, completer) =>

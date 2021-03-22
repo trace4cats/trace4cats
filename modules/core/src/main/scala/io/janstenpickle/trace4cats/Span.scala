@@ -77,7 +77,7 @@ case class EmptySpan[F[_]: Defer: MonadThrow] private (context: SpanContext) ext
   override def addLink(link: Link): F[Unit] = Applicative[F].unit
   override def addLinks(links: NonEmptyList[Link]): F[Unit] = Applicative[F].unit
   override def child(name: String, kind: SpanKind): Resource[F, Span[F]] =
-    Resource.liftF(SpanContext.child[F](context).map { childContext =>
+    Resource.eval(SpanContext.child[F](context).map { childContext =>
       EmptySpan(childContext.setDrop())
     })
   override def child(name: String, kind: SpanKind, errorHandler: ErrorHandler): Resource[F, Span[F]] = child(name, kind)
@@ -104,7 +104,7 @@ object Span {
     errorHandler: ErrorHandler
   ): Resource[F, Span[F]] =
     Resource
-      .liftF(
+      .eval(
         sampler
           .shouldSample(parent, context.traceId, name, kind)
       )
@@ -147,7 +147,7 @@ object Span {
     errorHandler: ErrorHandler = ErrorHandler.empty,
   ): Resource[F, Span[F]] =
     Resource
-      .liftF(SpanContext.child[F](parent))
+      .eval(SpanContext.child[F](parent))
       .flatMap(makeSpan(name, Some(parent), _, kind, sampler, completer, errorHandler))
 
   def root[F[_]: Sync: Clock](
@@ -157,7 +157,7 @@ object Span {
     completer: SpanCompleter[F],
     errorHandler: ErrorHandler = ErrorHandler.empty
   ): Resource[F, Span[F]] =
-    Resource.liftF(SpanContext.root[F]).flatMap(makeSpan(name, None, _, kind, sampler, completer, errorHandler))
+    Resource.eval(SpanContext.root[F]).flatMap(makeSpan(name, None, _, kind, sampler, completer, errorHandler))
 
   private def mapK[F[_], G[_]: Defer: Applicative](fk: F ~> G)(span: Span[F]): Span[G] =
     new Span[G] {

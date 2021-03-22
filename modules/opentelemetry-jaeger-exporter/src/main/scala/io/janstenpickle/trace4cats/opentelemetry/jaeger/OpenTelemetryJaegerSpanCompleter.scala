@@ -16,7 +16,7 @@ object OpenTelemetryJaegerSpanCompleter {
     config: CompleterConfig = CompleterConfig(),
   ): Resource[F, SpanCompleter[F]] =
     for {
-      implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
+      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
       exporter <- OpenTelemetryJaegerSpanExporter[F, Chunk](host, port)
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer

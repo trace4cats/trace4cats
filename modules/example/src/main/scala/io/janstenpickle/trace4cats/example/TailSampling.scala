@@ -21,13 +21,13 @@ object TailSampling extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     (for {
       blocker <- Blocker[IO]
-      implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
+      implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
       exporter <- AvroSpanExporter.udp[IO, Chunk](blocker)
 
       nameSampleDecisionStore <-
-        Resource.liftF(LocalCacheSampleDecisionStore[IO](ttl = 10.minutes, maximumSize = Some(200000)))
+        Resource.eval(LocalCacheSampleDecisionStore[IO](ttl = 10.minutes, maximumSize = Some(200000)))
       rateSampleDecisionStore <-
-        Resource.liftF(LocalCacheSampleDecisionStore[IO](ttl = 10.minutes, maximumSize = Some(200000)))
+        Resource.eval(LocalCacheSampleDecisionStore[IO](ttl = 10.minutes, maximumSize = Some(200000)))
 
       probSampler = TailSpanSampler.probabilistic[IO, Chunk](probability = 0.05)
       nameSampler =

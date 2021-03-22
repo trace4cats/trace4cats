@@ -96,15 +96,15 @@ class TracedSpanExporterSpec
         val batch = mapBatch(spans)
 
         (for {
-          queue <- Resource.liftF(Queue.circularBuffer[IO, CompletedSpan](batch.spans.size + 100))
+          queue <- Resource.eval(Queue.circularBuffer[IO, CompletedSpan](batch.spans.size + 100))
           exporter = new SpanExporter[IO, Chunk] {
             override def exportBatch(batch: Batch[Chunk]): IO[Unit] =
               Stream.chunk(batch.spans).covary[IO].through(queue.enqueue).compile.drain
           }
           tracedExporter = TracedSpanExporter[IO](exporterName, attributes, process, sampler, exporter)
-          _ <- Resource.liftF(tracedExporter.exportBatch(batch))
+          _ <- Resource.eval(tracedExporter.exportBatch(batch))
 
-          allSpans <- Resource.liftF(queue.dequeue.take(batch.spans.size + expectedMetaSpans).compile.to(Chunk))
+          allSpans <- Resource.eval(queue.dequeue.take(batch.spans.size + expectedMetaSpans).compile.to(Chunk))
         } yield allSpans)
           .use { spans =>
             IO(test(exporterName, attributes, process, batch, spans))

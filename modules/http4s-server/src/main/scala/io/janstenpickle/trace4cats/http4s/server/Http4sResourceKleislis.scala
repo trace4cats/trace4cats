@@ -29,7 +29,7 @@ object Http4sResourceKleislis {
     errorHandler: ErrorHandler = ErrorHandler.empty,
   )(k: ResourceKleisli[F, SpanParams, Span[F]]): ResourceKleisli[F, Request_, Ctx] =
     fromHeaders[F](spanNamer, requestFilter, dropHeadersWhen, errorHandler)(k).tapWithF { (req, span) =>
-      Resource.liftF(makeContext(req, span))
+      Resource.eval(makeContext(req, span))
     }
 
   def fromHeaders[F[_]: Applicative](
