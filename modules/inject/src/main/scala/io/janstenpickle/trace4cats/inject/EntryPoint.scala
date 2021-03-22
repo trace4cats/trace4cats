@@ -43,7 +43,7 @@ trait EntryPoint[F[_]] {
       continueOrElseRoot(name, kind, headers, errorHandler)
     }
 
-  def mapK[G[_]](fk: F ~> G)(implicit F: MonadCancelThrow[F], G: MonadCancelThrow[G]): EntryPoint[G] =
+  final def mapK[G[_]](fk: F ~> G)(implicit F: MonadCancelThrow[F], G: MonadCancelThrow[G]): EntryPoint[G] =
     EntryPoint.mapK(fk)(this)
 }
 
