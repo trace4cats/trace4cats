@@ -82,7 +82,7 @@ object EntryPoint {
         Span.noop[F]
     }
 
-  private def mapK[F[_], G[_]: Defer: Applicative](fk: F ~> G)(ep: EntryPoint[F]): EntryPoint[G] = {
+  private def mapK[F[_], G[_]: Defer: Applicative](fk: F ~> G)(ep: EntryPoint[F]): EntryPoint[G] =
     new EntryPoint[G] {
       def root(name: SpanName, kind: SpanKind, errorHandler: ErrorHandler): Resource[G, Span[G]] =
         ep.root(name, kind, errorHandler).mapK(fk).map(_.mapK(fk))
@@ -94,5 +94,4 @@ object EntryPoint {
       ): Resource[G, Span[G]] =
         ep.continueOrElseRoot(name, kind, headers, errorHandler).mapK(fk).map(_.mapK(fk))
     }
-  }
 }
