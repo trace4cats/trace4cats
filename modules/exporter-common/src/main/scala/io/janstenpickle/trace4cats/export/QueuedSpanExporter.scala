@@ -26,8 +26,8 @@ object QueuedSpanExporter {
   ): Resource[F, StreamSpanExporter[F]] = {
     def buffer(exporter: SpanExporter[F, Chunk]): Resource[F, StreamSpanExporter[F]] =
       for {
-        inFlight <- Resource.liftF(Ref.of[F, Int](0))
-        queue <- Resource.liftF(Queue.bounded[F, Batch[Chunk]](bufferSize))
+        inFlight <- Resource.eval(Ref.of[F, Int](0))
+        queue <- Resource.eval(Queue.bounded[F, Batch[Chunk]](bufferSize))
         _ <- Resource.make(
           queue.dequeue.evalMap(exporter.exportBatch(_).guarantee(inFlight.update(_ - 1))).compile.drain.start
         )(fiber => Timer[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)

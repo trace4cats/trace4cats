@@ -98,10 +98,10 @@ object AvroSpanExporter {
         .drain
 
     for {
-      avroSchema <- Resource.liftF(AvroInstances.completedSpanSchema[F])
-      address <- Resource.liftF(Sync[F].delay(new InetSocketAddress(host, port)))
-      queue <- Resource.liftF(Queue.bounded[F, Batch[G]](queueCapacity))
-      semaphore <- Resource.liftF(Semaphore[F](maxPermits))
+      avroSchema <- Resource.eval(AvroInstances.completedSpanSchema[F])
+      address <- Resource.eval(Sync[F].delay(new InetSocketAddress(host, port)))
+      queue <- Resource.eval(Queue.bounded[F, Batch[G]](queueCapacity))
+      semaphore <- Resource.eval(Semaphore[F](maxPermits))
       socketGroup <- UDPSocketGroup(blocker)
       socket <- socketGroup.open()
       writer = Resource.make(
@@ -174,10 +174,10 @@ object AvroSpanExporter {
         .drain
 
     for {
-      avroSchema <- Resource.liftF(AvroInstances.completedSpanSchema[F])
-      address <- Resource.liftF(Sync[F].delay(new InetSocketAddress(host, port)))
-      queue <- Resource.liftF(Queue.bounded[F, Batch[G]](queueCapacity))
-      semaphore <- Resource.liftF(Semaphore[F](maxPermits))
+      avroSchema <- Resource.eval(AvroInstances.completedSpanSchema[F])
+      address <- Resource.eval(Sync[F].delay(new InetSocketAddress(host, port)))
+      queue <- Resource.eval(Queue.bounded[F, Batch[G]](queueCapacity))
+      semaphore <- Resource.eval(Semaphore[F](maxPermits))
       socketGroup <- TCPSocketGroup(blocker)
       writer = Resource.make(
         Stream

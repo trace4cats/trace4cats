@@ -21,7 +21,7 @@ object Sampling {
     def makeDecisionStore(keyPrefix: Short) =
       config.redis match {
         case None =>
-          Resource.liftF(LocalCacheSampleDecisionStore[F](config.cacheTtlMinutes.minutes, Some(config.maxCacheSize)))
+          Resource.eval(LocalCacheSampleDecisionStore[F](config.cacheTtlMinutes.minutes, Some(config.maxCacheSize)))
         case Some(RedisStoreConfig.RedisServer(host, port)) =>
           RedisSampleDecisionStore[F](host, port, keyPrefix, config.cacheTtlMinutes.minutes, Some(config.maxCacheSize))
         case Some(RedisStoreConfig.RedisCluster(servers)) =>

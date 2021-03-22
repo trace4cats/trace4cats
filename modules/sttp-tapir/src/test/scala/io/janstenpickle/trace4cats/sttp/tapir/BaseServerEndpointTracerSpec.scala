@@ -87,7 +87,7 @@ abstract class BaseServerEndpointTracerSpec[F[_]: Concurrent: ContextShift: Time
 
     unsafeRunK.apply(
       (for {
-        completer <- Resource.liftF(RefSpanCompleter[F]("test"))
+        completer <- Resource.eval(RefSpanCompleter[F]("test"))
         ep = EntryPoint[F](SpanSampler.always[F], completer)
         serverEndpoints = injectEndpoints(ep)
         app = Http4sServerInterpreter.toRoutes(serverEndpoints).orNotFound

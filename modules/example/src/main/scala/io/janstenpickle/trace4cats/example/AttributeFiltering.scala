@@ -18,7 +18,7 @@ object AttributeFiltering extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     (for {
       blocker <- Blocker[IO]
-      implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
+      implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
       exporter <- AvroSpanExporter.udp[IO, Chunk](blocker)
 
       nameFilter = AttributeFilter.names(NonEmptySet.of("some.attribute.name", "some.other.name"))

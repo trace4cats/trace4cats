@@ -22,7 +22,7 @@ object StackdriverHttpSpanCompleter {
     ec: Option[ExecutionContext] = None
   ): Resource[F, SpanCompleter[F]] =
     for {
-      implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
+      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
       exporter <- StackdriverHttpSpanExporter.blazeClient[F, Chunk](projectId, serviceAccountPath, ec)
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
@@ -34,7 +34,7 @@ object StackdriverHttpSpanCompleter {
     ec: Option[ExecutionContext] = None,
   ): Resource[F, SpanCompleter[F]] =
     for {
-      implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
+      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
       exporter <- StackdriverHttpSpanExporter.blazeClient[F, Chunk](serviceAccountName, ec)
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
@@ -47,8 +47,8 @@ object StackdriverHttpSpanCompleter {
     config: CompleterConfig = CompleterConfig(),
   ): Resource[F, SpanCompleter[F]] =
     for {
-      implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- Resource.liftF(StackdriverHttpSpanExporter[F, Chunk](projectId, serviceAccountPath, client))
+      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
+      exporter <- Resource.eval(StackdriverHttpSpanExporter[F, Chunk](projectId, serviceAccountPath, client))
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 
@@ -59,8 +59,8 @@ object StackdriverHttpSpanCompleter {
     config: CompleterConfig = CompleterConfig(),
   ): Resource[F, SpanCompleter[F]] =
     for {
-      implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- Resource.liftF(StackdriverHttpSpanExporter[F, Chunk](client, serviceAccountName))
+      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
+      exporter <- Resource.eval(StackdriverHttpSpanExporter[F, Chunk](client, serviceAccountName))
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 
@@ -72,8 +72,8 @@ object StackdriverHttpSpanCompleter {
     config: CompleterConfig = CompleterConfig(),
   ): Resource[F, SpanCompleter[F]] =
     for {
-      implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
-      exporter <- Resource.liftF(StackdriverHttpSpanExporter[F, Chunk](projectIdProvider, tokenProvider, client))
+      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
+      exporter <- Resource.eval(StackdriverHttpSpanExporter[F, Chunk](projectIdProvider, tokenProvider, client))
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 }

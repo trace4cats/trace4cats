@@ -17,7 +17,7 @@ object AgentTrace {
     bufferSize: Int,
     exporter: SpanExporter[F, Chunk]
   ): Resource[F, (Pipe[F, CompletedSpan, CompletedSpan], SpanExporter[F, Chunk])] = for {
-    hostname <- Resource.liftF(Sync[F].delay(InetAddress.getLocalHost.getHostName))
+    hostname <- Resource.eval(Sync[F].delay(InetAddress.getLocalHost.getHostName))
     process = TraceProcess("trace4cats-agent", Map("hostname" -> hostname))
 
     sampler <- sampleRate.fold(Resource.pure[F, SpanSampler[F]](SpanSampler.always[F]))(rate =>

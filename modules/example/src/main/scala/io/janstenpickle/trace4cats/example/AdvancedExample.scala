@@ -17,7 +17,7 @@ object AdvancedExample extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     (for {
       blocker <- Blocker[IO]
-      implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
+      implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
       completer <- AllCompleters[IO](blocker, TraceProcess("test"))
 
       // Set up rate sampler

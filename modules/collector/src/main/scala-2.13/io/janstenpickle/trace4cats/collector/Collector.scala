@@ -39,7 +39,7 @@ object Collector
     configFile: String
   ): Resource[F, List[(String, List[(String, AttributeValue)], SpanExporter[F, Chunk])]] =
     for {
-      config <- Resource.liftF(ConfigParser.parse[F, CollectorConfig](configFile))
+      config <- Resource.eval(ConfigParser.parse[F, CollectorConfig](configFile))
       jaegerProtoExporters <- config.jaegerProto.traverse { jaeger =>
         OpenTelemetryJaegerSpanExporter[F, Chunk](jaeger.host, jaeger.port).map(
           (

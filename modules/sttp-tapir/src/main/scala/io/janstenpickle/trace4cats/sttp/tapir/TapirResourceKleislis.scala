@@ -38,7 +38,7 @@ object TapirResourceKleislis {
       val fa = EitherT(makeContext(req, span))
         .leftSemiflatTap(e => span.setStatus(errorToSpanStatus(e)))
         .value
-      Resource.liftF(fa)
+      Resource.eval(fa)
     }
 
   def fromHeadersContextRecoverErrors[F[_]: MonadThrow, I, E <: Throwable: ClassTag, Ctx](
@@ -52,7 +52,7 @@ object TapirResourceKleislis {
       val fa = makeContext(req, span).onError { case e: E =>
         span.setStatus(errorToSpanStatus(e))
       }
-      Resource.liftF(fa)
+      Resource.eval(fa)
     }
 
 }

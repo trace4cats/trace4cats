@@ -38,17 +38,17 @@ object CommonCollector {
     others: List[(String, List[(String, AttributeValue)], SpanExporter[F, Chunk])]
   ): Resource[F, Stream[F, Unit]] =
     for {
-      config <- Resource.liftF(ConfigParser.parse[F, CommonCollectorConfig](configFile))
+      config <- Resource.eval(ConfigParser.parse[F, CommonCollectorConfig](configFile))
       _ <- Resource.make(
         Logger[F].info(
           s"Starting Trace 4 Cats Collector v${BuildInfo.version} listening on tcp://::${config.listener.port} and udp://::${config.listener.port}"
         )
       )(_ => Logger[F].info("Shutting down Trace 4 Cats Collector"))
 
-      process <- Resource.liftF(Tracing.process[F])
+      process <- Resource.eval(Tracing.process[F])
       traceSampler <- Tracing.sampler[F](config.tracing, config.bufferSize)
 
-      client <- Resource.liftF(Http4sJdkClient[F](blocker))
+      client <- Resource.eval(Http4sJdkClient[F](blocker))
 
       collectorExporters <- config.forwarders.traverse { forwarder =>
         AvroSpanExporter
@@ -87,7 +87,7 @@ object CommonCollector {
 
       otHttpExporters <- config.otlpHttp.traverse { otlp =>
         Resource
-          .liftF(OpenTelemetryOtlpHttpSpanExporter[F, Chunk](client, host = otlp.host, port = otlp.port))
+          .eval(OpenTelemetryOtlpHttpSpanExporter[F, Chunk](client, host = otlp.host, port = otlp.port))
           .map(
             (
               "OpenTelemetry HTTP",
@@ -100,15 +100,15 @@ object CommonCollector {
       stackdriverExporters <- config.stackdriverHttp.traverse {
         case StackdriverHttpConfig(Some(projectId), Some(credsFile), _) =>
           Resource
-            .liftF(StackdriverHttpSpanExporter[F, Chunk](projectId, credsFile, client))
+            .eval(StackdriverHttpSpanExporter[F, Chunk](projectId, credsFile, client))
             .map(("Stackdriver HTTP", List[(String, AttributeValue)]("stackdriver.http.project.id" -> projectId), _))
         case StackdriverHttpConfig(_, _, None) =>
           Resource
-            .liftF(StackdriverHttpSpanExporter[F, Chunk](client))
+            .eval(StackdriverHttpSpanExporter[F, Chunk](client))
             .map(("Stackdriver HTTP", List.empty[(String, AttributeValue)], _))
         case StackdriverHttpConfig(_, _, Some(serviceAccount)) =>
           Resource
-            .liftF(StackdriverHttpSpanExporter[F, Chunk](client, serviceAccount))
+            .eval(StackdriverHttpSpanExporter[F, Chunk](client, serviceAccount))
             .map(
               (
                 "Stackdriver HTTP",
@@ -120,7 +120,7 @@ object CommonCollector {
 
       ddExporters <- config.datadog.traverse { datadog =>
         Resource
-          .liftF(DataDogSpanExporter[F, Chunk](client, host = datadog.host, port = datadog.port))
+          .eval(DataDogSpanExporter[F, Chunk](client, host = datadog.host, port = datadog.port))
           .map(
             (
               "DataDog Agent",
@@ -136,7 +136,7 @@ object CommonCollector {
 
       newRelicExporters <- config.newRelic.traverse { newRelic =>
         Resource
-          .liftF(NewRelicSpanExporter[F, Chunk](client, apiKey = newRelic.apiKey, endpoint = newRelic.endpoint))
+          .eval(NewRelicSpanExporter[F, Chunk](client, apiKey = newRelic.apiKey, endpoint = newRelic.endpoint))
           .map(("NewRelic HTTP", List[(String, AttributeValue)]("newrelic.endpoint" -> newRelic.endpoint.url), _))
 
       }

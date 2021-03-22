@@ -18,7 +18,7 @@ object TokenBucket {
 
   def create[F[_]: Concurrent: Timer](bucketSize: Int, tokenRate: FiniteDuration): Resource[F, TokenBucket[F]] =
     for {
-      tokens <- Resource.liftF(Ref.of(bucketSize))
+      tokens <- Resource.eval(Ref.of(bucketSize))
       _ <-
         Stream
           .fixedRate[F](tokenRate)

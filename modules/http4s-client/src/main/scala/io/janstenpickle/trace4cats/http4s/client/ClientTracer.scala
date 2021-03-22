@@ -19,7 +19,7 @@ object ClientTracer {
   )(implicit P: Provide[F, G, Ctx]): Client[G] =
     Client { request: Request[G] =>
       Resource
-        .liftF(P.ask[Ctx])
+        .eval(P.ask[Ctx])
         .flatMap { parentCtx =>
           val parentSpan = spanLens.get(parentCtx)
           parentSpan

@@ -48,7 +48,7 @@ object AgentKafka
     traceRate: Option[Double]
   ): IO[ExitCode] = (for {
     blocker <- Blocker[IO]
-    implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
+    implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
 
     kafkaExporter <- AvroKafkaSpanExporter[IO, Chunk](kafkaBootstrapServers, kafkaTopic)
   } yield CommonAgent.run[IO](

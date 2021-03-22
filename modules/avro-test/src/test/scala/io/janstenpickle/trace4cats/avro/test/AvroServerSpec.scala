@@ -48,7 +48,7 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
           (for {
             server <- AvroServer.tcp[IO](blocker, queue.enqueue)
             _ <- server.compile.drain.background
-            _ <- Resource.liftF(timer.sleep(2.seconds))
+            _ <- Resource.eval(timer.sleep(2.seconds))
             completer <- AvroSpanExporter.tcp[IO, Chunk](blocker)
           } yield completer).use(_.exportBatch(batch) >> timer.sleep(3.seconds)) >> queue.dequeue
             .take(batch.spans.size.toLong)
@@ -71,7 +71,7 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
           (for {
             server <- AvroServer.tcp[IO](blocker, queue.enqueue)
             _ <- server.compile.drain.background
-            _ <- Resource.liftF(timer.sleep(2.seconds))
+            _ <- Resource.eval(timer.sleep(2.seconds))
             completer <- AvroSpanExporter.tcp[IO, Chunk](blocker, numFibers = n)
           } yield completer).use(c => batches.traverse_(c.exportBatch) >> timer.sleep(3.seconds)) >> queue.dequeue
             .take(batches.foldMap(_.spans.size.toLong))
@@ -93,7 +93,7 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
           (for {
             server <- AvroServer.tcp[IO](blocker, queue.enqueue, port = 7778)
             _ <- server.compile.drain.background
-            _ <- Resource.liftF(timer.sleep(2.seconds))
+            _ <- Resource.eval(timer.sleep(2.seconds))
             completer <- AvroSpanCompleter.tcp[IO](
               blocker,
               process,
@@ -123,7 +123,7 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
           (for {
             server <- AvroServer.udp[IO](blocker, queue.enqueue, port = 7779)
             _ <- server.compile.drain.background
-            _ <- Resource.liftF(timer.sleep(2.seconds))
+            _ <- Resource.eval(timer.sleep(2.seconds))
             completer <- AvroSpanExporter.udp[IO, Chunk](blocker, port = 7779)
           } yield completer).use(_.exportBatch(batch) >> timer.sleep(3.seconds)) >> queue.dequeue
             .take(batch.spans.size.toLong)
@@ -146,7 +146,7 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
           (for {
             server <- AvroServer.udp[IO](blocker, queue.enqueue, port = 7781)
             _ <- server.compile.drain.background
-            _ <- Resource.liftF(timer.sleep(2.seconds))
+            _ <- Resource.eval(timer.sleep(2.seconds))
             completer <- AvroSpanExporter.udp[IO, Chunk](blocker, port = 7781, numFibers = n)
           } yield completer).use(c => batches.traverse_(c.exportBatch) >> timer.sleep(3.seconds)) >> queue.dequeue
             .take(batches.foldMap(_.spans.size.toLong))
@@ -168,7 +168,7 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
           (for {
             server <- AvroServer.udp[IO](blocker, queue.enqueue, port = 7780)
             _ <- server.compile.drain.background
-            _ <- Resource.liftF(timer.sleep(2.seconds))
+            _ <- Resource.eval(timer.sleep(2.seconds))
             completer <- AvroSpanCompleter.udp[IO](
               blocker,
               process,

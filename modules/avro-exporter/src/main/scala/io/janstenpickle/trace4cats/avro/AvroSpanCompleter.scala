@@ -17,7 +17,7 @@ object AvroSpanCompleter {
     config: CompleterConfig = CompleterConfig(),
   ): Resource[F, SpanCompleter[F]] =
     for {
-      implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
+      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
       exporter <- AvroSpanExporter.udp[F, Chunk](blocker, host, port)
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
@@ -30,7 +30,7 @@ object AvroSpanCompleter {
     config: CompleterConfig = CompleterConfig(),
   ): Resource[F, SpanCompleter[F]] = {
     for {
-      implicit0(logger: Logger[F]) <- Resource.liftF(Slf4jLogger.create[F])
+      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
       exporter <- AvroSpanExporter.tcp[F, Chunk](blocker, host, port)
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer

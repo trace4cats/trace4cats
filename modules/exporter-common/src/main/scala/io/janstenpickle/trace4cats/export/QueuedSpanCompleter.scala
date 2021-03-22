@@ -26,9 +26,9 @@ object QueuedSpanCompleter {
     val realBufferSize = if (config.bufferSize < config.batchSize * 5) config.batchSize * 5 else config.bufferSize
 
     for {
-      inFlight <- Resource.liftF(Ref.of(0))
-      hasLoggedWarn <- Resource.liftF(Ref.of(false))
-      queue <- Resource.liftF(Queue.bounded[F, CompletedSpan](realBufferSize))
+      inFlight <- Resource.eval(Ref.of(0))
+      hasLoggedWarn <- Resource.eval(Ref.of(false))
+      queue <- Resource.eval(Queue.bounded[F, CompletedSpan](realBufferSize))
       _ <- Resource.make {
         queue.dequeue
           .groupWithin(config.batchSize, config.batchTimeout)

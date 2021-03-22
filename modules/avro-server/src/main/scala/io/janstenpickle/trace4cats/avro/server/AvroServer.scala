@@ -57,9 +57,9 @@ object AvroServer {
     port: Int = agentPort,
   ): Resource[F, Stream[F, Unit]] =
     for {
-      avroSchema <- Resource.liftF(AvroInstances.completedSpanSchema[F])
+      avroSchema <- Resource.eval(AvroInstances.completedSpanSchema[F])
       socketGroup <- TCPSocketGroup(blocker)
-      address <- Resource.liftF(Sync[F].delay(new InetSocketAddress(port)))
+      address <- Resource.eval(Sync[F].delay(new InetSocketAddress(port)))
     } yield socketGroup
       .server(address)
       .map { serverResource =>
@@ -80,8 +80,8 @@ object AvroServer {
     port: Int = agentPort,
   ): Resource[F, Stream[F, Unit]] =
     for {
-      avroSchema <- Resource.liftF(AvroInstances.completedSpanSchema[F])
-      address <- Resource.liftF(Sync[F].delay(new InetSocketAddress(port)))
+      avroSchema <- Resource.eval(AvroInstances.completedSpanSchema[F])
+      address <- Resource.eval(Sync[F].delay(new InetSocketAddress(port)))
       socketGroup <- UDPSocketGroup[F](blocker)
       socket <- socketGroup.open(address)
     } yield socket
