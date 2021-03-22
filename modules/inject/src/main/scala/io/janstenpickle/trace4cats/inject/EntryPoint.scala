@@ -6,7 +6,7 @@
 
 package io.janstenpickle.trace4cats.inject
 
-import cats.Applicative
+import cats.{~>, Applicative, Defer}
 import cats.data.Kleisli
 import cats.effect.{Clock, Resource, Sync}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
@@ -42,6 +42,9 @@ trait EntryPoint[F[_]] {
     Kleisli { case (name, kind, headers, errorHandler) =>
       continueOrElseRoot(name, kind, headers, errorHandler)
     }
+
+  final def mapK[G[_]: Defer: Applicative](fk: F ~> G): EntryPoint[G] =
+    EntryPoint.mapK(fk)(this)
 }
 
 object EntryPoint {
@@ -79,4 +82,17 @@ object EntryPoint {
         Span.noop[F]
     }
 
+  private def mapK[F[_], G[_]: Defer: Applicative](fk: F ~> G)(ep: EntryPoint[F]): EntryPoint[G] = {
+    new EntryPoint[G] {
+      def root(name: SpanName, kind: SpanKind, errorHandler: ErrorHandler): Resource[G, Span[G]] =
+        ep.root(name, kind, errorHandler).mapK(fk).map(_.mapK(fk))
+      def continueOrElseRoot(
+        name: SpanName,
+        kind: SpanKind,
+        headers: TraceHeaders,
+        errorHandler: ErrorHandler
+      ): Resource[G, Span[G]] =
+        ep.continueOrElseRoot(name, kind, headers, errorHandler).mapK(fk).map(_.mapK(fk))
+    }
+  }
 }
