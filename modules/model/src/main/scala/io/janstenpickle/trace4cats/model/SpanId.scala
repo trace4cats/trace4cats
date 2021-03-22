@@ -14,7 +14,7 @@ case class SpanId private (value: Array[Byte]) extends AnyVal {
 
 object SpanId {
   def apply[F[_]: Functor: Random]: F[SpanId] =
-    Random[F].bytes(8).map(new SpanId(_))
+    Random[F].nextBytes(8).map(new SpanId(_))
 
   def fromHexString(hex: String): Option[SpanId] =
     Try(Hex.decodeHex(hex)).toOption.flatMap(apply)

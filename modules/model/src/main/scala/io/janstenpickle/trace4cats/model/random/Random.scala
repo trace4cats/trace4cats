@@ -5,7 +5,7 @@ import cats.effect.kernel.Sync
 import java.util.concurrent.ThreadLocalRandom
 
 trait Random[F[_]] {
-  def bytes(n: Int): F[Array[Byte]]
+  def nextBytes(n: Int): F[Array[Byte]]
 }
 
 object Random {

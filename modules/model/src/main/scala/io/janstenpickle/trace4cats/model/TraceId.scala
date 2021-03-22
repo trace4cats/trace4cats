@@ -14,7 +14,7 @@ case class TraceId private (value: Array[Byte]) extends AnyVal {
 
 object TraceId {
   def apply[F[_]: Functor: Random]: F[TraceId] =
-    Random[F].bytes(16).map(new TraceId(_))
+    Random[F].nextBytes(16).map(new TraceId(_))
 
   def fromHexString(hex: String): Option[TraceId] =
     Try(Hex.decodeHex(hex)).toOption.flatMap(apply)
