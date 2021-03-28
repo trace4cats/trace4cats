@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.agent
 
-import cats.effect.{Blocker, ExitCode, IO, Resource}
+import cats.effect.{ExitCode, IO, Resource}
 import cats.implicits._
 import com.monovore.decline._
 import com.monovore.decline.effect._
@@ -38,14 +38,9 @@ object Agent
     traceRate: Option[Double]
   ): IO[ExitCode] =
     (for {
-      blocker <- Blocker[IO]
       implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
-
-      avroExporter <-
-        AvroSpanExporter
-          .tcp[IO, Chunk](blocker, host = collectorHost, port = collectorPort)
+      avroExporter <- AvroSpanExporter.tcp[IO, Chunk](host = collectorHost, port = collectorPort)
     } yield CommonAgent.run[IO](
-      blocker,
       port,
       bufferSize,
       "Avro TCP",

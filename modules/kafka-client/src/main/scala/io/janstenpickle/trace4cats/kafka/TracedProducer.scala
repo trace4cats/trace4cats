@@ -15,7 +15,7 @@ object TracedProducer {
     implicit L: Lift[F, G]
   ): KafkaProducer[G, K, V] =
     new KafkaProducer[G, K, V] {
-      override def produce[P](records: ProducerRecords[K, V, P]): G[G[ProducerResult[K, V, P]]] =
+      override def produce[P](records: ProducerRecords[P, K, V]): G[G[ProducerResult[P, K, V]]] =
         Trace[G].span("kafka.send", SpanKind.Producer) {
           Trace[G].headers(toHeaders).flatMap { traceHeaders =>
             val msgHeaders = KafkaHeaders.converter.to(traceHeaders)

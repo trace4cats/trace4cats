@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.sampling.tail.redis
 
 import cats.data.NonEmptyList
-import cats.effect.{Concurrent, ContextShift, Resource, Sync}
+import cats.effect.kernel.{Async, Resource, Sync}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.parallel._
@@ -12,10 +12,10 @@ import dev.profunktor.redis4cats.codecs.splits.SplitEpi
 import dev.profunktor.redis4cats.data.RedisCodec
 import dev.profunktor.redis4cats.log4cats._
 import dev.profunktor.redis4cats.{Redis, RedisCommands}
-import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.model.{SampleDecision, TraceId}
 import io.janstenpickle.trace4cats.sampling.tail.SampleDecisionStore
 import io.lettuce.core.ClientOptions
+import org.typelevel.log4cats.Logger
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -97,7 +97,7 @@ object RedisSampleDecisionStore {
 
   private def redisUrl(host: String, port: Int): String = s"redis://$host:$port"
 
-  def apply[F[_]: Concurrent: ContextShift: Parallel: Logger](
+  def apply[F[_]: Async: Parallel: Logger](
     host: String,
     port: Int,
     keyPrefix: Short,
@@ -111,7 +111,7 @@ object RedisSampleDecisionStore {
       sampler <- Resource.eval(apply[F](cmd, keyPrefix, ttl, maximumLocalCacheSize))
     } yield sampler
 
-  def cluster[F[_]: Concurrent: ContextShift: Parallel: Logger](
+  def cluster[F[_]: Async: Parallel: Logger](
     servers: NonEmptyList[(String, Int)],
     keyPrefix: Short,
     ttl: FiniteDuration,

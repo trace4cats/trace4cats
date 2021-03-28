@@ -1,7 +1,10 @@
 package io.janstenpickle.trace4cats.test.jaeger
 
+import java.util.concurrent.TimeUnit
+
 import cats.data.NonEmptyList
 import cats.effect.{IO, Resource}
+import cats.effect.unsafe.implicits.global
 import cats.implicits._
 import fs2.Chunk
 import io.circe.generic.auto._
@@ -15,15 +18,9 @@ import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import java.util.concurrent.TimeUnit
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks with ArbitraryInstances {
-
-  implicit val contextShift = IO.contextShift(ExecutionContext.global)
-  implicit val timer = IO.timer(ExecutionContext.global)
-
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 3, maxDiscardedFactor = 50.0)
 
@@ -99,11 +96,12 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
     batch: Batch[Chunk],
     expectedResponse: List[JaegerTraceResponse]
   ): Assertion = {
-    val res =
-      BlazeClientBuilder[IO](ExecutionContext.global).resource
+    val res = {
+      Resource
+        .eval(IO.executionContext)
+        .flatMap(BlazeClientBuilder[IO](_).resource)
         .use { client =>
-          exporter.use(_.exportBatch(batch)) >> timer
-            .sleep(1.second) >> batch.spans
+          exporter.use(_.exportBatch(batch)) >> IO.sleep(1.second) >> batch.spans
             .map(_.context.traceId)
             .toList
             .distinct
@@ -121,6 +119,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
             )
           )
         )
+    }
 
     assert(res === expectedResponse)
   }
@@ -134,10 +133,11 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
     val batch = Batch(List(span.build(process)))
 
     val res =
-      BlazeClientBuilder[IO](ExecutionContext.global).resource
+      Resource
+        .eval(IO.executionContext)
+        .flatMap(BlazeClientBuilder[IO](_).resource)
         .use { client =>
-          completer.use(_.complete(span)) >> timer
-            .sleep(1.second) >> batch.spans
+          completer.use(_.complete(span)) >> IO.sleep(1.second) >> batch.spans
             .map(_.context.traceId)
             .distinct
             .traverse { traceId =>

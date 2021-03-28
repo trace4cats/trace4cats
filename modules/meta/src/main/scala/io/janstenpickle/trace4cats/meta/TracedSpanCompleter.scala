@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.meta
 
-import cats.effect.{Clock, Sync}
+import cats.effect.kernel.Sync
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
@@ -10,11 +10,7 @@ object TracedSpanCompleter {
   private final val spanName = "trace4cats.complete.span"
   private final val spanKind = SpanKind.Producer
 
-  def apply[F[_]: Sync: Clock](
-    name: String,
-    sampler: SpanSampler[F],
-    underlying: SpanCompleter[F],
-  ): SpanCompleter[F] = {
+  def apply[F[_]: Sync](name: String, sampler: SpanSampler[F], underlying: SpanCompleter[F]): SpanCompleter[F] =
     new SpanCompleter[F] {
       override def complete(span: CompletedSpan.Builder): F[Unit] =
         for {
@@ -29,5 +25,4 @@ object TracedSpanCompleter {
           }
         } yield ()
     }
-  }
 }

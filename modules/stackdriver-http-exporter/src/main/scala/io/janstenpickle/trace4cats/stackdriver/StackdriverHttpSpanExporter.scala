@@ -1,10 +1,12 @@
 package io.janstenpickle.trace4cats.stackdriver
 
 import cats.Foldable
-import cats.effect.{Concurrent, ConcurrentEffect, Resource, Timer}
+import cats.effect.kernel.{Async, Resource, Temporal}
+import cats.syntax.applicative._
 import cats.syntax.flatMap._
-import cats.syntax.foldable._
 import cats.syntax.functor._
+import cats.syntax.foldable._
+import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.`export`.HttpSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch
@@ -23,7 +25,6 @@ import org.http4s.Uri
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
-import org.typelevel.log4cats.Logger
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext
@@ -31,28 +32,26 @@ import scala.concurrent.ExecutionContext
 object StackdriverHttpSpanExporter {
   private final val base = "https://cloudtrace.googleapis.com/v2/projects"
 
-  def blazeClient[F[_]: ConcurrentEffect: Timer: Logger, G[_]: Foldable](
+  def serviceAccountBlazeClient[F[_]: Async: Logger, G[_]: Foldable](
     projectId: String,
     serviceAccountPath: String,
-  ): Resource[F, SpanExporter[F, G]] = blazeClient(projectId, serviceAccountPath, None)
+    ec: Option[ExecutionContext] = None
+  ): Resource[F, SpanExporter[F, G]] = for {
+    ec <- Resource.eval(ec.fold(Async[F].executionContext)(_.pure))
+    client <- BlazeClientBuilder[F](ec).resource
+    exporter <- Resource.eval(apply[F, G](projectId, serviceAccountPath, client))
+  } yield exporter
 
-  def blazeClient[F[_]: ConcurrentEffect: Timer: Logger, G[_]: Foldable](
-    projectId: String,
-    serviceAccountPath: String,
-    ec: Option[ExecutionContext]
-  ): Resource[F, SpanExporter[F, G]] =
-    // TODO: CE3 - use Async[F].executionContext
-    BlazeClientBuilder[F](ec.getOrElse(ExecutionContext.global)).resource
-      .evalMap(apply[F, G](projectId, serviceAccountPath, _))
-
-  def blazeClient[F[_]: ConcurrentEffect: Timer: Logger, G[_]: Foldable](
+  def blazeClient[F[_]: Async: Logger, G[_]: Foldable](
     serviceAccountName: String = "default",
     ec: Option[ExecutionContext] = None
-  ): Resource[F, SpanExporter[F, G]] =
-    // TODO: CE3 - use Async[F].executionContext
-    BlazeClientBuilder[F](ec.getOrElse(ExecutionContext.global)).resource.evalMap(apply[F, G](_, serviceAccountName))
+  ): Resource[F, SpanExporter[F, G]] = for {
+    ec <- Resource.eval(ec.fold(Async[F].executionContext)(_.pure))
+    client <- BlazeClientBuilder[F](ec).resource
+    exporter <- Resource.eval(apply[F, G](client, serviceAccountName))
+  } yield exporter
 
-  def apply[F[_]: Concurrent: Timer: Logger, G[_]: Foldable](
+  def apply[F[_]: Async: Logger, G[_]: Foldable](
     projectId: String,
     serviceAccountPath: String,
     client: Client[F]
@@ -61,7 +60,7 @@ object StackdriverHttpSpanExporter {
       apply[F, G](StaticProjectIdProvider(projectId), tokenProvider, client)
     }
 
-  def apply[F[_]: Concurrent: Timer: Logger, G[_]: Foldable](
+  def apply[F[_]: Temporal: Logger, G[_]: Foldable](
     client: Client[F],
     serviceAccountName: String = "default"
   ): F[SpanExporter[F, G]] =
@@ -71,7 +70,7 @@ object StackdriverHttpSpanExporter {
       client
     )
 
-  def apply[F[_]: Concurrent: Timer, G[_]: Foldable](
+  def apply[F[_]: Temporal, G[_]: Foldable](
     projectIdProvider: ProjectIdProvider[F],
     tokenProvider: TokenProvider[F],
     client: Client[F]

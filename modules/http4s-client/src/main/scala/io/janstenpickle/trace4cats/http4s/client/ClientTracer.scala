@@ -1,7 +1,6 @@
 package io.janstenpickle.trace4cats.http4s.client
 
-import cats.effect.{BracketThrow, Resource}
-import cats.{Applicative, Defer}
+import cats.effect.kernel.{MonadCancelThrow, Resource}
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.base.optics.{Getter, Lens}
@@ -11,7 +10,7 @@ import org.http4s.Request
 import org.http4s.client.{Client, UnexpectedStatus}
 
 object ClientTracer {
-  def liftTrace[F[_]: Applicative, G[_]: Defer: BracketThrow, Ctx](
+  def liftTrace[F[_]: MonadCancelThrow, G[_]: MonadCancelThrow, Ctx](
     client: Client[F],
     spanLens: Lens[Ctx, Span[F]],
     headersGetter: Getter[Ctx, TraceHeaders],
@@ -26,14 +25,14 @@ object ClientTracer {
             .child(
               spanNamer(request),
               SpanKind.Client,
-              { case UnexpectedStatus(status) =>
+              { case UnexpectedStatus(status, _, _) =>
                 Http4sStatusMapping.toSpanStatus(status)
               }
             )
             .flatMap { childSpan =>
               val childCtx = spanLens.set(childSpan)(parentCtx)
               val headers = headersGetter.get(childCtx)
-              val req = request.putHeaders(Http4sHeaders.converter.to(headers).toList: _*)
+              val req = request.putHeaders(Http4sHeaders.converter.to(headers).headers)
 
               client
                 .run(req.mapK(P.provideK(childCtx)))

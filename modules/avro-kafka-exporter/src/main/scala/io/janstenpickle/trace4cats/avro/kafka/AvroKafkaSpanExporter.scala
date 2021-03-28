@@ -1,9 +1,8 @@
 package io.janstenpickle.trace4cats.avro.kafka
 
 import java.io.ByteArrayOutputStream
-
 import cats.data.NonEmptyList
-import cats.effect.{ConcurrentEffect, ContextShift, Resource, Sync}
+import cats.effect.kernel.{Async, Resource, Sync}
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
@@ -50,7 +49,7 @@ object AvroKafkaSpanExporter {
       } yield ba
     }
 
-  def apply[F[_]: ConcurrentEffect: ContextShift, G[+_]: Traverse](
+  def apply[F[_]: Async, G[+_]: Traverse](
     bootStrapServers: NonEmptyList[String],
     topic: String,
     modifySettings: ProducerSettings[F, TraceId, CompletedSpan] => ProducerSettings[F, TraceId, CompletedSpan] =

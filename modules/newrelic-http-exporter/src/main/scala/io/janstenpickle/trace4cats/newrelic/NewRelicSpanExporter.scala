@@ -1,7 +1,8 @@
 package io.janstenpickle.trace4cats.newrelic
 
 import cats.Foldable
-import cats.effect.{ConcurrentEffect, Resource, Sync, Timer}
+import cats.effect.kernel.{Async, Resource, Temporal}
+import cats.syntax.applicative._
 import io.circe.Json
 import io.janstenpickle.trace4cats.`export`.HttpSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
@@ -15,16 +16,17 @@ import org.http4s.{Header, MediaType}
 import scala.concurrent.ExecutionContext
 
 object NewRelicSpanExporter {
-
-  def blazeClient[F[_]: ConcurrentEffect: Timer, G[_]: Foldable](
+  def blazeClient[F[_]: Async, G[_]: Foldable](
     apiKey: String,
     endpoint: Endpoint,
     ec: Option[ExecutionContext] = None
-  ): Resource[F, SpanExporter[F, G]] =
-    // TODO: CE3 - use Async[F].executionContext
-    BlazeClientBuilder[F](ec.getOrElse(ExecutionContext.global)).resource.evalMap(apply[F, G](_, apiKey, endpoint))
+  ): Resource[F, SpanExporter[F, G]] = for {
+    ec <- Resource.eval(ec.fold(Async[F].executionContext)(_.pure))
+    client <- BlazeClientBuilder[F](ec).resource
+    exporter <- Resource.eval(apply[F, G](client, apiKey, endpoint))
+  } yield exporter
 
-  def apply[F[_]: Sync: Timer, G[_]: Foldable](
+  def apply[F[_]: Temporal, G[_]: Foldable](
     client: Client[F],
     apiKey: String,
     endpoint: Endpoint
@@ -33,12 +35,11 @@ object NewRelicSpanExporter {
       client,
       endpoint.url,
       (batch: Batch[G]) => Convert.toJson(batch),
-      List(
+      List[Header.ToRaw](
         `Content-Type`(MediaType.application.json),
-        Header("Api-Key", apiKey),
-        Header("Data-Format", "newrelic"),
-        Header("Data-Format-Version", "1")
+        "Api-Key" -> apiKey,
+        "Data-Format" -> "newrelic",
+        "Data-Format-Version" -> "1"
       )
     )
-
 }

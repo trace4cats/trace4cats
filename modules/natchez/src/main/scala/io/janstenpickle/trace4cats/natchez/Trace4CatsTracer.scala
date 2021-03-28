@@ -1,13 +1,13 @@
 package io.janstenpickle.trace4cats.natchez
 
-import cats.effect.{Clock, Resource, Sync}
+import cats.effect.kernel.{Resource, Sync}
 import io.janstenpickle.trace4cats.ToHeaders
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.model.SpanKind
 import natchez.{EntryPoint, Kernel, Span}
 
 object Trace4CatsTracer {
-  def entryPoint[F[_]: Sync: Clock](
+  def entryPoint[F[_]: Sync](
     sampler: SpanSampler[F],
     completer: SpanCompleter[F],
     toHeaders: ToHeaders = ToHeaders.all

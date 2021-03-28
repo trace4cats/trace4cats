@@ -1,10 +1,12 @@
 package io.janstenpickle.trace4cats.collector
 
-import cats.effect.{Blocker, ConcurrentEffect, ExitCode, IO, Resource}
+import cats.effect.{ExitCode, IO}
+import cats.effect.kernel.{Async, Resource}
 import cats.implicits._
 import com.monovore.decline._
 import com.monovore.decline.effect._
 import fs2.Chunk
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.collector.common.CommonCollector
 import io.janstenpickle.trace4cats.collector.common.config.ConfigParser
 import io.janstenpickle.trace4cats.collector.config.CollectorConfig
@@ -13,7 +15,6 @@ import io.janstenpickle.trace4cats.model.AttributeValue
 import io.janstenpickle.trace4cats.opentelemetry.jaeger.OpenTelemetryJaegerSpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpGrpcSpanExporter
 import io.janstenpickle.trace4cats.stackdriver.StackdriverGrpcSpanExporter
-import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 object Collector
     extends CommandIOApp(
@@ -26,16 +27,15 @@ object Collector
     CommonCollector.configFileOpt.map { configFile =>
       Slf4jLogger.create[IO].flatMap { implicit logger =>
         (for {
-          blocker <- Blocker[IO]
           oth <- others[IO](configFile)
-          stream <- CommonCollector[IO](blocker, configFile, oth)
+          stream <- CommonCollector[IO](configFile, oth)
         } yield stream).use(_.compile.drain.as(ExitCode.Success)).handleErrorWith { th =>
           logger.error(th)("Trace 4 Cats collector failed").as(ExitCode.Error)
         }
       }
     }
 
-  def others[F[_]: ConcurrentEffect](
+  def others[F[_]: Async](
     configFile: String
   ): Resource[F, List[(String, List[(String, AttributeValue)], SpanExporter[F, Chunk])]] =
     for {

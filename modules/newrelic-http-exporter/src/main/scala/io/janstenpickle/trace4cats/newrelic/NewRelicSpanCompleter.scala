@@ -1,35 +1,37 @@
 package io.janstenpickle.trace4cats.newrelic
 
-import cats.effect.{Concurrent, ConcurrentEffect, Resource, Timer}
+import cats.effect.kernel.{Async, Resource}
+import cats.syntax.applicative._
 import fs2.Chunk
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.{CompleterConfig, QueuedSpanCompleter}
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.TraceProcess
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
-import org.typelevel.log4cats.Logger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import scala.concurrent.ExecutionContext
 
 object NewRelicSpanCompleter {
-  def blazeClient[F[_]: ConcurrentEffect: Timer](
+  def blazeClient[F[_]: Async](
     process: TraceProcess,
     apiKey: String,
     endpoint: Endpoint,
     config: CompleterConfig = CompleterConfig(),
-    ec: Option[ExecutionContext] = None,
-  ): Resource[F, SpanCompleter[F]] =
-    // TODO: CE3 - use Async[F].executionContext
-    BlazeClientBuilder[F](ec.getOrElse(ExecutionContext.global)).resource
-      .flatMap(apply[F](_, process, apiKey, endpoint, config))
+    ec: Option[ExecutionContext] = None
+  ): Resource[F, SpanCompleter[F]] = for {
+    ec <- Resource.eval(ec.fold(Async[F].executionContext)(_.pure))
+    client <- BlazeClientBuilder[F](ec).resource
+    completer <- apply[F](client, process, apiKey, endpoint, config)
+  } yield completer
 
-  def apply[F[_]: Concurrent: Timer](
+  def apply[F[_]: Async](
     client: Client[F],
     process: TraceProcess,
     apiKey: String,
     endpoint: Endpoint,
-    config: CompleterConfig = CompleterConfig(),
+    config: CompleterConfig = CompleterConfig()
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])

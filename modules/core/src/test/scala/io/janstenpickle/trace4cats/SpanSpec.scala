@@ -1,10 +1,9 @@
 package io.janstenpickle.trace4cats
 
-import java.util.concurrent.{ScheduledExecutorService, ScheduledThreadPoolExecutor}
-
-import cats.effect.concurrent.Deferred
-import cats.effect.laws.util.TestContext
-import cats.effect.{ContextShift, ExitCase, IO, Timer}
+import cats.effect.{IO, OutcomeIO}
+import cats.effect.kernel.Deferred
+import cats.effect.testkit.TestInstances
+import cats.effect.unsafe.implicits.global
 import cats.implicits._
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
@@ -15,13 +14,14 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.concurrent.duration._
+import scala.util.Success
 
-class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks with ArbitraryInstances {
-  val ec: TestContext = TestContext()
-  implicit val timer: Timer[IO] = ec.ioTimer
-  implicit val ctx: ContextShift[IO] = ec.ioContextShift
-
-  val sc: ScheduledExecutorService = new ScheduledThreadPoolExecutor(1)
+class SpanSpec
+    extends AnyFlatSpec
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks
+    with ArbitraryInstances
+    with TestInstances {
 
   behavior.of("Span.root")
 
@@ -246,29 +246,31 @@ class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyCh
       span.status should be(status)
   }
 
-  it should "override the status to cancelled when execution is cancelled" in forAll {
-    (name: String, kind: SpanKind, status: SpanStatus, serviceName: String) =>
-      val completer = RefSpanCompleter.unsafe[IO](serviceName)
+  it should "override the status to cancelled when execution is cancelled" in {
+    forAll { (name: String, kind: SpanKind, status: SpanStatus, serviceName: String) =>
+      implicit val ticker = Ticker()
+      val io = for {
+        completer <- RefSpanCompleter[IO](serviceName)
+        _ <- Deferred[IO, OutcomeIO[Unit]]
+          .flatMap { stop =>
+            val r = Span
+              .root[IO](name, kind, SpanSampler.always, completer)
+              .use(_.setStatus(status) >> IO.never: IO[Unit])
+              .guaranteeCase(stop.complete(_).void)
 
-      Deferred[IO, ExitCase[Throwable]]
-        .flatMap { stop =>
-          val r = Span
-            .root[IO](name, kind, SpanSampler.always, completer)
-            .use(_.setStatus(status) >> IO.never: IO[Unit])
-            .guaranteeCase(stop.complete)
-
-          r.start.flatMap { fiber =>
-            timer.sleep(200.millis) >> fiber.cancel >> stop.get
+            r.start.flatMap { fiber =>
+              IO.sleep(200.millis) >> fiber.cancel >> stop.get
+            }
           }
-        }
-        .timeout(2.seconds)
-        .unsafeToFuture()
+          .timeout(2.seconds)
+        queue <- completer.get
+        span = queue.head
+      } yield span.status
 
-      ec.tick(3.seconds)
-
-      val span = completer.get.unsafeRunSync().head
-
-      span.status should be(SpanStatus.Cancelled)
+      val result = io.unsafeToFuture()(materializeRuntime)
+      ticker.ctx.tick(3.seconds)
+      result.value shouldEqual Some(Success(SpanStatus.Cancelled))
+    }
   }
 
   it should "override the status to internal when execution fails" in forAll {

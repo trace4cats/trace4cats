@@ -1,9 +1,9 @@
 package io.janstenpickle.trace4cats.sttp.tapir
 
-import cats.{Applicative, Monad}
+import cats.Monad
 import cats.syntax.applicativeError._
 import cats.data.{EitherT, Kleisli}
-import cats.effect.{MonadThrow, Resource}
+import cats.effect.kernel.{MonadThrow, Resource}
 import io.janstenpickle.trace4cats.{ErrorHandler, Span}
 import io.janstenpickle.trace4cats.base.optics.Getter
 import io.janstenpickle.trace4cats.inject.{ResourceKleisli, SpanParams}
@@ -14,7 +14,7 @@ import sttp.model.{HeaderNames, Headers}
 import scala.reflect.ClassTag
 
 object TapirResourceKleislis {
-  def fromHeaders[F[_]: Applicative, I](
+  def fromHeaders[F[_], I](
     inHeadersGetter: Getter[I, Headers],
     inSpanNamer: TapirInputSpanNamer[I],
     dropHeadersWhen: String => Boolean = HeaderNames.isSensitive

@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.`export`
 
-import cats.effect.Concurrent
+import cats.effect.kernel.Concurrent
 import cats.{Applicative, Monoid, Parallel}
 import fs2.{Chunk, Pipe}
 import io.janstenpickle.trace4cats.kernel.SpanExporter

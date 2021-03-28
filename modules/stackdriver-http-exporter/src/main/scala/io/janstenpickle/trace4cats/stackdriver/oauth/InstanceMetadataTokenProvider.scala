@@ -1,20 +1,20 @@
 package io.janstenpickle.trace4cats.stackdriver.oauth
 
-import cats.effect.Sync
+import cats.effect.kernel.Concurrent
 import cats.syntax.applicativeError._
 import cats.syntax.functor._
-import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.stackdriver.oauth.GoogleOAuth.FailedRequest
 import org.http4s.Method.GET
+import org.http4s.Uri
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl
-import org.http4s.{Header, Uri}
+import org.typelevel.log4cats.Logger
 
 object InstanceMetadataTokenProvider {
-  final private[this] val metadataHeader = Header("Metadata-Flavor", "Google")
+  final private[this] val metadataHeader = "Metadata-Flavor" -> "Google"
 
-  def apply[F[_]: Sync: Logger](httpClient: Client[F], serviceAccountName: String = "default"): TokenProvider[F] =
+  def apply[F[_]: Concurrent: Logger](httpClient: Client[F], serviceAccountName: String = "default"): TokenProvider[F] =
     new TokenProvider[F] with Http4sClientDsl[F] {
       final private[this] val tokenMetadataUri = Uri.unsafeFromString(
         s"http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/$serviceAccountName/token"

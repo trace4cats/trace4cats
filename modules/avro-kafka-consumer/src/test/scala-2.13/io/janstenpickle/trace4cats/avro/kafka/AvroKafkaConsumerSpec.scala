@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream
 import cats.Eq
 import cats.data.NonEmptyList
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import fs2.kafka.{AutoOffsetReset, ConsumerSettings}
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -20,17 +21,12 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import scala.concurrent.ExecutionContext
-
 class AvroKafkaConsumerSpec
     extends AnyFlatSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks
     with EmbeddedKafka
     with ArbitraryInstances {
-  implicit val contextShift = IO.contextShift(ExecutionContext.global)
-  implicit val timer = IO.timer(ExecutionContext.global)
-
   implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =

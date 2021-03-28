@@ -1,8 +1,7 @@
 package io.janstenpickle.trace4cats.http4s.client
 
 import cats.data.NonEmptyList
-import cats.effect.concurrent.Ref
-import cats.effect.{Sync, Timer}
+import cats.effect.kernel.{Async, Ref}
 import cats.implicits._
 import cats.{~>, Eq, Id}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
@@ -24,7 +23,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-abstract class BaseClientTracerSpec[F[_]: Sync: Timer, G[_]: Sync: Trace, Ctx](
+abstract class BaseClientTracerSpec[F[_]: Async, G[_]: Async: Trace, Ctx](
   unsafeRunK: F ~> Id,
   makeSomeContext: Span[F] => Ctx,
   liftClient: Client[F] => Client[G]
@@ -57,7 +56,7 @@ abstract class BaseClientTracerSpec[F[_]: Sync: Timer, G[_]: Sync: Trace, Ctx](
 
   it should "correctly set request headers and span status when the response body is not read" in test(_.status(_).void)
 
-  def test(runReq: (Client[G], G[Request[G]]) => G[Unit]): Assertion =
+  def test(runReq: (Client[G], Request[G]) => G[Unit]): Assertion =
     forAll { (rootSpan: String, req1Span: String, req2Span: String, response: Response[F]) =>
       val rootSpanName = s"root: $rootSpan"
       val req1SpanName = s"req1: $req1Span"

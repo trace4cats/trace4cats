@@ -1,11 +1,11 @@
 package io.janstenpickle.trace4cats.fs2.syntax
 
 import cats.data.WriterT
-import cats.effect.BracketThrow
+import cats.effect.kernel.MonadCancelThrow
 import cats.syntax.applicative._
 import cats.syntax.apply._
 import cats.syntax.functor._
-import cats.{~>, Applicative, Defer, Functor}
+import cats.{~>, Applicative, Functor}
 import fs2.Stream
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.fs2.{ContinuationSpan, TracedStream}
@@ -14,7 +14,7 @@ import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, TraceHeaders
 import io.janstenpickle.trace4cats.{ErrorHandler, Span, ToHeaders}
 
 trait Fs2StreamSyntax {
-  implicit class InjectEntryPoint[F[_]: BracketThrow, A](stream: Stream[F, A]) {
+  implicit class InjectEntryPoint[F[_]: MonadCancelThrow, A](stream: Stream[F, A]) {
     def inject(ep: EntryPoint[F], name: String): TracedStream[F, A] =
       inject(ep, _ => name, SpanKind.Internal)
 
@@ -100,7 +100,7 @@ trait Fs2StreamSyntax {
     }
 
     private def eval[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
-      F: BracketThrow[F]
+      F: MonadCancelThrow[F]
     ): (Span[F], A) => F[(Span[F], B)] = { case (span, a) =>
       span.child(name, kind).use { child =>
         child.putAll(attributes: _*) *> eval(f).apply(span, a)
@@ -128,52 +128,57 @@ trait Fs2StreamSyntax {
       WriterT(stream.run.evalMapChunk(eval(f).tupled))
 
     def evalMap[B](name: String, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
-      F: BracketThrow[F]
+      F: MonadCancelThrow[F]
     ): TracedStream[F, B] =
       evalMap(name, SpanKind.Internal, attributes: _*)(f)
 
     def evalMap[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
-      F: BracketThrow[F]
+      F: MonadCancelThrow[F]
     ): TracedStream[F, B] =
       WriterT(stream.run.evalMap(eval(name, kind, attributes: _*)(f).tupled))
 
     def evalMapChunk[B](name: String, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
-      F: BracketThrow[F]
+      F: MonadCancelThrow[F]
     ): TracedStream[F, B] =
       evalMapChunk(name, SpanKind.Internal, attributes: _*)(f)
 
     def evalMapChunk[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
-      F: BracketThrow[F]
+      F: MonadCancelThrow[F]
     ): TracedStream[F, B] =
       WriterT(stream.run.evalMapChunk(eval(name, kind, attributes: _*)(f).tupled))
 
     def traceMapChunk[B](name: String, attributes: (String, AttributeValue)*)(f: A => B)(implicit
-      F: BracketThrow[F]
+      F: MonadCancelThrow[F]
     ): TracedStream[F, B] =
       traceMapChunk[B](name, SpanKind.Internal, attributes: _*)(f)
 
     def traceMapChunk[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(f: A => B)(implicit
-      F: BracketThrow[F]
+      F: MonadCancelThrow[F]
     ): TracedStream[F, B] =
       WriterT(stream.run.evalMapChunk(eval(name, kind, attributes: _*)(a => Applicative[F].pure(f(a))).tupled))
 
     def endTrace: Stream[F, A] =
       stream.value
 
-    def endTrace[G[_]: Applicative: Defer](implicit P: Provide[G, F, Span[G]]): Stream[G, A] =
+    def endTrace[G[_]: MonadCancelThrow](implicit F: MonadCancelThrow[F], P: Provide[G, F, Span[G]]): Stream[G, A] =
       Stream.resource(Span.noop[G]).flatMap(endTrace(_))
 
-    def endTrace[G[_]: Applicative: Defer](span: Span[G])(implicit P: Provide[G, F, Span[G]]): Stream[G, A] =
+    def endTrace[G[_]: MonadCancelThrow](
+      span: Span[G]
+    )(implicit F: MonadCancelThrow[F], P: Provide[G, F, Span[G]]): Stream[G, A] =
       translate(P.provideK(span)).value
 
     def through[B](f: TracedStream[F, A] => TracedStream[F, B]): TracedStream[F, B] = f(stream)
 
-    def liftTrace[G[_]: Applicative: Defer](implicit P: Provide[F, G, Span[F]]): TracedStream[G, A] =
+    def liftTrace[G[_]: MonadCancelThrow](implicit
+      F: MonadCancelThrow[F],
+      P: Provide[F, G, Span[F]]
+    ): TracedStream[G, A] =
       WriterT(stream.run.translate(P.liftK).map { case (span, a) =>
         ContinuationSpan.fromSpan[F, G](span) -> a
       })
 
-    def translate[G[_]: Applicative: Defer](fk: F ~> G): TracedStream[G, A] =
+    def translate[G[_]: MonadCancelThrow](fk: F ~> G)(implicit F: MonadCancelThrow[F]): TracedStream[G, A] =
       WriterT(stream.run.translate(fk).map { case (span, a) =>
         span.mapK(fk) -> a
       })

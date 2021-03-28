@@ -6,9 +6,9 @@
 
 package io.janstenpickle.trace4cats.inject
 
-import cats.{~>, Applicative, Defer}
+import cats.{~>, Applicative}
 import cats.data.Kleisli
-import cats.effect.{Clock, Resource, Sync}
+import cats.effect.kernel.{MonadCancelThrow, Resource, Sync}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders}
 import io.janstenpickle.trace4cats.{ErrorHandler, Span, ToHeaders}
@@ -43,14 +43,14 @@ trait EntryPoint[F[_]] {
       continueOrElseRoot(name, kind, headers, errorHandler)
     }
 
-  final def mapK[G[_]: Defer: Applicative](fk: F ~> G): EntryPoint[G] =
+  final def mapK[G[_]](fk: F ~> G)(implicit F: MonadCancelThrow[F], G: MonadCancelThrow[G]): EntryPoint[G] =
     EntryPoint.mapK(fk)(this)
 }
 
 object EntryPoint {
   def apply[F[_]](implicit entryPoint: EntryPoint[F]): EntryPoint[F] = entryPoint
 
-  def apply[F[_]: Sync: Clock](
+  def apply[F[_]: Sync](
     sampler: SpanSampler[F],
     completer: SpanCompleter[F],
     toHeaders: ToHeaders = ToHeaders.all
@@ -82,16 +82,16 @@ object EntryPoint {
         Span.noop[F]
     }
 
-  private def mapK[F[_], G[_]: Defer: Applicative](fk: F ~> G)(ep: EntryPoint[F]): EntryPoint[G] =
+  private def mapK[F[_]: MonadCancelThrow, G[_]: MonadCancelThrow](fk: F ~> G)(ep: EntryPoint[F]): EntryPoint[G] =
     new EntryPoint[G] {
       def root(name: SpanName, kind: SpanKind, errorHandler: ErrorHandler): Resource[G, Span[G]] =
-        ep.root(name, kind, errorHandler).mapK(fk).map(_.mapK(fk))
+        ep.root(name, kind, errorHandler).map(_.mapK(fk)).mapK(fk)
       def continueOrElseRoot(
         name: SpanName,
         kind: SpanKind,
         headers: TraceHeaders,
         errorHandler: ErrorHandler
       ): Resource[G, Span[G]] =
-        ep.continueOrElseRoot(name, kind, headers, errorHandler).mapK(fk).map(_.mapK(fk))
+        ep.continueOrElseRoot(name, kind, headers, errorHandler).map(_.mapK(fk)).mapK(fk)
     }
 }

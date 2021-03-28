@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.opentelemetry.otlp
 
 import cats.Foldable
-import cats.effect.{Async, Resource}
+import cats.effect.kernel.{Async, Resource}
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.common.OpenTelemetryGrpcSpanExporter
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter

@@ -1,7 +1,8 @@
 package io.janstenpickle.trace4cats.model
 
 import cats.syntax.all._
-import cats.{Defer, Eq, MonadError, Show}
+import cats.{Apply, Eq, Functor, Show}
+import io.janstenpickle.trace4cats.model.random.Random
 
 case class SpanContext(
   traceId: TraceId,
@@ -16,13 +17,12 @@ case class SpanContext(
 }
 
 object SpanContext {
-  def root[F[_]: Defer: MonadError[*[_], Throwable]]: F[SpanContext] =
-    for {
-      traceId <- TraceId[F]
-      spanId <- SpanId[F]
-    } yield SpanContext(traceId, spanId, None, TraceFlags(SampleDecision.Include), TraceState.empty, isRemote = false)
+  def root[F[_]: Apply: Random]: F[SpanContext] =
+    (TraceId[F], SpanId[F]).mapN(
+      SpanContext(_, _, None, TraceFlags(SampleDecision.Include), TraceState.empty, isRemote = false)
+    )
 
-  def child[F[_]: Defer: MonadError[*[_], Throwable]](parent: SpanContext, isRemote: Boolean = false): F[SpanContext] =
+  def child[F[_]: Functor: Random](parent: SpanContext, isRemote: Boolean = false): F[SpanContext] =
     SpanId[F].map { spanId =>
       SpanContext(
         parent.traceId,
