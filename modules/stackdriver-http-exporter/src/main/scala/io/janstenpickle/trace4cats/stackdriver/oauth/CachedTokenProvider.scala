@@ -3,12 +3,12 @@ package io.janstenpickle.trace4cats.stackdriver.oauth
 import java.util.concurrent.TimeUnit
 
 import cats.effect.{Clock, Sync}
-import cats.effect.concurrent.Ref
 import cats.syntax.functor._
 import cats.syntax.flatMap._
 import cats.syntax.applicative._
 
 import scala.concurrent.duration._
+import cats.effect.Ref
 
 object CachedTokenProvider {
   def apply[F[_]: Sync: Clock](

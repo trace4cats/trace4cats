@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.sampling.tail.redis
 
 import cats.data.NonEmptyList
-import cats.effect.{Concurrent, ContextShift, Resource, Sync}
+import cats.effect.{Concurrent, Resource, Sync}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.parallel._

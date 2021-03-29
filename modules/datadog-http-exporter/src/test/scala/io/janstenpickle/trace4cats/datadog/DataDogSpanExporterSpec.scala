@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.datadog
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import fs2.Chunk
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger

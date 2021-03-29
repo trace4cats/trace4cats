@@ -135,7 +135,7 @@ object StackdriverGrpcSpanExporter {
         fut <- ffa
         ec = com.google.common.util.concurrent.MoreExecutors
           .directExecutor() // TODO: CE3 - use Async[F].executionContext
-        a <- Async[F].async[A] { cb =>
+        a <- Async[F].async_[A] { cb =>
           ApiFutures.addCallback(
             fut,
             new ApiFutureCallback[A] {

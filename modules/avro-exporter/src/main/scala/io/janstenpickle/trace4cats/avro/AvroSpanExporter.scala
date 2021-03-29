@@ -2,9 +2,8 @@ package io.janstenpickle.trace4cats.avro
 
 import java.io.ByteArrayOutputStream
 import java.net.{ConnectException, InetSocketAddress}
-import cats.effect.concurrent.Semaphore
 import cats.effect.syntax.concurrent._
-import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync, Timer}
+import cats.effect.{Concurrent, Resource, Sync}
 import cats.syntax.applicativeError._
 import cats.syntax.apply._
 import cats.syntax.either._
@@ -25,6 +24,8 @@ import org.apache.avro.generic.GenericDatumWriter
 import org.apache.avro.io.EncoderFactory
 
 import scala.concurrent.duration._
+import cats.effect.Temporal
+import cats.effect.std.Semaphore
 
 object AvroSpanExporter {
   //TODO: use one from cats-core when it's merged https://github.com/typelevel/cats/pull/3705
@@ -64,9 +65,7 @@ object AvroSpanExporter {
     *                  workers that consume the queue and send batches via UDP; use numbers
     *                  greater than 1 at your own risk
     */
-  def udp[F[_]: Concurrent: ContextShift: Timer, G[_]: Traverse](
-    blocker: Blocker,
-    host: String = agentHostname,
+  def udp[F[_]: Concurrent: ContextShift: Temporal, G[_]: Traverse](host: String = agentHostname,
     port: Int = agentPort,
     numFibers: Int = 1
   ): Resource[F, SpanExporter[F, G]] = {
@@ -111,7 +110,7 @@ object AvroSpanExporter {
           .drain
           .start
       )(fiber =>
-        Timer[F].sleep(50.millis).whileM_(semaphore.available.map(_ < maxPermits)) >>
+        Temporal[F].sleep(50.millis).whileM_(semaphore.available.map(_ < maxPermits)) >>
           fiber.cancel
       )
       _ <- replicateA_(writer)(numFibers)
@@ -126,9 +125,7 @@ object AvroSpanExporter {
     *                  workers that consume the queue and send batches via TCP; use numbers
     *                  greater than 1 at your own risk
     */
-  def tcp[F[_]: Concurrent: ContextShift: Timer: Logger, G[_]: Traverse](
-    blocker: Blocker,
-    host: String = agentHostname,
+  def tcp[F[_]: Concurrent: ContextShift: Temporal: Logger, G[_]: Traverse](host: String = agentHostname,
     port: Int = agentPort,
     numFibers: Int = 1
   ): Resource[F, SpanExporter[F, G]] = {
@@ -186,7 +183,7 @@ object AvroSpanExporter {
           .drain
           .start
       )(fiber =>
-        Timer[F].sleep(50.millis).whileM_(semaphore.available.map(_ < maxPermits)) >>
+        Temporal[F].sleep(50.millis).whileM_(semaphore.available.map(_ < maxPermits)) >>
           fiber.cancel
       )
       _ <- replicateA_(writer)(numFibers)

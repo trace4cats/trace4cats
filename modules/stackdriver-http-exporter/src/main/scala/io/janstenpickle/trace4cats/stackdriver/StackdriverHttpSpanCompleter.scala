@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.stackdriver
 
-import cats.effect.{Concurrent, ConcurrentEffect, Resource, Timer}
+import cats.effect.{Concurrent, ConcurrentEffect, Resource}
 import fs2.Chunk
 import io.janstenpickle.trace4cats.`export`.{CompleterConfig, QueuedSpanCompleter}
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
@@ -12,9 +12,10 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import scala.concurrent.ExecutionContext
+import cats.effect.Temporal
 
 object StackdriverHttpSpanCompleter {
-  def serviceAccountBlazeClient[F[_]: ConcurrentEffect: Timer](
+  def serviceAccountBlazeClient[F[_]: ConcurrentEffect: Temporal](
     process: TraceProcess,
     projectId: String,
     serviceAccountPath: String,
@@ -27,7 +28,7 @@ object StackdriverHttpSpanCompleter {
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 
-  def blazeClient[F[_]: ConcurrentEffect: Timer](
+  def blazeClient[F[_]: ConcurrentEffect: Temporal](
     process: TraceProcess,
     serviceAccountName: String = "default",
     config: CompleterConfig = CompleterConfig(),
@@ -39,7 +40,7 @@ object StackdriverHttpSpanCompleter {
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 
-  def serviceAccount[F[_]: Concurrent: Timer](
+  def serviceAccount[F[_]: Concurrent: Temporal](
     process: TraceProcess,
     client: Client[F],
     projectId: String,
@@ -52,7 +53,7 @@ object StackdriverHttpSpanCompleter {
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 
-  def apply[F[_]: Concurrent: Timer](
+  def apply[F[_]: Concurrent: Temporal](
     process: TraceProcess,
     client: Client[F],
     serviceAccountName: String = "default",
@@ -64,7 +65,7 @@ object StackdriverHttpSpanCompleter {
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 
-  def fromProviders[F[_]: Concurrent: Timer](
+  def fromProviders[F[_]: Concurrent: Temporal](
     process: TraceProcess,
     projectIdProvider: ProjectIdProvider[F],
     tokenProvider: TokenProvider[F],

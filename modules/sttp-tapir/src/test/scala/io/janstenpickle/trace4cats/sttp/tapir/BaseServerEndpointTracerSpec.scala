@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.sttp.tapir
 
 import cats.data.NonEmptyList
-import cats.effect.{Concurrent, ContextShift, Resource, Timer}
+import cats.effect.{Concurrent, Resource}
 import cats.syntax.all._
 import cats.{~>, Id}
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
@@ -20,8 +20,9 @@ import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.server.http4s._
 
 import scala.collection.immutable.Queue
+import cats.effect.Temporal
 
-abstract class BaseServerEndpointTracerSpec[F[_]: Concurrent: ContextShift: Timer](
+abstract class BaseServerEndpointTracerSpec[F[_]: Concurrent: ContextShift: Temporal](
   unsafeRunK: F ~> Id,
   injectEndpoints: EntryPoint[F] => List[ServerEndpoint[_, _, _, Any, F]],
   checkMkContextErrors: Boolean

@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.meta
 
 import cats.Eq
-import cats.effect.{ContextShift, IO, Resource, Timer}
+import cats.effect.{IO, Resource}
 import fs2.{Chunk, Stream}
 import fs2.concurrent.Queue
 import org.typelevel.log4cats.Logger
@@ -15,6 +15,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.concurrent.ExecutionContext
+import cats.effect.Temporal
 
 class TracedSpanExporterSpec
     extends AnyFlatSpec
@@ -22,7 +23,7 @@ class TracedSpanExporterSpec
     with ScalaCheckDrivenPropertyChecks
     with ArbitraryInstances {
 
-  implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
+  implicit val timer: Temporal[IO] = IO.timer(ExecutionContext.global)
   implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]

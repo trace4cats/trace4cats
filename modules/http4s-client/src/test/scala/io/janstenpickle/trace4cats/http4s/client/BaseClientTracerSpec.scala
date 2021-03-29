@@ -1,8 +1,7 @@
 package io.janstenpickle.trace4cats.http4s.client
 
 import cats.data.NonEmptyList
-import cats.effect.concurrent.Ref
-import cats.effect.{Sync, Timer}
+import cats.effect.Sync
 import cats.implicits._
 import cats.{~>, Eq, Id}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
@@ -23,8 +22,9 @@ import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import cats.effect.{ Ref, Temporal }
 
-abstract class BaseClientTracerSpec[F[_]: Sync: Timer, G[_]: Sync: Trace, Ctx](
+abstract class BaseClientTracerSpec[F[_]: Sync: Temporal, G[_]: Sync: Trace, Ctx](
   unsafeRunK: F ~> Id,
   makeSomeContext: Span[F] => Ctx,
   liftClient: Client[F] => Client[G]

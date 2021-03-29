@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.http4s.server
 import java.util.UUID
 
 import cats.data.NonEmptyList
-import cats.effect.{Resource, Sync, Timer}
+import cats.effect.{Resource, Sync}
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -25,8 +25,9 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.immutable.Queue
+import cats.effect.Temporal
 
-abstract class BaseServerTracerSpec[F[_]: Sync: Timer, G[_]: Sync](
+abstract class BaseServerTracerSpec[F[_]: Sync: Temporal, G[_]: Sync](
   unsafeRunK: F ~> Id,
   noopProvideK: G ~> F,
   injectRoutes: (HttpRoutes[G], Http4sRequestFilter, EntryPoint[F]) => HttpRoutes[F],

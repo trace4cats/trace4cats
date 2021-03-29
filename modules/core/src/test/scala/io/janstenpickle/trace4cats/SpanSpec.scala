@@ -2,9 +2,8 @@ package io.janstenpickle.trace4cats
 
 import java.util.concurrent.{ScheduledExecutorService, ScheduledThreadPoolExecutor}
 
-import cats.effect.concurrent.Deferred
 import cats.effect.laws.util.TestContext
-import cats.effect.{ContextShift, ExitCase, IO, Timer}
+import cats.effect.{ExitCase, IO}
 import cats.implicits._
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
@@ -15,10 +14,11 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.concurrent.duration._
+import cats.effect.{ Deferred, Temporal }
 
 class SpanSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks with ArbitraryInstances {
   val ec: TestContext = TestContext()
-  implicit val timer: Timer[IO] = ec.ioTimer
+  implicit val timer: Temporal[IO] = ec.ioTimer
   implicit val ctx: ContextShift[IO] = ec.ioContextShift
 
   val sc: ScheduledExecutorService = new ScheduledThreadPoolExecutor(1)

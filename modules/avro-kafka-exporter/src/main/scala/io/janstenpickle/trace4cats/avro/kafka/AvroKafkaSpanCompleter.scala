@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.avro.kafka
 
 import cats.data.NonEmptyList
-import cats.effect.{ConcurrentEffect, ContextShift, Resource, Timer}
+import cats.effect.{ConcurrentEffect, Resource}
 import fs2.Chunk
 import fs2.kafka.{KafkaProducer, ProducerSettings}
 import org.typelevel.log4cats.Logger
@@ -9,9 +9,10 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.{CompleterConfig, QueuedSpanCompleter}
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.{CompletedSpan, TraceId, TraceProcess}
+import cats.effect.Temporal
 
 object AvroKafkaSpanCompleter {
-  def apply[F[_]: ConcurrentEffect: ContextShift: Timer](
+  def apply[F[_]: ConcurrentEffect: ContextShift: Temporal](
     process: TraceProcess,
     bootStrapServers: NonEmptyList[String],
     topic: String,
@@ -25,7 +26,7 @@ object AvroKafkaSpanCompleter {
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 
-  def fromProducer[F[_]: ConcurrentEffect: Timer](
+  def fromProducer[F[_]: ConcurrentEffect: Temporal](
     process: TraceProcess,
     producer: KafkaProducer[F, TraceId, CompletedSpan],
     topic: String,

@@ -1,6 +1,5 @@
 package io.janstenpickle.trace4cats.example
 
-import cats.effect.Blocker
 import io.janstenpickle.trace4cats.example.Fs2Example.entryPoint
 import io.janstenpickle.trace4cats.http4s.client.syntax._
 import io.janstenpickle.trace4cats.http4s.common.Http4sRequestFilter
@@ -18,6 +17,7 @@ import zio.interop.catz._
 import zio.interop.catz.implicits._
 
 import scala.concurrent.ExecutionContext
+import cats.effect.Resource
 
 object Http4sZioExample extends CatsApp {
 
@@ -32,7 +32,7 @@ object Http4sZioExample extends CatsApp {
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
     (for {
-      blocker <- Blocker[Task]
+      blocker <- Resource.unit[Task]
       ep <- entryPoint[Task](blocker, TraceProcess("trace4catsHttp4s"))
 
       client <- BlazeClientBuilder[Task](ExecutionContext.global).resource

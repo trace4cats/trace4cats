@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.avro.kafka
 
 import cats.data.NonEmptyList
-import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Sync, Timer}
+import cats.effect.{Concurrent, ConcurrentEffect, Sync}
 import cats.syntax.applicativeError._
 import cats.syntax.either._
 import cats.syntax.flatMap._
@@ -17,6 +17,7 @@ import io.janstenpickle.trace4cats.model._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.io.DecoderFactory
+import cats.effect.Temporal
 
 object AvroKafkaConsumer {
   implicit def keyDeserializer[F[_]: Sync]: Deserializer[F, Option[TraceId]] =
@@ -43,7 +44,7 @@ object AvroKafkaConsumer {
       }
     }
 
-  def apply[F[_]: ConcurrentEffect: ContextShift: Timer](
+  def apply[F[_]: ConcurrentEffect: ContextShift: Temporal](
     bootStrapServers: NonEmptyList[String],
     consumerGroup: String,
     topic: String,

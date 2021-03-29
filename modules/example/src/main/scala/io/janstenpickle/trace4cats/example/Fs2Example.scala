@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.example
 
 import java.util.concurrent.TimeUnit
 import cats.data.Kleisli
-import cats.effect.{Blocker, BracketThrow, Clock, Concurrent, ContextShift, ExitCode, IO, IOApp, Resource, Sync, Timer}
+import cats.effect.{Clock, Concurrent, ExitCode, IO, IOApp, Resource, Sync}
 import cats.implicits._
 import cats.{Applicative, Functor, Monad, Order, Parallel}
 import fs2.Stream
@@ -18,12 +18,11 @@ import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders, TraceProcess}
 
 import scala.concurrent.duration._
 import scala.util.Random
+import cats.effect.{ MonadCancelThrow, Temporal }
 
 object Fs2Example extends IOApp {
 
-  def entryPoint[F[_]: Concurrent: ContextShift: Timer](
-    blocker: Blocker,
-    process: TraceProcess
+  def entryPoint[F[_]: Concurrent: ContextShift: Temporal](process: TraceProcess
   ): Resource[F, EntryPoint[F]] =
     AvroSpanCompleter.udp[F](blocker, process, config = CompleterConfig(batchTimeout = 50.millis)).map { completer =>
       EntryPoint[F](SpanSampler.probabilistic[F](0.05), completer)
@@ -31,9 +30,9 @@ object Fs2Example extends IOApp {
 
   // Intentionally slow parallel quicksort, to demonstrate branching. If we run too quickly it seems
   // to break Jaeger with "skipping clock skew adjustment" so let's pause a bit each time.
-  def qsort[F[_]: Monad: Parallel: Trace: Timer, A: Order](as: List[A]): F[List[A]] =
+  def qsort[F[_]: Monad: Parallel: Trace: Temporal, A: Order](as: List[A]): F[List[A]] =
     Trace[F].span(as.mkString(",")) {
-      Timer[F].sleep(10.milli) *> {
+      Temporal[F].sleep(10.milli) *> {
         as match {
           case Nil => Monad[F].pure(Nil)
           case h :: t =>
@@ -43,7 +42,7 @@ object Fs2Example extends IOApp {
       }
     }
 
-  def runF[F[_]: Sync: Trace: Parallel: Timer](timeMs: String): F[Unit] =
+  def runF[F[_]: Sync: Trace: Parallel: Temporal](timeMs: String): F[Unit] =
     Trace[F].span("Sort some stuff!") {
       for {
         _ <- Sync[F].delay(println(timeMs))
@@ -52,14 +51,14 @@ object Fs2Example extends IOApp {
       } yield ()
     }
 
-  def sourceStream[F[_]: Functor: Timer]: Stream[F, FiniteDuration] = Stream.awakeEvery[F](10.seconds)
+  def sourceStream[F[_]: Functor: Temporal]: Stream[F, FiniteDuration] = Stream.awakeEvery[F](10.seconds)
 
   // uses WriterT to inject the EntryPoint with element in the stream
-  def inject[F[_]: BracketThrow: Timer](ep: EntryPoint[F]): TracedStream[F, FiniteDuration] =
+  def inject[F[_]: MonadCancelThrow: Temporal](ep: EntryPoint[F]): TracedStream[F, FiniteDuration] =
     sourceStream[F].inject(ep, "this is injected root span", SpanKind.Producer)
 
   // after the first call to `evalMap` a `Span` is propagated alongside the entry point
-  def doWork[F[_]: BracketThrow: Clock](stream: TracedStream[F, FiniteDuration]): TracedStream[F, Long] =
+  def doWork[F[_]: MonadCancelThrow: Clock](stream: TracedStream[F, FiniteDuration]): TracedStream[F, Long] =
     stream
       // eval some effect within a span
       .evalMap(
@@ -71,13 +70,13 @@ object Fs2Example extends IOApp {
       }
 
   // perform a map operation on the underlying stream where each element is traced
-  def map[F[_]: BracketThrow](stream: TracedStream[F, Long]): TracedStream[F, String] =
+  def map[F[_]: MonadCancelThrow](stream: TracedStream[F, Long]): TracedStream[F, String] =
     stream.traceMapChunk("map", "opt-attr-2" -> LongValue(1))(_.toString)
 
   // `evalMapTrace` takes a function which transforms A => Kleisli[F, Span[F], B] and injects a root or child span
   // to the evaluation. This allows implicit resolution of the `Trace` typeclass in any methods accessed within the
   // evaluation
-  def doTracedWork[F[_]: Sync: Parallel: Timer](stream: TracedStream[F, String]): TracedStream[F, Unit] =
+  def doTracedWork[F[_]: Sync: Parallel: Temporal](stream: TracedStream[F, String]): TracedStream[F, Unit] =
     stream.evalMapTrace { time =>
       runF[Kleisli[F, Span[F], *]](time)
     }
@@ -86,7 +85,7 @@ object Fs2Example extends IOApp {
   def getHeaders[F[_]](stream: TracedStream[F, Unit]): Stream[F, (TraceHeaders, Unit)] =
     stream.traceHeaders.endTrace
 
-  def continue[F[_]: BracketThrow](ep: EntryPoint[F], stream: Stream[F, (TraceHeaders, Unit)]): TracedStream[F, Unit] =
+  def continue[F[_]: MonadCancelThrow](ep: EntryPoint[F], stream: Stream[F, (TraceHeaders, Unit)]): TracedStream[F, Unit] =
     // inject the entry point and extract headers from the stream element
     stream
       .injectContinue(ep, "this is the root span in a new service", SpanKind.Consumer)(_._1)
@@ -96,7 +95,7 @@ object Fs2Example extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] =
     (for {
-      blocker <- Blocker[IO]
+      blocker <- Resource.unit[IO]
       ep <- entryPoint[IO](blocker, TraceProcess("trace4catsFS2"))
     } yield ep)
       .use { ep =>

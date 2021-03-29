@@ -1,7 +1,6 @@
 package io.janstenpickle.trace4cats.http4s.server
 
 import cats.data.{Kleisli, OptionT}
-import cats.effect.BracketThrow
 import cats.syntax.apply._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -11,13 +10,14 @@ import io.janstenpickle.trace4cats.http4s.common.{Http4sHeaders, Http4sStatusMap
 import io.janstenpickle.trace4cats.inject.{ResourceKleisli, Trace}
 import org.http4s.util.CaseInsensitiveString
 import org.http4s.{HttpApp, HttpRoutes, Request, Response}
+import cats.effect.MonadCancelThrow
 
 object ServerTracer {
   def injectRoutes[F[_], G[_]: Monad: Trace, Ctx](
     routes: HttpRoutes[G],
     k: ResourceKleisli[F, Request_, Ctx],
     dropHeadersWhen: CaseInsensitiveString => Boolean,
-  )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F]): HttpRoutes[F] =
+  )(implicit P: Provide[F, G, Ctx], F: MonadCancelThrow[F]): HttpRoutes[F] =
     Kleisli[OptionT[F, *], Request[F], Response[F]] { req =>
       val fa =
         for {
@@ -43,7 +43,7 @@ object ServerTracer {
     app: HttpApp[G],
     k: ResourceKleisli[F, Request_, Ctx],
     dropHeadersWhen: CaseInsensitiveString => Boolean,
-  )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F]): HttpApp[F] =
+  )(implicit P: Provide[F, G, Ctx], F: MonadCancelThrow[F]): HttpApp[F] =
     Kleisli[F, Request[F], Response[F]] { req =>
       val fa =
         for {
