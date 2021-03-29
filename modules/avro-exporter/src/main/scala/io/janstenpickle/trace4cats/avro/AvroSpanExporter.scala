@@ -5,7 +5,6 @@ import java.net.ConnectException
 import cats.effect.kernel.syntax.spawn._
 import cats.effect.kernel.{Async, Clock, Resource, Sync}
 import cats.effect.std.{Queue, Semaphore}
-import cats.syntax.applicative._
 import cats.syntax.applicativeError._
 import cats.syntax.apply._
 import cats.syntax.either._
@@ -15,7 +14,7 @@ import cats.syntax.monad._
 import cats.syntax.option._
 import cats.syntax.traverse._
 import cats.{Applicative, Traverse}
-import com.comcast.ip4s.{Dns, Host, Hostname, IDN, IpAddress, Port, SocketAddress}
+import com.comcast.ip4s.{Host, IpAddress, Port, SocketAddress}
 import fs2.io.net.{Datagram, DatagramSocket, Network, Socket, SocketGroup}
 import fs2.{Chunk, Stream}
 import org.typelevel.log4cats.Logger
@@ -100,13 +99,8 @@ object AvroSpanExporter {
     for {
       avroSchema <- Resource.eval(AvroInstances.completedSpanSchema[F])
       host <- Resource.eval(Host.fromString(host).liftTo[F](new IllegalArgumentException(s"invalid host $host")))
-      ip <- Resource.eval(host match {
-        case address: IpAddress => address.pure[F]
-        case hostname: Hostname => Dns[F].resolve(hostname)
-        case idn: IDN => Dns[F].resolve(idn.hostname)
-      })
       port <- Resource.eval(Port.fromInt(port).liftTo[F](new IllegalArgumentException(s"invalid port $port")))
-      address = SocketAddress(ip, port)
+      address <- Resource.eval(SocketAddress(host, port).resolve[F])
       queue <- Resource.eval(Queue.bounded[F, Batch[G]](queueCapacity))
       semaphore <- Resource.eval(Semaphore[F](maxPermits))
       socketGroup <- Network[F].datagramSocketGroup()
