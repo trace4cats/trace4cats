@@ -39,7 +39,7 @@ Requires:
 
 ```
 
-## [Advanced](0.10.0)
+## [Advanced](../modules/example/src/main/scala/io/janstenpickle/trace4cats/example/AdvancedExample.scala)
 
 Demonstrates how spans may be used in a for comprehension along side other [`Resource`]s.
 Also shows how multiple completers may be combined using a monoid in the
