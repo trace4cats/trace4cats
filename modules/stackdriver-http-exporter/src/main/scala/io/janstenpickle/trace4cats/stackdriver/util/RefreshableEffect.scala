@@ -2,8 +2,9 @@ package io.janstenpickle.trace4cats.stackdriver.util
 
 /** Code copied from https://github.com/permutive/fs2-google-pubsub
   */
+import cats.MonadThrow
 import cats.effect.kernel.syntax.spawn._
-import cats.effect.kernel.{MonadThrow, Ref, Resource, Temporal}
+import cats.effect.kernel.{Ref, Resource, Temporal}
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._

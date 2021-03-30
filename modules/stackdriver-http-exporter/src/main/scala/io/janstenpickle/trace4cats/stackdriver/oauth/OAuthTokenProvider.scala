@@ -3,11 +3,11 @@ package io.janstenpickle.trace4cats.stackdriver.oauth
 /** Code adapted from https://github.com/permutive/fs2-google-pubsub
   */
 import java.io.File
-import cats.effect.{MonadThrow, Sync}
-import cats.effect.kernel.{Async, Clock}
+import cats.MonadThrow
+import cats.effect.kernel.{Async, Clock, Sync}
 import cats.syntax.all._
-import org.typelevel.log4cats.Logger
 import org.http4s.client.Client
+import org.typelevel.log4cats.Logger
 
 class OAuthTokenProvider[F[_]: MonadThrow: Clock](emailAddress: String, scope: List[String], auth: OAuth[F])
     extends TokenProvider[F] {
