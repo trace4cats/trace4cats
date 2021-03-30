@@ -28,15 +28,15 @@ application. Forwards batches of spans onto the Collector over TCP.
 To see the command line options:
 
 ```bash
-docker run -it janstenpickle/trace4cats-agent:0.9.0
+docker run -it janstenpickle/trace4cats-agent:0.10.0
 ```
 
 Run in background:
- 
+
 ```bash
 docker run -p7777:7777/udp -d --rm \
   --name trace4cats-agent \
-  janstenpickle/janstenpickle/trace4cats-agent:0.9.0
+  janstenpickle/janstenpickle/trace4cats-agent:0.10.0
 ```
 
 ### Agent Kafka
@@ -49,7 +49,7 @@ application. Forwards batches of spans onto a supplied Kafka topic.
 To see the command line options:
 
 ```bash
-docker run -it janstenpickle/trace4cats-agent-kafka:0.9.0
+docker run -it janstenpickle/trace4cats-agent-kafka:0.10.0
 ```
 
 Run in background:
@@ -57,12 +57,12 @@ Run in background:
 ```bash
 docker run -p7777:7777/udp -d --rm \
   --name trace4cats-agent \
-  janstenpickle/janstenpickle/trace4cats-agent-kafka:0.9.0
+  janstenpickle/janstenpickle/trace4cats-agent-kafka:0.10.0
 ```
 
 ## Collectors
 
-Collectors are designed as standalone components that route spans to different systems, see the 
+Collectors are designed as standalone components that route spans to different systems, see the
 [documentation on deployment topologies so](topologies.md) for information on how to use agents in different
 deployments.
 
@@ -101,7 +101,7 @@ buffer-size: 1000 # How many batches to buffer in case of a slow exporter, defau
 sampling:
   sample-probability: 0.05 # Optional - must be between 0 and 1.0. 1.0 being always sample, and 0.0 being never
   drop-span-names: # Optional - name of spans to drop (may be partial match)
-    - some-span-name   
+    - some-span-name
   rate: # Optional - rate sampling
     max-batch-size: 1000
     token-rate-millis: 10
@@ -144,7 +144,7 @@ forwarders:
 kafka-forwarders:
   - topic: spans
     bootstrap-servers:
-      - "localhost:9092"  
+      - "localhost:9092"
     # Optional additional Kafka producer config
     producer-config:
       key: value
@@ -197,7 +197,7 @@ new-relic:
 docker run -p7777:7777 -p7777:7777/udp -d --rm \
   --name trace4cats-collector \
   -v /path/to/your/collector-config.yaml:/tmp/collector.yaml \
-  janstenpickle/trace4cats-collector:0.9.0 --config-file=/tmp/collector.yaml
+  janstenpickle/trace4cats-collector:0.10.0 --config-file=/tmp/collector.yaml
 ```
 
 
@@ -233,7 +233,7 @@ buffer-size: 1000 # How many batches to buffer in case of a slow exporter, defau
 sampling:
   sample-probability: 0.05 # Optional - must be between 0 and 1.0. 1.0 being always sample, and 0.0 being never
   drop-span-names: # Optional - name of spans to drop (may be partial match)
-    - some-span-name 
+    - some-span-name
   rate: # Optional - rate sampling
     max-batch-size: 1000
     token-rate-millis: 10
@@ -276,7 +276,7 @@ forwarder:
 kafka-forwarder:
   - topic: spans
     bootstrap-servers:
-     - "localhost:9092"  
+     - "localhost:9092"
     # Optional additional Kafka producer config
     producer-config:
       key: value
@@ -315,7 +315,7 @@ new-relic:
 docker run -p7777:7777 -p7777:7777/udp -d --rm \
   --name trace4cats-collector-lite \
   -v /path/to/your/collector-config.yaml:/tmp/collector.yaml \
-  janstenpickle/trace4cats-collector-lite:0.9.0 --config-file=/tmp/collector.yaml
+  janstenpickle/trace4cats-collector-lite:0.10.0 --config-file=/tmp/collector.yaml
 ```
 
 
@@ -324,11 +324,11 @@ docker run -p7777:7777 -p7777:7777/udp -d --rm \
 [Jaeger]: https://www.jaegertracing.io/
 [Log4Cats]: https://github.com/typelevel/log4cats
 [Natchez]: https://github.com/tpolecat/natchez
-[`native-image`]: https://www.graalvm.org/docs/reference-manual/native-image/ 
+[`native-image`]: https://www.graalvm.org/docs/reference-manual/native-image/
 [OpenTelemetry]: http://opentelemetry.io
 [Stackdriver Trace]: https://cloud.google.com/trace/docs/reference
 [Datadog]: https://docs.datadoghq.com/api/v1/tracing/
-[NewRelic]: https://docs.newrelic.com/docs/understand-dependencies/distributed-tracing/trace-api/report-new-relic-format-traces-trace-api#new-relic-guidelines 
+[NewRelic]: https://docs.newrelic.com/docs/understand-dependencies/distributed-tracing/trace-api/report-new-relic-format-traces-trace-api#new-relic-guidelines
 [`Resource`]: https://typelevel.org/cats-effect/datatypes/resource.html
 [ZIO]: https://zio.dev
 [Sttp]: https://sttp.softwaremill.com
