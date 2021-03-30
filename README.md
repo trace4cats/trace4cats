@@ -12,14 +12,14 @@ Compatible with [OpenTelemetry] and [Jaeger], based on, and interoperates wht [N
 
 [Obligatory XKCD](https://xkcd.com/927/)
 
-#### For release information and changes see [the changelog](CHANGELOG.md)
+#### For release information and changes see [the releases page](releases)
 
   * [Motivation](#motivation)
   * [Highlights](#highlights)
   * [Quickstart](#quickstart)
   * [Components](#components)
   * [Documentation](#documentation)
-  * [SBT Dependencies](#sbt-dependencies)  
+  * [SBT Dependencies](#sbt-dependencies)
   * [native-image Compatibility](#native-image-compatibility)
   * [Contributing](#contributing)
 
@@ -31,7 +31,7 @@ brings along lots of other dependencies. You may find *Trace4Cats* useful if you
 - Reduce the number of dependencies in your application
 - Resolve a dependency conflict caused by a tracing implementation
 - Create a [`native-image`] using [Graalvm](https://www.graalvm.org/)
-  
+
 ## Highlights
 
 Trace4Cats supports publishing spans to the following systems:
@@ -53,7 +53,7 @@ Instrumentation for trace propagation and continuation is available for the foll
 - [FS2]
 
 **Unlike other tracing libraries, trace attributes are lazily evaluated. If a span is not [sampled](docs/sampling.md),
-no computation associated with calculating attribute values will be performed** 
+no computation associated with calculating attribute values will be performed**
 
 For more information on how to use these can be found in the [examples documentation](docs/examples.md)
 
@@ -64,9 +64,9 @@ For more information on how to use these can be found in the [examples documenta
 Add the following dependencies to your `build.sbt`:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.9.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.10.0"
 ```
 
 Then run the [collector](docs/components.md#collectors) in span logging mode:
@@ -75,7 +75,7 @@ Then run the [collector](docs/components.md#collectors) in span logging mode:
 echo "log-spans: true" > /tmp/collector.yaml
 docker run -p7777:7777 -p7777:7777/udp -it \
   -v /tmp/collector.yaml:/tmp/collector.yaml \
-  janstenpickle/trace4cats-collector-lite:0.9.0 \
+  janstenpickle/trace4cats-collector-lite:0.10.0 \
   --config-file=/tmp/collector.yaml
 ```
 
@@ -132,11 +132,11 @@ object Trace4CatsQuickStart extends IOApp {
 Trace4Cats is made up as both a set of libraries for integration in applications and standalone processes. For
 information on the libraries and interfaces see the [design documentation](docs/design.md).
 
-The standalone components are the agent and the collector. To see how they work together, see the 
-[topologies documentation](docs/topologies.md), for information on configuring and running the agent and collector see 
+The standalone components are the agent and the collector. To see how they work together, see the
+[topologies documentation](docs/topologies.md), for information on configuring and running the agent and collector see
 the [components documentation](docs/components.md).
 
-## Documentation 
+## Documentation
 
 - [Design](docs/design.md) - Trace4Cats design
 - [Components](docs/components.md) - running and configuring Trace4Cats components
@@ -150,29 +150,29 @@ the [components documentation](docs/components.md).
 To use Trace4Cats within your application add the dependencies listed below as needed:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-inject-zio" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-rate-sampling" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-fs2" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-http4s-client" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-http4s-server" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-sttp-client" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-sttp-client3" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-sttp-tapir" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-natchez" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-avro-kafka-exporter" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-avro-kafka-consumer" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-log-exporter" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.9.0"
-"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.9.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-inject-zio" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-rate-sampling" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-fs2" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-http4s-client" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-http4s-server" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-sttp-client" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-sttp-client3" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-sttp-tapir" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-natchez" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-avro-kafka-exporter" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-avro-kafka-consumer" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-log-exporter" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.10.0"
+"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.10.0"
 
 ```
 
@@ -199,11 +199,11 @@ This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-
 [Jaeger]: https://www.jaegertracing.io/
 [Log4Cats]: https://github.com/typelevel/log4cats
 [Natchez]: https://github.com/tpolecat/natchez
-[`native-image`]: https://www.graalvm.org/docs/reference-manual/native-image/ 
+[`native-image`]: https://www.graalvm.org/docs/reference-manual/native-image/
 [OpenTelemetry]: http://opentelemetry.io
 [Stackdriver Trace]: https://cloud.google.com/trace/docs/reference
 [Datadog]: https://docs.datadoghq.com/api/v1/tracing/
-[NewRelic]: https://docs.newrelic.com/docs/understand-dependencies/distributed-tracing/trace-api/report-new-relic-format-traces-trace-api#new-relic-guidelines 
+[NewRelic]: https://docs.newrelic.com/docs/understand-dependencies/distributed-tracing/trace-api/report-new-relic-format-traces-trace-api#new-relic-guidelines
 [`Resource`]: https://typelevel.org/cats-effect/datatypes/resource.html
 [ZIO]: https://zio.dev
 [Sttp]: https://sttp.softwaremill.com
