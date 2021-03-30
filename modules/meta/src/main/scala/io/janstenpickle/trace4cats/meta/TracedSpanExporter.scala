@@ -1,20 +1,20 @@
 package io.janstenpickle.trace4cats.meta
 
 import cats.Applicative
-import cats.effect.concurrent.Deferred
-import cats.effect.{Concurrent, Timer}
+import cats.effect.Concurrent
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.Chunk
 import io.janstenpickle.trace4cats.`export`.StreamSpanExporter
 import io.janstenpickle.trace4cats.kernel.{SpanExporter, SpanSampler}
 import io.janstenpickle.trace4cats.model._
+import cats.effect.{ Deferred, Temporal }
 
 object TracedSpanExporter {
   private final val spanName = "trace4cats.export.batch"
   private final val spanKind = SpanKind.Producer
 
-  def apply[F[_]: Concurrent: Timer](
+  def apply[F[_]: Concurrent: Temporal](
     name: String,
     attributes: Map[String, AttributeValue],
     process: TraceProcess,

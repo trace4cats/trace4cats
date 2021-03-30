@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.fs2.syntax
 
 import cats.Applicative
 import cats.data.Kleisli
-import cats.effect.{IO, Timer}
+import cats.effect.IO
 import fs2.Stream
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
@@ -18,6 +18,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scala.collection.immutable.Queue
 import scala.concurrent.ExecutionContext
 import cats.syntax.show._
+import cats.effect.Temporal
 
 class Fs2StreamSyntaxSpec
     extends AnyFlatSpec
@@ -27,7 +28,7 @@ class Fs2StreamSyntaxSpec
     with Fs2StreamSyntax {
   type IOTrace[A] = Kleisli[IO, Span[IO], A]
 
-  implicit val ioTimer: Timer[IO] = IO.timer(ExecutionContext.global)
+  implicit val ioTimer: Temporal[IO] = IO.timer(ExecutionContext.global)
 
   def hasParent(spans: Queue[CompletedSpan], span: String, parent: String): Assertion =
     spans.find(_.name == span).flatMap(_.context.parent.map(_.spanId.show)) should be(

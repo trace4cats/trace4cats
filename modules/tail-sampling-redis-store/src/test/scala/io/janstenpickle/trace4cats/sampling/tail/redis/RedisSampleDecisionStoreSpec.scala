@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.sampling.tail.redis
 
-import cats.effect.{ContextShift, IO, Resource, Timer}
+import cats.effect.{IO, Resource}
 import cats.syntax.flatMap._
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -13,6 +13,7 @@ import redis.embedded.RedisServer
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+import cats.effect.Temporal
 
 class RedisSampleDecisionStoreSpec
     extends AnyFlatSpec
@@ -20,7 +21,7 @@ class RedisSampleDecisionStoreSpec
     with ScalaCheckDrivenPropertyChecks
     with ArbitraryInstances {
 
-  implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
+  implicit val timer: Temporal[IO] = IO.timer(ExecutionContext.global)
   implicit val ctx: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]

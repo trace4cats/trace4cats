@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.agent.kafka
 
 import cats.data.NonEmptyList
-import cats.effect.{Blocker, ExitCode, IO, Resource}
+import cats.effect.{ExitCode, IO, Resource}
 import cats.implicits._
 import com.monovore.decline._
 import com.monovore.decline.effect._
@@ -47,7 +47,7 @@ object AgentKafka
     trace: Boolean,
     traceRate: Option[Double]
   ): IO[ExitCode] = (for {
-    blocker <- Blocker[IO]
+    blocker <- Resource.unit[IO]
     implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
 
     kafkaExporter <- AvroKafkaSpanExporter[IO, Chunk](kafkaBootstrapServers, kafkaTopic)

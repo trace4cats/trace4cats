@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.example
 
-import cats.effect.{Blocker, ExitCode, IO, IOApp, Resource}
+import cats.effect.{ExitCode, IO, IOApp, Resource}
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.Span
@@ -16,7 +16,7 @@ import scala.concurrent.duration._
 object AdvancedExample extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     (for {
-      blocker <- Blocker[IO]
+      blocker <- Resource.unit[IO]
       implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
       completer <- AllCompleters[IO](blocker, TraceProcess("test"))
 

@@ -1,10 +1,9 @@
 package io.janstenpickle.trace4cats.`export`
 
 import cats.Applicative
-import cats.effect.concurrent.Ref
 import cats.effect.syntax.bracket._
 import cats.effect.syntax.concurrent._
-import cats.effect.{Concurrent, Resource, Timer}
+import cats.effect.{Concurrent, Resource}
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -16,9 +15,10 @@ import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanExporter}
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceProcess}
 
 import scala.concurrent.duration._
+import cats.effect.{ Ref, Temporal }
 
 object QueuedSpanCompleter {
-  def apply[F[_]: Concurrent: Timer: Logger](
+  def apply[F[_]: Concurrent: Temporal: Logger](
     process: TraceProcess,
     exporter: SpanExporter[F, Chunk],
     config: CompleterConfig
@@ -51,7 +51,7 @@ object QueuedSpanCompleter {
           .compile
           .drain
           .start
-      }(fiber => Timer[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)
+      }(fiber => Temporal[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)
     } yield new SpanCompleter[F] {
       override def complete(span: CompletedSpan.Builder): F[Unit] = {
         val enqueue = queue.enqueue1(span.build(process)) >> inFlight.update { current =>

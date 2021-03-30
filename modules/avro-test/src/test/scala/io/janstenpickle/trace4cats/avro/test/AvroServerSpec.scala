@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.avro.test
 
 import cats.data.NonEmptyList
-import cats.effect.{Blocker, IO, Resource}
+import cats.effect.{IO, Resource}
 import cats.kernel.Eq
 import cats.syntax.all._
 import fs2.Chunk

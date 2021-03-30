@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.avro.server
 
 import java.net.InetSocketAddress
 
-import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync}
+import cats.effect.{Concurrent, Resource, Sync}
 import cats.syntax.applicativeError._
 import cats.syntax.either._
 import cats.syntax.flatMap._
@@ -51,9 +51,7 @@ object AvroServer {
       }
       .handleErrorWith(th => Logger[F].warn(th)("Failed to decode span batch").as(Option.empty[CompletedSpan]))
 
-  def tcp[F[_]: Concurrent: ContextShift: Logger](
-    blocker: Blocker,
-    sink: Pipe[F, CompletedSpan, Unit],
+  def tcp[F[_]: Concurrent: ContextShift: Logger](sink: Pipe[F, CompletedSpan, Unit],
     port: Int = agentPort,
   ): Resource[F, Stream[F, Unit]] =
     for {
@@ -74,9 +72,7 @@ object AvroServer {
       }
       .parJoin(100)
 
-  def udp[F[_]: Concurrent: ContextShift: Logger](
-    blocker: Blocker,
-    sink: Pipe[F, CompletedSpan, Unit],
+  def udp[F[_]: Concurrent: ContextShift: Logger](sink: Pipe[F, CompletedSpan, Unit],
     port: Int = agentPort,
   ): Resource[F, Stream[F, Unit]] =
     for {

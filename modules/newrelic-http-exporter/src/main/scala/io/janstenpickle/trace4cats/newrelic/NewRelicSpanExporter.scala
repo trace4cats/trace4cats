@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.newrelic
 
 import cats.Foldable
-import cats.effect.{ConcurrentEffect, Resource, Sync, Timer}
+import cats.effect.{ConcurrentEffect, Resource, Sync}
 import io.circe.Json
 import io.janstenpickle.trace4cats.`export`.HttpSpanExporter
 import io.janstenpickle.trace4cats.kernel.SpanExporter
@@ -13,10 +13,11 @@ import org.http4s.headers.`Content-Type`
 import org.http4s.{Header, MediaType}
 
 import scala.concurrent.ExecutionContext
+import cats.effect.Temporal
 
 object NewRelicSpanExporter {
 
-  def blazeClient[F[_]: ConcurrentEffect: Timer, G[_]: Foldable](
+  def blazeClient[F[_]: ConcurrentEffect: Temporal, G[_]: Foldable](
     apiKey: String,
     endpoint: Endpoint,
     ec: Option[ExecutionContext] = None
@@ -24,7 +25,7 @@ object NewRelicSpanExporter {
     // TODO: CE3 - use Async[F].executionContext
     BlazeClientBuilder[F](ec.getOrElse(ExecutionContext.global)).resource.evalMap(apply[F, G](_, apiKey, endpoint))
 
-  def apply[F[_]: Sync: Timer, G[_]: Foldable](
+  def apply[F[_]: Sync: Temporal, G[_]: Foldable](
     client: Client[F],
     apiKey: String,
     endpoint: Endpoint

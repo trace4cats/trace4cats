@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.example
 
 import cats.Parallel
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Timer}
+import cats.effect.{ConcurrentEffect, Resource}
 import cats.instances.list._
 import cats.syntax.foldable._
 import cats.syntax.parallel._
@@ -17,6 +17,7 @@ import io.janstenpickle.trace4cats.opentelemetry.otlp.{
   OpenTelemetryOtlpHttpSpanCompleter
 }
 import io.janstenpickle.trace4cats.stackdriver.{StackdriverGrpcSpanCompleter, StackdriverHttpSpanCompleter}
+import cats.effect.Temporal
 
 /** This example shows how many different completers may be combined into a single completer using
   * the provided monoid instance.
@@ -25,9 +26,7 @@ import io.janstenpickle.trace4cats.stackdriver.{StackdriverGrpcSpanCompleter, St
   * provide a `Parallel` typeclass then completers will be executed in sequence
   */
 object AllCompleters {
-  def apply[F[_]: ConcurrentEffect: ContextShift: Timer: Parallel: Logger](
-    blocker: Blocker,
-    process: TraceProcess
+  def apply[F[_]: ConcurrentEffect: ContextShift: Temporal: Parallel: Logger](process: TraceProcess
   ): Resource[F, SpanCompleter[F]] =
     List(
       AvroSpanCompleter.udp[F](blocker, process),

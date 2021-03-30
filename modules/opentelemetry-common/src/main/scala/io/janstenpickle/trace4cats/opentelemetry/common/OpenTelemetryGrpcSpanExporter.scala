@@ -31,7 +31,7 @@ object OpenTelemetryGrpcSpanExporter {
   ): Resource[F, SpanExporter[F, G]] = {
     def liftCompletableResultCode(fa: F[CompletableResultCode])(onFailure: => Throwable): F[Unit] =
       fa.flatMap { result =>
-        Async[F].async[Unit] { cb =>
+        Async[F].async_[Unit] { cb =>
           val _ = result.whenComplete { () =>
             if (result.isSuccess) cb(Right(()))
             else cb(Left(onFailure))

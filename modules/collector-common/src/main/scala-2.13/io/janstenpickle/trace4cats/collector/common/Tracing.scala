@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.collector.common
 
 import java.net.InetAddress
 import cats.data.NonEmptyList
-import cats.effect.{Concurrent, Resource, Sync, Timer}
+import cats.effect.{Concurrent, Resource, Sync}
 import cats.syntax.functor._
 import cats.syntax.traverse._
 import cats.syntax.semigroup._
@@ -14,13 +14,14 @@ import io.janstenpickle.trace4cats.meta.{PipeTracer, TracedSpanExporter}
 import io.janstenpickle.trace4cats.model.AttributeValue.StringList
 import io.janstenpickle.trace4cats.model.{AttributeValue, CompletedSpan, TraceProcess}
 import io.janstenpickle.trace4cats.rate.sampling.RateSpanSampler
+import cats.effect.Temporal
 
 object Tracing {
   def process[F[_]: Sync]: F[TraceProcess] = Sync[F].delay(InetAddress.getLocalHost.getHostName).map { hostname =>
     TraceProcess("trace4cats-collector", Map("hostname" -> hostname))
   }
 
-  def sampler[F[_]: Concurrent: Timer](
+  def sampler[F[_]: Concurrent: Temporal](
     config: Option[TracingConfig],
     bufferSize: Int
   ): Resource[F, Option[SpanSampler[F]]] =
@@ -30,7 +31,7 @@ object Tracing {
       )
     )
 
-  def pipe[F[_]: Concurrent: Timer](
+  def pipe[F[_]: Concurrent: Temporal](
     sampler: Option[SpanSampler[F]],
     process: TraceProcess,
     listener: ListenerConfig,
@@ -61,7 +62,7 @@ object Tracing {
   def combineAttributes(allAttrs: List[(String, AttributeValue)]): Map[String, AttributeValue] =
     allAttrs.groupMapReduce(_._1)(_._2)(_ |+| _)
 
-  def exporter[F[_]: Concurrent: Timer](
+  def exporter[F[_]: Concurrent: Temporal](
     sampler: Option[SpanSampler[F]],
     name: String,
     exporterNames: List[String],

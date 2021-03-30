@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.meta
 
 import cats.Eq
-import cats.effect.{ContextShift, IO, Timer}
+import cats.effect.IO
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanSampler}
 import io.janstenpickle.trace4cats.model.{AttributeValue, CompletedSpan, MetaTrace, SpanKind, TraceProcess}
@@ -11,6 +11,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.concurrent.ExecutionContext
+import cats.effect.Temporal
 
 class TracedSpanCompleterSpec
     extends AnyFlatSpec
@@ -18,7 +19,7 @@ class TracedSpanCompleterSpec
     with ScalaCheckDrivenPropertyChecks
     with ArbitraryInstances {
 
-  implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
+  implicit val timer: Temporal[IO] = IO.timer(ExecutionContext.global)
   implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   it should "add a trace for every span when all meta traces are sampled" in forAll {
