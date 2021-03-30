@@ -10,14 +10,14 @@
     + [Sample Decision Store](#sample-decision-store)
     + [Collector Tail Sampling](#collector-tail-sampling)
 
-There are two types of sampling in tracing; head and tail. 
+There are two types of sampling in tracing; head and tail.
 
-- Head sampling is performed at the source, the choice is made within the traced component as to whether the trace 
+- Head sampling is performed at the source, the choice is made within the traced component as to whether the trace
 should be sampled.
 - Tail sampling is performed in infrastructure downstream from the traced component. This could be in a [collector] or
 the tracing system itself.
 
-As mentioned in the [design document](design.md), there are three kinds of head sampler provided out of the box, 
+As mentioned in the [design document](design.md), there are three kinds of head sampler provided out of the box,
 although you are welcome to create other implementations of the `SpanSampler` or `TailSpanSampler` interfaces:
 
 - Always
@@ -75,10 +75,10 @@ components. There are two parameters required to configure this sampler;
 - Bucket size: maximum number of tokens that spans that may be allocated in one go
 - Token rate: how often tokens are added back to the bucket
 
-In order to use the rate sampler, add the following dependency to your `build.sbt`: 
+In order to use the rate sampler, add the following dependency to your `build.sbt`:
 
 ```
-"io.janstenpickle" %% "trace4cats-rate-sampling" % "0.9.0"
+"io.janstenpickle" %% "trace4cats-rate-sampling" % "0.11.0"
 ```
 
 You can use the sampler with the code block below. For a more complete example see
@@ -120,7 +120,7 @@ can receive spans for the same trace, the sample decision may be shared between 
 in this kind of [topology](topologies.md), then you could end up with incomplete traces in you tracing system. At
 present the only external sample store implementation available is Redis.
 
-### Collector Tail Sampling 
+### Collector Tail Sampling
 
 By using the tail sampling config on the Trace4Cats Collector you can centrally configure sampling for all of your
 traces.
@@ -131,7 +131,7 @@ The configuration fragment below sets up the following:
     - This sampler only applies to root spans, subsequent spans will look up decisions for the trace against the
       decision store
     - *Note that the greater number of names, the more performance of the [collector] may be negatively impacted*
-  - A [rate sampler](#rate), which ensures the number of spans passing through the [collector] doesn't exceed a defined 
+  - A [rate sampler](#rate), which ensures the number of spans passing through the [collector] doesn't exceed a defined
     rate
     - Take care ensure that the configuration does not conflict with batching config
   - A local cache decision store with

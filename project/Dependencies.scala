@@ -2,9 +2,9 @@ import sbt._
 
 object Dependencies {
   object Versions {
-    val cats = "2.4.2"
+    val cats = "2.5.0"
     val catsEffect = "3.0.0-RC2"
-    val collectionCompat = "2.4.2"
+    val collectionCompat = "2.4.3"
     val commonsCodec = "1.15"
     val circe = "0.13.0"
     val circeYaml = "0.13.1"
@@ -36,8 +36,8 @@ object Dependencies {
     val sttpModel = "1.4.0"
     val sttpTapir = "0.17.19"
     val svm = "19.2.1"
-    val vulcan = "1.4.1"
-    val zioInterop = "2.3.1.0"
+    val vulcan = "1.5.0"
+    val zioInterop = "2.4.0.0"
 
     val catsTestkitScalatest = "2.1.2"
     val disciplineScalatest = "2.1.2"

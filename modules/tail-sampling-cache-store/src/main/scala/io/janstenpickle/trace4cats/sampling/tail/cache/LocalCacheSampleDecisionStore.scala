@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.sampling.tail.cache
 
-import cats.effect.Sync
+import cats.effect.kernel.Sync
 import cats.syntax.functor._
 import com.github.blemale.scaffeine.Scaffeine
 import io.janstenpickle.trace4cats.model.{SampleDecision, TraceId}

@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.log
 
 import cats.{Foldable, Functor}
-import cats.effect.Sync
+import cats.effect.kernel.Sync
 import cats.syntax.functor._
 import cats.syntax.show._
 import org.typelevel.log4cats.Logger
