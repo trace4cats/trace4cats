@@ -2,7 +2,8 @@ package io.janstenpickle.trace4cats.stackdriver
 
 import cats.Foldable
 import cats.data.NonEmptyList
-import cats.effect.{Async, Resource, Sync}
+import cats.effect.{Async, ContextShift, Resource, Sync}
+import cats.effect.syntax.bracket._
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
 import cats.syntax.functor._
@@ -26,7 +27,7 @@ import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
 object StackdriverGrpcSpanExporter {
-  def apply[F[_]: Async, G[_]: Foldable](
+  def apply[F[_]: Async: ContextShift, G[_]: Foldable](
     projectId: String,
     credentials: Option[Credentials] = None,
     requestTimeout: FiniteDuration = 5.seconds
@@ -130,8 +131,8 @@ object StackdriverGrpcSpanExporter {
       builder.build()
     }
 
-    def liftApiFuture[A](ffa: F[ApiFuture[A]]): F[A] = {
-      for {
+    def liftApiFuture[A](ffa: F[ApiFuture[A]]): F[A] =
+      (for {
         fut <- ffa
         ec = com.google.common.util.concurrent.MoreExecutors
           .directExecutor() // TODO: CE3 - use Async[F].executionContext
@@ -145,8 +146,7 @@ object StackdriverGrpcSpanExporter {
             ec.execute _
           )
         }
-      } yield a
-    }
+      } yield a).guarantee(ContextShift[F].shift)
 
     def write(client: TraceServiceClient, spans: G[CompletedSpan]): F[Unit] =
       for {
