@@ -1,13 +1,13 @@
 package io.janstenpickle.trace4cats.opentelemetry.otlp
 
 import cats.Foldable
-import cats.effect.{Async, Resource}
+import cats.effect.{Async, ContextShift, Resource}
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.common.OpenTelemetryGrpcSpanExporter
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
 
 object OpenTelemetryOtlpGrpcSpanExporter {
-  def apply[F[_]: Async, G[_]: Foldable](
+  def apply[F[_]: Async: ContextShift, G[_]: Foldable](
     host: String = "localhost",
     port: Int = 55680
   ): Resource[F, SpanExporter[F, G]] =

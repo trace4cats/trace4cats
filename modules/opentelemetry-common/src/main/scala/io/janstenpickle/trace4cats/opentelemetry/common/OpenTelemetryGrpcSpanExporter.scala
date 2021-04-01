@@ -1,7 +1,8 @@
 package io.janstenpickle.trace4cats.opentelemetry.common
 
 import cats.Foldable
-import cats.effect.{Async, Resource, Sync}
+import cats.effect.{Async, ContextShift, Resource, Sync}
+import cats.effect.syntax.bracket._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.grpc.{ManagedChannel, ManagedChannelBuilder}
@@ -24,7 +25,7 @@ object OpenTelemetryGrpcSpanExporter {
     override def getMessage: String = s"Failed to export Open Telemetry span batch to $host:$port"
   }
 
-  def apply[F[_]: Async, G[_]: Foldable](
+  def apply[F[_]: Async: ContextShift, G[_]: Foldable](
     host: String,
     port: Int,
     makeExporter: ManagedChannel => OTSpanExporter
@@ -37,7 +38,7 @@ object OpenTelemetryGrpcSpanExporter {
             else cb(Left(onFailure))
           }
         }
-      }
+      }.guarantee(ContextShift[F].shift)
 
     def write(exporter: OTSpanExporter, spans: G[CompletedSpan]): F[Unit] = {
       for {

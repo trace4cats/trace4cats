@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.collector
 
-import cats.effect.{Blocker, ConcurrentEffect, ExitCode, IO, Resource}
+import cats.effect.{Blocker, ConcurrentEffect, ContextShift, ExitCode, IO, Resource}
 import cats.implicits._
 import com.monovore.decline._
 import com.monovore.decline.effect._
@@ -35,7 +35,7 @@ object Collector
       }
     }
 
-  def others[F[_]: ConcurrentEffect](
+  def others[F[_]: ConcurrentEffect: ContextShift](
     configFile: String
   ): Resource[F, List[(String, List[(String, AttributeValue)], SpanExporter[F, Chunk])]] =
     for {

@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.stackdriver
 
-import cats.effect.{Concurrent, Resource, Timer}
+import cats.effect.{Concurrent, ContextShift, Resource, Timer}
 import com.google.auth.Credentials
 import fs2.Chunk
 import io.janstenpickle.trace4cats.`export`.{CompleterConfig, QueuedSpanCompleter}
@@ -12,7 +12,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import scala.concurrent.duration._
 
 object StackdriverGrpcSpanCompleter {
-  def apply[F[_]: Concurrent: Timer](
+  def apply[F[_]: Concurrent: ContextShift: Timer](
     process: TraceProcess,
     projectId: String,
     credentials: Option[Credentials] = None,
