@@ -24,6 +24,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
           java-version: '15'
       - name: Cache ivy2
         uses: actions/cache@v2.1.4
@@ -88,6 +89,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
           java-version: '15'
       - name: Cache ivy2
         uses: actions/cache@v2.1.4
@@ -152,6 +154,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
           java-version: '15'
       - name: Cache ivy2
         uses: actions/cache@v2.1.4
@@ -210,6 +213,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
           java-version: '15'
       - name: Cache ivy2
         uses: actions/cache@v2.1.4
@@ -273,6 +277,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
           java-version: '15'
 
       - name: Cache ivy2
@@ -334,6 +339,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
           java-version: '15'
 
       - name: docker containers
