@@ -15,7 +15,7 @@ lazy val commonSettings = Seq(
   scmInfo := Some(
     ScmInfo(url("https://github.com/janstenpickle/trace4cats"), "scm:git:git@github.com:janstenpickle/trace4cats.git")
   ),
-  javacOptions in (Compile, compile) ++= Seq("-source", "1.8", "-target", "1.8"),
+  Compile / compile / javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
   addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.11.3").cross(CrossVersion.patch)),
   libraryDependencies ++= Seq(Dependencies.cats, Dependencies.collectionCompat),
@@ -27,15 +27,16 @@ lazy val commonSettings = Seq(
       case _ => opts
     }
   },
-  fork in Test := true,
+  Test / fork := true,
   bintrayRepository := "trace4cats",
-  releaseEarlyWith in Global := SonatypePublisher,
+  Global / releaseEarlyWith := SonatypePublisher,
   credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials"),
   releaseEarlyEnableSyncToMaven := true,
   pgpPublicRing := file("./.github/git adlocal.pubring.asc"),
   pgpSecretRing := file("./.github/local.secring.asc"),
   crossScalaVersions := Seq(Dependencies.Versions.scala213, Dependencies.Versions.scala212),
   resolvers += Resolver.sonatypeRepo("releases"),
+  ThisBuild / evictionErrorLevel := Level.Warn
 )
 
 lazy val noPublishSettings = commonSettings ++ Seq(publish := {}, publishArtifact := false, publishTo := None)
@@ -45,7 +46,7 @@ lazy val publishSettings = commonSettings ++ Seq(
   pomIncludeRepository := { _ =>
     false
   },
-  publishArtifact in Test := false
+  Test / publishArtifact := false
 )
 
 lazy val graalSettings = Seq(
@@ -328,8 +329,8 @@ lazy val `opentelemetry-otlp-http-exporter` =
         (Dependencies.openTelemetryProto % "protobuf").intransitive(),
         Dependencies.scalapbJson
       ),
-      PB.protoSources in Compile += target.value / "protobuf_external",
-      PB.targets in Compile := Seq(scalapb.gen(grpc = false, lenses = false) -> (sourceManaged in Compile).value)
+      Compile / PB.protoSources += target.value / "protobuf_external",
+      Compile / PB.targets := Seq(scalapb.gen(grpc = false, lenses = false) -> (Compile / sourceManaged).value)
     )
     .dependsOn(model, kernel, `exporter-common`, `exporter-http`, `jaeger-integration-test` % "test->compile")
 
@@ -404,8 +405,8 @@ lazy val `avro-kafka-exporter` =
       name := "trace4cats-avro-kafka-exporter",
       libraryDependencies ++= Seq(Dependencies.fs2Kafka, Dependencies.kafka, Dependencies.log4cats),
       libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.embeddedKafka)).map(_ % Test),
-      classLoaderLayeringStrategy in Test := ClassLoaderLayeringStrategy.ScalaLibrary,
-      classLoaderLayeringStrategy in Test := ClassLoaderLayeringStrategy.Flat
+      Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary,
+      Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
     )
     .dependsOn(model, kernel, `exporter-common`, avro, test % "test->compile")
 
@@ -682,8 +683,8 @@ lazy val collector = (project in file("modules/collector"))
     dockerBaseImage := "adoptopenjdk/openjdk15:alpine-jre",
     dockerExposedPorts += 7777,
     dockerExposedUdpPorts += 7777,
-    daemonUserUid in Docker := Some("9000"),
-    javaOptions in Universal ++= Seq(
+    Docker / daemonUserUid := Some("9000"),
+    Universal / javaOptions ++= Seq(
       "-Djava.net.preferIPv4Stack=true",
       "-J-XX:+UnlockExperimentalVMOptions",
       "-J-XX:MaxRAMPercentage=90"
