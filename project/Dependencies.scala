@@ -19,7 +19,7 @@ object Dependencies {
     val http4s = "0.21.21"
     val http4sJdkClient = "0.3.6"
     val jaeger = "1.5.0"
-    val jwt = "3.14.0"
+    val jwt = "3.15.0"
     val kafka = "2.7.0"
     val kittens = "2.2.1"
     val log4cats = "1.2.2"
