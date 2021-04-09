@@ -127,6 +127,6 @@ abstract class BaseSttpBackendTracerSpec[F[_]: Async, G[_]: Sync: Trace, Ctx](
   }
 
   def withBackend(app: HttpApp[F])(fa: SttpBackend[G, Any] => F[Assertion]): F[Assertion] =
-    fa(liftBackend(Http4sBackend.usingClient(Client.fromHttpApp(app), ???)))
+    fa(liftBackend(Http4sBackend.usingClient(Client.fromHttpApp(app))))
 
 }
