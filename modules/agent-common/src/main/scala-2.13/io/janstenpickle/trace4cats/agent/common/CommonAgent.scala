@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.agent.common
 
 import cats.{Applicative, Parallel}
-import cats.effect.{Blocker, Concurrent, ContextShift, ExitCode, Resource, Timer}
+import cats.effect.{Concurrent, ExitCode, Resource}
 import cats.syntax.functor._
 import com.monovore.decline.Opts
 import fs2.{Chunk, Pipe}
@@ -11,6 +11,7 @@ import io.janstenpickle.trace4cats.avro.server.AvroServer
 import io.janstenpickle.trace4cats.avro.{AgentPortEnv, DefaultPort}
 import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanExporter}
 import io.janstenpickle.trace4cats.model.{AttributeValue, CompletedSpan}
+import cats.effect.Temporal
 
 object CommonAgent {
   val portOpt: Opts[Int] =
@@ -43,9 +44,7 @@ object CommonAgent {
       )
       .orNone
 
-  def run[F[_]: Concurrent: ContextShift: Timer: Parallel: Logger](
-    blocker: Blocker,
-    port: Int,
+  def run[F[_]: Concurrent: ContextShift: Temporal: Parallel: Logger](port: Int,
     bufferSize: Int,
     exporterName: String,
     exporterAttributes: Map[String, AttributeValue],

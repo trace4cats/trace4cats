@@ -2,7 +2,6 @@ package io.janstenpickle.trace4cats.sttp.tapir
 
 import cats.Monad
 import cats.data.EitherT
-import cats.effect.BracketThrow
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import io.janstenpickle.trace4cats.base.context.Provide
@@ -14,6 +13,7 @@ import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.integ.cats.MonadErrorSyntax._
 
 import scala.reflect.ClassTag
+import cats.effect.MonadCancelThrow
 
 object ServerEndpointTracer {
   def inject[I, E, O, R, F[_], G[_], Ctx](
@@ -23,7 +23,7 @@ object ServerEndpointTracer {
     outHeadersGetter: Getter[O, Headers],
     errorToSpanStatus: TapirStatusMapping[E],
     dropHeadersWhen: String => Boolean
-  )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F], G: Monad[G], T: Trace[G]): ServerEndpoint[I, E, O, R, F] =
+  )(implicit P: Provide[F, G, Ctx], F: MonadCancelThrow[F], G: Monad[G], T: Trace[G]): ServerEndpoint[I, E, O, R, F] =
     serverEndpoint.copy(logic =
       MEF =>
         input => {
@@ -56,7 +56,7 @@ object ServerEndpointTracer {
     dropHeadersWhen: String => Boolean
   )(implicit
     P: Provide[F, G, Ctx],
-    F: BracketThrow[F],
+    F: MonadCancelThrow[F],
     G: Monad[G],
     T: Trace[G],
     eClassTag: ClassTag[E]

@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.opentelemetry.common
 
 import cats.Foldable
-import cats.effect.{Async, ContextShift, Resource, Sync}
+import cats.effect.{Async, Resource, Sync}
 import cats.effect.syntax.bracket._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -32,7 +32,7 @@ object OpenTelemetryGrpcSpanExporter {
   ): Resource[F, SpanExporter[F, G]] = {
     def liftCompletableResultCode(fa: F[CompletableResultCode])(onFailure: => Throwable): F[Unit] =
       fa.flatMap { result =>
-        Async[F].async[Unit] { cb =>
+        Async[F].async_[Unit] { cb =>
           val _ = result.whenComplete { () =>
             if (result.isSuccess) cb(Right(()))
             else cb(Left(onFailure))

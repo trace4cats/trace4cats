@@ -1,12 +1,12 @@
 package io.janstenpickle.trace4cats.`export`
 
 import cats.effect.Sync
-import cats.effect.concurrent.Ref
 import cats.syntax.functor._
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.{CompletedSpan, TraceProcess}
 
 import scala.collection.immutable.Queue
+import cats.effect.Ref
 
 /** RefSpanCompleter collects all spans in a queue within an atomic reference
   * Best used for testing purposes

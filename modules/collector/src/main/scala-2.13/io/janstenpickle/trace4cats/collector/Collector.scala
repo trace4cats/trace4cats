@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.collector
 
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, ExitCode, IO, Resource}
+import cats.effect.{ConcurrentEffect, ExitCode, IO, Resource}
 import cats.implicits._
 import com.monovore.decline._
 import com.monovore.decline.effect._
@@ -26,7 +26,7 @@ object Collector
     CommonCollector.configFileOpt.map { configFile =>
       Slf4jLogger.create[IO].flatMap { implicit logger =>
         (for {
-          blocker <- Blocker[IO]
+          blocker <- Resource.unit[IO]
           oth <- others[IO](configFile)
           stream <- CommonCollector[IO](blocker, configFile, oth)
         } yield stream).use(_.compile.drain.as(ExitCode.Success)).handleErrorWith { th =>

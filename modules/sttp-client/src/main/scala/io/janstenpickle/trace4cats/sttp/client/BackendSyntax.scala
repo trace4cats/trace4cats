@@ -1,11 +1,12 @@
 package io.janstenpickle.trace4cats.sttp.client
 
-import cats.effect.{BracketThrow, MonadThrow}
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.base.optics.{Getter, Lens}
 import io.janstenpickle.trace4cats.model.TraceHeaders
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import sttp.client.SttpBackend
+import cats.MonadThrow
+import cats.effect.MonadCancelThrow
 
 trait BackendSyntax {
 
@@ -13,7 +14,7 @@ trait BackendSyntax {
     def liftTrace[G[_]](
       toHeaders: ToHeaders = ToHeaders.all,
       spanNamer: SttpSpanNamer = SttpSpanNamer.methodWithPath
-    )(implicit P: Provide[F, G, Span[F]], F: BracketThrow[F], G: MonadThrow[G]): SttpBackend[G, S, WS_HANDLER] =
+    )(implicit P: Provide[F, G, Span[F]], F: MonadCancelThrow[F], G: MonadThrow[G]): SttpBackend[G, S, WS_HANDLER] =
       new BackendTracer[F, G, S, WS_HANDLER, Span[F]](
         backend,
         Lens.id,
@@ -25,7 +26,7 @@ trait BackendSyntax {
       spanLens: Lens[Ctx, Span[F]],
       headersGetter: Getter[Ctx, TraceHeaders],
       spanNamer: SttpSpanNamer = SttpSpanNamer.methodWithPath
-    )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F], G: MonadThrow[G]): SttpBackend[G, S, WS_HANDLER] =
+    )(implicit P: Provide[F, G, Ctx], F: MonadCancelThrow[F], G: MonadThrow[G]): SttpBackend[G, S, WS_HANDLER] =
       new BackendTracer[F, G, S, WS_HANDLER, Ctx](backend, spanLens, headersGetter, spanNamer)
   }
 

@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.example
 
 import cats.data.Kleisli
-import cats.effect.{Blocker, ExitCode, IO, IOApp, Sync}
+import cats.effect.{ExitCode, IO, IOApp, Sync}
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.example.Fs2Example.entryPoint
 import io.janstenpickle.trace4cats.http4s.client.syntax._
@@ -16,6 +16,7 @@ import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
 
 import scala.concurrent.ExecutionContext
+import cats.effect.Resource
 
 object Http4sExample extends IOApp {
 
@@ -30,7 +31,7 @@ object Http4sExample extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] =
     (for {
-      blocker <- Blocker[IO]
+      blocker <- Resource.unit[IO]
       ep <- entryPoint[IO](blocker, TraceProcess("trace4catsHttp4s"))
 
       client <- BlazeClientBuilder[IO](ExecutionContext.global).resource

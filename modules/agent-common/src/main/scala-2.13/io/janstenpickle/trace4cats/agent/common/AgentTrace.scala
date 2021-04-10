@@ -1,15 +1,16 @@
 package io.janstenpickle.trace4cats.agent.common
 
 import java.net.InetAddress
-import cats.effect.{Concurrent, Resource, Sync, Timer}
+import cats.effect.{Concurrent, Resource, Sync}
 import fs2.{Chunk, Pipe}
 import io.janstenpickle.trace4cats.kernel.{SpanExporter, SpanSampler}
 import io.janstenpickle.trace4cats.meta.{PipeTracer, TracedSpanExporter}
 import io.janstenpickle.trace4cats.model.{AttributeValue, CompletedSpan, TraceProcess}
 import io.janstenpickle.trace4cats.rate.sampling.RateSpanSampler
+import cats.effect.Temporal
 
 object AgentTrace {
-  def apply[F[_]: Concurrent: Timer](
+  def apply[F[_]: Concurrent: Temporal](
     exporterName: String,
     exporterAttributes: Map[String, AttributeValue],
     listenerPort: Int,

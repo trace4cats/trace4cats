@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.opentelemetry.jaeger
 
 import cats.Foldable
-import cats.effect.{Async, ContextShift, Resource}
+import cats.effect.{Async, Resource}
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.common.OpenTelemetryGrpcSpanExporter
 import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter

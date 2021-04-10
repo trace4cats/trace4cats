@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.sttp.client3
 
-import cats.effect.{BracketThrow, Concurrent}
+import cats.effect.Concurrent
 import cats.syntax.flatMap._
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.base.context.Provide
@@ -11,13 +11,14 @@ import sttp.capabilities.{Effect => SttpEffect}
 import sttp.client3.impl.cats.implicits._
 import sttp.client3.{HttpError, Request, Response, SttpBackend}
 import sttp.monad.{MonadError => SttpMonadError}
+import cats.effect.MonadCancelThrow
 
 class SttpBackendTracer[F[_], G[_], +P, Ctx](
   backend: SttpBackend[F, P],
   spanLens: Lens[Ctx, Span[F]],
   headersGetter: Getter[Ctx, TraceHeaders],
   spanNamer: SttpSpanNamer
-)(implicit P: Provide[F, G, Ctx], F: BracketThrow[F], G: Concurrent[G])
+)(implicit P: Provide[F, G, Ctx], F: MonadCancelThrow[F], G: Concurrent[G])
     extends SttpBackend[G, P] {
   def send[T, R >: P with SttpEffect[G]](request: Request[T, R]): G[Response[T]] =
     P.kleislift { parentCtx =>

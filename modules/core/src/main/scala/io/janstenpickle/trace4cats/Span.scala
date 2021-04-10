@@ -5,13 +5,14 @@ import java.util.concurrent.TimeUnit
 
 import cats.data.NonEmptyList
 import cats.{~>, Applicative, Defer}
-import cats.effect.concurrent.Ref
-import cats.effect.{Clock, ExitCase, MonadThrow, Resource, Sync}
+import cats.effect.{Clock, ExitCase, Resource, Sync}
 import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.model._
+import cats.MonadThrow
+import cats.effect.Ref
 
 trait Span[F[_]] {
   def context: SpanContext

@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.collector.common
 
 import cats.Parallel
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Timer}
+import cats.effect.{ConcurrentEffect, Resource}
 import cats.implicits._
 import com.monovore.decline._
 import fs2.kafka.ConsumerSettings
@@ -27,14 +27,13 @@ import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpHttpSpanE
 import io.janstenpickle.trace4cats.stackdriver.StackdriverHttpSpanExporter
 
 import scala.concurrent.duration._
+import cats.effect.Temporal
 
 object CommonCollector {
   val configFileOpt: Opts[String] =
     Opts.option[String]("config-file", "Configuration file location, may be in YAML or JSON format")
 
-  def apply[F[_]: ConcurrentEffect: Parallel: ContextShift: Timer: Logger](
-    blocker: Blocker,
-    configFile: String,
+  def apply[F[_]: ConcurrentEffect: Parallel: ContextShift: Temporal: Logger](configFile: String,
     others: List[(String, List[(String, AttributeValue)], SpanExporter[F, Chunk])]
   ): Resource[F, Stream[F, Unit]] =
     for {
