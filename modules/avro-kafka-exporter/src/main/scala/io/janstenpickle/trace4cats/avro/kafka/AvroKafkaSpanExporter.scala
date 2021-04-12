@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.avro.kafka
 
 import java.io.ByteArrayOutputStream
+
 import cats.data.NonEmptyList
 import cats.effect.kernel.{Async, Resource, Sync}
 import cats.syntax.either._
@@ -58,8 +59,9 @@ object AvroKafkaSpanExporter {
     Resource
       .eval(AvroInstances.completedSpanCodec.schema.leftMap(_.throwable).map(valueSerializer[F]).liftTo[F])
       .flatMap { implicit ser =>
-        KafkaProducer[F]
-          .resource(
+        KafkaProducer
+          .resource[F]
+          .using(
             modifySettings(
               ProducerSettings[F, TraceId, CompletedSpan]
                 .withBootstrapServers(bootStrapServers.mkString_(","))
