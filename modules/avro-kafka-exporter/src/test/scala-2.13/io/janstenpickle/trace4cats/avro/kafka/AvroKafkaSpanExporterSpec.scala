@@ -8,7 +8,7 @@ import fs2.Chunk
 import io.janstenpickle.trace4cats.avro.AvroInstances
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
-import net.manub.embeddedkafka.{EmbeddedKafka, EmbeddedKafkaConfig}
+import io.github.embeddedkafka.{EmbeddedKafka, EmbeddedKafkaConfig}
 import org.apache.avro.generic.GenericDatumReader
 import org.apache.avro.io.DecoderFactory
 import org.apache.kafka.common.serialization.Deserializer
