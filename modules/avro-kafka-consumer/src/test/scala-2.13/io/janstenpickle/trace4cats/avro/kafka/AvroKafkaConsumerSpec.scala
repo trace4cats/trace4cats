@@ -11,7 +11,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.avro.AvroInstances
 import io.janstenpickle.trace4cats.model.{CompletedSpan, TraceId}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
-import net.manub.embeddedkafka.{EmbeddedKafka, EmbeddedKafkaConfig}
+import io.github.embeddedkafka.{EmbeddedKafka, EmbeddedKafkaConfig}
 import org.apache.avro.generic.GenericDatumWriter
 import org.apache.avro.io.EncoderFactory
 import org.apache.kafka.common.serialization.Serializer
