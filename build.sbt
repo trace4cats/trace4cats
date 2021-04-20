@@ -101,7 +101,7 @@ lazy val root = (project in file("."))
     `avro-test`,
     base,
     `base-laws`,
-    //`base-zio`,
+    `base-zio`,
     collector,
     `collector-common`,
     `collector-lite`,
@@ -118,7 +118,7 @@ lazy val root = (project in file("."))
     `http4s-common`,
     `http4s-server`,
     inject,
-    //`inject-zio`,
+    `inject-zio`,
     `jaeger-integration-test`,
     `jaeger-thrift-exporter`,
     `kafka-client`,
@@ -178,7 +178,7 @@ lazy val example = (project in file("modules/example"))
     kernel,
     core,
     inject,
-    //`inject-zio`,
+    `inject-zio`,
     fs2,
     `http4s-client`,
     `http4s-server`,
@@ -250,7 +250,10 @@ lazy val `base-laws` =
 lazy val `base-zio` =
   (project in file("modules/base-zio"))
     .settings(publishSettings)
-    .settings(name := "trace4cats-base-zio", libraryDependencies ++= Seq(Dependencies.zioInterop))
+    .settings(
+      name := "trace4cats-base-zio",
+      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.zioInterop)
+    )
     .dependsOn(base, `base-laws` % "test->compile;test->test")
 
 lazy val avro =
