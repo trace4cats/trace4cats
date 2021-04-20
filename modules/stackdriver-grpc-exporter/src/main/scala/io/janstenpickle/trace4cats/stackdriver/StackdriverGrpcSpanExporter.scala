@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.stackdriver
 
 import cats.Foldable
 import cats.data.NonEmptyList
-import cats.effect.{Async, ContextShift, Resource, Sync}
+import cats.effect.{Async, Resource, Sync}
 import cats.effect.syntax.bracket._
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
@@ -136,7 +136,7 @@ object StackdriverGrpcSpanExporter {
         fut <- ffa
         ec = com.google.common.util.concurrent.MoreExecutors
           .directExecutor() // TODO: CE3 - use Async[F].executionContext
-        a <- Async[F].async[A] { cb =>
+        a <- Async[F].async_[A] { cb =>
           ApiFutures.addCallback(
             fut,
             new ApiFutureCallback[A] {

@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.sttp.tapir
 
 import cats.data.EitherT
-import cats.effect.{BracketThrow, Sync}
+import cats.effect.Sync
 import cats.syntax.applicative._
 import cats.syntax.either._
 import cats.syntax.flatMap._
@@ -21,8 +21,9 @@ import sttp.tapir.json.circe._
 import sttp.tapir.server.ServerEndpoint
 
 import java.util.UUID
+import cats.effect.MonadCancelThrow
 
-class Endpoints[F[_]: Sync, G[_]: BracketThrow: Trace] {
+class Endpoints[F[_]: Sync, G[_]: MonadCancelThrow: Trace] {
   val devices =
     endpoint.get
       .in("devices" / path[Int]("deviceId"))

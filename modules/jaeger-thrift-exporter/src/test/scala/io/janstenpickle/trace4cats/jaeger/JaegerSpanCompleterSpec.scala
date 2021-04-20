@@ -1,13 +1,14 @@
 package io.janstenpickle.trace4cats.jaeger
 
 import java.time.Instant
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import fs2.Chunk
 import io.janstenpickle.trace4cats.`export`.{CompleterConfig, SemanticTags}
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceProcess}
 import io.janstenpickle.trace4cats.test.jaeger.BaseJaegerSpec
 
 import scala.concurrent.duration._
+import cats.effect.Resource
 
 class JaegerSpanCompleterSpec extends BaseJaegerSpec {
   it should "Send a span to jaeger" in forAll { (span: CompletedSpan.Builder, process: TraceProcess) =>
@@ -19,7 +20,7 @@ class JaegerSpanCompleterSpec extends BaseJaegerSpec {
     val batch = Batch(Chunk(updatedSpan.build(process)))
 
     testCompleter(
-      Blocker[IO].flatMap(
+      Resource.unit[IO].flatMap(
         JaegerSpanCompleter[IO](_, process, "localhost", 6831, config = CompleterConfig(batchTimeout = 50.millis))
       ),
       updatedSpan,

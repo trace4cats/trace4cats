@@ -1,6 +1,5 @@
 package io.janstenpickle.trace4cats.example
 
-import cats.effect.Blocker
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.inject.zio._
 import io.janstenpickle.trace4cats.sttp.client.syntax._
@@ -12,12 +11,13 @@ import zio._
 import zio.interop.catz._
 
 import scala.concurrent.ExecutionContext
+import cats.effect.Resource
 
 object SttpZioExample extends CatsApp {
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
     (for {
-      blocker <- Blocker[Task]
+      blocker <- Resource.unit[Task]
       client <- BlazeClientBuilder[Task](ExecutionContext.global).resource
       sttpBackend = Http4sBackend.usingClient(client, blocker): SttpBackend[Task, EntityBody[Task], INothingT]
       tracedBackend = sttpBackend.liftTrace[RIO[Span[Task], *]]()

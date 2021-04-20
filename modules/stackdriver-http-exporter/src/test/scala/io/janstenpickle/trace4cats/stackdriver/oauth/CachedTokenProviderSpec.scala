@@ -1,18 +1,19 @@
 package io.janstenpickle.trace4cats.stackdriver.oauth
 
 import cats.effect.laws.util.TestContext
-import cats.effect.{ContextShift, IO, Timer}
+import cats.effect.IO
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.ScalacheckShapeless._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scala.concurrent.duration._
+import cats.effect.Temporal
 
 class CachedTokenProviderSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks {
   implicit lazy val ec: TestContext = TestContext.apply()
   implicit lazy val cs: ContextShift[IO] = IO.contextShift(ec)
-  implicit lazy val ioTimer: Timer[IO] = ec.timer[IO]
+  implicit lazy val ioTimer: Temporal[IO] = ec.timer[IO]
 
   implicit val longArb: Arbitrary[Long] = Arbitrary(Gen.posNum[Long])
 

@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.rate.sampling
 
-import cats.effect.{Concurrent, Resource, Timer}
+import cats.effect.{Concurrent, Resource}
 import cats.syntax.functor._
 import cats.{Applicative, Foldable, Monad, MonoidK}
 import io.janstenpickle.trace4cats.model.{CompletedSpan, SampleDecision, TraceId}
@@ -9,6 +9,7 @@ import io.janstenpickle.trace4cats.sampling.tail.{SampleDecisionStore, TailSpanS
 import cats.syntax.foldable._
 
 import scala.concurrent.duration.FiniteDuration
+import cats.effect.Temporal
 
 object RateTailSpanSampler {
   def apply[F[_]: Monad: TokenBucket, G[_]: Applicative: Foldable: MonoidK](
@@ -43,7 +44,7 @@ object RateTailSpanSampler {
       }
     )
 
-  def create[F[_]: Concurrent: Timer, G[_]: Applicative: Foldable: MonoidK](
+  def create[F[_]: Concurrent: Temporal, G[_]: Applicative: Foldable: MonoidK](
     store: SampleDecisionStore[F],
     bucketSize: Int,
     tokenRate: FiniteDuration

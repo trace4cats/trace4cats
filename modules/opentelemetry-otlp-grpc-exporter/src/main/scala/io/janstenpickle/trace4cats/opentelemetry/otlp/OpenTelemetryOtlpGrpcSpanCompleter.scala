@@ -1,15 +1,16 @@
 package io.janstenpickle.trace4cats.opentelemetry.otlp
 
-import cats.effect.{Concurrent, ContextShift, Resource, Timer}
+import cats.effect.{Concurrent, Resource}
 import fs2.Chunk
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.{CompleterConfig, QueuedSpanCompleter}
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.TraceProcess
+import cats.effect.Temporal
 
 object OpenTelemetryOtlpGrpcSpanCompleter {
-  def apply[F[_]: Concurrent: ContextShift: Timer](
+  def apply[F[_]: Concurrent: ContextShift: Temporal](
     process: TraceProcess,
     host: String = "localhost",
     port: Int = 55680,

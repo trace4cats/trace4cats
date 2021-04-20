@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.stackdriver
 
 import cats.Foldable
-import cats.effect.{Concurrent, ConcurrentEffect, Resource, Timer}
+import cats.effect.{Concurrent, ConcurrentEffect, Resource}
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
 import cats.syntax.functor._
@@ -27,16 +27,17 @@ import org.typelevel.log4cats.Logger
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext
+import cats.effect.Temporal
 
 object StackdriverHttpSpanExporter {
   private final val base = "https://cloudtrace.googleapis.com/v2/projects"
 
-  def blazeClient[F[_]: ConcurrentEffect: Timer: Logger, G[_]: Foldable](
+  def blazeClient[F[_]: ConcurrentEffect: Temporal: Logger, G[_]: Foldable](
     projectId: String,
     serviceAccountPath: String,
   ): Resource[F, SpanExporter[F, G]] = blazeClient(projectId, serviceAccountPath, None)
 
-  def blazeClient[F[_]: ConcurrentEffect: Timer: Logger, G[_]: Foldable](
+  def blazeClient[F[_]: ConcurrentEffect: Temporal: Logger, G[_]: Foldable](
     projectId: String,
     serviceAccountPath: String,
     ec: Option[ExecutionContext]
@@ -45,14 +46,14 @@ object StackdriverHttpSpanExporter {
     BlazeClientBuilder[F](ec.getOrElse(ExecutionContext.global)).resource
       .evalMap(apply[F, G](projectId, serviceAccountPath, _))
 
-  def blazeClient[F[_]: ConcurrentEffect: Timer: Logger, G[_]: Foldable](
+  def blazeClient[F[_]: ConcurrentEffect: Temporal: Logger, G[_]: Foldable](
     serviceAccountName: String = "default",
     ec: Option[ExecutionContext] = None
   ): Resource[F, SpanExporter[F, G]] =
     // TODO: CE3 - use Async[F].executionContext
     BlazeClientBuilder[F](ec.getOrElse(ExecutionContext.global)).resource.evalMap(apply[F, G](_, serviceAccountName))
 
-  def apply[F[_]: Concurrent: Timer: Logger, G[_]: Foldable](
+  def apply[F[_]: Concurrent: Temporal: Logger, G[_]: Foldable](
     projectId: String,
     serviceAccountPath: String,
     client: Client[F]
@@ -61,7 +62,7 @@ object StackdriverHttpSpanExporter {
       apply[F, G](StaticProjectIdProvider(projectId), tokenProvider, client)
     }
 
-  def apply[F[_]: Concurrent: Timer: Logger, G[_]: Foldable](
+  def apply[F[_]: Concurrent: Temporal: Logger, G[_]: Foldable](
     client: Client[F],
     serviceAccountName: String = "default"
   ): F[SpanExporter[F, G]] =
@@ -71,7 +72,7 @@ object StackdriverHttpSpanExporter {
       client
     )
 
-  def apply[F[_]: Concurrent: Timer, G[_]: Foldable](
+  def apply[F[_]: Concurrent: Temporal, G[_]: Foldable](
     projectIdProvider: ProjectIdProvider[F],
     tokenProvider: TokenProvider[F],
     client: Client[F]

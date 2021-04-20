@@ -1,8 +1,7 @@
 package io.janstenpickle.trace4cats.sttp.client
 
 import cats.data.NonEmptyList
-import cats.effect.concurrent.Ref
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Sync, Timer}
+import cats.effect.{ConcurrentEffect, Sync}
 import cats.implicits._
 import cats.{~>, Eq, Id}
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
@@ -26,8 +25,9 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import sttp.client._
 import sttp.client.http4s.Http4sBackend
 import sttp.model.StatusCode
+import cats.effect.{ Ref, Resource, Temporal }
 
-abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift: Timer, G[_]: Sync: Trace, Ctx](
+abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift: Temporal, G[_]: Sync: Trace, Ctx](
   unsafeRunK: F ~> Id,
   makeSomeContext: Span[F] => Ctx,
   liftBackend: SttpBackend[F, INothing, INothingT] => SttpBackend[G, INothing, INothingT]
@@ -130,6 +130,6 @@ abstract class BaseBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift: Timer
   }
 
   def withBackend(app: HttpApp[F])(fa: SttpBackend[G, Nothing, NothingT] => F[Assertion]): F[Assertion] =
-    Blocker[F].use(blocker => fa(liftBackend(Http4sBackend.usingClient(Client.fromHttpApp(app), blocker))))
+    Resource.unit[F].use(blocker => fa(liftBackend(Http4sBackend.usingClient(Client.fromHttpApp(app), blocker))))
 
 }

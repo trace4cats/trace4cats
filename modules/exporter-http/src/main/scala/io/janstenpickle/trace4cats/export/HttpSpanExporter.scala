@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.`export`
 
 import cats.Applicative
-import cats.effect.{Sync, Timer}
+import cats.effect.Sync
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -16,6 +16,7 @@ import org.http4s.headers.`Content-Type`
 
 import scala.concurrent.duration._
 import scala.util.control.NoStackTrace
+import cats.effect.Temporal
 
 object HttpSpanExporter {
   case class UnexpectedResponse(status: Status, message: String) extends RuntimeException with NoStackTrace {
@@ -26,7 +27,7 @@ object HttpSpanExporter {
          |""".stripMargin
   }
 
-  def apply[F[_]: Sync: Timer, G[_], A](client: Client[F], uri: String, makePayload: Batch[G] => A)(implicit
+  def apply[F[_]: Sync: Temporal, G[_], A](client: Client[F], uri: String, makePayload: Batch[G] => A)(implicit
     encoder: EntityEncoder[F, A]
   ): F[SpanExporter[F, G]] =
     apply(
@@ -39,7 +40,7 @@ object HttpSpanExporter {
       List(`Content-Type`(MediaType.application.json))
     )
 
-  def apply[F[_]: Sync: Timer, G[_], A](
+  def apply[F[_]: Sync: Temporal, G[_], A](
     client: Client[F],
     uri: String,
     makePayload: Batch[G] => A,
@@ -55,7 +56,7 @@ object HttpSpanExporter {
       staticHeaders
     )
 
-  def apply[F[_]: Sync: Timer, G[_], A](
+  def apply[F[_]: Sync: Temporal, G[_], A](
     client: Client[F],
     uri: String,
     makePayload: Batch[G] => A,
@@ -71,7 +72,7 @@ object HttpSpanExporter {
       List(`Content-Type`(MediaType.application.json))
     )
 
-  def apply[F[_]: Sync: Timer, G[_], A](
+  def apply[F[_]: Sync: Temporal, G[_], A](
     client: Client[F],
     uri: String,
     makePayload: Batch[G] => A,
@@ -87,7 +88,7 @@ object HttpSpanExporter {
       List(`Content-Type`(MediaType.application.json))
     )
 
-  def apply[F[_]: Sync: Timer, G[_], A](
+  def apply[F[_]: Sync: Temporal, G[_], A](
     client: Client[F],
     uri: String,
     makePayload: Batch[G] => A,
@@ -103,7 +104,7 @@ object HttpSpanExporter {
       List(`Content-Type`(MediaType.application.json))
     )
 
-  def apply[F[_]: Sync: Timer, G[_], A](
+  def apply[F[_]: Sync: Temporal, G[_], A](
     client: Client[F],
     uri: String,
     makePayload: Batch[G] => A,

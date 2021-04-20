@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.example
 
-import cats.effect.{Blocker, ExitCode, IO, IOApp}
+import cats.effect.{ExitCode, IO, IOApp}
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.kernel.SpanSampler
@@ -9,6 +9,7 @@ import io.janstenpickle.trace4cats.model.{SpanKind, SpanStatus, TraceProcess}
 import scala.concurrent.duration._
 import cats.syntax.flatMap._
 import io.janstenpickle.trace4cats.`export`.CompleterConfig
+import cats.effect.Resource
 
 /** This example shows how to send traces to the Avro Agent.
   *
@@ -18,7 +19,7 @@ import io.janstenpickle.trace4cats.`export`.CompleterConfig
 object SimpleExample extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     (for {
-      blocker <- Blocker[IO]
+      blocker <- Resource.unit[IO]
       completer <- AvroSpanCompleter.udp[IO](
         blocker,
         TraceProcess("test"),

@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.rate
 
 import java.util.concurrent.{ScheduledExecutorService, ScheduledThreadPoolExecutor}
-import cats.effect.{ContextShift, IO, Timer}
+import cats.effect.IO
 import cats.effect.laws.util.TestContext
 import cats.syntax.applicative._
 import cats.syntax.flatMap._
@@ -12,10 +12,11 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.concurrent.duration._
 import scala.util.Success
+import cats.effect.Temporal
 
 class TokenBucketSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks {
   val ec: TestContext = TestContext()
-  implicit val timer: Timer[IO] = ec.ioTimer
+  implicit val timer: Temporal[IO] = ec.ioTimer
   implicit val ctx: ContextShift[IO] = ec.ioContextShift
 
   val sc: ScheduledExecutorService = new ScheduledThreadPoolExecutor(1)

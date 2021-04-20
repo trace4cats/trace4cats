@@ -1,6 +1,5 @@
 package io.janstenpickle.trace4cats.example
 
-import cats.effect.Blocker
 import cats.syntax.flatMap._
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.`export`.CompleterConfig
@@ -13,6 +12,7 @@ import zio.interop.catz.implicits._
 import zio.{Exit, ExitCode, Task, URIO}
 
 import scala.concurrent.duration._
+import cats.effect.Resource
 
 /** This example shows how to send traces to the Avro Agent.
   *
@@ -23,7 +23,7 @@ object SimpleZioExample extends CatsApp {
 
   override def run(args: List[String]): URIO[zio.ZEnv, zio.ExitCode] =
     (for {
-      blocker <- Blocker[Task]
+      blocker <- Resource.unit[Task]
       completer <- AvroSpanCompleter.udp[Task](
         blocker,
         TraceProcess("test"),

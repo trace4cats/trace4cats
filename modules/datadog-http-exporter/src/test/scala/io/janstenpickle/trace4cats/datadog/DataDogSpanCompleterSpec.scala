@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.datadog
 
-import cats.effect.{Blocker, IO}
+import cats.effect.IO
 import io.janstenpickle.trace4cats.`export`.CompleterConfig
 import io.janstenpickle.trace4cats.model.{CompletedSpan, TraceProcess}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
