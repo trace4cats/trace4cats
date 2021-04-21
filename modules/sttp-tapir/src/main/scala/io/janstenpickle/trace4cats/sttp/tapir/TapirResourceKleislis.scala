@@ -1,9 +1,9 @@
 package io.janstenpickle.trace4cats.sttp.tapir
 
-import cats.Monad
+import cats.{Monad, MonadThrow}
 import cats.syntax.applicativeError._
 import cats.data.{EitherT, Kleisli}
-import cats.effect.kernel.{MonadThrow, Resource}
+import cats.effect.kernel.Resource
 import io.janstenpickle.trace4cats.{ErrorHandler, Span}
 import io.janstenpickle.trace4cats.base.optics.Getter
 import io.janstenpickle.trace4cats.inject.{ResourceKleisli, SpanParams}

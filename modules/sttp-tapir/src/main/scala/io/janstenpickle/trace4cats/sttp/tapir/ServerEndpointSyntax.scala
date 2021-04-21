@@ -47,7 +47,12 @@ trait ServerEndpointSyntax {
       outHeadersGetter: Getter[O, Headers] = _ => Headers(Nil),
       dropHeadersWhen: String => Boolean = HeaderNames.isSensitive,
       errorToSpanStatus: TapirStatusMapping[E] = TapirStatusMapping.errorStringToInternal
-    )(implicit P: Provide[F, G, Span[F]], F: MonadCancelThrow[F], G: Monad[G], T: Trace[G]): ServerEndpoint[I, E, O, R, F] =
+    )(implicit
+      P: Provide[F, G, Span[F]],
+      F: MonadCancelThrow[F],
+      G: Monad[G],
+      T: Trace[G]
+    ): ServerEndpoint[I, E, O, R, F] =
       ServerEndpointTracer.inject(
         serverEndpoint,
         k.map(_.asRight[E]),
@@ -65,7 +70,12 @@ trait ServerEndpointSyntax {
       spanNamer: TapirSpanNamer[I] = TapirSpanNamer.methodWithPathTemplate,
       dropHeadersWhen: String => Boolean = HeaderNames.isSensitive,
       errorToSpanStatus: TapirStatusMapping[E] = TapirStatusMapping.errorStringToInternal
-    )(implicit P: Provide[F, G, Ctx], F: MonadCancelThrow[F], G: Monad[G], T: Trace[G]): ServerEndpoint[I, E, O, R, F] = {
+    )(implicit
+      P: Provide[F, G, Ctx],
+      F: MonadCancelThrow[F],
+      G: Monad[G],
+      T: Trace[G]
+    ): ServerEndpoint[I, E, O, R, F] = {
       val inputSpanNamer = spanNamer(serverEndpoint.endpoint, _)
       val context = TapirResourceKleislis.fromHeadersContext(
         makeContext,

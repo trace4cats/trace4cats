@@ -138,7 +138,7 @@ lazy val root = (project in file("."))
     `stackdriver-http-exporter`,
     `sttp-client3`,
     `sttp-common`,
-    //`sttp-tapir`,
+    `sttp-tapir`,
     `tail-sampling`,
     `tail-sampling-cache-store`,
     `tail-sampling-redis-store`,
@@ -566,7 +566,7 @@ lazy val `sttp-tapir` = (project in file("modules/sttp-tapir"))
       Dependencies.circeGeneric,
       Dependencies.http4sClient,
       Dependencies.sttpTapirJsonCirce,
-      Dependencies.sttpTapirHttp4s
+      //Dependencies.sttpTapirHttp4s
     ))
       .map(_ % Test)
   )
