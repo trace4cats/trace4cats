@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
   object Versions {
-    val cats = "2.5.0"
+    val cats = "2.6.0"
     val catsEffect = "3.1.0"
     val collectionCompat = "2.4.3"
     val commonsCodec = "1.15"
@@ -13,8 +13,8 @@ object Dependencies {
     val enumeratum = "1.6.1"
     val fs2 = "3.0.1"
     val fs2Kafka = "2.0.0-RC1"
-    val googleCredentials = "0.25.3"
-    val googleCloudTrace = "1.3.1"
+    val googleCredentials = "0.25.4"
+    val googleCloudTrace = "1.3.2"
     val grpc = "1.37.0"
     val http4s = "1.0.0-M21"
     val http4sJdkClient = "0.5.0-M4"
@@ -44,7 +44,7 @@ object Dependencies {
     val discipline = "1.1.4"
     val scalaCheck = "1.15.3"
     val scalaCheckShapeless = "1.2.5"
-    val scalaTest = "3.2.7"
+    val scalaTest = "3.2.8"
     val testContainers = "0.39.3"
   }
 
