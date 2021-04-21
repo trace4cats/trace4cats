@@ -118,15 +118,15 @@ private[zio] trait CatsSpecBase
     (x, y) => (x.interrupted && y.interrupted) || x == y
 
   implicit def eqForExitOfNothing[A: Eq]: Eq[Exit[Nothing, A]] = {
-    case (Exit.Success(x), Exit.Success(y)) => x eqv y
-    case (Exit.Failure(x), Exit.Failure(y)) => x eqv y
-    case _                                  => false
+    case (Exit.Success(x), Exit.Success(y)) => x.eqv(y)
+    case (Exit.Failure(x), Exit.Failure(y)) => x.eqv(y)
+    case _ => false
   }
 
   implicit def eqForUIO[A: Eq](implicit ticker: Ticker): Eq[UIO[A]] = { (uio1, uio2) =>
     val exit1 = unsafeRun(uio1)
     val exit2 = unsafeRun(uio2)
-    (exit1 eqv exit2) || {
+    (exit1.eqv(exit2)) || {
       println(s"$exit1 was not equal to $exit2")
       false
     }
@@ -142,7 +142,7 @@ private[zio] trait CatsSpecBase
     Order.by(unsafeRun(_).toEither.toOption)
 
   implicit def orderForRIOofFiniteDuration[R: Arbitrary](implicit ticker: Ticker): Order[RIO[R, FiniteDuration]] =
-    (x, y) => Arbitrary.arbitrary[R].sample.fold(0)(r => x.orDie.provide(r) compare y.orDie.provide(r))
+    (x, y) => Arbitrary.arbitrary[R].sample.fold(0)(r => x.orDie.provide(r).compare(y.orDie.provide(r)))
 
   implicit def eqForUManaged[A: Eq](implicit ticker: Ticker): Eq[UManaged[A]] =
     zManagedEq[Any, Nothing, A]
@@ -157,7 +157,7 @@ private[interop] sealed trait CatsSpecBaseLowPriority { this: CatsSpecBase =>
     Eq.by(_.either)
 
   implicit def eqForZIO[R: Arbitrary, E: Eq, A: Eq](implicit ticker: Ticker): Eq[ZIO[R, E, A]] =
-    (x, y) => Arbitrary.arbitrary[R].sample.exists(r => x.provide(r) eqv y.provide(r))
+    (x, y) => Arbitrary.arbitrary[R].sample.exists(r => x.provide(r).eqv(y.provide(r)))
 
   implicit def eqForRIO[R: Arbitrary, A: Eq](implicit ticker: Ticker): Eq[RIO[R, A]] =
     eqForZIO[R, Throwable, A]
