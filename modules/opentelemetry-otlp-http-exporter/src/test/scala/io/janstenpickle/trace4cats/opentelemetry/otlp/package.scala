@@ -10,5 +10,5 @@ package object otlp {
 
   val processTags: TraceProcess => Map[String, AttributeValue] = _ => Map.empty
 
-  val additionalTags: Map[String, AttributeValue] = Map("otlp.instrumentation.library.name" -> "trace4cats")
+  val additionalTags: Map[String, AttributeValue] = Map("otel.library.name" -> "trace4cats")
 }
