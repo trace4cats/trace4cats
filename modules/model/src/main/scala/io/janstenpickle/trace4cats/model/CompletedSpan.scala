@@ -41,7 +41,7 @@ object CompletedSpan {
   }
 
   implicit val instant: Eq[Instant] = Eq.fromUniversalEquals
-  implicit val eq: Eq[CompletedSpan] = cats.derived.semiauto.eq[CompletedSpan]
+  implicit val eq: Eq[CompletedSpan] = magnolify.cats.semiauto.EqDerivation[CompletedSpan]
 
   case class Builder(
     context: SpanContext,

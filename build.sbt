@@ -155,7 +155,7 @@ lazy val model =
         Dependencies.enumeratum,
         Dependencies.enumeratumCats,
         Dependencies.commonsCodec,
-        Dependencies.kittens
+        Dependencies.magnolifyCats
       )
     )
 
@@ -300,7 +300,12 @@ lazy val `jaeger-thrift-exporter` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-jaeger-thrift-exporter",
-      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.jaegerThrift)
+      libraryDependencies ++= Seq(
+        Dependencies.alleyCats,
+        Dependencies.catsEffect,
+        Dependencies.fs2,
+        Dependencies.jaegerThrift
+      )
     )
     .dependsOn(model, kernel, `exporter-common`, `jaeger-integration-test` % "test->compile")
 

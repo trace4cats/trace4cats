@@ -16,7 +16,7 @@ object ErrorInfo {
   case class Unknown(code: Int, msg: String) extends ErrorInfo
   case object NoContent extends ErrorInfo
 
-  implicit val show: Show[ErrorInfo] = cats.derived.semiauto.show
+  implicit val show: Show[ErrorInfo] = magnolify.cats.semiauto.ShowDerivation[ErrorInfo]
 
   val endpointOutput: EndpointOutput[ErrorInfo] =
     oneOf[ErrorInfo](

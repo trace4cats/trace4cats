@@ -5,9 +5,11 @@ import java.time.Instant
 import cats.Eval
 import fs2.Chunk
 import io.janstenpickle.trace4cats.model._
-import org.scalacheck.{Arbitrary, Gen, ScalacheckShapeless}
+import org.scalacheck.{Arbitrary, Gen}
 
-trait ArbitraryInstances extends ScalacheckShapeless {
+trait ArbitraryInstances {
+  implicit def genArbitrary[T]: Arbitrary[T] = macro magnolify.scalacheck.auto.genArbitraryMacro[T]
+
   private def byteArray(length: Int) = Gen.listOfN(length, Arbitrary.arbByte.arbitrary).map(_.toArray)
 
   implicit val doubleArb: Arbitrary[Double] = Arbitrary(Gen.chooseNum(-1000.0, 1000.0).map(_ + 0.5))

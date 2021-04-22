@@ -51,5 +51,5 @@ object SpanContext {
     show"[ trace-id: ${c.traceId}, span-id: ${c.spanId}$parent$state, sampled: ${c.traceFlags.sampled}, remote: ${c.isRemote} ]"
   }
 
-  implicit val eq: Eq[SpanContext] = cats.derived.semiauto.eq[SpanContext]
+  implicit val eq: Eq[SpanContext] = magnolify.cats.semiauto.EqDerivation[SpanContext]
 }

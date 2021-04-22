@@ -3,7 +3,6 @@ package io.janstenpickle.trace4cats.stackdriver.oauth
 import cats.effect.laws.util.TestContext
 import cats.effect.{ContextShift, IO, Timer}
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalacheck.ScalacheckShapeless._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -15,6 +14,7 @@ class CachedTokenProviderSpec extends AnyFlatSpec with Matchers with ScalaCheckD
   implicit lazy val ioTimer: Timer[IO] = ec.timer[IO]
 
   implicit val longArb: Arbitrary[Long] = Arbitrary(Gen.posNum[Long])
+  implicit val accessTokenArb: Arbitrary[AccessToken] = magnolify.scalacheck.semiauto.ArbitraryDerivation[AccessToken]
 
   it should "return a cached token when clock tick is less than expiry" in forAll {
     (token1: AccessToken, token2: AccessToken) =>

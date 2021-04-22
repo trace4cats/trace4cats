@@ -21,9 +21,9 @@ object Dependencies {
     val jaeger = "1.6.0"
     val jwt = "3.15.0"
     val kafka = "2.8.0"
-    val kittens = "2.2.2"
     val log4cats = "1.2.2"
     val logback = "1.2.3"
+    val mangolify = "0.4.3"
     val micronaut = "2.4.2"
     val natchez = "0.0.22"
     val openTelemetry = "1.1.0"
@@ -44,11 +44,11 @@ object Dependencies {
     val disciplineScalatest = "2.1.3"
     val discipline = "1.1.4"
     val scalaCheck = "1.15.3"
-    val scalaCheckShapeless = "1.2.5"
     val scalaTest = "3.2.8"
     val testContainers = "0.39.3"
   }
 
+  lazy val alleyCats = "org.typelevel"                         %% "alleycats-core"                  % Versions.cats
   lazy val cats = "org.typelevel"                              %% "cats-core"                       % Versions.cats
   lazy val catsEffect = "org.typelevel"                        %% "cats-effect"                     % Versions.catsEffect
   lazy val commonsCodec = "commons-codec"                       % "commons-codec"                   % Versions.commonsCodec
@@ -80,9 +80,9 @@ object Dependencies {
   lazy val jaegerThrift = "io.jaegertracing"                    % "jaeger-thrift"                   % Versions.jaeger
   lazy val jwt = "com.auth0"                                    % "java-jwt"                        % Versions.jwt
   lazy val kafka = "org.apache.kafka"                           % "kafka-clients"                   % Versions.kafka
-  lazy val kittens = "org.typelevel"                           %% "kittens"                         % Versions.kittens
   lazy val log4cats = "org.typelevel"                          %% "log4cats-slf4j"                  % Versions.log4cats
   lazy val logback = "ch.qos.logback"                           % "logback-classic"                 % Versions.logback
+  lazy val magnolifyCats = "com.spotify"                       %% "magnolify-cats"                  % Versions.mangolify
   lazy val micronautCore = "io.micronaut"                       % "micronaut-core"                  % Versions.micronaut
   lazy val natchez = "org.tpolecat"                            %% "natchez-core"                    % Versions.natchez
   lazy val openTelemetrySdk = "io.opentelemetry"                % "opentelemetry-sdk"               % Versions.openTelemetry
@@ -107,16 +107,15 @@ object Dependencies {
   lazy val vulcanEnumeratum = "com.github.fd4s"                %% "vulcan-enumeratum"               % Versions.vulcan
   lazy val zioInterop = "dev.zio"                              %% "zio-interop-cats"                % Versions.zioInterop
 
-  lazy val catsLaws = "org.typelevel"             %% "cats-laws"              % Versions.cats
-  lazy val catsEffectLaws = "org.typelevel"       %% "cats-effect-laws"       % Versions.catsEffect
-  lazy val catsTestkitScalatest = "org.typelevel" %% "cats-testkit-scalatest" % Versions.catsTestkitScalatest
-  lazy val disciplineScalatest = "org.typelevel"  %% "discipline-scalatest"   % Versions.disciplineScalatest
-  lazy val disciplineCore = "org.typelevel"       %% "discipline-core"        % Versions.discipline
-  lazy val scalacheck = "org.scalacheck"          %% "scalacheck"             % Versions.scalaCheck
-  lazy val scalacheckShapeless =
-    "com.github.alexarchambault"           %% "scalacheck-shapeless_1.14"      % Versions.scalaCheckShapeless
-  lazy val scalaTest = "org.scalatest"     %% "scalatest"                      % Versions.scalaTest
-  lazy val testContainers = "com.dimafeng" %% "testcontainers-scala-scalatest" % Versions.testContainers
+  lazy val catsLaws = "org.typelevel"             %% "cats-laws"                      % Versions.cats
+  lazy val catsEffectLaws = "org.typelevel"       %% "cats-effect-laws"               % Versions.catsEffect
+  lazy val catsTestkitScalatest = "org.typelevel" %% "cats-testkit-scalatest"         % Versions.catsTestkitScalatest
+  lazy val disciplineScalatest = "org.typelevel"  %% "discipline-scalatest"           % Versions.disciplineScalatest
+  lazy val disciplineCore = "org.typelevel"       %% "discipline-core"                % Versions.discipline
+  lazy val magnolifyScalacheck = "com.spotify"    %% "magnolify-scalacheck"           % Versions.mangolify
+  lazy val scalacheck = "org.scalacheck"          %% "scalacheck"                     % Versions.scalaCheck
+  lazy val scalaTest = "org.scalatest"            %% "scalatest"                      % Versions.scalaTest
+  lazy val testContainers = "com.dimafeng"        %% "testcontainers-scala-scalatest" % Versions.testContainers
 
   lazy val test =
     Seq(
@@ -125,8 +124,8 @@ object Dependencies {
       catsTestkitScalatest,
       disciplineScalatest,
       disciplineCore,
+      magnolifyScalacheck,
       scalacheck,
-      scalacheckShapeless,
       scalaTest
     )
 }
