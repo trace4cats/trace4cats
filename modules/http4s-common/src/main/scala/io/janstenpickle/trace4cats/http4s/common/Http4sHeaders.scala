@@ -1,6 +1,8 @@
 package io.janstenpickle.trace4cats.http4s.common
 
-import io.janstenpickle.trace4cats.model.{AttributeValue, TraceHeaders}
+import com.comcast.ip4s.{Ipv4Address, Ipv6Address}
+import io.janstenpickle.trace4cats.model.SemanticAttributeKeys._
+import io.janstenpickle.trace4cats.model.{AttributeValue, SemanticAttributeKeys, TraceHeaders}
 import org.http4s.Headers
 import org.typelevel.ci.CIString
 
@@ -18,18 +20,29 @@ object Http4sHeaders {
     req: Request_,
     dropHeadersWhen: CIString => Boolean = Headers.SensitiveHeaders.contains
   ): List[(String, AttributeValue)] =
-    List[(String, AttributeValue)](
-      "http.method" -> req.method.name,
-      "http.url" -> req.uri.path.toString
-    ) ++ headerFields(req.headers, "req", dropHeadersWhen)
+    List[(String, AttributeValue)](httpMethod -> req.method.name, httpUrl -> req.uri.path.toString) ++ headerFields(
+      req.headers,
+      "req",
+      dropHeadersWhen
+    ) ++ req.server.toList.flatMap { address =>
+      val addressKey = address.host match {
+        case _: Ipv4Address => SemanticAttributeKeys.serviceIpv4
+        case _: Ipv6Address => SemanticAttributeKeys.serviceIpv6
+      }
+
+      List[(String, AttributeValue)](
+        addressKey -> address.host.toString,
+        SemanticAttributeKeys.servicePort -> address.port.value
+      )
+    }
 
   def responseFields(
     resp: Response_,
     dropHeadersWhen: CIString => Boolean = Headers.SensitiveHeaders.contains
   ): List[(String, AttributeValue)] =
     List[(String, AttributeValue)](
-      "http.status_code" -> resp.status.code,
-      "http.status_message" -> resp.status.reason
+      httpStatusCode -> resp.status.code,
+      httpStatusMessage -> resp.status.reason
     ) ++ headerFields(resp.headers, "resp", dropHeadersWhen)
 
   val converter: TraceHeaders.Converter[Headers] = new TraceHeaders.Converter[Headers] {
