@@ -17,6 +17,7 @@ trait Span[F[_]] {
   def context: SpanContext
   def put(key: String, value: AttributeValue): F[Unit]
   def putAll(fields: (String, AttributeValue)*): F[Unit]
+  def putAll(fields: Map[String, AttributeValue]): F[Unit]
   def setStatus(spanStatus: SpanStatus): F[Unit]
   def addLink(link: Link): F[Unit]
   def addLinks(links: NonEmptyList[Link]): F[Unit]
@@ -40,6 +41,8 @@ case class RefSpan[F[_]: Sync: Clock] private (
   override def put(key: String, value: AttributeValue): F[Unit] =
     attributes.update(_ + (key -> value))
   override def putAll(fields: (String, AttributeValue)*): F[Unit] =
+    attributes.update(_ ++ fields)
+  def putAll(fields: Map[String, AttributeValue]): F[Unit] =
     attributes.update(_ ++ fields)
   override def setStatus(spanStatus: SpanStatus): F[Unit] = status.set(spanStatus)
   override def addLink(link: Link): F[Unit] = links.update(link :: _)
@@ -73,6 +76,7 @@ case class RefSpan[F[_]: Sync: Clock] private (
 case class EmptySpan[F[_]: Defer: MonadThrow] private (context: SpanContext) extends Span[F] {
   override def put(key: String, value: AttributeValue): F[Unit] = Applicative[F].unit
   override def putAll(fields: (String, AttributeValue)*): F[Unit] = Applicative[F].unit
+  override def putAll(fields: Map[String, AttributeValue]): F[Unit] = Applicative[F].unit
   override def setStatus(spanStatus: SpanStatus): F[Unit] = Applicative[F].unit
   override def addLink(link: Link): F[Unit] = Applicative[F].unit
   override def addLinks(links: NonEmptyList[Link]): F[Unit] = Applicative[F].unit
@@ -86,6 +90,7 @@ case class EmptySpan[F[_]: Defer: MonadThrow] private (context: SpanContext) ext
 case class NoopSpan[F[_]: Applicative] private (context: SpanContext) extends Span[F] {
   override def put(key: String, value: AttributeValue): F[Unit] = Applicative[F].unit
   override def putAll(fields: (String, AttributeValue)*): F[Unit] = Applicative[F].unit
+  override def putAll(fields: Map[String, AttributeValue]): F[Unit] = Applicative[F].unit
   override def setStatus(spanStatus: SpanStatus): F[Unit] = Applicative[F].unit
   override def addLink(link: Link): F[Unit] = Applicative[F].unit
   override def addLinks(links: NonEmptyList[Link]): F[Unit] = Applicative[F].unit
@@ -164,6 +169,7 @@ object Span {
       override def context: SpanContext = span.context
       override def put(key: String, value: AttributeValue): G[Unit] = fk(span.put(key, value))
       override def putAll(fields: (String, AttributeValue)*): G[Unit] = fk(span.putAll(fields: _*))
+      override def putAll(fields: Map[String, AttributeValue]): G[Unit] = fk(span.putAll(fields))
       override def setStatus(spanStatus: SpanStatus): G[Unit] = fk(span.setStatus(spanStatus))
       override def addLink(link: Link): G[Unit] = fk(span.addLink(link))
       override def addLinks(links: NonEmptyList[Link]): G[Unit] = fk(span.addLinks(links))
