@@ -21,7 +21,7 @@ object Dependencies {
     val jaeger = "1.6.0"
     val jwt = "3.15.0"
     val kafka = "2.8.0"
-    val kittens = "2.2.2"
+    val kittens = "2.3.0"
     val log4cats = "1.3.0"
     val logback = "1.2.3"
     val micronaut = "2.5.1"
