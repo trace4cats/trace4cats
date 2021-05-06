@@ -9,6 +9,6 @@ object KafkaHeaders {
     def from(t: Headers): TraceHeaders =
       t.toChain.foldMap(h => TraceHeaders.of(h.key() -> h.as[String]))
     def to(h: TraceHeaders): Headers =
-      Headers.fromIterable(h.values.map { case (k, v) => Header(k, v) })
+      Headers.fromIterable(h.values.map { case (k, v) => Header(k.toString, v) })
   }
 }

@@ -2,12 +2,13 @@ package io.janstenpickle.trace4cats
 
 import cats.syntax.show._
 import io.janstenpickle.trace4cats.model._
+import org.typelevel.ci.CIString
 
 private[trace4cats] class B3SingleToHeaders extends ToHeaders {
   final val traceHeader = "b3"
 
   override def toContext(headers: TraceHeaders): Option[SpanContext] =
-    headers.values.get(traceHeader).map(_.split('-').toList) match {
+    headers.values.get(CIString(traceHeader)).map(_.split('-').toList) match {
       case Some(traceIdHex :: spanIdHex :: rest) =>
         for {
           traceId <- TraceId.fromHexString(traceIdHex)

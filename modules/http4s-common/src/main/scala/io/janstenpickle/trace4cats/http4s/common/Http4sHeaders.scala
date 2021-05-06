@@ -3,6 +3,7 @@ package io.janstenpickle.trace4cats.http4s.common
 import io.janstenpickle.trace4cats.model.{AttributeValue, TraceHeaders}
 import org.http4s.util.CaseInsensitiveString
 import org.http4s.{Header, Headers}
+import org.typelevel.ci.CIString
 
 object Http4sHeaders {
   def headerFields(
@@ -35,8 +36,8 @@ object Http4sHeaders {
 
   val converter: TraceHeaders.Converter[Headers] = new TraceHeaders.Converter[Headers] {
     def from(t: Headers): TraceHeaders =
-      TraceHeaders(t.toList.map(h => h.name.value -> h.value).toMap)
+      TraceHeaders(t.toList.map(h => CIString(h.name.value) -> h.value).toMap)
     def to(h: TraceHeaders): Headers =
-      Headers(h.values.map { case (k, v) => Header(k, v) }.toList)
+      Headers(h.values.map { case (k, v) => Header(k.toString, v) }.toList)
   }
 }
