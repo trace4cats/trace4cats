@@ -107,7 +107,7 @@ object Dependencies {
   lazy val vulcanGeneric = "com.github.fd4s"                   %% "vulcan-generic"                  % Versions.vulcan
   lazy val vulcanEnumeratum = "com.github.fd4s"                %% "vulcan-enumeratum"               % Versions.vulcan
   lazy val zioInterop = "dev.zio"                              %% "zio-interop-cats"                % Versions.zioInterop
-  lazy val caseInsensitive = "org.typelevel" %% "case-insensitive" % Versions.caseInsensitive
+  lazy val caseInsensitive = "org.typelevel"                   %% "case-insensitive"                % Versions.caseInsensitive
 
   lazy val catsLaws = "org.typelevel"             %% "cats-laws"              % Versions.cats
   lazy val catsEffectLaws = "org.typelevel"       %% "cats-effect-laws"       % Versions.catsEffect

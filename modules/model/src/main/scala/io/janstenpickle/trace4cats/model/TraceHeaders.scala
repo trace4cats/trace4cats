@@ -13,7 +13,7 @@ case class TraceHeaders(values: Map[CIString, String]) extends AnyVal {
 }
 
 object TraceHeaders {
-  def of(zxc: Map[String, String]): TraceHeaders = TraceHeaders(zxc.map{ case (k, v) => CIString(k) -> v })
+  def of(zxc: Map[String, String]): TraceHeaders = TraceHeaders(zxc.map { case (k, v) => CIString(k) -> v })
   def of(values: (String, String)*): TraceHeaders = of(values.toMap)
   def ofCi(values: (CIString, String)*): TraceHeaders = TraceHeaders(values.toMap)
 
