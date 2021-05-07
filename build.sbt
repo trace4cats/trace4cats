@@ -142,7 +142,8 @@ lazy val root = (project in file("."))
     `tail-sampling`,
     `tail-sampling-cache-store`,
     `tail-sampling-redis-store`,
-    test
+    test,
+    `zipkin-http-exporter`,
   )
 
 lazy val model =
@@ -363,6 +364,21 @@ lazy val `opentelemetry-otlp-http-exporter` =
       ),
       Compile / PB.protoSources += target.value / "protobuf_external",
       Compile / PB.targets := Seq(scalapb.gen(grpc = false, lenses = false) -> (Compile / sourceManaged).value)
+    )
+    .dependsOn(model, kernel, `exporter-common`, `exporter-http`, `jaeger-integration-test` % "test->compile")
+
+lazy val `zipkin-http-exporter` =
+  (project in file("modules/zipkin-http-exporter"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-zipkin-http-exporter",
+      libraryDependencies ++= Seq(
+        Dependencies.catsEffect,
+        Dependencies.circeGeneric,
+        Dependencies.fs2,
+        Dependencies.http4sClient,
+        Dependencies.http4sBlazeClient
+      )
     )
     .dependsOn(model, kernel, `exporter-common`, `exporter-http`, `jaeger-integration-test` % "test->compile")
 
