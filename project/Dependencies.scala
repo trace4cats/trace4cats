@@ -3,53 +3,53 @@ import sbt._
 object Dependencies {
   object Versions {
     val cats = "2.6.0"
-    val catsEffect = "2.5.0"
+    val catsEffect = "3.1.0"
     val collectionCompat = "2.4.3"
     val commonsCodec = "1.15"
     val circe = "0.13.0"
     val circeYaml = "0.13.1"
-    val decline = "1.4.0"
+    val decline = "2.0.0"
     val embeddedRedis = "0.7.3"
     val enumeratum = "1.6.1"
-    val fs2 = "2.5.5"
-    val fs2Kafka = "1.6.1"
+    val fs2 = "3.0.2"
+    val fs2Kafka = "2.0.0"
     val googleCredentials = "0.25.5"
     val googleCloudTrace = "1.3.3"
     val grpc = "1.37.0"
-    val http4s = "0.21.22"
-    val http4sJdkClient = "0.3.6"
+    val http4s = "1.0.0-M21"
+    val http4sJdkClient = "0.5.0-M4"
     val jaeger = "1.6.0"
     val jwt = "3.15.0"
     val kafka = "2.8.0"
-    val kittens = "2.3.0"
-    val log4cats = "1.3.0"
+    val kittens = "2.2.2"
+    val log4cats = "2.1.0"
     val logback = "1.2.3"
     val micronaut = "2.5.0"
-    val natchez = "0.0.24"
+    val natchez = "0.1.2"
     val openTelemetry = "1.1.0"
-    val redis4cats = "0.13.1"
+    val redis4cats = "1.0.0-RC3"
     val scaffeine = "4.0.2"
     val scala212 = "2.12.13"
     val scala213 = "2.13.5"
     val scalapb = "0.11.0"
-    val sttpClient2 = "2.2.9"
-    val sttpClient3 = "3.2.3"
-    val sttpModel = "1.4.6"
-    val sttpTapir = "0.17.19"
+    val sttpClient3 = "3.3.0"
+    val sttpModel = "1.4.5"
+    val sttpTapir = "0.18.0-M7"
     val svm = "19.2.1"
     val vulcan = "1.6.0"
-    val zioInterop = "2.4.1.0"
+    val zioInterop = "3.0.2.0"
 
     val catsTestkitScalatest = "2.1.4"
     val disciplineScalatest = "2.1.4"
     val discipline = "1.1.4"
-    val scalaCheck = "1.15.4"
+    val scalaCheck = "1.15.3"
     val scalaCheckShapeless = "1.2.5"
     val scalaTest = "3.2.8"
     val testContainers = "0.39.3"
   }
 
   lazy val cats = "org.typelevel"                              %% "cats-core"                       % Versions.cats
+  lazy val catsEffectKernel = "org.typelevel"                  %% "cats-effect-kernel"              % Versions.catsEffect
   lazy val catsEffect = "org.typelevel"                        %% "cats-effect"                     % Versions.catsEffect
   lazy val commonsCodec = "commons-codec"                       % "commons-codec"                   % Versions.commonsCodec
   lazy val collectionCompat = "org.scala-lang.modules"         %% "scala-collection-compat"         % Versions.collectionCompat
@@ -93,8 +93,6 @@ object Dependencies {
   lazy val redis4catsLog4cats = "dev.profunktor"               %% "redis4cats-log4cats"             % Versions.redis4cats
   lazy val scaffeine = "com.github.blemale"                    %% "scaffeine"                       % Versions.scaffeine
   lazy val scalapbJson = "com.thesamet.scalapb"                %% "scalapb-json4s"                  % Versions.scalapb
-  lazy val sttpClient2 = "com.softwaremill.sttp.client"        %% "cats"                            % Versions.sttpClient2
-  lazy val sttpClient2Http4s = "com.softwaremill.sttp.client"  %% "http4s-backend"                  % Versions.sttpClient2
   lazy val sttpClient3 = "com.softwaremill.sttp.client3"       %% "cats"                            % Versions.sttpClient3
   lazy val sttpClient3Http4s = "com.softwaremill.sttp.client3" %% "http4s-backend"                  % Versions.sttpClient3
   lazy val sttpModel = "com.softwaremill.sttp.model"           %% "core"                            % Versions.sttpModel
@@ -109,6 +107,7 @@ object Dependencies {
 
   lazy val catsLaws = "org.typelevel"             %% "cats-laws"              % Versions.cats
   lazy val catsEffectLaws = "org.typelevel"       %% "cats-effect-laws"       % Versions.catsEffect
+  lazy val catsEffectTestkit = "org.typelevel"    %% "cats-effect-testkit"    % Versions.catsEffect
   lazy val catsTestkitScalatest = "org.typelevel" %% "cats-testkit-scalatest" % Versions.catsTestkitScalatest
   lazy val disciplineScalatest = "org.typelevel"  %% "discipline-scalatest"   % Versions.disciplineScalatest
   lazy val disciplineCore = "org.typelevel"       %% "discipline-core"        % Versions.discipline
@@ -122,6 +121,7 @@ object Dependencies {
     Seq(
       catsLaws,
       catsEffectLaws,
+      catsEffectTestkit,
       catsTestkitScalatest,
       disciplineScalatest,
       disciplineCore,

@@ -43,6 +43,7 @@ Trace4Cats supports publishing spans to the following systems:
 - [Stackdriver Trace] over HTTP and GRPC
 - [Datadog] over HTTP
 - [NewRelic] over HTTP
+- [Zipkin] over HTTP
 
 Instrumentation for trace propagation and continuation is available for the following libraries
 
@@ -208,3 +209,4 @@ This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-
 [Sttp]: https://sttp.softwaremill.com
 [Tapir]: https://tapir.softwaremill.com
 [FS2 Kafka]: https://fd4s.github.io/fs2-kafka/
+[Zipkin]: https://zipkin.io
