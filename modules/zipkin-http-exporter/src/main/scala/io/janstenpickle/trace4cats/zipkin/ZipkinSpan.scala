@@ -3,9 +3,9 @@ package io.janstenpickle.trace4cats.zipkin
 import cats.Foldable
 import cats.syntax.foldable._
 import cats.syntax.show._
+import io.circe.Encoder
 import io.circe.generic.semiauto.deriveEncoder
 import io.circe.syntax._
-import io.circe.{Encoder, Json}
 import io.janstenpickle.trace4cats.`export`.SemanticTags
 import io.janstenpickle.trace4cats.model.AttributeValue.{LongValue, StringValue}
 import io.janstenpickle.trace4cats.model._
@@ -91,12 +91,7 @@ object ZipkinSpan {
     )
   }
 
-  private val endpointEncoder: Encoder[Endpoint] = deriveEncoder[Endpoint]
-
-  implicit val optionalEndpointEncoder: Encoder[Option[Endpoint]] = Encoder.instance {
-    case Some(endpoint) if endpoint.nonEmpty => endpointEncoder(endpoint)
-    case _ => Json.Null
-  }
+  implicit val endpointEncoder: Encoder[Endpoint] = deriveEncoder[Endpoint]
 
   implicit val zipkinSpanEncoder: Encoder[ZipkinSpan] = deriveEncoder[ZipkinSpan]
 

@@ -68,7 +68,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
                       ) ++ additionalAttributes
                     )).sortBy(_.key)
 
-                    val childRefs = span.context.parent.toList.map { parent =>
+                    val parentRefs = span.context.parent.toList.map { parent =>
                       JaegerReference("CHILD_OF", traceId.show, parent.spanId.show)
                     }
 
@@ -88,7 +88,7 @@ trait BaseJaegerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
                       duration = TimeUnit.MILLISECONDS.toMicros(span.end.toEpochMilli) - TimeUnit.MILLISECONDS
                         .toMicros(span.start.toEpochMilli),
                       tags = jtags,
-                      references = (childRefs ++ linkRefs).sortBy(_.traceID)
+                      references = (parentRefs ++ linkRefs).sortBy(_.traceID)
                     )
                   }
                   .sortBy(_.operationName),
