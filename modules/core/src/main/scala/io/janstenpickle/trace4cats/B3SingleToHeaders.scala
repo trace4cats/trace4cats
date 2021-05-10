@@ -2,9 +2,10 @@ package io.janstenpickle.trace4cats
 
 import cats.syntax.show._
 import io.janstenpickle.trace4cats.model._
+import org.typelevel.ci._
 
 private[trace4cats] class B3SingleToHeaders extends ToHeaders {
-  final val traceHeader = "b3"
+  final val traceHeader = ci"b3"
 
   override def toContext(headers: TraceHeaders): Option[SpanContext] =
     headers.values.get(traceHeader).map(_.split('-').toList) match {
@@ -33,7 +34,7 @@ private[trace4cats] class B3SingleToHeaders extends ToHeaders {
 
     val header = show"${context.traceId}-${context.spanId}-$sampled"
 
-    TraceHeaders.of(traceHeader -> context.parent.fold(header) { parent =>
+    TraceHeaders.ofCi(traceHeader -> context.parent.fold(header) { parent =>
       show"$header-${parent.spanId}"
     })
   }

@@ -11,12 +11,13 @@ import io.janstenpickle.trace4cats.model.{
   TraceState
 }
 import cats.syntax.show._
+import org.typelevel.ci._
 
 private[trace4cats] class B3ToHeaders extends ToHeaders {
-  final val traceIdHeader = "X-B3-TraceId"
-  final val spanIdHeader = "X-B3-SpanId"
-  final val parentSpanIdHeader = "X-B3-ParentSpanId"
-  final val sampledHeader = "X-B3-Sampled"
+  final val traceIdHeader = ci"X-B3-TraceId"
+  final val spanIdHeader = ci"X-B3-SpanId"
+  final val parentSpanIdHeader = ci"X-B3-ParentSpanId"
+  final val sampledHeader = ci"X-B3-Sampled"
 
   override def toContext(headers: TraceHeaders): Option[SpanContext] =
     (

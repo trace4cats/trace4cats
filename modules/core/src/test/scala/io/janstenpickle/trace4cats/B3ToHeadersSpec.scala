@@ -58,4 +58,29 @@ class B3ToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wi
 
     assert(Eq.eqv(b3.toContext(headers), expected))
   }
+
+  it should "be case insensitive" in {
+    val headers = TraceHeaders.of(
+      "x-b3-traceid" -> "80f198ee56343ba864fe8b2a57d3eff7",
+      "x-b3-parentspanid" -> "05e3ac9a4f6e3b90",
+      "x-b3-spanid" -> "e457b5a2e4d86bd1",
+      "x-b3-sampled" -> "1"
+    )
+
+    val expected = for {
+      traceId <- TraceId.fromHexString("80f198ee56343ba864fe8b2a57d3eff7")
+      spanId <- SpanId.fromHexString("e457b5a2e4d86bd1")
+      parentSpanId <- SpanId.fromHexString("05e3ac9a4f6e3b90")
+    } yield SpanContext(
+      traceId,
+      spanId,
+      Some(Parent(parentSpanId, isRemote = true)),
+      TraceFlags(sampled = SampleDecision.Include),
+      TraceState.empty,
+      isRemote = true
+    )
+
+    println(b3.toContext(headers))
+    assert(Eq.eqv(b3.toContext(headers), expected))
+  }
 }

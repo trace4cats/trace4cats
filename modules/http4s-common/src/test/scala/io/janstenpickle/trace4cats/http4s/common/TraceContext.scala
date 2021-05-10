@@ -7,14 +7,14 @@ import cats.syntax.functor._
 import io.janstenpickle.trace4cats.base.optics.{Getter, Lens}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import io.janstenpickle.trace4cats.model.TraceHeaders
-import org.typelevel.ci.CIString
+import org.typelevel.ci._
 
 case class TraceContext[F[_]](correlationId: String, span: Span[F])
 
 object TraceContext {
   def make[F[_]: Sync](req: Request_, span: Span[F]): F[TraceContext[F]] =
     req.headers
-      .get(CIString("X-Correlation-ID"))
+      .get(ci"X-Correlation-ID")
       .fold(Sync[F].delay(UUID.randomUUID().toString))(h => h.head.value.pure)
       .map(TraceContext(_, span))
 

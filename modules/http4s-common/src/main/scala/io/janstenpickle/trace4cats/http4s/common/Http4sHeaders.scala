@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.http4s.common
 
 import io.janstenpickle.trace4cats.model.{AttributeValue, TraceHeaders}
-import org.http4s.Headers
+import org.http4s.{Header, Headers}
 import org.typelevel.ci.CIString
 
 object Http4sHeaders {
@@ -34,8 +34,8 @@ object Http4sHeaders {
 
   val converter: TraceHeaders.Converter[Headers] = new TraceHeaders.Converter[Headers] {
     def from(t: Headers): TraceHeaders =
-      TraceHeaders(t.headers.map(h => h.name.toString -> h.value).toMap)
+      TraceHeaders(t.headers.map(h => h.name -> h.value).toMap)
     def to(h: TraceHeaders): Headers =
-      Headers(h.values.toSeq)
+      Headers(h.values.map { case (k, v) => Header.Raw(k, v) }.toSeq)
   }
 }

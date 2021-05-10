@@ -156,7 +156,8 @@ lazy val model =
         Dependencies.enumeratum,
         Dependencies.enumeratumCats,
         Dependencies.commonsCodec,
-        Dependencies.kittens
+        Dependencies.kittens,
+        Dependencies.caseInsensitive
       )
     )
 
