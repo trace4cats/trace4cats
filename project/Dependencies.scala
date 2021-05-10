@@ -2,6 +2,7 @@ import sbt._
 
 object Dependencies {
   object Versions {
+    val caseInsensitive = "1.1.3"
     val cats = "2.6.0"
     val catsEffect = "2.5.0"
     val collectionCompat = "2.4.3"
@@ -39,7 +40,6 @@ object Dependencies {
     val svm = "19.2.1"
     val vulcan = "1.6.0"
     val zioInterop = "2.4.1.0"
-    val caseInsensitive = "1.1.3"
 
     val catsTestkitScalatest = "2.1.4"
     val disciplineScalatest = "2.1.4"
@@ -50,6 +50,7 @@ object Dependencies {
     val testContainers = "0.39.3"
   }
 
+  lazy val caseInsensitive = "org.typelevel"                   %% "case-insensitive"                % Versions.caseInsensitive
   lazy val cats = "org.typelevel"                              %% "cats-core"                       % Versions.cats
   lazy val catsEffect = "org.typelevel"                        %% "cats-effect"                     % Versions.catsEffect
   lazy val commonsCodec = "commons-codec"                       % "commons-codec"                   % Versions.commonsCodec
@@ -107,7 +108,6 @@ object Dependencies {
   lazy val vulcanGeneric = "com.github.fd4s"                   %% "vulcan-generic"                  % Versions.vulcan
   lazy val vulcanEnumeratum = "com.github.fd4s"                %% "vulcan-enumeratum"               % Versions.vulcan
   lazy val zioInterop = "dev.zio"                              %% "zio-interop-cats"                % Versions.zioInterop
-  lazy val caseInsensitive = "org.typelevel"                   %% "case-insensitive"                % Versions.caseInsensitive
 
   lazy val catsLaws = "org.typelevel"             %% "cats-laws"              % Versions.cats
   lazy val catsEffectLaws = "org.typelevel"       %% "cats-effect-laws"       % Versions.catsEffect
