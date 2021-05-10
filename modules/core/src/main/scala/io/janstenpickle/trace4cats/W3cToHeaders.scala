@@ -2,11 +2,11 @@ package io.janstenpickle.trace4cats
 
 import cats.syntax.show._
 import io.janstenpickle.trace4cats.model._
-import org.typelevel.ci.CIString
+import org.typelevel.ci._
 
 private[trace4cats] class W3cToHeaders extends ToHeaders {
-  final val parentHeader = CIString("traceparent")
-  final val stateHeader = CIString("tracestate")
+  final val parentHeader = ci"traceparent"
+  final val stateHeader = ci"tracestate"
 
   override def toContext(headers: TraceHeaders): Option[SpanContext] = {
     def splitParent(traceParent: String): Option[(String, String, SampleDecision)] =

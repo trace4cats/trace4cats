@@ -5,15 +5,15 @@ import cats.syntax.contravariant._
 import org.typelevel.ci.CIString
 
 case class TraceHeaders(values: Map[CIString, String]) extends AnyVal {
-  def ++(that: TraceHeaders): TraceHeaders = new TraceHeaders(this.values ++ that.values)
+  def ++(that: TraceHeaders): TraceHeaders = TraceHeaders(this.values ++ that.values)
   def +(elem: (String, String)): TraceHeaders = {
     val (k, v) = elem
-    new TraceHeaders(this.values.updated(CIString(k), v))
+    TraceHeaders(values.updated(CIString(k), v))
   }
 }
 
 object TraceHeaders {
-  def of(zxc: Map[String, String]): TraceHeaders = TraceHeaders(zxc.map { case (k, v) => CIString(k) -> v })
+  def of(values: Map[String, String]): TraceHeaders = TraceHeaders(values.map { case (k, v) => CIString(k) -> v })
   def of(values: (String, String)*): TraceHeaders = of(values.toMap)
   def ofCi(values: (CIString, String)*): TraceHeaders = TraceHeaders(values.toMap)
 
@@ -22,7 +22,7 @@ object TraceHeaders {
     def to(h: TraceHeaders): T
   }
 
-  val empty: TraceHeaders = new TraceHeaders(Map.empty)
+  val empty: TraceHeaders = TraceHeaders(Map.empty)
 
   implicit val traceHeadersMonoid: Monoid[TraceHeaders] = Monoid.instance(empty, _ ++ _)
   implicit val traceHeadersShow: Show[TraceHeaders] = Show.catsShowForMap[CIString, String].contramap(_.values)
