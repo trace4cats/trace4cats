@@ -36,6 +36,6 @@ object Http4sHeaders {
     def from(t: Headers): TraceHeaders =
       TraceHeaders(t.headers.map(h => h.name -> h.value).toMap)
     def to(h: TraceHeaders): Headers =
-      Headers(h.values.toSeq.map { case (k, v) => Header.ToRaw.rawToRaw(Header.Raw(k, v)) }: _*)
+      Headers(h.values.map { case (k, v) => Header.Raw(k, v) }.toSeq)
   }
 }

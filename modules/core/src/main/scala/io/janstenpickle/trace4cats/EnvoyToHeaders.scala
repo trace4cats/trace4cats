@@ -12,13 +12,13 @@ import io.janstenpickle.trace4cats.model.{
   TraceState
 }
 import cats.syntax.show._
-import org.typelevel.ci.CIString
+import org.typelevel.ci._
 
 private[trace4cats] class EnvoyToHeaders extends ToHeaders {
-  final val requestIdHeader = CIString("x-request-id")
+  final val requestIdHeader = ci"x-request-id"
   final val requestIdStateKey = TraceState.Key.unsafe("envoy-request-id")
-  final val clientTraceIdHeader = CIString("x-client-trace-id")
-  final val contextHeader = CIString("x-ot-span-context")
+  final val clientTraceIdHeader = ci"x-client-trace-id"
+  final val contextHeader = ci"x-ot-span-context"
 
   override def toContext(headers: TraceHeaders): Option[SpanContext] = {
     val traceState =
