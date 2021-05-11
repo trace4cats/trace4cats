@@ -8,7 +8,7 @@ import io.janstenpickle.trace4cats.model.AttributeValue.StringValue
 import scala.jdk.CollectionConverters._
 
 object EnvironmentAttributes {
-  def apply[F[_]: Sync](): F[Map[String, AttributeValue]] = filterKeys(_ => true)
+  def apply[F[_]: Sync]: F[Map[String, AttributeValue]] = filterKeys(_ => true)
 
   def excludeKeys[F[_]: Sync](excludeKeys: Set[String]): F[Map[String, AttributeValue]] = filterKeys(
     !excludeKeys.contains(_)
