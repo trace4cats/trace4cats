@@ -261,6 +261,17 @@ Requires:
 
 ```
 
+## [Trace Process Attributes](../modules/example/src/main/scala/io/janstenpickle/trace4cats/example/TraceProcessAttributes.scala)
+
+Demonstrates how to use the `TraceProcessBuilder` to include attributes derived from the local environment, such as
+hostname, IP address, environment variables, system properties and user provided.
+
+Requires:
+
+```scala
+"io.janstenpickle" %% "trace4cats-core" % "0.10.1"
+```
+
 [FS2]: https://fs2.io/
 [FS2 `EntryPoint`]: ../modules/fs2/src/main/scala/io/janstenpickle/trace4cats/fs2/Fs2EntryPoint.scala
 [Http4s]: https://http4s.org/
