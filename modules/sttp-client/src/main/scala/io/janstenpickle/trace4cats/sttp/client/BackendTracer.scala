@@ -5,7 +5,7 @@ import cats.syntax.flatMap._
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.base.optics.{Getter, Lens}
-import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders}
+import io.janstenpickle.trace4cats.model.{SampleDecision, SpanKind, TraceHeaders}
 import sttp.client.impl.cats.CatsMonadError
 import sttp.client.monad.{MonadError => SttpMonadError}
 import sttp.client.ws.WebSocketResponse
@@ -34,7 +34,13 @@ class BackendTracer[F[_], G[_], -S, -WS_HANLDER[_], Ctx](
           val headers = headersGetter.get(childCtx)
           val req = request.headers(SttpHeaders.converter.to(headers).headers: _*)
 
-          backend.send(req).flatTap { resp =>
+          // only extract request attributes if the span is sampled as the host parsing is quite expensive
+          val requestAttributes =
+            if (childSpan.context.traceFlags.sampled == SampleDecision.Include)
+              childSpan.putAll(SttpRequest.toAttributes(request))
+            else F.unit
+
+          requestAttributes >> backend.send(req).flatTap { resp =>
             childSpan.setStatus(SttpStatusMapping.statusToSpanStatus(resp.statusText, resp.code))
           }
         }
