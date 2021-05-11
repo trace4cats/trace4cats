@@ -265,7 +265,7 @@ jobs:
   libraries:
 
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
+    if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')) && author != 'mergify'
     needs: test
 
     steps:
