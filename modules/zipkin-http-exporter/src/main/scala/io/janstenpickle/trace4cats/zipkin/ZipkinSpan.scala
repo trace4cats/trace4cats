@@ -37,7 +37,7 @@ object ZipkinSpan {
 
   private def toTags(span: CompletedSpan): Map[String, String] = {
     val statusTags = SemanticTags.statusTags(prefix = "", requireMessage = false)(span.status)
-    (span.attributes ++ statusTags).view.mapValues(_.show).toMap
+    (span.attributes ++ statusTags).map { case (k, v) => k -> v.show }
   }
 
   private def toLocalEndpoint(serviceName: String, attributes: Map[String, AttributeValue]): Option[Endpoint] = {

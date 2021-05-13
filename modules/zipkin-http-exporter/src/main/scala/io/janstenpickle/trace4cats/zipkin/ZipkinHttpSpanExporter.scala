@@ -26,8 +26,8 @@ object ZipkinHttpSpanExporter {
     host: String = "localhost",
     port: Int = 9411
   ): F[SpanExporter[F, G]] =
-    HttpSpanExporter[F, G, String](client, s"http://$host:$port/api/v2/spans", ZipkinSpan.toJsonString)
+    HttpSpanExporter[F, G, String](client, s"http://$host:$port/api/v2/spans", ZipkinSpan.toJsonString[G](_))
 
   def apply[F[_]: Sync: Timer, G[_]: Foldable](client: Client[F], uri: String): F[SpanExporter[F, G]] =
-    HttpSpanExporter[F, G, String](client, uri, ZipkinSpan.toJsonString)
+    HttpSpanExporter[F, G, String](client, uri, ZipkinSpan.toJsonString[G](_))
 }
