@@ -344,11 +344,7 @@ lazy val `zipkin-http-exporter` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-zipkin-http-exporter",
-      libraryDependencies ++= Seq(
-        Dependencies.circeGeneric,
-        Dependencies.http4sClient,
-        Dependencies.http4sBlazeClient
-      )
+      libraryDependencies ++= Seq(Dependencies.circeGeneric, Dependencies.http4sClient, Dependencies.http4sBlazeClient)
     )
     .dependsOn(model, kernel, `exporter-common`, `exporter-http`, `jaeger-integration-test` % "test->compile")
 
