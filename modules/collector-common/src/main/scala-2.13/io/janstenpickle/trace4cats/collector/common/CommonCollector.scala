@@ -25,6 +25,7 @@ import io.janstenpickle.trace4cats.model.{AttributeValue, CompletedSpan, TraceId
 import io.janstenpickle.trace4cats.newrelic.NewRelicSpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpHttpSpanExporter
 import io.janstenpickle.trace4cats.stackdriver.StackdriverHttpSpanExporter
+import io.janstenpickle.trace4cats.zipkin.ZipkinHttpSpanExporter
 
 import scala.concurrent.duration._
 
@@ -141,6 +142,19 @@ object CommonCollector {
 
       }
 
+      zipkinExporters <- config.zipkin.traverse { zipkin =>
+        Resource
+          .eval(ZipkinHttpSpanExporter[F, Chunk](client, host = zipkin.host, port = zipkin.port))
+          .map(
+            (
+              "Zipkin HTTP",
+              List[(String, AttributeValue)]("zipkin.host" -> zipkin.host, "zipkin.port" -> zipkin.port),
+              _
+            )
+          )
+
+      }
+
       kafkaExporters <-
         config.kafkaForwarders
           .traverse { kafka =>
@@ -165,6 +179,7 @@ object CommonCollector {
         stackdriverExporters,
         ddExporters,
         newRelicExporters,
+        zipkinExporters,
         kafkaExporters
       ).flatten ++ others
 
