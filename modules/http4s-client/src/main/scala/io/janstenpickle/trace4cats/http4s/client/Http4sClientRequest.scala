@@ -14,5 +14,5 @@ object Http4sClientRequest {
         case _: Uri.RegName => SemanticAttributeKeys.remoteServiceHostname
       }
       key -> StringValue(host.value)
-    }.toMap ++ req.uri.port.map(port => SemanticAttributeKeys.servicePort -> LongValue(port.toLong))
+    }.toMap ++ req.uri.port.map(port => SemanticAttributeKeys.remoteServicePort -> LongValue(port.toLong))
 }
