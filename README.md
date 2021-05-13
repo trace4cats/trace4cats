@@ -178,6 +178,7 @@ To use Trace4Cats within your application add the dependencies listed below as n
 "io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.11.0"
 "io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.11.0"
 "io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-zipkin-http-exporter" % "0.11.0"
 
 ```
 
