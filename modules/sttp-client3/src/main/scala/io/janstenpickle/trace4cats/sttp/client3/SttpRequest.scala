@@ -22,5 +22,5 @@ object SttpRequest {
       }
 
       key -> StringValue(host)
-    }.toMap ++ req.uri.port.map(port => SemanticAttributeKeys.servicePort -> LongValue(port.toLong))
+    }.toMap ++ req.uri.port.map(port => SemanticAttributeKeys.remoteServicePort -> LongValue(port.toLong))
 }
