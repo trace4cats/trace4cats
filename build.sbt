@@ -787,7 +787,8 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
     `tail-sampling-cache-store`,
     `tail-sampling-redis-store`,
     filtering,
-    `rate-sampling`
+    `rate-sampling`,
+    `zipkin-http-exporter`
   )
 
 lazy val collector = (project in file("modules/collector"))

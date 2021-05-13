@@ -22,6 +22,7 @@ case class CommonCollectorConfig(
   stackdriverHttp: List[StackdriverHttpConfig] = List.empty,
   datadog: List[DatadogConfig] = List.empty,
   newRelic: List[NewRelicConfig] = List.empty,
+  zipkin: List[ZipkinConfig] = List.empty,
   sampling: SamplingConfig = SamplingConfig(),
   attributeFiltering: FilteringConfig = FilteringConfig(),
   logSpans: Boolean = false,
@@ -97,6 +98,11 @@ object NewRelicConfig {
     case endpoint => Endpoint.Observer(endpoint)
   }
   implicit val decoder: Decoder[NewRelicConfig] = deriveConfiguredDecoder
+}
+
+case class ZipkinConfig(port: Int = 9411, host: String = "localhost")
+object ZipkinConfig {
+  implicit val decoder: Decoder[ZipkinConfig] = deriveConfiguredDecoder
 }
 
 case class SamplingConfig(
