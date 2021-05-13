@@ -3,9 +3,8 @@ package io.janstenpickle.trace4cats.http4s.common
 import io.janstenpickle.trace4cats.model.AttributeValue.{LongValue, StringValue}
 import io.janstenpickle.trace4cats.model.SemanticAttributeKeys._
 import io.janstenpickle.trace4cats.model.{AttributeValue, TraceHeaders}
-import org.http4s.Uri.{Ipv4Address, Ipv6Address}
 import org.http4s.util.CaseInsensitiveString
-import org.http4s.{Header, Headers}
+import org.http4s.{Header, Headers, Uri}
 import org.typelevel.ci.CIString
 
 object Http4sHeaders {
@@ -26,15 +25,14 @@ object Http4sHeaders {
       req.headers,
       "req",
       dropHeadersWhen
-    ) ++ req.uri.host.toList.flatMap { host =>
-      val addressKey = host match {
-        case _: Ipv4Address => Some(serviceIpv4)
-        case _: Ipv6Address => Some(serviceIpv6)
-        case _ => None
+    ) ++ req.uri.host.map { host =>
+      val key = host match {
+        case _: Uri.Ipv4Address => serviceIpv4
+        case _: Uri.Ipv6Address => serviceIpv6
+        case _: Uri.RegName => serviceHostname
       }
-
-      List[(String, AttributeValue)](serviceHostname -> host.value) ++ addressKey.map(_ -> StringValue(host.value))
-    } ++ req.uri.port.map(port => servicePort -> LongValue(port.toLong))
+      key -> StringValue(host.value)
+    }.toMap ++ req.uri.port.map(port => servicePort -> LongValue(port.toLong))
 
   def responseFields(
     resp: Response_,
