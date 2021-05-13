@@ -24,6 +24,8 @@ object ContinuationSpan {
 
       override def putAll(fields: (String, AttributeValue)*): G[Unit] = spanK.putAll(fields: _*)
 
+      override def putAll(fields: Map[String, AttributeValue]): G[Unit] = spanK.putAll(fields)
+
       override def setStatus(spanStatus: SpanStatus): G[Unit] = spanK.setStatus(spanStatus)
 
       override def addLink(link: Link): G[Unit] = spanK.addLink(link)

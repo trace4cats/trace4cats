@@ -25,7 +25,7 @@ object Dependencies {
     val kittens = "2.3.0"
     val log4cats = "2.1.0"
     val logback = "1.2.3"
-    val micronaut = "2.5.1"
+    val micronaut = "2.5.3"
     val natchez = "0.1.2"
     val openTelemetry = "1.2.0"
     val redis4cats = "1.0.0-RC3"
@@ -46,7 +46,7 @@ object Dependencies {
     val scalaCheck = "1.15.4"
     val scalaCheckShapeless = "1.2.5"
     val scalaTest = "3.2.8"
-    val testContainers = "0.39.3"
+    val testContainers = "0.39.4"
   }
 
   lazy val caseInsensitive = "org.typelevel"                   %% "case-insensitive"                % Versions.caseInsensitive
