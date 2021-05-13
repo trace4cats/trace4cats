@@ -1,9 +1,6 @@
 package io.janstenpickle.trace4cats.stackdriver.oauth
 
-import java.util.concurrent.TimeUnit
-
-import cats.effect.{Clock, Sync}
-import cats.effect.concurrent.Ref
+import cats.effect.kernel.{Clock, Ref, Temporal}
 import cats.syntax.functor._
 import cats.syntax.flatMap._
 import cats.syntax.applicative._
@@ -11,16 +8,16 @@ import cats.syntax.applicative._
 import scala.concurrent.duration._
 
 object CachedTokenProvider {
-  def apply[F[_]: Sync: Clock](
+  def apply[F[_]: Temporal](
     underlying: TokenProvider[F],
     expiryOffset: FiniteDuration = 10.seconds
   ): F[TokenProvider[F]] =
-    Ref.of[F, Option[(Long, AccessToken)]](None).map { ref =>
+    Ref.of[F, Option[(FiniteDuration, AccessToken)]](None).map { ref =>
       new TokenProvider[F] {
         private def refreshToken =
           underlying.accessToken.flatTap { token =>
-            Clock[F].realTime(TimeUnit.SECONDS).flatMap { now =>
-              ref.set(Some((now + token.expiresIn - expiryOffset.toSeconds, token)))
+            Clock[F].realTime.flatMap { now =>
+              ref.set(Some((now + token.expiresIn.seconds - expiryOffset, token)))
             }
           }
 
@@ -29,9 +26,9 @@ object CachedTokenProvider {
             case None => refreshToken
             case Some((expiresAt, token)) =>
               for {
-                now <- Clock[F].realTime(TimeUnit.SECONDS)
+                now <- Clock[F].realTime
                 t <-
-                  if (now < expiresAt) token.copy(expiresIn = expiresAt - now).pure[F]
+                  if (now < expiresAt) token.copy(expiresIn = (expiresAt - now).toSeconds).pure[F]
                   else refreshToken
               } yield t
           }

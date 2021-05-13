@@ -1,7 +1,8 @@
 package io.janstenpickle.trace4cats.avro.kafka
 
+import cats.ApplicativeThrow
 import cats.data.NonEmptyList
-import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Sync, Timer}
+import cats.effect.kernel.{Async, Sync}
 import cats.syntax.applicativeError._
 import cats.syntax.either._
 import cats.syntax.flatMap._
@@ -43,7 +44,7 @@ object AvroKafkaConsumer {
       }
     }
 
-  def apply[F[_]: ConcurrentEffect: ContextShift: Timer](
+  def apply[F[_]: Async](
     bootStrapServers: NonEmptyList[String],
     consumerGroup: String,
     topic: String,
@@ -69,7 +70,7 @@ object AvroKafkaConsumer {
         .flatMap(apply[F](_, topic))
     }
 
-  def apply[F[_]: Concurrent](
+  def apply[F[_]: ApplicativeThrow](
     consumer: KafkaConsumer[F, Option[TraceId], Option[CompletedSpan]],
     topic: String,
   ): Stream[F, CompletedSpan] =

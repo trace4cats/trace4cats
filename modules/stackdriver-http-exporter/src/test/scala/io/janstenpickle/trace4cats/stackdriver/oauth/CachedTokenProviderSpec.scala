@@ -1,56 +1,64 @@
 package io.janstenpickle.trace4cats.stackdriver.oauth
 
-import cats.effect.laws.util.TestContext
-import cats.effect.{ContextShift, IO, Timer}
+import cats.effect.IO
+import cats.effect.testkit.TestInstances
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.ScalacheckShapeless._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+
 import scala.concurrent.duration._
+import scala.util.Success
 
-class CachedTokenProviderSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks {
-  implicit lazy val ec: TestContext = TestContext.apply()
-  implicit lazy val cs: ContextShift[IO] = IO.contextShift(ec)
-  implicit lazy val ioTimer: Timer[IO] = ec.timer[IO]
-
+class CachedTokenProviderSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks with TestInstances {
   implicit val longArb: Arbitrary[Long] = Arbitrary(Gen.posNum[Long])
 
   it should "return a cached token when clock tick is less than expiry" in forAll {
     (token1: AccessToken, token2: AccessToken) =>
+      implicit val ticker = Ticker()
+
       val updatedToken1 = token1.copy(expiresIn = 2)
       val provider = testTokenProvider(updatedToken1, token2)
 
       val test = for {
         cached <- CachedTokenProvider[IO](provider, 0.seconds)
         first <- cached.accessToken
-        _ <- IO(ec.tick(1.second))
+        _ <- IO.sleep(1.second)
         second <- cached.accessToken
       } yield {
         first.copy(expiresIn = 1) should be(second)
         first should be(updatedToken1)
         if (token1.accessToken != token2.accessToken) first.accessToken should not be (token2.accessToken)
+        ()
       }
 
-      test.unsafeRunSync()
+      val result = test.unsafeToFuture()
+      ticker.ctx.tick(10.seconds)
+      result.value shouldEqual Some(Success(()))
   }
 
   it should "return a new token when clock tick is greater than expiry" in forAll {
     (token1: AccessToken, token2: AccessToken) =>
+      implicit val ticker = Ticker()
+
       val updatedToken1 = token1.copy(expiresIn = 1)
       val provider = testTokenProvider(updatedToken1, token2)
 
       val test = for {
         cached <- CachedTokenProvider[IO](provider, 0.seconds)
         first <- cached.accessToken
-        _ <- IO(ec.tick(2.seconds))
+        _ <- IO.sleep(2.seconds)
         second <- cached.accessToken
       } yield {
         first should be(updatedToken1)
         second should be(token2)
+        ()
       }
 
-      test.unsafeRunSync()
+      val result = test.unsafeToFuture()
+      ticker.ctx.tick(10.seconds)
+      result.value shouldEqual Some(Success(()))
   }
 
   def testTokenProvider(first: AccessToken, second: AccessToken): TokenProvider[IO] =

@@ -1,24 +1,23 @@
 package io.janstenpickle.trace4cats.`export`
 
 import cats.Applicative
-import cats.effect.concurrent.Ref
-import cats.effect.syntax.bracket._
-import cats.effect.syntax.concurrent._
-import cats.effect.{Concurrent, Resource, Timer}
+import cats.effect.kernel.syntax.monadCancel._
+import cats.effect.kernel.syntax.spawn._
+import cats.effect.kernel.{Clock, Ref, Resource, Temporal}
+import cats.effect.std.Queue
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.monad._
 import fs2.{Chunk, Stream}
-import fs2.concurrent.Queue
-import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanExporter}
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceProcess}
+import org.typelevel.log4cats.Logger
 
 import scala.concurrent.duration._
 
 object QueuedSpanCompleter {
-  def apply[F[_]: Concurrent: Timer: Logger](
+  def apply[F[_]: Temporal: Logger](
     process: TraceProcess,
     exporter: SpanExporter[F, Chunk],
     config: CompleterConfig
@@ -30,7 +29,8 @@ object QueuedSpanCompleter {
       hasLoggedWarn <- Resource.eval(Ref.of(false))
       queue <- Resource.eval(Queue.bounded[F, CompletedSpan](realBufferSize))
       _ <- Resource.make {
-        queue.dequeue
+        Stream
+          .fromQueueUnterminated(queue)
           .groupWithin(config.batchSize, config.batchTimeout)
           .map(spans => Batch(spans))
           .evalMap { batch =>
@@ -51,10 +51,10 @@ object QueuedSpanCompleter {
           .compile
           .drain
           .start
-      }(fiber => Timer[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)
+      }(fiber => Clock[F].sleep(50.millis).whileM_(inFlight.get.map(_ != 0)) >> fiber.cancel)
     } yield new SpanCompleter[F] {
       override def complete(span: CompletedSpan.Builder): F[Unit] = {
-        val enqueue = queue.enqueue1(span.build(process)) >> inFlight.update { current =>
+        val enqueue = queue.offer(span.build(process)) >> inFlight.update { current =>
           if (current == realBufferSize) current
           else current + 1
         }

@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.avro
 
 import cats.data.NonEmptyList
 import cats.syntax.either._
-import cats.{ApplicativeError, Eval}
+import cats.{ApplicativeThrow, Eval}
 import io.janstenpickle.trace4cats.model._
 import org.apache.avro.Schema
 import vulcan.generic._
@@ -60,6 +60,6 @@ object AvroInstances {
 
   implicit val processCodec: Codec[TraceProcess] = Codec.derive
 
-  def completedSpanSchema[F[_]: ApplicativeError[*[_], Throwable]]: F[Schema] =
-    ApplicativeError[F, Throwable].fromEither(completedSpanCodec.schema.leftMap(_.throwable))
+  def completedSpanSchema[F[_]: ApplicativeThrow]: F[Schema] =
+    ApplicativeThrow[F].fromEither(completedSpanCodec.schema.leftMap(_.throwable))
 }

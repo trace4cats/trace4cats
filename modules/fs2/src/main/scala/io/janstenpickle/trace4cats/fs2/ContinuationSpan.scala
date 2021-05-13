@@ -1,8 +1,7 @@
 package io.janstenpickle.trace4cats.fs2
 
 import cats.data.NonEmptyList
-import cats.effect.Resource
-import cats.{Applicative, Defer}
+import cats.effect.kernel.{MonadCancelThrow, Resource}
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.model._
 import io.janstenpickle.trace4cats.{ErrorHandler, Span}
@@ -12,7 +11,7 @@ trait ContinuationSpan[F[_]] extends Span[F] {
 }
 
 object ContinuationSpan {
-  def fromSpan[F[_], G[_]: Applicative: Defer](
+  def fromSpan[F[_]: MonadCancelThrow, G[_]: MonadCancelThrow](
     span: Span[F]
   )(implicit P: Provide[F, G, Span[F]]): ContinuationSpan[G] = {
     // 👀

@@ -5,8 +5,7 @@ package io.janstenpickle.trace4cats.stackdriver.oauth
 import java.security.interfaces.{RSAPrivateKey, RSAPublicKey}
 import java.time.Instant
 import java.util.Date
-
-import cats.effect.Sync
+import cats.effect.kernel.{Async, Sync}
 import cats.syntax.all._
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
@@ -20,7 +19,7 @@ import org.http4s.circe.CirceEntityCodec._
 import scala.concurrent.duration._
 import scala.util.control.NoStackTrace
 
-class GoogleOAuth[F[_]: Logger](key: RSAPrivateKey, httpClient: Client[F])(implicit F: Sync[F])
+class GoogleOAuth[F[_]: Async: Logger](key: RSAPrivateKey, httpClient: Client[F])
     extends OAuth[F]
     with Http4sClientDsl[F] {
   import GoogleOAuth._
@@ -30,7 +29,7 @@ class GoogleOAuth[F[_]: Logger](key: RSAPrivateKey, httpClient: Client[F])(impli
   final private[this] val googleOAuthDomain = Uri.unsafeFromString(googleOAuthDomainStr)
 
   final override def authenticate(iss: String, scope: String, exp: Instant, iat: Instant): F[Option[AccessToken]] = {
-    val tokenF = F.delay(
+    val tokenF = Sync[F].delay(
       JWT.create
         .withIssuedAt(Date.from(iat))
         .withExpiresAt(Date.from(exp))
@@ -44,7 +43,7 @@ class GoogleOAuth[F[_]: Logger](key: RSAPrivateKey, httpClient: Client[F])(impli
       for {
         token <- tokenF
         form = UrlForm("grant_type" -> "urn:ietf:params:oauth:grant-type:jwt-bearer", "assertion" -> token)
-        req <- POST(form, googleOAuthDomain)
+        req = POST(form, googleOAuthDomain)
       } yield req
 
     httpClient
@@ -52,7 +51,7 @@ class GoogleOAuth[F[_]: Logger](key: RSAPrivateKey, httpClient: Client[F])(impli
         resp.as[String].map(FailedRequest.apply)
       }
       .handleErrorWith { e =>
-        Logger[F].warn(e)("Failed to retrieve JWT Access Token from Google") >> F.pure(None)
+        Logger[F].warn(e)("Failed to retrieve JWT Access Token from Google").as(None)
       }
   }
 

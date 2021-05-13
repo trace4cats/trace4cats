@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.jaeger
 
-import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Timer}
+import cats.effect.kernel.{Async, Resource}
 import fs2.Chunk
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -9,21 +9,22 @@ import io.janstenpickle.trace4cats.`export`.{CompleterConfig, QueuedSpanComplete
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.TraceProcess
 
+import scala.concurrent.ExecutionContext
 import scala.util.Try
 
 object JaegerSpanCompleter {
-  def apply[F[_]: Concurrent: ContextShift: Timer](
-    blocker: Blocker,
+  def apply[F[_]: Async](
     process: TraceProcess,
     host: String = Option(System.getenv("JAEGER_AGENT_HOST")).getOrElse(UdpSender.DEFAULT_AGENT_UDP_HOST),
     port: Int = Option(System.getenv("JAEGER_AGENT_PORT"))
       .flatMap(p => Try(p.toInt).toOption)
       .getOrElse(UdpSender.DEFAULT_AGENT_UDP_COMPACT_PORT),
     config: CompleterConfig = CompleterConfig(),
+    blocker: Option[ExecutionContext] = None
   ): Resource[F, SpanCompleter[F]] =
     for {
       implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
-      exporter <- JaegerSpanExporter[F, Chunk](blocker, Some(process), host, port)
+      exporter <- JaegerSpanExporter[F, Chunk](Some(process), host, port, blocker)
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 }

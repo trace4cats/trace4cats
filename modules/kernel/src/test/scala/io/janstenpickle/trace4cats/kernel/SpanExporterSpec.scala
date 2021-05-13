@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.kernel
 
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import cats.kernel.laws.discipline.MonoidTests
 import cats.{Applicative, Eq, Id}
 import io.janstenpickle.trace4cats.model.Batch

@@ -1,8 +1,7 @@
 package io.janstenpickle.trace4cats.sttp.client3
 
 import cats.data.NonEmptyList
-import cats.effect.concurrent.Ref
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Sync, Timer}
+import cats.effect.kernel.{Async, Ref, Sync}
 import cats.implicits._
 import cats.{~>, Eq, Id}
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
@@ -27,7 +26,7 @@ import sttp.client3._
 import sttp.client3.http4s.Http4sBackend
 import sttp.model.StatusCode
 
-abstract class BaseSttpBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift: Timer, G[_]: Sync: Trace, Ctx](
+abstract class BaseSttpBackendTracerSpec[F[_]: Async, G[_]: Sync: Trace, Ctx](
   unsafeRunK: F ~> Id,
   makeSomeContext: Span[F] => Ctx,
   liftBackend: SttpBackend[F, Any] => SttpBackend[G, Any]
@@ -128,6 +127,6 @@ abstract class BaseSttpBackendTracerSpec[F[_]: ConcurrentEffect: ContextShift: T
   }
 
   def withBackend(app: HttpApp[F])(fa: SttpBackend[G, Any] => F[Assertion]): F[Assertion] =
-    Blocker[F].use(blocker => fa(liftBackend(Http4sBackend.usingClient(Client.fromHttpApp(app), blocker))))
+    fa(liftBackend(Http4sBackend.usingClient(Client.fromHttpApp(app))))
 
 }

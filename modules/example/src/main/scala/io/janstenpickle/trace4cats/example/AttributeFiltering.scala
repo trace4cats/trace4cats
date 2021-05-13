@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.example
 
 import cats.data.{NonEmptyMap, NonEmptySet}
-import cats.effect.{Blocker, ExitCode, IO, IOApp, Resource}
+import cats.effect.{ExitCode, IO, IOApp, Resource}
 import cats.syntax.semigroup._
 import fs2.Chunk
 import org.typelevel.log4cats.Logger
@@ -17,9 +17,8 @@ import io.janstenpickle.trace4cats.model.{SpanKind, SpanStatus, TraceProcess}
 object AttributeFiltering extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     (for {
-      blocker <- Blocker[IO]
       implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
-      exporter <- AvroSpanExporter.udp[IO, Chunk](blocker)
+      exporter <- AvroSpanExporter.udp[IO, Chunk]()
 
       nameFilter = AttributeFilter.names(NonEmptySet.of("some.attribute.name", "some.other.name"))
       valueFilter = AttributeFilter.values(NonEmptySet.of("protected.value", "sensitive.info"))

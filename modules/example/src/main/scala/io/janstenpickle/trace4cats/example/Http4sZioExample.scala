@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.example
 
-import cats.effect.Blocker
+import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.example.Fs2Example.entryPoint
 import io.janstenpickle.trace4cats.http4s.client.syntax._
 import io.janstenpickle.trace4cats.http4s.common.Http4sRequestFilter
@@ -15,14 +16,13 @@ import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
 import zio._
 import zio.interop.catz._
-import zio.interop.catz.implicits._
-
-import scala.concurrent.ExecutionContext
 
 object Http4sZioExample extends CatsApp {
+  type F[x] = RIO[ZEnv, x]
+  type G[x] = RIO[ZEnv with Has[Span[F]], x]
 
-  def makeRoutes(client: Client[SpannedRIO]): HttpRoutes[SpannedRIO] = {
-    object dsl extends Http4sDsl[SpannedRIO]
+  def makeRoutes(client: Client[G]): HttpRoutes[G] = {
+    object dsl extends Http4sDsl[G]
     import dsl._
 
     HttpRoutes.of { case req @ GET -> Root / "forward" =>
@@ -30,29 +30,30 @@ object Http4sZioExample extends CatsApp {
     }
   }
 
-  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
-    (for {
-      blocker <- Blocker[Task]
-      ep <- entryPoint[Task](blocker, TraceProcess("trace4catsHttp4s"))
+  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = {
+    implicit val spanProvide: Provide[F, G, Span[F]] = zioProvideSome
+    ZIO
+      .runtime[ZEnv]
+      .flatMap { rt =>
+        val ec = rt.platform.executor.asEC
+        (for {
 
-      client <- BlazeClientBuilder[Task](ExecutionContext.global).resource
+          ep <- entryPoint[F](TraceProcess("trace4catsHttp4s"))
 
-      routes = makeRoutes(client.liftTrace()) // use implicit syntax to lift http client to the trace context
+          client <- BlazeClientBuilder[F](ec).resource
 
-      server <-
-        BlazeServerBuilder[Task](ExecutionContext.global)
-          .bindHttp(8080, "0.0.0.0")
-          .withHttpApp(
-            routes.inject(ep, requestFilter = Http4sRequestFilter.kubernetesPrometheus).orNotFound
-          ) // use implicit syntax to inject an entry point to http routes
-          .resource
-    } yield server)
-      .use { _ =>
-        ZIO.never
+          routes = makeRoutes(client.liftTrace[G]()) // use implicit syntax to lift http client to the trace context
+
+          server <-
+            BlazeServerBuilder[F](ec)
+              .bindHttp(8080, "0.0.0.0")
+              .withHttpApp(
+                routes.inject(ep, requestFilter = Http4sRequestFilter.kubernetesPrometheus).orNotFound
+              ) // use implicit syntax to inject an entry point to http routes
+              .resource
+        } yield server)
+          .use(_ => ZIO.never)
       }
-      .run
-      .map {
-        case Exit.Success(_) => ExitCode.success
-        case Exit.Failure(_) => ExitCode.failure
-      }
+      .exitCode
+  }
 }

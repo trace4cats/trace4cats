@@ -1,11 +1,9 @@
 package io.janstenpickle.trace4cats.meta
 
-import java.time.Instant
-import java.util.concurrent.TimeUnit
-
 import cats.Monad
 import cats.data.NonEmptyList
-import cats.effect.{Clock, ExitCase, Resource}
+import cats.effect.kernel.Resource.ExitCase
+import cats.effect.kernel.{Clock, Resource}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.Chunk
@@ -32,11 +30,11 @@ object MetaTraceUtil {
     }
 
     Resource
-      .makeCase(Clock[F].realTime(TimeUnit.MILLISECONDS)) { (start, exit) =>
-        Clock[F].realTime(TimeUnit.MILLISECONDS).flatMap { end =>
+      .makeCase(Clock[F].realTimeInstant) { (start, exit) =>
+        Clock[F].realTimeInstant.flatMap { end =>
           val status = exit match {
-            case ExitCase.Completed => SpanStatus.Ok
-            case ExitCase.Error(e) => SpanStatus.Internal(e.getMessage)
+            case ExitCase.Succeeded => SpanStatus.Ok
+            case ExitCase.Errored(e) => SpanStatus.Internal(e.getMessage)
             case ExitCase.Canceled => SpanStatus.Cancelled
           }
 
@@ -45,8 +43,8 @@ object MetaTraceUtil {
               ctx,
               spanName,
               spanKind,
-              Instant.ofEpochMilli(start),
-              Instant.ofEpochMilli(end),
+              start,
+              end,
               attributes.updated("trace4cats.version", BuildInfo.version),
               status,
               lnks,

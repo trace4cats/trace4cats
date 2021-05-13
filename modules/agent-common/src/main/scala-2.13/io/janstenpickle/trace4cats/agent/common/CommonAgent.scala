@@ -1,16 +1,17 @@
 package io.janstenpickle.trace4cats.agent.common
 
-import cats.{Applicative, Parallel}
-import cats.effect.{Blocker, Concurrent, ContextShift, ExitCode, Resource, Timer}
+import cats.effect.ExitCode
+import cats.effect.kernel.{Async, Resource}
 import cats.syntax.functor._
+import cats.{Applicative, Parallel}
 import com.monovore.decline.Opts
 import fs2.{Chunk, Pipe}
-import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.`export`.QueuedSpanExporter
 import io.janstenpickle.trace4cats.avro.server.AvroServer
 import io.janstenpickle.trace4cats.avro.{AgentPortEnv, DefaultPort}
 import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanExporter}
 import io.janstenpickle.trace4cats.model.{AttributeValue, CompletedSpan}
+import org.typelevel.log4cats.Logger
 
 object CommonAgent {
   val portOpt: Opts[Int] =
@@ -43,8 +44,7 @@ object CommonAgent {
       )
       .orNone
 
-  def run[F[_]: Concurrent: ContextShift: Timer: Parallel: Logger](
-    blocker: Blocker,
+  def run[F[_]: Async: Parallel: Logger](
     port: Int,
     bufferSize: Int,
     exporterName: String,
@@ -69,6 +69,6 @@ object CommonAgent {
 
       queuedExporter <- QueuedSpanExporter(bufferSize, List(exporterName -> exp))
 
-      udpServer <- AvroServer.udp[F](blocker, pipe.andThen(queuedExporter.pipe), port)
+      udpServer <- AvroServer.udp[F](pipe.andThen(queuedExporter.pipe), port)
     } yield udpServer).use(_.compile.drain.as(ExitCode.Success))
 }

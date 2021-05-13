@@ -48,7 +48,7 @@ Trace4Cats supports publishing spans to the following systems:
 Instrumentation for trace propagation and continuation is available for the following libraries
 
 - [Http4s] client and server
-- [Sttp] client v2 and v3
+- [Sttp] client v3
 - [Tapir]
 - [FS2 Kafka] consumer and producer
 - [FS2]
@@ -98,11 +98,8 @@ import io.janstenpickle.trace4cats.model.{SpanKind, SpanStatus, TraceProcess}
 import scala.concurrent.duration._
 
 object Trace4CatsQuickStart extends IOApp {
-  def entryPoint[F[_]: Concurrent: ContextShift: Timer: Logger](
-    blocker: Blocker,
-    process: TraceProcess
-  ): Resource[F, EntryPoint[F]] =
-    AvroSpanCompleter.udp[F](blocker, process, config = CompleterConfig(batchTimeout = 50.millis)).map { completer =>
+  def entryPoint[F[_]: Async: Logger](process: TraceProcess): Resource[F, EntryPoint[F]] =
+    AvroSpanCompleter.udp[F](process, config = CompleterConfig(batchTimeout = 50.millis)).map { completer =>
       EntryPoint[F](SpanSampler.always[F], completer)
     }
 
@@ -119,9 +116,8 @@ object Trace4CatsQuickStart extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] =
     (for {
-      blocker <- Blocker[IO]
-      implicit0(logger: Logger[IO]) <- Resource.liftF(Slf4jLogger.create[IO])
-      ep <- entryPoint[IO](blocker, TraceProcess("trace4cats"))
+      implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
+      ep <- entryPoint[IO](TraceProcess("trace4cats"))
     } yield ep)
       .use { ep =>
         ep.root("this is the root span").use { span =>
@@ -162,7 +158,6 @@ To use Trace4Cats within your application add the dependencies listed below as n
 "io.janstenpickle" %% "trace4cats-fs2" % "0.11.0"
 "io.janstenpickle" %% "trace4cats-http4s-client" % "0.11.0"
 "io.janstenpickle" %% "trace4cats-http4s-server" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-sttp-client" % "0.11.0"
 "io.janstenpickle" %% "trace4cats-sttp-client3" % "0.11.0"
 "io.janstenpickle" %% "trace4cats-sttp-tapir" % "0.11.0"
 "io.janstenpickle" %% "trace4cats-natchez" % "0.11.0"
@@ -179,7 +174,6 @@ To use Trace4Cats within your application add the dependencies listed below as n
 "io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.11.0"
 "io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.11.0"
 "io.janstenpickle" %% "trace4cats-zipkin-http-exporter" % "0.11.0"
-
 ```
 
 ## [`native-image`] Compatibility

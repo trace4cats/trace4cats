@@ -1,14 +1,13 @@
 package io.janstenpickle.trace4cats.avro.server
 
-import java.net.InetSocketAddress
-
-import cats.effect.{Blocker, Concurrent, ContextShift, Resource, Sync}
+import cats.effect.kernel.{Async, Resource, Sync}
 import cats.syntax.applicativeError._
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import fs2.io.tcp.{SocketGroup => TCPSocketGroup}
-import fs2.io.udp.{SocketGroup => UDPSocketGroup}
+import cats.syntax.option._
+import com.comcast.ip4s.Port
+import fs2.io.net.Network
 import fs2.{Chunk, Pipe, Pull, Stream}
 import org.typelevel.log4cats.Logger
 import io.janstenpickle.trace4cats.avro.{agentPort, AvroInstances}
@@ -51,41 +50,35 @@ object AvroServer {
       }
       .handleErrorWith(th => Logger[F].warn(th)("Failed to decode span batch").as(Option.empty[CompletedSpan]))
 
-  def tcp[F[_]: Concurrent: ContextShift: Logger](
-    blocker: Blocker,
+  def tcp[F[_]: Async: Logger](
     sink: Pipe[F, CompletedSpan, Unit],
     port: Int = agentPort,
   ): Resource[F, Stream[F, Unit]] =
     for {
       avroSchema <- Resource.eval(AvroInstances.completedSpanSchema[F])
-      socketGroup <- TCPSocketGroup(blocker)
-      address <- Resource.eval(Sync[F].delay(new InetSocketAddress(port)))
+      socketGroup <- Network[F].socketGroup()
+      port <- Resource.eval(Port.fromInt(port).liftTo[F](new IllegalArgumentException(s"invalid port $port")))
     } yield socketGroup
-      .server(address)
-      .map { serverResource =>
-        Stream.resource(serverResource).flatMap { server =>
-          server
-            .reads(8192)
-            .through(buffer[F])
-            .evalMap(decode[F](avroSchema))
-            .unNone
-            .through(sink)
-        }
+      .server(port = Some(port))
+      .map { socket =>
+        socket.reads
+          .through(buffer[F])
+          .evalMap(decode[F](avroSchema))
+          .unNone
+          .through(sink)
       }
       .parJoin(100)
 
-  def udp[F[_]: Concurrent: ContextShift: Logger](
-    blocker: Blocker,
+  def udp[F[_]: Async: Logger](
     sink: Pipe[F, CompletedSpan, Unit],
     port: Int = agentPort,
   ): Resource[F, Stream[F, Unit]] =
     for {
       avroSchema <- Resource.eval(AvroInstances.completedSpanSchema[F])
-      address <- Resource.eval(Sync[F].delay(new InetSocketAddress(port)))
-      socketGroup <- UDPSocketGroup[F](blocker)
-      socket <- socketGroup.open(address)
-    } yield socket
-      .reads()
+      port <- Resource.eval(Port.fromInt(port).liftTo[F](new IllegalArgumentException(s"invalid port $port")))
+      socketGroup <- Network[F].datagramSocketGroup()
+      socket <- socketGroup.openDatagramSocket(port = Some(port))
+    } yield socket.reads
       .map(_.bytes)
       .evalMap(decode[F](avroSchema))
       .unNone

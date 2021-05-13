@@ -1,10 +1,10 @@
 package io.janstenpickle.trace4cats.base.context
 
 import cats.data.Kleisli
-import cats.effect.IO
 import io.janstenpickle.trace4cats.base.context.Env.{Sub1, Sub2}
 
 object KleisliInstanceSummonTest {
+  type IO[x] = x
   type R = Env
   type F[x] = Kleisli[IO, R, x]
   type Low[x] = IO[x]

@@ -4,13 +4,13 @@ import java.net.URI
 
 import _root_.natchez.{Kernel, Span, TraceValue => V}
 import cats.Applicative
-import cats.effect.{Clock, Resource, Sync}
+import cats.effect.kernel.{Resource, Sync}
 import cats.syntax.show._
 import io.janstenpickle.trace4cats.ToHeaders
 import io.janstenpickle.trace4cats.model.AttributeValue._
 import io.janstenpickle.trace4cats.model.SpanKind
 
-final case class Trace4CatsSpan[F[_]: Sync: Clock](span: io.janstenpickle.trace4cats.Span[F], toHeaders: ToHeaders)
+final case class Trace4CatsSpan[F[_]: Sync](span: io.janstenpickle.trace4cats.Span[F], toHeaders: ToHeaders)
     extends Span[F] {
   override def put(fields: (String, V)*): F[Unit] =
     span.putAll(fields.map {
@@ -32,7 +32,7 @@ final case class Trace4CatsSpan[F[_]: Sync: Clock](span: io.janstenpickle.trace4
 }
 
 object Trace4CatsSpan {
-  def apply[F[_]: Sync: Clock](
+  def apply[F[_]: Sync](
     span: Resource[F, io.janstenpickle.trace4cats.Span[F]],
     toHeaders: ToHeaders
   ): Resource[F, Span[F]] =

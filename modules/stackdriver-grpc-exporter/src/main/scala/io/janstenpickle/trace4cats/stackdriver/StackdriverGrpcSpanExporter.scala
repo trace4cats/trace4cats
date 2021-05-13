@@ -1,9 +1,9 @@
 package io.janstenpickle.trace4cats.stackdriver
 
+import java.time.Instant
 import cats.Foldable
 import cats.data.NonEmptyList
-import cats.effect.{Async, ContextShift, Resource, Sync}
-import cats.effect.syntax.bracket._
+import cats.effect.kernel.{Async, Resource, Sync}
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
 import cats.syntax.functor._
@@ -22,12 +22,11 @@ import io.janstenpickle.trace4cats.model._
 import io.janstenpickle.trace4cats.stackdriver.common.StackdriverConstants._
 import io.janstenpickle.trace4cats.stackdriver.common.TruncatableString
 
-import java.time.Instant
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
 object StackdriverGrpcSpanExporter {
-  def apply[F[_]: Async: ContextShift, G[_]: Foldable](
+  def apply[F[_]: Async, G[_]: Foldable](
     projectId: String,
     credentials: Option[Credentials] = None,
     requestTimeout: FiniteDuration = 5.seconds
@@ -131,12 +130,11 @@ object StackdriverGrpcSpanExporter {
       builder.build()
     }
 
-    def liftApiFuture[A](ffa: F[ApiFuture[A]]): F[A] =
-      (for {
+    def liftApiFuture[A](ffa: F[ApiFuture[A]]): F[A] = {
+      for {
         fut <- ffa
-        ec = com.google.common.util.concurrent.MoreExecutors
-          .directExecutor() // TODO: CE3 - use Async[F].executionContext
-        a <- Async[F].async[A] { cb =>
+        ec <- Async[F].executionContext
+        a <- Async[F].async_[A] { cb =>
           ApiFutures.addCallback(
             fut,
             new ApiFutureCallback[A] {
@@ -146,7 +144,8 @@ object StackdriverGrpcSpanExporter {
             ec.execute _
           )
         }
-      } yield a).guarantee(ContextShift[F].shift)
+      } yield a
+    }
 
     def write(client: TraceServiceClient, spans: G[CompletedSpan]): F[Unit] =
       for {

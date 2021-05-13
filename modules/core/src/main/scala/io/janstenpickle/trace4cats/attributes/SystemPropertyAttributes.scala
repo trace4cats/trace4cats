@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.attributes
 
-import cats.effect.Sync
+import cats.effect.kernel.Sync
 import cats.syntax.functor._
 import io.janstenpickle.trace4cats.model.AttributeValue
 import io.janstenpickle.trace4cats.model.AttributeValue.StringValue

@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.kafka.syntax
 
-import cats.effect.{ApplicativeThrow, BracketThrow}
-import cats.{Defer, Functor, Monad}
+import cats.effect.kernel.MonadCancelThrow
+import cats.{Functor, Monad}
 import fs2.Stream
 import fs2.kafka.{CommittableConsumerRecord, KafkaProducer}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
@@ -21,7 +21,7 @@ trait Fs2KafkaSyntax {
   implicit class ConsumerSyntax[F[_], K, V](consumerStream: Stream[F, CommittableConsumerRecord[F, K, V]]) {
     def inject[G[_]](ep: EntryPoint[F])(implicit
       P: Provide[F, G, Span[F]],
-      F: BracketThrow[F],
+      F: MonadCancelThrow[F],
       G: Functor[G],
       T: Trace[G],
     ): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
@@ -29,7 +29,7 @@ trait Fs2KafkaSyntax {
 
     def trace[G[_]](k: ResourceKleisli[F, SpanParams, Span[F]])(implicit
       P: Provide[F, G, Span[F]],
-      F: BracketThrow[F],
+      F: MonadCancelThrow[F],
       G: Functor[G],
       T: Trace[G],
     ): TracedStream[F, CommittableConsumerRecord[F, K, V]] =
@@ -37,18 +37,16 @@ trait Fs2KafkaSyntax {
 
     def injectK[G[_]](ep: EntryPoint[F])(implicit
       P: Provide[F, G, Span[F]],
-      F: BracketThrow[F],
-      G: ApplicativeThrow[G],
-      deferG: Defer[G],
+      F: MonadCancelThrow[F],
+      G: MonadCancelThrow[G],
       trace: Trace[G]
     ): TracedStream[G, CommittableConsumerRecord[G, K, V]] =
       TracedConsumer.injectK[F, G, K, V](consumerStream)(ep.toKleisli)
 
     def traceK[G[_]](k: ResourceKleisli[F, SpanParams, Span[F]])(implicit
       P: Provide[F, G, Span[F]],
-      F: BracketThrow[F],
-      G: ApplicativeThrow[G],
-      deferG: Defer[G],
+      F: MonadCancelThrow[F],
+      G: MonadCancelThrow[G],
       trace: Trace[G]
     ): TracedStream[G, CommittableConsumerRecord[G, K, V]] =
       TracedConsumer.injectK[F, G, K, V](consumerStream)(k)

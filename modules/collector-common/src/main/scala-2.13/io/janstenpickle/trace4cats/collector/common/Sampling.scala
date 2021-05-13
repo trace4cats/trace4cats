@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.collector.common
 
-import cats.effect.{Concurrent, ContextShift, Resource, Timer}
+import cats.effect.kernel.{Async, Resource}
 import cats.syntax.traverse._
 import cats.{Parallel, Semigroup}
 import fs2.{Chunk, Pipe}
@@ -15,8 +15,8 @@ import io.janstenpickle.trace4cats.sampling.tail.{TailSamplingPipe, TailSpanSamp
 import scala.concurrent.duration._
 
 object Sampling {
-  def pipe[F[_]: Concurrent: ContextShift: Timer: Parallel: Logger](
-    config: SamplingConfig,
+  def pipe[F[_]: Async: Parallel: Logger](
+    config: SamplingConfig
   ): Resource[F, Pipe[F, CompletedSpan, CompletedSpan]] = {
     def makeDecisionStore(keyPrefix: Short) =
       config.redis match {

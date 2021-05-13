@@ -1,11 +1,12 @@
 package io.janstenpickle.trace4cats.avro.test
 
 import cats.data.NonEmptyList
-import cats.effect.{Blocker, IO, Resource}
+import cats.effect.{IO, Resource}
+import cats.effect.std.Queue
+import cats.effect.unsafe.implicits.global
 import cats.kernel.Eq
 import cats.syntax.all._
-import fs2.Chunk
-import fs2.concurrent.Queue
+import fs2.{Chunk, Stream}
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.`export`.CompleterConfig
@@ -17,15 +18,9 @@ import org.scalacheck.{Arbitrary, Gen, Shrink}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks with ArbitraryInstances {
-  implicit val contextShift = IO.contextShift(ExecutionContext.global)
-  implicit val timer = IO.timer(ExecutionContext.global)
-
-  val blocker = Blocker.liftExecutionContext(ExecutionContext.global)
-
   implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
@@ -46,11 +41,12 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
         .unbounded[IO, CompletedSpan]
         .flatMap { queue =>
           (for {
-            server <- AvroServer.tcp[IO](blocker, queue.enqueue)
+            server <- AvroServer.tcp[IO](_.evalMap(queue.offer))
             _ <- server.compile.drain.background
-            _ <- Resource.eval(timer.sleep(2.seconds))
-            completer <- AvroSpanExporter.tcp[IO, Chunk](blocker)
-          } yield completer).use(_.exportBatch(batch) >> timer.sleep(3.seconds)) >> queue.dequeue
+            _ <- Resource.eval(IO.sleep(2.seconds))
+            completer <- AvroSpanExporter.tcp[IO, Chunk]()
+          } yield completer).use(_.exportBatch(batch) >> IO.sleep(3.seconds)) >> Stream
+            .fromQueueUnterminated(queue)
             .take(batch.spans.size.toLong)
             .compile
             .to(Chunk)
@@ -69,11 +65,12 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
         .unbounded[IO, CompletedSpan]
         .flatMap { queue =>
           (for {
-            server <- AvroServer.tcp[IO](blocker, queue.enqueue)
+            server <- AvroServer.tcp[IO](_.evalMap(queue.offer))
             _ <- server.compile.drain.background
-            _ <- Resource.eval(timer.sleep(2.seconds))
-            completer <- AvroSpanExporter.tcp[IO, Chunk](blocker, numFibers = n)
-          } yield completer).use(c => batches.traverse_(c.exportBatch) >> timer.sleep(3.seconds)) >> queue.dequeue
+            _ <- Resource.eval(IO.sleep(2.seconds))
+            completer <- AvroSpanExporter.tcp[IO, Chunk](numFibers = n)
+          } yield completer).use(c => batches.traverse_(c.exportBatch) >> IO.sleep(3.seconds)) >> Stream
+            .fromQueueUnterminated(queue)
             .take(batches.foldMap(_.spans.size.toLong))
             .compile
             .toList
@@ -91,16 +88,16 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
         .unbounded[IO, CompletedSpan]
         .flatMap { queue =>
           (for {
-            server <- AvroServer.tcp[IO](blocker, queue.enqueue, port = 7778)
+            server <- AvroServer.tcp[IO](_.evalMap(queue.offer), port = 7778)
             _ <- server.compile.drain.background
-            _ <- Resource.eval(timer.sleep(2.seconds))
+            _ <- Resource.eval(IO.sleep(2.seconds))
             completer <- AvroSpanCompleter.tcp[IO](
-              blocker,
               process,
               port = 7778,
               config = CompleterConfig(batchTimeout = 1.second)
             )
-          } yield completer).use(c => spans.traverse(c.complete) >> timer.sleep(3.seconds)) >> queue.dequeue
+          } yield completer).use(c => spans.traverse(c.complete) >> IO.sleep(3.seconds)) >> Stream
+            .fromQueueUnterminated(queue)
             .take(spans.size.toLong)
             .compile
             .toList
@@ -121,11 +118,12 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
         .unbounded[IO, CompletedSpan]
         .flatMap { queue =>
           (for {
-            server <- AvroServer.udp[IO](blocker, queue.enqueue, port = 7779)
+            server <- AvroServer.udp[IO](_.evalMap(queue.offer), port = 7779)
             _ <- server.compile.drain.background
-            _ <- Resource.eval(timer.sleep(2.seconds))
-            completer <- AvroSpanExporter.udp[IO, Chunk](blocker, port = 7779)
-          } yield completer).use(_.exportBatch(batch) >> timer.sleep(3.seconds)) >> queue.dequeue
+            _ <- Resource.eval(IO.sleep(2.seconds))
+            completer <- AvroSpanExporter.udp[IO, Chunk](port = 7779)
+          } yield completer).use(_.exportBatch(batch) >> IO.sleep(3.seconds)) >> Stream
+            .fromQueueUnterminated(queue)
             .take(batch.spans.size.toLong)
             .compile
             .to(Chunk)
@@ -144,11 +142,12 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
         .unbounded[IO, CompletedSpan]
         .flatMap { queue =>
           (for {
-            server <- AvroServer.udp[IO](blocker, queue.enqueue, port = 7781)
+            server <- AvroServer.udp[IO](_.evalMap(queue.offer), port = 7781)
             _ <- server.compile.drain.background
-            _ <- Resource.eval(timer.sleep(2.seconds))
-            completer <- AvroSpanExporter.udp[IO, Chunk](blocker, port = 7781, numFibers = n)
-          } yield completer).use(c => batches.traverse_(c.exportBatch) >> timer.sleep(3.seconds)) >> queue.dequeue
+            _ <- Resource.eval(IO.sleep(2.seconds))
+            completer <- AvroSpanExporter.udp[IO, Chunk](port = 7781, numFibers = n)
+          } yield completer).use(c => batches.traverse_(c.exportBatch) >> IO.sleep(3.seconds)) >> Stream
+            .fromQueueUnterminated(queue)
             .take(batches.foldMap(_.spans.size.toLong))
             .compile
             .toList
@@ -166,16 +165,16 @@ class AvroServerSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wit
         .unbounded[IO, CompletedSpan]
         .flatMap { queue =>
           (for {
-            server <- AvroServer.udp[IO](blocker, queue.enqueue, port = 7780)
+            server <- AvroServer.udp[IO](_.evalMap(queue.offer), port = 7780)
             _ <- server.compile.drain.background
-            _ <- Resource.eval(timer.sleep(2.seconds))
+            _ <- Resource.eval(IO.sleep(2.seconds))
             completer <- AvroSpanCompleter.udp[IO](
-              blocker,
               process,
               port = 7780,
               config = CompleterConfig(batchTimeout = 1.second)
             )
-          } yield completer).use(c => spans.traverse(c.complete) >> timer.sleep(3.seconds)) >> queue.dequeue
+          } yield completer).use(c => spans.traverse(c.complete) >> IO.sleep(3.seconds)) >> Stream
+            .fromQueueUnterminated(queue)
             .take(spans.size.toLong)
             .compile
             .toList

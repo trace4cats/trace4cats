@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.zipkin
 
-import cats.effect.{Concurrent, ConcurrentEffect, Resource, Timer}
+import cats.effect.kernel.{Async, Resource}
+import cats.syntax.applicative._
 import fs2.Chunk
 import io.janstenpickle.trace4cats.`export`.{CompleterConfig, QueuedSpanCompleter}
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
@@ -14,18 +15,19 @@ import scala.concurrent.ExecutionContext
 
 object ZipkinHttpSpanCompleter {
 
-  def blazeClient[F[_]: ConcurrentEffect: Timer](
+  def blazeClient[F[_]: Async](
     process: TraceProcess,
     host: String = "localhost",
     port: Int = 9411,
     config: CompleterConfig = CompleterConfig(),
     ec: Option[ExecutionContext] = None
   ): Resource[F, SpanCompleter[F]] = for {
-    client <- BlazeClientBuilder[F](ec.getOrElse(ExecutionContext.global)).resource
+    ec <- Resource.eval(ec.fold(Async[F].executionContext)(_.pure))
+    client <- BlazeClientBuilder[F](ec).resource
     completer <- apply[F](client, process, host, port, config)
   } yield completer
 
-  def apply[F[_]: Concurrent: Timer](
+  def apply[F[_]: Async](
     client: Client[F],
     process: TraceProcess,
     host: String = "localhost",
@@ -38,7 +40,7 @@ object ZipkinHttpSpanCompleter {
       completer <- QueuedSpanCompleter[F](process, exporter, config)
     } yield completer
 
-  def apply[F[_]: Concurrent: Timer](
+  def apply[F[_]: Async](
     client: Client[F],
     process: TraceProcess,
     uri: String,

@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.collector.common
 
 import cats.Parallel
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Resource, Timer}
+import cats.effect.kernel.{Async, Resource}
 import cats.implicits._
 import com.monovore.decline._
 import fs2.kafka.ConsumerSettings
@@ -33,8 +33,7 @@ object CommonCollector {
   val configFileOpt: Opts[String] =
     Opts.option[String]("config-file", "Configuration file location, may be in YAML or JSON format")
 
-  def apply[F[_]: ConcurrentEffect: Parallel: ContextShift: Timer: Logger](
-    blocker: Blocker,
+  def apply[F[_]: Async: Parallel: Logger](
     configFile: String,
     others: List[(String, List[(String, AttributeValue)], SpanExporter[F, Chunk])]
   ): Resource[F, Stream[F, Unit]] =
@@ -49,11 +48,11 @@ object CommonCollector {
       process <- Resource.eval(Tracing.process[F])
       traceSampler <- Tracing.sampler[F](config.tracing, config.bufferSize)
 
-      client <- Resource.eval(Http4sJdkClient[F](blocker))
+      client <- Http4sJdkClient[F]()
 
       collectorExporters <- config.forwarders.traverse { forwarder =>
         AvroSpanExporter
-          .tcp[F, Chunk](blocker, host = forwarder.host, port = forwarder.port)
+          .tcp[F, Chunk](host = forwarder.host, port = forwarder.port)
           .map(
             (
               "Trace4Cats Avro TCP",
@@ -68,7 +67,7 @@ object CommonCollector {
       }
 
       jaegerUdpExporters <- config.jaeger.traverse { jaeger =>
-        JaegerSpanExporter[F, Chunk](blocker, process = None, host = jaeger.host, port = jaeger.port)
+        JaegerSpanExporter[F, Chunk](process = None, host = jaeger.host, port = jaeger.port)
           .map(
             (
               "Jaeger UDP",
@@ -206,8 +205,8 @@ object CommonCollector {
         .andThen(tracingPipe)
         .andThen(exporter.pipe)
 
-      tcp <- AvroServer.tcp[F](blocker, exportPipe, config.listener.port)
-      udp <- AvroServer.udp[F](blocker, exportPipe, config.listener.port)
+      tcp <- AvroServer.tcp[F](exportPipe, config.listener.port)
+      udp <- AvroServer.udp[F](exportPipe, config.listener.port)
       network = tcp.concurrently(udp)
 
       kafka = config.kafkaListener.map { kafka =>

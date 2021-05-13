@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 John A. De Goes and the ZIO Contributors
+ * Copyright 2017-2021 John A. De Goes and the ZIO Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package io.janstenpickle.trace4cats.base.context.zio.laws
+package zio.interop
 
 import org.scalacheck._
-import zio.{IO, Promise, ZIO, ZManaged}
+import zio._
 
 /** Temporary fork of zio.GenIO that overrides `genParallel` with ZManaged-based code
   * instead of `io.zipPar(parIo).map(_._1)`
@@ -55,6 +55,9 @@ trait GenIOInteropCats {
     */
   def genIO[E: Arbitrary, A: Arbitrary]: Gen[IO[E, A]] =
     Gen.oneOf(genSuccess[E, A], genFailure[E, A])
+
+  def genUIO[A: Arbitrary]: Gen[UIO[A]] =
+    Gen.oneOf(genSuccess[Nothing, A], genIdentityTrans(genSuccess[Nothing, A]))
 
   /** Given a generator for `IO[E, A]`, produces a sized generator for `IO[E, A]` which represents a transformation,
     * by using some random combination of the methods `map`, `flatMap`, `mapError`, and any other method that does not change
@@ -116,12 +119,12 @@ trait GenIOInteropCats {
     Gen.const(io.flatMap(a => IO.succeed(a)))
 
   private def genOfRace[E, A](io: IO[E, A]): Gen[IO[E, A]] =
-    Gen.const(io.interruptible.race(ZIO.never.interruptible))
+    Gen.const(io.raceFirst(ZIO.never.interruptible))
 
   private def genOfParallel[E, A](io: IO[E, A])(gen: Gen[IO[E, A]]): Gen[IO[E, A]] =
     gen.map { parIo =>
       // this should work, but generates more random failures on CI
-      //      io.interruptible.zipPar(parIo.interruptible).map(_._1)
+//      io.interruptible.zipPar(parIo.interruptible).map(_._1)
       Promise.make[Nothing, Unit].flatMap { p =>
         ZManaged
           .fromEffect(parIo *> p.succeed(()))
@@ -129,5 +132,4 @@ trait GenIOInteropCats {
           .use_(p.await *> io)
       }
     }
-
 }

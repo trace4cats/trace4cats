@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.avro.kafka
 import cats.Eq
 import cats.data.NonEmptyList
 import cats.effect.IO
-import cats.syntax.flatMap._
+import cats.effect.unsafe.implicits.global
 import fs2.Chunk
 import io.janstenpickle.trace4cats.avro.AvroInstances
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan}
@@ -17,17 +17,12 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import scala.concurrent.ExecutionContext
-
 class AvroKafkaSpanExporterSpec
     extends AnyFlatSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks
     with EmbeddedKafka
     with ArbitraryInstances {
-  implicit val contextShift = IO.contextShift(ExecutionContext.global)
-  implicit val timer = IO.timer(ExecutionContext.global)
-
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 3, maxDiscardedFactor = 50.0)
 

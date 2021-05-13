@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats
 
 import cats.data.Kleisli
-import cats.effect.Resource
+import cats.effect.kernel.Resource
 import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders}
 
 import scala.annotation.unchecked.uncheckedVariance

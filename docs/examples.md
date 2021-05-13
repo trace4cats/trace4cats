@@ -213,7 +213,7 @@ Requires:
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % "0.11.0"
 "io.janstenpickle" %% "trace4cats-inject" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-sttp-client" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-sttp-client3" % "0.11.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
 
 ```
@@ -228,7 +228,7 @@ Requires:
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % "0.11.0"
 "io.janstenpickle" %% "trace4cats-inject-zio" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-sttp-client" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-sttp-client3" % "0.11.0"
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
 
 ```
