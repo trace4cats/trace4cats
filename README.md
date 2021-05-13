@@ -187,6 +187,7 @@ The following span completers have been found to be compatible with [`native-ima
 - [Stackdriver Trace] over HTTP
 - [Datadog] over HTTP
 - [NewRelic] over HTTP
+- [Zipkin] over HTTP
 
 ## Contributing
 
