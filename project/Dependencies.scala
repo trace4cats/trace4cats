@@ -3,20 +3,20 @@ import sbt._
 object Dependencies {
   object Versions {
     val caseInsensitive = "1.1.3"
-    val cats = "2.6.0"
-    val catsEffect = "2.5.0"
-    val collectionCompat = "2.4.3"
+    val cats = "2.6.1"
+    val catsEffect = "2.5.1"
+    val collectionCompat = "2.4.4"
     val commonsCodec = "1.15"
     val circe = "0.13.0"
     val circeYaml = "0.13.1"
     val decline = "1.4.0"
     val embeddedRedis = "0.7.3"
     val enumeratum = "1.6.1"
-    val fs2 = "2.5.5"
+    val fs2 = "2.5.6"
     val fs2Kafka = "1.6.1"
     val googleCredentials = "0.25.5"
-    val googleCloudTrace = "1.3.3"
-    val grpc = "1.37.0"
+    val googleCloudTrace = "1.3.4"
+    val grpc = "1.37.1"
     val http4s = "0.21.22"
     val http4sJdkClient = "0.3.6"
     val jaeger = "1.6.0"
@@ -34,7 +34,7 @@ object Dependencies {
     val scala213 = "2.13.5"
     val scalapb = "0.11.0"
     val sttpClient2 = "2.2.9"
-    val sttpClient3 = "3.2.3"
+    val sttpClient3 = "3.3.2"
     val sttpModel = "1.4.6"
     val sttpTapir = "0.17.19"
     val svm = "19.2.1"
@@ -43,7 +43,7 @@ object Dependencies {
 
     val catsTestkitScalatest = "2.1.4"
     val disciplineScalatest = "2.1.4"
-    val discipline = "1.1.4"
+    val discipline = "1.1.5"
     val scalaCheck = "1.15.4"
     val scalaCheckShapeless = "1.2.5"
     val scalaTest = "3.2.8"
@@ -97,8 +97,8 @@ object Dependencies {
   lazy val scalapbJson = "com.thesamet.scalapb"                %% "scalapb-json4s"                  % Versions.scalapb
   lazy val sttpClient2 = "com.softwaremill.sttp.client"        %% "cats"                            % Versions.sttpClient2
   lazy val sttpClient2Http4s = "com.softwaremill.sttp.client"  %% "http4s-backend"                  % Versions.sttpClient2
-  lazy val sttpClient3 = "com.softwaremill.sttp.client3"       %% "cats"                            % Versions.sttpClient3
-  lazy val sttpClient3Http4s = "com.softwaremill.sttp.client3" %% "http4s-backend"                  % Versions.sttpClient3
+  lazy val sttpClient3 = "com.softwaremill.sttp.client3"       %% "catsce2"                         % Versions.sttpClient3
+  lazy val sttpClient3Http4s = "com.softwaremill.sttp.client3" %% "http4s-ce2-backend"              % Versions.sttpClient3
   lazy val sttpModel = "com.softwaremill.sttp.model"           %% "core"                            % Versions.sttpModel
   lazy val sttpTapir = "com.softwaremill.sttp.tapir"           %% "tapir-cats"                      % Versions.sttpTapir
   lazy val sttpTapirJsonCirce = "com.softwaremill.sttp.tapir"  %% "tapir-json-circe"                % Versions.sttpTapir
