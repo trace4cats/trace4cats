@@ -41,7 +41,7 @@ object Dependencies {
     val zioInterop = "3.0.2.0"
 
     val catsTestkitScalatest = "2.1.4"
-    val disciplineScalatest = "2.1.4"
+    val disciplineScalatest = "2.1.5"
     val discipline = "1.1.5"
     val scalaCheck = "1.15.4"
     val scalaCheckShapeless = "1.2.5"
