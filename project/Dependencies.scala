@@ -34,19 +34,19 @@ object Dependencies {
     val scala213 = "2.13.5"
     val scalapb = "0.11.0"
     val sttpClient2 = "2.2.9"
-    val sttpClient3 = "3.3.2"
-    val sttpModel = "1.4.6"
+    val sttpClient3 = "3.3.3"
+    val sttpModel = "1.4.7"
     val sttpTapir = "0.17.19"
     val svm = "19.2.1"
     val vulcan = "1.6.0"
     val zioInterop = "2.4.1.0"
 
     val catsTestkitScalatest = "2.1.4"
-    val disciplineScalatest = "2.1.4"
+    val disciplineScalatest = "2.1.5"
     val discipline = "1.1.5"
     val scalaCheck = "1.15.4"
     val scalaCheckShapeless = "1.2.5"
-    val scalaTest = "3.2.8"
+    val scalaTest = "3.2.9"
     val testContainers = "0.39.4"
   }
 
