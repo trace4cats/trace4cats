@@ -37,7 +37,7 @@ object Dependencies {
     val sttpModel = "1.4.7"
     val sttpTapir = "0.18.0-M10"
     val svm = "19.2.1"
-    val vulcan = "1.6.0"
+    val vulcan = "1.7.0"
     val zioInterop = "3.0.2.0"
 
     val catsTestkitScalatest = "2.1.4"
