@@ -110,6 +110,7 @@ lazy val root = (project in file("."))
     example,
     `exporter-common`,
     `exporter-http`,
+    `exporter-metrics`,
     `exporter-stream`,
     filtering,
     fs2,
@@ -436,6 +437,15 @@ lazy val `exporter-common` =
     .settings(name := "trace4cats-exporter-common", libraryDependencies ++= Seq(Dependencies.log4cats))
     .dependsOn(model, kernel, `exporter-stream`)
 
+lazy val `exporter-metrics` =
+  (project in file("modules/exporter-metrics"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-exporter-metrics",
+      libraryDependencies ++= Seq(Dependencies.epimetheus, Dependencies.fs2)
+    )
+    .dependsOn(model, kernel)
+
 lazy val meta =
   (project in file("modules/meta"))
     .settings(publishSettings)
@@ -663,8 +673,12 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
       Dependencies.circeGeneric,
       Dependencies.circeYaml,
       Dependencies.declineEffect,
+      Dependencies.epimetheus,
+      Dependencies.http4sBlazeServer,
+      Dependencies.http4sDsl,
       Dependencies.http4sJdkClient,
-      Dependencies.log4cats
+      Dependencies.http4sPrometheus,
+      Dependencies.log4cats,
     )
   )
   .dependsOn(
@@ -674,6 +688,7 @@ lazy val `collector-common` = (project in file("modules/collector-common"))
     `avro-exporter`,
     `avro-server`,
     `datadog-http-exporter`,
+    `exporter-metrics`,
     `jaeger-thrift-exporter`,
     `log-exporter`,
     `opentelemetry-otlp-http-exporter`,

@@ -12,6 +12,7 @@ object Dependencies {
     val decline = "2.0.0"
     val embeddedRedis = "0.7.3"
     val enumeratum = "1.6.1"
+    val epimetheus = "0.4.0+43-6ff95988-SNAPSHOT"
     val fs2 = "3.0.3"
     val fs2Kafka = "2.0.0"
     val googleCredentials = "0.25.5"
@@ -63,6 +64,7 @@ object Dependencies {
   lazy val enumeratum = "com.beachape"                         %% "enumeratum"                      % Versions.enumeratum
   lazy val enumeratumCats = "com.beachape"                     %% "enumeratum-cats"                 % Versions.enumeratum
   lazy val enumeratumCirce = "com.beachape"                    %% "enumeratum-circe"                % Versions.enumeratum
+  lazy val epimetheus = "io.chrisdavenport"                    %% "epimetheus"                      % Versions.epimetheus
   lazy val declineEffect = "com.monovore"                      %% "decline-effect"                  % Versions.decline
   lazy val googleCredentials = "com.google.auth"                % "google-auth-library-credentials" % Versions.googleCredentials
   lazy val googleCloudTrace = "com.google.cloud"                % "google-cloud-trace"              % Versions.googleCloudTrace
@@ -78,6 +80,7 @@ object Dependencies {
   lazy val http4sBlazeClient = "org.http4s"                    %% "http4s-blaze-client"             % Versions.http4s
   lazy val http4sBlazeServer = "org.http4s"                    %% "http4s-blaze-server"             % Versions.http4s
   lazy val http4sJdkClient = "org.http4s"                      %% "http4s-jdk-http-client"          % Versions.http4sJdkClient
+  lazy val http4sPrometheus = "org.http4s"                     %% "http4s-prometheus-metrics"       % Versions.http4s
   lazy val http4sServer = "org.http4s"                         %% "http4s-server"                   % Versions.http4s
   lazy val jaegerThrift = "io.jaegertracing"                    % "jaeger-thrift"                   % Versions.jaeger
   lazy val jwt = "com.auth0"                                    % "java-jwt"                        % Versions.jwt

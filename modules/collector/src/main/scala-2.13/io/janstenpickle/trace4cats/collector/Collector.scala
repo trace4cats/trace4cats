@@ -29,7 +29,7 @@ object Collector
         (for {
           oth <- others[IO](configFile)
           stream <- CommonCollector[IO](configFile, oth)
-        } yield stream).use(_.compile.drain.as(ExitCode.Success)).handleErrorWith { th =>
+        } yield stream).use(_.compile.lastOrError).handleErrorWith { th =>
           logger.error(th)("Trace 4 Cats collector failed").as(ExitCode.Error)
         }
       }

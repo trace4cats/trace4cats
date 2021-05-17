@@ -26,7 +26,8 @@ case class CommonCollectorConfig(
   sampling: SamplingConfig = SamplingConfig(),
   attributeFiltering: FilteringConfig = FilteringConfig(),
   logSpans: Boolean = false,
-  bufferSize: Int = 500
+  bufferSize: Int = 500,
+  httpPort: Int = 8080,
 )
 object CommonCollectorConfig {
   implicit val decoder: Decoder[CommonCollectorConfig] = deriveConfiguredDecoder

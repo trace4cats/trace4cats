@@ -1,13 +1,15 @@
 package io.janstenpickle.trace4cats.collector.common
 
-import cats.Parallel
-import cats.effect.kernel.{Async, Resource}
+import cats.data.NonEmptyList
+import cats.effect.ExitCode
+import cats.effect.kernel.{Async, Resource, Sync}
 import cats.implicits._
+import cats.{Parallel, Show}
 import com.monovore.decline._
 import fs2.kafka.ConsumerSettings
 import fs2.{Chunk, Pipe, Stream}
-import org.typelevel.log4cats.Logger
-import io.janstenpickle.trace4cats.`export`.QueuedSpanExporter
+import io.chrisdavenport.epimetheus.{CollectorRegistry, Gauge, _}
+import io.janstenpickle.trace4cats.`export`.{MeteredSpanExporters, QueuedSpanExporter}
 import io.janstenpickle.trace4cats.avro._
 import io.janstenpickle.trace4cats.avro.kafka.{AvroKafkaConsumer, AvroKafkaSpanExporter}
 import io.janstenpickle.trace4cats.avro.server.AvroServer
@@ -26,6 +28,7 @@ import io.janstenpickle.trace4cats.newrelic.NewRelicSpanExporter
 import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpHttpSpanExporter
 import io.janstenpickle.trace4cats.stackdriver.StackdriverHttpSpanExporter
 import io.janstenpickle.trace4cats.zipkin.ZipkinHttpSpanExporter
+import org.typelevel.log4cats.Logger
 
 import scala.concurrent.duration._
 
@@ -36,9 +39,12 @@ object CommonCollector {
   def apply[F[_]: Async: Parallel: Logger](
     configFile: String,
     others: List[(String, List[(String, AttributeValue)], SpanExporter[F, Chunk])]
-  ): Resource[F, Stream[F, Unit]] =
+  ): Resource[F, Stream[F, ExitCode]] =
     for {
       config <- Resource.eval(ConfigParser.parse[F, CommonCollectorConfig](configFile))
+
+      collectorRegistry <- Resource.eval(CollectorRegistry.buildWithDefaults[F])
+
       _ <- Resource.make(
         Logger[F].info(
           s"Starting Trace 4 Cats Collector v${BuildInfo.version} listening on tcp://::${config.listener.port} and udp://::${config.listener.port}"
@@ -182,27 +188,61 @@ object CommonCollector {
         kafkaExporters
       ).flatten ++ others
 
+      _ <- Resource.eval(
+        Gauge
+          .noLabels(
+            collectorRegistry,
+            Name("trace4cats_collector_configured_exporters"),
+            "Number of configured exporters on this collector"
+          )
+          .flatMap(_.set(allExporters.size.toDouble))
+      )
+
       exporterTraceAttrs = allExporters.flatMap(_._2)
 
-      exporter <- QueuedSpanExporter(
-        config.bufferSize,
-        allExporters.map { case (name, _, exporter) => name -> exporter }
-      ).map(
-        Tracing.exporter[F](traceSampler, "Collector Combined", allExporters.map(_._1), exporterTraceAttrs, process, _)
+      meteredExporters <- Resource.eval(
+        meteredExporters(
+          collectorRegistry,
+          config.batch.map(_.size),
+          allExporters.map { case (name, _, exporter) => name -> exporter }
+        )
+      )
+
+      exporter <- QueuedSpanExporter(config.bufferSize, meteredExporters).map(
+        Tracing
+          .exporter[F](traceSampler, "Collector Combined", meteredExporters.map(_._1), exporterTraceAttrs, process, _)
       )
 
       samplingPipe: Pipe[F, CompletedSpan, CompletedSpan] <- Sampling.pipe[F](config.sampling)
 
       tracingPipe = Tracing.pipe[F](traceSampler, process, config.listener, config.kafkaListener)
 
+      spansInCounter <- Resource.eval(
+        Counter.noLabels(
+          collectorRegistry,
+          Name("trace4cats_collector_spans_in_total"),
+          "Number of spans received by this collector"
+        )
+      )
+
+      spansOutCounter <- Resource.eval(
+        Counter.noLabels(
+          collectorRegistry,
+          Name("trace4cats_collector_spans_out_total"),
+          "Number of spans forwarded by this collector to each exporter"
+        )
+      )
+
       exportPipe: Pipe[F, CompletedSpan, Unit] = { stream: Stream[F, CompletedSpan] =>
         config.batch
           .fold(stream) { case BatchConfig(size, timeoutSeconds) =>
             stream.groupWithin(size, timeoutSeconds.seconds).flatMap(Stream.chunk)
           }
-      }.andThen(samplingPipe)
+      }.andThen(_.evalTapChunk(_ => spansInCounter.inc))
+        .andThen(samplingPipe)
         .andThen(AttributeFiltering.pipe[F](config.attributeFiltering))
         .andThen(tracingPipe)
+        .andThen(_.evalTapChunk(_ => spansOutCounter.inc))
         .andThen(exporter.pipe)
 
       tcp <- AvroServer.tcp[F](exportPipe, config.listener.port)
@@ -217,6 +257,31 @@ object CommonCollector {
           (s: ConsumerSettings[F, Option[TraceId], Option[CompletedSpan]]) => s.withProperties(kafka.consumerConfig)
         ).through(exportPipe)
       }
-    } yield kafka.fold(network)(network.concurrently(_))
+
+      httpServer <- Resource.eval(HttpAPI.server[F](config.httpPort, collectorRegistry))
+    } yield httpServer.concurrently(kafka.fold(network)(network.concurrently(_)))
+
+  def meteredExporters[F[_]: Sync](
+    collectorRegistry: CollectorRegistry[F],
+    batchSize: Option[Int],
+    exporters: List[(String, SpanExporter[F, Chunk])]
+  ): F[List[(String, SpanExporter[F, Chunk])]] = {
+    // used by the metered span exporter to obtain a label name for the exporter e.g. "Zipkin 1"
+    implicit val tupleShow: Show[(String, String)] = Show.show(_._2)
+
+    val namedExporters = exporters.groupBy(_._1).toList.flatMap { case (_, exps) =>
+      exps.zipWithIndex.map { case ((name, exp), idx) => ((name, s"$name ${idx + 1}"), exp) }
+    }
+
+    NonEmptyList.fromList(namedExporters) match {
+      case None => List.empty[(String, SpanExporter[F, Chunk])].pure[F]
+      case Some(nelExporters) =>
+        MeteredSpanExporters(collectorRegistry, batchSize.getOrElse(100))(nelExporters.head, nelExporters.tail: _*)
+          .map(_.toList.map { case ((name, _), exporter) =>
+            name -> exporter
+          })
+    }
+
+  }
 
 }

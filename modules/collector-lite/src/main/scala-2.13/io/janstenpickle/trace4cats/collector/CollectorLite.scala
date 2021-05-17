@@ -18,7 +18,7 @@ object CollectorLite
     CommonCollector.configFileOpt.map { configFile =>
       Slf4jLogger.create[IO].flatMap { implicit logger =>
         CommonCollector[IO](configFile, List.empty)
-          .use(_.compile.drain.as(ExitCode.Success))
+          .use(_.compile.lastOrError)
           .handleErrorWith { th =>
             logger.error(th)("Trace 4 Cats collector failed").as(ExitCode.Error)
           }
