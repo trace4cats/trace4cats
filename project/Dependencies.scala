@@ -35,7 +35,7 @@ object Dependencies {
     val scalapb = "0.11.0"
     val sttpClient3 = "3.3.3"
     val sttpModel = "1.4.7"
-    val sttpTapir = "0.18.0-M10"
+    val sttpTapir = "0.18.0-M11"
     val svm = "19.2.1"
     val vulcan = "1.7.1"
     val zioInterop = "3.0.2.0"
