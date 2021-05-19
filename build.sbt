@@ -107,6 +107,7 @@ lazy val root = (project in file("."))
     `collector-lite`,
     core,
     `datadog-http-exporter`,
+    `dynamic-sampling`,
     example,
     `exporter-common`,
     `exporter-http`,
@@ -630,6 +631,11 @@ lazy val filtering = (project in file("modules/filtering"))
   .settings(publishSettings)
   .settings(name := "trace4cats-filtering", libraryDependencies ++= Dependencies.test.map(_ % Test))
   .dependsOn(model, kernel, `exporter-stream`)
+
+lazy val `dynamic-sampling` = (project in file("modules/dynamic-sampling"))
+  .settings(publishSettings)
+  .settings(name := "trace4cats-dynamic-sampling", libraryDependencies ++= Dependencies.test.map(_ % Test))
+  .dependsOn(model, kernel, `rate-sampling`, test % "test->compile")
 
 lazy val `rate-sampling` = (project in file("modules/rate-sampling"))
   .settings(publishSettings)
