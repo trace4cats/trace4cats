@@ -108,6 +108,8 @@ lazy val root = (project in file("."))
     core,
     `datadog-http-exporter`,
     `dynamic-sampling`,
+    `dynamic-sampling-http4s`,
+    `dynamic-sampling-http-server`,
     example,
     `exporter-common`,
     `exporter-http`,
@@ -199,7 +201,8 @@ lazy val example = (project in file("modules/example"))
     `tail-sampling-cache-store`,
     filtering,
     `rate-sampling`,
-    meta
+    meta,
+    `dynamic-sampling-http-server`,
   )
 
 lazy val test = (project in file("modules/test"))
@@ -635,7 +638,28 @@ lazy val filtering = (project in file("modules/filtering"))
 lazy val `dynamic-sampling` = (project in file("modules/dynamic-sampling"))
   .settings(publishSettings)
   .settings(name := "trace4cats-dynamic-sampling", libraryDependencies ++= Dependencies.test.map(_ % Test))
-  .dependsOn(model, kernel, `rate-sampling`, test % "test->compile")
+  .dependsOn(model, kernel, `rate-sampling`)
+
+lazy val `dynamic-sampling-http4s` = (project in file("modules/dynamic-sampling-http4s"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-dynamic-sampling-http4s",
+    libraryDependencies ++= Seq(
+      Dependencies.circeGeneric,
+      Dependencies.http4sCirce,
+      Dependencies.http4sDsl,
+      Dependencies.http4sServer
+    ),
+  )
+  .dependsOn(model, kernel, `dynamic-sampling`)
+
+lazy val `dynamic-sampling-http-server` = (project in file("modules/dynamic-sampling-http-server"))
+  .settings(publishSettings)
+  .settings(
+    name := "trace4cats-dynamic-sampling-http-server",
+    libraryDependencies ++= Seq(Dependencies.http4sBlazeServer)
+  )
+  .dependsOn(model, kernel, `dynamic-sampling-http4s`)
 
 lazy val `rate-sampling` = (project in file("modules/rate-sampling"))
   .settings(publishSettings)

@@ -10,6 +10,7 @@ import io.janstenpickle.trace4cats.model.{SampleDecision, SpanContext, SpanKind,
 
 trait HotSwappableSpanSampler[F[_]] extends SpanSampler[F] {
   def updateConfig(config: SamplerConfig): F[Unit]
+  def getConfig: F[SamplerConfig]
 }
 
 object HotSwappableSpanSampler {
@@ -28,11 +29,14 @@ object HotSwappableSpanSampler {
       else ().pure
     }
 
+    override def getConfig: F[SamplerConfig] = currentConfig.get
+
     override def shouldSample(
       parentContext: Option[SpanContext],
       traceId: TraceId,
       spanName: String,
       spanKind: SpanKind
     ): F[SampleDecision] = sampler.get.flatMap(_.value.shouldSample(parentContext, traceId, spanName, spanKind))
+
   }
 }
