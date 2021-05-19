@@ -13,13 +13,13 @@ object SamplerUtil {
     case SamplerConfig.Never => SamplerProcess(SpanSampler.never[F], ().pure).pure
     case SamplerConfig.Probabilistic(probability, rootSpansOnly) =>
       SamplerProcess(SpanSampler.probabilistic[F](probability, rootSpansOnly), ().pure).pure
-    case SamplerConfig.Rate(bucketSize, tokenRate) =>
+    case SamplerConfig.Rate(bucketSize, tokenRate, rootSpansOnly) =>
       TokenInterval(tokenRate)
         .fold(SamplerProcess(SpanSampler.always[F], ().pure).pure)(interval =>
           DynamicTokenBucket.unsafeCreate[F](bucketSize, interval).map { case (tb, cancel) =>
             implicit val tokenBucket: DynamicTokenBucket[F] = tb
 
-            SamplerProcess(RateSpanSampler[F], cancel)
+            SamplerProcess(RateSpanSampler[F](rootSpansOnly), cancel)
           }
         )
   }
