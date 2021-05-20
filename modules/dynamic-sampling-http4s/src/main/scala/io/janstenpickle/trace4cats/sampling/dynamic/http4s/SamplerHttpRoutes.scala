@@ -6,7 +6,7 @@ import io.circe.Codec
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.semiauto.deriveConfiguredCodec
 import io.janstenpickle.trace4cats.kernel.SpanSampler
-import io.janstenpickle.trace4cats.sampling.dynamic.{HotSwappableSpanSampler, SamplerConfig}
+import io.janstenpickle.trace4cats.sampling.dynamic.config.{ConfiguredHotSwappableDynamicSpanSampler, SamplerConfig}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.dsl.Http4sDsl
@@ -18,7 +18,7 @@ object SamplerHttpRoutes {
   def create[F[_]: Temporal](
     initialConfig: SamplerConfig = SamplerConfig.Never
   ): Resource[F, (SpanSampler[F], HttpRoutes[F])] =
-    HotSwappableSpanSampler.create[F](initialConfig).map { sampler =>
+    ConfiguredHotSwappableDynamicSpanSampler.create[F](initialConfig).map { sampler =>
       object dsl extends Http4sDsl[F]
       import dsl._
 

@@ -108,6 +108,7 @@ lazy val root = (project in file("."))
     core,
     `datadog-http-exporter`,
     `dynamic-sampling`,
+    `dynamic-sampling-config`,
     `dynamic-sampling-http4s`,
     `dynamic-sampling-http-server`,
     example,
@@ -637,8 +638,17 @@ lazy val filtering = (project in file("modules/filtering"))
 
 lazy val `dynamic-sampling` = (project in file("modules/dynamic-sampling"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-dynamic-sampling", libraryDependencies ++= Dependencies.test.map(_ % Test))
-  .dependsOn(model, kernel, `rate-sampling`, test % "test->compile")
+  .settings(
+    name := "trace4cats-dynamic-sampling",
+    libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2),
+    libraryDependencies ++= Dependencies.test.map(_ % Test)
+  )
+  .dependsOn(model, kernel, test % "test->compile")
+
+lazy val `dynamic-sampling-config` = (project in file("modules/dynamic-sampling-config"))
+  .settings(publishSettings)
+  .settings(name := "trace4cats-dynamic-sampling-config", libraryDependencies ++= Dependencies.test.map(_ % Test))
+  .dependsOn(model, kernel, `dynamic-sampling`, `rate-sampling`, test % "test->compile")
 
 lazy val `dynamic-sampling-http4s` = (project in file("modules/dynamic-sampling-http4s"))
   .settings(publishSettings)
@@ -651,7 +661,7 @@ lazy val `dynamic-sampling-http4s` = (project in file("modules/dynamic-sampling-
       Dependencies.http4sServer
     ),
   )
-  .dependsOn(model, kernel, `dynamic-sampling`)
+  .dependsOn(model, kernel, `dynamic-sampling-config`)
 
 lazy val `dynamic-sampling-http-server` = (project in file("modules/dynamic-sampling-http-server"))
   .settings(publishSettings)

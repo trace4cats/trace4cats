@@ -1,17 +1,19 @@
 package io.janstenpickle.trace4cats.sampling.dynamic
 
+import cats.effect.kernel.Resource
 import cats.effect.{IO, Ref}
 import cats.effect.testkit.TestInstances
+import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{SampleDecision, SpanKind, TraceId}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import scala.concurrent.duration._
 
+import scala.concurrent.duration._
 import scala.util.Success
 
-class ConfigPollingSpanSamplerSpec
+class PollingDynamicSpanSamplerSpec
     extends AnyFlatSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks
@@ -23,21 +25,23 @@ class ConfigPollingSpanSamplerSpec
   it should "swap between samplers" in {
     implicit val ticker = Ticker()
 
-    val test = Ref.of[IO, SamplerConfig](SamplerConfig.Always).flatMap { configRef =>
-      ConfigPollingSpanSampler.create[IO](configRef.get, 1.second).use { sampler =>
-        val decision = sampler.shouldSample(None, TraceId.invalid, "test", SpanKind.Internal)
+    val test =
+      Ref.of[IO, (String, Resource[IO, SpanSampler[IO]])](("always", Resource.pure(SpanSampler.always))).flatMap {
+        samplerRef =>
+          PollingDynamicSpanSampler.create[IO, String](samplerRef.get, 1.second).use { sampler =>
+            val decision = sampler.shouldSample(None, TraceId.invalid, "test", SpanKind.Internal)
 
-        for {
-          d0 <- decision
-          _ <- configRef.set(SamplerConfig.Never)
-          _ <- IO.sleep(2.seconds)
-          d1 <- decision
-          _ <- configRef.set(SamplerConfig.Always)
-          _ <- IO.sleep(2.seconds)
-          d2 <- decision
-        } yield (d0, d1, d2)
+            for {
+              d0 <- decision
+              _ <- samplerRef.set(("never", Resource.pure(SpanSampler.always)))
+              _ <- IO.sleep(2.seconds)
+              d1 <- decision
+              _ <- samplerRef.set(("always", Resource.pure(SpanSampler.always)))
+              _ <- IO.sleep(2.seconds)
+              d2 <- decision
+            } yield (d0, d1, d2)
+          }
       }
-    }
 
     val result = test.unsafeToFuture()
     ticker.ctx.tick(4.seconds)

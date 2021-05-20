@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.sampling.dynamic.http
 import cats.Applicative
 import cats.effect.kernel.{Async, Resource}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
-import io.janstenpickle.trace4cats.sampling.dynamic.SamplerConfig
+import io.janstenpickle.trace4cats.sampling.dynamic.config.SamplerConfig
 import io.janstenpickle.trace4cats.sampling.dynamic.http4s.SamplerHttpRoutes
 import org.http4s.implicits._
 import org.http4s.server.Router

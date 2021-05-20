@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.sampling.dynamic
+package io.janstenpickle.trace4cats.sampling.dynamic.config
 
 sealed trait SamplerConfig
 object SamplerConfig {
