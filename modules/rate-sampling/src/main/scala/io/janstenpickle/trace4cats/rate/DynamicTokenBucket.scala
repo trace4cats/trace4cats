@@ -15,8 +15,6 @@ trait DynamicTokenBucket[F[_]] extends TokenBucket[F] {
 }
 
 object DynamicTokenBucket {
-  type CancelToken[F[_]] = F[Unit]
-
   def create[F[_]: Temporal](bucketSize: Int, tokenRate: FiniteDuration): Resource[F, DynamicTokenBucket[F]] =
     for {
       currentConfig <- Resource.eval(Ref.of[F, (Int, FiniteDuration)]((bucketSize, tokenRate)))
