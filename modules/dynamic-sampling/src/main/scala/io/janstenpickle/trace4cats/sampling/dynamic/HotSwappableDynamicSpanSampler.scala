@@ -3,10 +3,12 @@ package io.janstenpickle.trace4cats.sampling.dynamic
 import cats.Applicative
 import cats.effect.kernel.{Ref, Resource, Temporal}
 import cats.effect.std.Hotswap
+import cats.kernel.Eq
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{SampleDecision, SpanContext, SpanKind, TraceId}
+import cats.syntax.eq._
 
 trait HotSwappableDynamicSpanSampler[F[_], A] extends SpanSampler[F] {
   def updateSampler(id: A, samplerResource: Resource[F, SpanSampler[F]]): F[Boolean]
@@ -14,7 +16,7 @@ trait HotSwappableDynamicSpanSampler[F[_], A] extends SpanSampler[F] {
 }
 
 object HotSwappableDynamicSpanSampler {
-  def create[F[_]: Temporal, A](
+  def create[F[_]: Temporal, A: Eq](
     id: A,
     initial: Resource[F, SpanSampler[F]]
   ): Resource[F, HotSwappableDynamicSpanSampler[F, A]] = for {
@@ -23,7 +25,7 @@ object HotSwappableDynamicSpanSampler {
   } yield new HotSwappableDynamicSpanSampler[F, A] {
     def updateSampler(newId: A, samplerResource: Resource[F, SpanSampler[F]]): F[Boolean] =
       current.get
-        .map(_._2 != newId)
+        .map(_._2.neqv(newId))
         .flatTap { idChanged =>
           Applicative[F].whenA(idChanged)(
             hotswap.swap(samplerResource.evalTap(newSampler => current.set((newSampler, newId))))

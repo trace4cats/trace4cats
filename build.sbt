@@ -647,7 +647,11 @@ lazy val `dynamic-sampling` = (project in file("modules/dynamic-sampling"))
 
 lazy val `dynamic-sampling-config` = (project in file("modules/dynamic-sampling-config"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-dynamic-sampling-config", libraryDependencies ++= Dependencies.test.map(_ % Test))
+  .settings(
+    name := "trace4cats-dynamic-sampling-config",
+    libraryDependencies ++= Seq(Dependencies.kittens),
+    libraryDependencies ++= Dependencies.test.map(_ % Test)
+  )
   .dependsOn(model, kernel, `dynamic-sampling`, `rate-sampling`, test % "test->compile")
 
 lazy val `dynamic-sampling-http4s` = (project in file("modules/dynamic-sampling-http4s"))
