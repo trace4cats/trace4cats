@@ -24,10 +24,11 @@ object HotSwappableDynamicSpanSampler {
     def updateSampler(newId: A, samplerResource: Resource[F, SpanSampler[F]]): F[Boolean] =
       current.get
         .map(_._2 != newId)
-        .ifM(
-          hotswap.swap(samplerResource.evalTap(newSampler => current.set((newSampler, newId)))).as(true),
-          Applicative[F].pure(false)
-        )
+        .flatTap { idChanged =>
+          Applicative[F].whenA(idChanged)(
+            hotswap.swap(samplerResource.evalTap(newSampler => current.set((newSampler, newId))))
+          )
+        }
 
     override def getId: F[A] = current.get.map(_._2)
 
