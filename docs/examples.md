@@ -12,6 +12,10 @@
  * [Http4s ZIO](#http4s-zio)
  * [Sttp](#http4s)
  * [Sttp ZIO](#http4s-zio)
+ * [Attribute Filtering](#attribute-filtering)
+ * [Tail Sampling](#tail-sampling)
+ * [Trace Process Attributes](#trace-process-attributes)
+ * [Dynamic Sampling](#dynamic-sampling)
 
 ## [Simple](../modules/example/src/main/scala/io/janstenpickle/trace4cats/example/SimpleExample.scala)
 
@@ -270,6 +274,19 @@ Requires:
 
 ```scala
 "io.janstenpickle" %% "trace4cats-core" % "0.11.0"
+```
+
+## [Dynamic Sampling](../modules/example/src/main/scala/io/janstenpickle/trace4cats/example/DynamicSampling.scala)
+
+Shows how to use a dynamically configured sampler. This spans a HTTP server and provides an API for modifying sampling
+configuration at runtime. See the [sampling documentation](sampling.md#dynamic-head-sampling) for more details on
+dynamic sampling.
+
+Requires:
+
+```scala
+"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-dynamic-http-server" % "0.11.0"
 ```
 
 [FS2]: https://fs2.io/

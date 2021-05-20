@@ -1,14 +1,18 @@
 # Sampling
 
-  * [Head Sampling](#head-sampling)
-    + [Always](#always)
-    + [Never](#never)
-    + [Probabilistic](#probabilistic)
-    + [Rate](#rate)
-  * [Tail Sampling](#tail-sampling)
-    + [Why Tail Sampling?](#why-tail-sampling-)
-    + [Sample Decision Store](#sample-decision-store)
-    + [Collector Tail Sampling](#collector-tail-sampling)
+* [Head Sampling](#head-sampling)
+  + [Always](#always)
+  + [Never](#never)
+  + [Probabilistic](#probabilistic)
+  + [Rate](#rate)
+* [Dynamic Head Sampling](#dynamic-head-sampling)
+  + [Low Level Implementation](#low-level-implementation)
+  + [Config Driven](#config-driven)
+  + [HTTP Endpoints](#http-endpoints)
+* [Tail Sampling](#tail-sampling)
+  + [Why Tail Sampling?](#why-tail-sampling-)
+  + [Sample Decision Store](#sample-decision-store)
+  + [Collector Tail Sampling](#collector-tail-sampling)
 
 There are two types of sampling in tracing; head and tail.
 
@@ -89,6 +93,100 @@ import io.janstenpickle.trace4cats.rate.sampling.RateSpanSampler
 import scala.concurrent.duration._
 
 RateSpanSampler.create[IO](bucketSize = 100, tokenRate = 10.millis)
+```
+
+## Dynamic Head Sampling
+
+This allows for sampling to be configured by some dynamic means, this could be some central control plane or, in the
+future, [Jaeger adaptive sampling](https://github.com/jaegertracing/jaeger/issues/365).
+
+### Low Level Implementation
+
+A couple of low level implementations are provided that may be integrated with dynamic configuration sources and used
+by higher level implementations.
+
+- [`HotSwapSpanSampler`](../modules/dynamic-sampling/src/main/scala/io/janstenpickle/trace4cats/sampling/dynamic/HotSwapSpanSampler.scala)
+  exposes methods for updating the sampler implementation at runtime. When updating, if the ID of the sampler does not
+  change, the sampler will not get updated. This is indicated by the return type of `F[Boolean]` on the `updateSampler`
+  method
+- [`PollingSpanSampler`](../modules/dynamic-sampling/src/main/scala/io/janstenpickle/trace4cats/sampling/dynamic/PollingSpanSampler.scala)
+  given some updating source at construction, polls it for updates and changes implementation accordingly
+
+To access these implementations, include the following module in your project:
+```
+"io.janstenpickle" %% "trace4cats-dynamic-sampling" % "0.11.0"
+```
+
+### Config Driven
+
+This module provides an ADT called
+[`SamplerConfig`](../modules/dynamic-sampling-config/src/main/scala/io/janstenpickle/trace4cats/sampling/dynamic/config/SamplerConfig.scala)
+that allows the sampler type and configuration to be changed at runtime. Companions to the low level implementations
+described above are available in this module, which take `SamplerConfig` as an argument:
+
+- [`ConfiguredHotSwapSpanSampler`](../modules/dynamic-sampling-config/src/main/scala/io/janstenpickle/trace4cats/sampling/dynamic/config/ConfiguredHotSwapSpanSampler.scala)
+- [`ConfiguredPollingSpanSampler`](../modules/dynamic-sampling-config/src/main/scala/io/janstenpickle/trace4cats/sampling/dynamic/config/ConfiguredPollingSpanSampler.scala)
+
+To access these implementations, include the following module in your project:
+```
+"io.janstenpickle" %% "trace4cats-dynamic-sampling-config" % "0.11.0"
+```
+### HTTP Endpoints
+
+A couple of modules provide a solid implementation to allow samplers to be configured to runtime via HTTP endpoints. If
+you just want Http4s endpoints in order to include them alongside other routes then just use the following module and
+see
+[`SamplerHttpRoutes`](../modules/dynamic-sampling-http4s/src/main/scala/io/janstenpickle/trace4cats/sampling/dynamic/http4s/SamplerHttpRoutes.scala)
+to get started
+
+```
+"io.janstenpickle" %% "trace4cats-dynamic-sampling-http4s" % "0.11.0"
+```
+
+If you want a complete implementation of a HTTP server then use the following module, and
+[see the example](examples.md#dynamic-sampling).
+
+```
+"io.janstenpickle" %% "trace4cats-dynamic-sampling-http-server" % "0.11.0"
+```
+
+#### Usage
+
+Assuming the Http4s endpoints are mounted on `/trace4cats` or you are using the bundled HTTP server, the following
+commands should work:
+
+Get the current sampler config:
+```bash
+curl http://localhost:8080/trace4cats/config
+```
+
+Set the sampler to ["always"](#always), to trace every request:
+
+```bash
+curl -XPOST -d '{ "samplerType": "Always" }' http://localhost:8080/trace4cats/config
+```
+
+Set the sampler to ["never"](#never), to stop tracing completely:
+
+```bash
+curl -XPOST -d '{ "samplerType": "Never" }' http://localhost:8080/trace4cats/config
+```
+Set the sampler to [probabilistic](#probabilistic), with a probability parameter between 0 and 1:
+
+```bash
+curl -XPOST -d '{ "samplerType": "Probabilistic", "probability": 0.3 }' http://localhost:8080/trace4cats/config
+```
+
+Set the sampler to [rate](#rate), with token bucket parameters:
+
+```bash
+curl -XPOST -d '{ "samplerType": "Rate", "bucketSize": 100, "tokenRate": 2.0 }' http://localhost:8080/trace4cats/config
+```
+
+Use a kill switch to stop collecting traces (same as ["never" sampler](#never)):
+
+```bash
+curl -XPOST http://localhost:8080/trace4cats/killswitch
 ```
 
 ## Tail Sampling
