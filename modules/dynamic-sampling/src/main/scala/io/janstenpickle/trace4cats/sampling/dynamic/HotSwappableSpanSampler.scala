@@ -4,6 +4,7 @@ import cats.Applicative
 import cats.effect.kernel.{Ref, Resource, Temporal}
 import cats.effect.std.Hotswap
 import cats.syntax.flatMap._
+import cats.syntax.functor._
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{SampleDecision, SpanContext, SpanKind, TraceId}
 
@@ -14,24 +15,25 @@ trait HotSwappableSpanSampler[F[_]] extends SpanSampler[F] {
 
 object HotSwappableSpanSampler {
   def create[F[_]: Temporal](config: SamplerConfig): Resource[F, HotSwappableSpanSampler[F]] = for {
-    currentConfig <- Resource.eval(Ref.of(config))
     (hotswap, sampler) <- Hotswap(SamplerUtil.makeSampler[F](config))
-    currentSampler <- Resource.eval(Ref.of(sampler))
+    current <- Resource.eval(Ref.of((sampler, config)))
   } yield new HotSwappableSpanSampler[F] {
-    override def updateConfig(newConfig: SamplerConfig): F[Unit] = currentConfig.get.flatMap { oldConfig =>
+    override def updateConfig(newConfig: SamplerConfig): F[Unit] = current.get.flatMap { case (_, oldConfig) =>
       Applicative[F].whenA(oldConfig != newConfig) {
-        hotswap.swap(SamplerUtil.makeSampler[F](newConfig).evalTap(currentSampler.set))
+        hotswap.swap(SamplerUtil.makeSampler[F](newConfig).evalTap(newSampler => current.set((newSampler, newConfig))))
       }
     }
 
-    override def getConfig: F[SamplerConfig] = currentConfig.get
+    override def getConfig: F[SamplerConfig] = current.get.map { case (_, config) => config }
 
     override def shouldSample(
       parentContext: Option[SpanContext],
       traceId: TraceId,
       spanName: String,
       spanKind: SpanKind
-    ): F[SampleDecision] = currentSampler.get.flatMap(_.shouldSample(parentContext, traceId, spanName, spanKind))
+    ): F[SampleDecision] = current.get.flatMap { case (sampler, _) =>
+      sampler.shouldSample(parentContext, traceId, spanName, spanKind)
+    }
 
   }
 }
