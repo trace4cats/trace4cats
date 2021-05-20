@@ -33,7 +33,7 @@ class PollingDynamicSpanSamplerSpec
 
             for {
               d0 <- decision
-              _ <- samplerRef.set(("never", Resource.pure(SpanSampler.always)))
+              _ <- samplerRef.set(("never", Resource.pure(SpanSampler.never)))
               _ <- IO.sleep(2.seconds)
               d1 <- decision
               _ <- samplerRef.set(("always", Resource.pure(SpanSampler.always)))
