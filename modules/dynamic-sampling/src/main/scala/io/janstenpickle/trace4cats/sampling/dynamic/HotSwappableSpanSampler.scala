@@ -20,7 +20,7 @@ object HotSwappableSpanSampler {
   } yield new HotSwappableSpanSampler[F] {
     override def updateConfig(newConfig: SamplerConfig): F[Unit] = currentConfig.get.flatMap { oldConfig =>
       Applicative[F].whenA(oldConfig != newConfig) {
-        hotswap.swap(SamplerUtil.makeSampler[F](config)).flatMap(currentSampler.set)
+        hotswap.swap(SamplerUtil.makeSampler[F](config).evalTap(currentSampler.set))
       }
     }
 
