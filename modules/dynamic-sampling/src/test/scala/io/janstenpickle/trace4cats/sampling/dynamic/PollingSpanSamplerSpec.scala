@@ -13,7 +13,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scala.concurrent.duration._
 import scala.util.Success
 
-class PollingDynamicSpanSamplerSpec
+class PollingSpanSamplerSpec
     extends AnyFlatSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks
@@ -28,7 +28,7 @@ class PollingDynamicSpanSamplerSpec
     val test =
       Ref.of[IO, (String, Resource[IO, SpanSampler[IO]])](("always", Resource.pure(SpanSampler.always))).flatMap {
         samplerRef =>
-          PollingDynamicSpanSampler.create[IO, String](samplerRef.get, 1.second).use { sampler =>
+          PollingSpanSampler.create[IO, String](samplerRef.get, 1.second).use { sampler =>
             val decision = sampler.shouldSample(None, TraceId.invalid, "test", SpanKind.Internal)
 
             for {

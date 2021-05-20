@@ -3,19 +3,19 @@ package io.janstenpickle.trace4cats.sampling.dynamic.config
 import cats.effect.kernel.{Resource, Temporal}
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{SampleDecision, SpanContext, SpanKind, TraceId}
-import io.janstenpickle.trace4cats.sampling.dynamic.HotSwappableDynamicSpanSampler
+import io.janstenpickle.trace4cats.sampling.dynamic.HotSwapSpanSampler
 
-trait ConfiguredHotSwappableDynamicSpanSampler[F[_]] extends SpanSampler[F] {
+trait ConfiguredHotSwapSpanSampler[F[_]] extends SpanSampler[F] {
   def updateConfig(config: SamplerConfig): F[Boolean]
   def getConfig: F[SamplerConfig]
 }
 
-object ConfiguredHotSwappableDynamicSpanSampler {
-  def create[F[_]: Temporal](initialConfig: SamplerConfig): Resource[F, ConfiguredHotSwappableDynamicSpanSampler[F]] =
-    HotSwappableDynamicSpanSampler
+object ConfiguredHotSwapSpanSampler {
+  def create[F[_]: Temporal](initialConfig: SamplerConfig): Resource[F, ConfiguredHotSwapSpanSampler[F]] =
+    HotSwapSpanSampler
       .create(initialConfig, SamplerUtil.makeSampler(initialConfig))
       .map(underlying =>
-        new ConfiguredHotSwappableDynamicSpanSampler[F] {
+        new ConfiguredHotSwapSpanSampler[F] {
           override def updateConfig(config: SamplerConfig): F[Boolean] =
             underlying.updateSampler(config, SamplerUtil.makeSampler(config))
 

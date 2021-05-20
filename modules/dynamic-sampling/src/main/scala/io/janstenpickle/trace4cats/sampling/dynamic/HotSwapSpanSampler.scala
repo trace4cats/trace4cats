@@ -10,19 +10,19 @@ import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{SampleDecision, SpanContext, SpanKind, TraceId}
 import cats.syntax.eq._
 
-trait HotSwappableDynamicSpanSampler[F[_], A] extends SpanSampler[F] {
+trait HotSwapSpanSampler[F[_], A] extends SpanSampler[F] {
   def updateSampler(id: A, samplerResource: Resource[F, SpanSampler[F]]): F[Boolean]
   def getId: F[A]
 }
 
-object HotSwappableDynamicSpanSampler {
+object HotSwapSpanSampler {
   def create[F[_]: Temporal, A: Eq](
     id: A,
     initial: Resource[F, SpanSampler[F]]
-  ): Resource[F, HotSwappableDynamicSpanSampler[F, A]] = for {
+  ): Resource[F, HotSwapSpanSampler[F, A]] = for {
     (hotswap, sampler) <- Hotswap(initial)
     current <- Resource.eval(Ref.of((sampler, id)))
-  } yield new HotSwappableDynamicSpanSampler[F, A] {
+  } yield new HotSwapSpanSampler[F, A] {
     def updateSampler(newId: A, samplerResource: Resource[F, SpanSampler[F]]): F[Boolean] =
       current.get
         .map(_._2.neqv(newId))

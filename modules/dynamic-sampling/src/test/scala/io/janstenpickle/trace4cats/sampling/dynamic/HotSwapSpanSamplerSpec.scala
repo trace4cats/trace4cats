@@ -11,7 +11,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.util.Success
 
-class HotSwappableDynamicSpanSamplerSpec
+class HotSwapSpanSamplerSpec
     extends AnyFlatSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks
@@ -23,8 +23,8 @@ class HotSwappableDynamicSpanSamplerSpec
   it should "swap between samplers" in {
     implicit val ticker = Ticker()
 
-    val test = HotSwappableDynamicSpanSampler.create[IO, String]("always", Resource.pure(SpanSampler.always[IO])).use {
-      sampler =>
+    val test =
+      HotSwapSpanSampler.create[IO, String]("always", Resource.pure(SpanSampler.always[IO])).use { sampler =>
         val decision = sampler.shouldSample(None, TraceId.invalid, "test", SpanKind.Internal)
 
         for {
@@ -34,7 +34,7 @@ class HotSwappableDynamicSpanSamplerSpec
           updated1 <- sampler.updateSampler("always", Resource.pure(SpanSampler.always))
           d2 <- decision
         } yield (d0, d1, d2, updated0, updated1)
-    }
+      }
 
     val result = test.unsafeToFuture()
     ticker.ctx.tick()
@@ -47,7 +47,7 @@ class HotSwappableDynamicSpanSamplerSpec
     implicit val ticker = Ticker()
 
     val test =
-      HotSwappableDynamicSpanSampler.create[IO, String]("id", Resource.pure(SpanSampler.always[IO])).use { sampler =>
+      HotSwapSpanSampler.create[IO, String]("id", Resource.pure(SpanSampler.always[IO])).use { sampler =>
         val decision = sampler.shouldSample(None, TraceId.invalid, "test", SpanKind.Internal)
 
         for {

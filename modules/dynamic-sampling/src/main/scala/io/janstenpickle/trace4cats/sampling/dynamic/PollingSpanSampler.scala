@@ -8,13 +8,13 @@ import io.janstenpickle.trace4cats.kernel.SpanSampler
 
 import scala.concurrent.duration.FiniteDuration
 
-object PollingDynamicSpanSampler {
+object PollingSpanSampler {
   def create[F[_]: Temporal, A: Eq](
     configuredSampler: F[(A, Resource[F, SpanSampler[F]])],
     updateInterval: FiniteDuration
   ): Resource[F, SpanSampler[F]] = {
 
-    def configPoller(sampler: HotSwappableDynamicSpanSampler[F, A]): Stream[F, Unit] =
+    def configPoller(sampler: HotSwapSpanSampler[F, A]): Stream[F, Unit] =
       for {
         _ <- Stream.fixedRate[F](updateInterval)
         (id, samplerResource) <- Stream.eval(configuredSampler)
@@ -23,7 +23,7 @@ object PollingDynamicSpanSampler {
 
     for {
       (id, samplerResource) <- Resource.eval(configuredSampler)
-      sampler <- HotSwappableDynamicSpanSampler.create(id, samplerResource)
+      sampler <- HotSwapSpanSampler.create(id, samplerResource)
       _ <- configPoller(sampler).compile.drain.background
     } yield sampler
   }
