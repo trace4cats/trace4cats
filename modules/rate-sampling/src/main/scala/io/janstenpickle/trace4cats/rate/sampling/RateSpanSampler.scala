@@ -1,34 +1,58 @@
 package io.janstenpickle.trace4cats.rate.sampling
 
-import cats.Functor
+import cats.Applicative
 import cats.effect.{Concurrent, Resource, Timer}
 import cats.syntax.functor._
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{SampleDecision, SpanContext, SpanKind, TraceId}
-import io.janstenpickle.trace4cats.rate.TokenBucket
+import io.janstenpickle.trace4cats.rate.{TokenBucket, TokenInterval}
 
 import scala.concurrent.duration._
 
 object RateSpanSampler {
-  def apply[F[_]: Functor: TokenBucket]: SpanSampler[F] =
+  def apply[F[_]: Applicative: TokenBucket]: SpanSampler[F] = apply(rootSpansOnly = true)
+
+  def apply[F[_]: Applicative: TokenBucket](rootSpansOnly: Boolean): SpanSampler[F] =
     new SpanSampler[F] {
       override def shouldSample(
         parentContext: Option[SpanContext],
         traceId: TraceId,
         spanName: String,
         spanKind: SpanKind
-      ): F[SampleDecision] =
-        TokenBucket[F].request1.map {
+      ): F[SampleDecision] = {
+        val sampleDecisionF: F[SampleDecision] = TokenBucket[F].request1.map {
           case false => SampleDecision.Drop
           case true => SampleDecision.Include
         }
+
+        parentContext.map(_.traceFlags.sampled).fold(sampleDecisionF) {
+          case SampleDecision.Include =>
+            if (rootSpansOnly) Applicative[F].pure(SampleDecision.Include)
+            else sampleDecisionF
+          case SampleDecision.Drop => Applicative[F].pure(SampleDecision.Drop)
+        }
+      }
+
     }
 
   def create[F[_]: Concurrent: Timer](bucketSize: Int, tokenRate: Double): Resource[F, SpanSampler[F]] =
-    Some(1.second / tokenRate)
-      .collect { case dur: FiniteDuration => dur }
-      .fold(Resource.pure[F, SpanSampler[F]](SpanSampler.always[F]))(create[F](bucketSize, _))
+    create(bucketSize, tokenRate, rootSpansOnly = true)
+
+  def create[F[_]: Concurrent: Timer](
+    bucketSize: Int,
+    tokenRate: Double,
+    rootSpansOnly: Boolean
+  ): Resource[F, SpanSampler[F]] =
+    TokenInterval(tokenRate)
+      .fold(Resource.pure[F, SpanSampler[F]](SpanSampler.always[F]))(create[F](bucketSize, _, rootSpansOnly))
 
   def create[F[_]: Concurrent: Timer](bucketSize: Int, tokenInterval: FiniteDuration): Resource[F, SpanSampler[F]] =
-    TokenBucket.create[F](bucketSize, tokenInterval).map(implicit tb => apply[F])
+    create(bucketSize, tokenInterval, rootSpansOnly = true)
+
+  def create[F[_]: Concurrent: Timer](
+    bucketSize: Int,
+    tokenInterval: FiniteDuration,
+    rootSpansOnly: Boolean
+  ): Resource[F, SpanSampler[F]] =
+    TokenBucket.create[F](bucketSize, tokenInterval).map(implicit tb => apply[F](rootSpansOnly))
 }
