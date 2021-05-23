@@ -15,7 +15,10 @@ class OpenTelemetryOtlpGrpcSpanExporterSpec extends BaseJaegerSpec {
         batch.spans.map(span =>
           span.copy(
             serviceName = process.serviceName,
-            attributes = (process.attributes ++ span.attributes).filterNot { case (key, _) => key == "ip" },
+            attributes = (process.attributes ++ span.attributes)
+              .filterNot { case (key, _) =>
+                excludedTagKeys.contains(key)
+              },
             start = Instant.now(),
             end = Instant.now()
           )
