@@ -11,4 +11,6 @@ package object otlp {
   val processTags: TraceProcess => Map[String, AttributeValue] = _ => Map.empty
 
   val additionalTags: Map[String, AttributeValue] = Map("otel.library.name" -> "trace4cats")
+
+  val excludedTagKeys: Set[String] = Set("ip")
 }

@@ -23,4 +23,6 @@ package object zipkin {
         case (k, AttributeValue.BooleanValue(value)) if k == "error" => JaegerTag.BoolTag(k, value.value)
         case (k, v) => JaegerTag.StringTag(k, v.show)
       }
+
+  val excludedTagKeys: Set[String] = Set("lc")
 }
