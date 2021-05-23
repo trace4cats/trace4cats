@@ -13,7 +13,13 @@ class ZipkinHttpSpanCompleterSpec extends BaseJaegerSpec {
   it should "Send a span to Zipkin" in forAll { (span: CompletedSpan.Builder, serviceName: String) =>
     val process = TraceProcess(serviceName)
 
-    val updatedSpan = span.copy(start = Instant.now(), end = Instant.now(), attributes = span.attributes)
+    val updatedSpan = span.copy(
+      start = Instant.now(),
+      end = Instant.now(),
+      attributes = span.attributes.filterNot { case (key, _) =>
+        excludedTagKeys.contains(key)
+      }
+    )
     val batch = Batch(Chunk(updatedSpan.build(process)))
 
     testCompleter(

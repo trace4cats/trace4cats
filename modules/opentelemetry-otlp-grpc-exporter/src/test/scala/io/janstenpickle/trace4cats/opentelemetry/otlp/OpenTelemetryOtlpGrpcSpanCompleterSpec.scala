@@ -16,7 +16,9 @@ class OpenTelemetryOtlpGrpcSpanCompleterSpec extends BaseJaegerSpec {
     val updatedSpan = span.copy(
       start = Instant.now(),
       end = Instant.now(),
-      attributes = span.attributes.filterNot { case (key, _) => key == "ip" }
+      attributes = span.attributes.filterNot { case (key, _) =>
+        excludedTagKeys.contains(key)
+      }
     )
     val batch = Batch(Chunk(updatedSpan.build(serviceName)))
 
