@@ -82,7 +82,7 @@ components. There are two parameters required to configure this sampler;
 In order to use the rate sampler, add the following dependency to your `build.sbt`:
 
 ```
-"io.janstenpickle" %% "trace4cats-rate-sampling" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-rate-sampling" % "0.12.0-RC1"
 ```
 
 You can use the sampler with the code block below. For a more complete example see
@@ -114,7 +114,7 @@ by higher level implementations.
 
 To access these implementations, include the following module in your project:
 ```
-"io.janstenpickle" %% "trace4cats-dynamic-sampling" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-dynamic-sampling" % "0.12.0-RC1"
 ```
 
 ### Config Driven
@@ -129,7 +129,7 @@ described above are available in this module, which take `SamplerConfig` as an a
 
 To access these implementations, include the following module in your project:
 ```
-"io.janstenpickle" %% "trace4cats-dynamic-sampling-config" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-dynamic-sampling-config" % "0.12.0-RC1"
 ```
 ### HTTP Endpoints
 
@@ -140,14 +140,14 @@ see
 to get started
 
 ```
-"io.janstenpickle" %% "trace4cats-dynamic-sampling-http4s" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-dynamic-sampling-http4s" % "0.12.0-RC1"
 ```
 
 If you want a complete implementation of a HTTP server then use the following module, and
 [see the example](examples.md#dynamic-sampling).
 
 ```
-"io.janstenpickle" %% "trace4cats-dynamic-sampling-http-server" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-dynamic-sampling-http-server" % "0.12.0-RC1"
 ```
 
 #### Usage

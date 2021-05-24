@@ -25,8 +25,8 @@ inject a root span via a Kleisli (see the Inject example below).
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC1"
 
 ```
 
@@ -38,8 +38,8 @@ inject a root span via the environment (see the Inject example below).
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC1"
 
 ```
 
@@ -53,17 +53,17 @@ object.
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-log-exporter" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-log-exporter" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.12.0-RC1"
 
 ```
 
@@ -82,10 +82,10 @@ Requires:
 
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-natchez" % "0.11.0" // required only for interop
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-inject" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-natchez" % "0.12.0-RC1" // required only for interop
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC1"
 
 ```
 
@@ -101,10 +101,10 @@ io.janstenpickle.trace4cats.inject.zio._
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-inject-zio" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-natchez" % "0.11.0" // required only for interop
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-inject-zio" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-natchez" % "0.12.0-RC1" // required only for interop
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC1"
 
 ```
 
@@ -121,10 +121,10 @@ Requires:
 
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.11.0" // required only for interop
-"io.janstenpickle" %% "trace4cats-natchez" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-inject" % "0.12.0-RC1" // required only for interop
+"io.janstenpickle" %% "trace4cats-natchez" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC1"
 
 ```
 
@@ -140,9 +140,9 @@ between closures.
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-fs2" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-fs2" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC1"
 
 ```
 
@@ -156,9 +156,9 @@ having to use two type parameters when passing around a `TracedStream`.
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-fs2" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-fs2" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC1"
 
 ```
 
@@ -176,11 +176,11 @@ io.janstenpickle.trace4cats.http4s.client.syntax._
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-http4s-client" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-http4s-server" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-inject" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-http4s-client" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-http4s-server" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC1"
 
 ```
 
@@ -199,11 +199,11 @@ io.janstenpickle.trace4cats.inject.zio._
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-inject-zio" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-http4s-client" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-http4s-server" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-inject-zio" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-http4s-client" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-http4s-server" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC1"
 
 ```
 
@@ -215,10 +215,10 @@ span status is derived from HTTP status codes.
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-sttp-client3" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-inject" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-sttp-client3" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC1"
 
 ```
 
@@ -230,10 +230,10 @@ span status is derived from HTTP status codes.
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-inject-zio" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-sttp-client3" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-inject-zio" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-sttp-client3" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC1"
 
 ```
 
@@ -245,9 +245,9 @@ from spans. Note that this would more commonly be configured on the [collector].
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-filtering" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-filtering" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC1"
 
 ```
 
@@ -259,9 +259,9 @@ have been created. Note that this would more commonly be configured on the [coll
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-filtering" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-filtering" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC1"
 
 ```
 
@@ -273,7 +273,7 @@ hostname, IP address, environment variables, system properties and user provided
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
 ```
 
 ## [Dynamic Sampling](../modules/example/src/main/scala/io/janstenpickle/trace4cats/example/DynamicSampling.scala)
@@ -285,8 +285,8 @@ dynamic sampling.
 Requires:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.11.0"
-"io.janstenpickle" %% "trace4cats-dynamic-http-server" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC1"
+"io.janstenpickle" %% "trace4cats-dynamic-http-server" % "0.12.0-RC1"
 ```
 
 [FS2]: https://fs2.io/
