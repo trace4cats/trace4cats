@@ -1,7 +1,6 @@
 package io.janstenpickle.trace4cats.`export`
 
 import cats.kernel.Eq
-import cats.derived.semiauto
 
 import scala.concurrent.duration._
 
@@ -12,7 +11,7 @@ case class ExportRetryConfig(
 )
 
 object ExportRetryConfig {
-  implicit val nexDelayEq: Eq[FiniteDuration => FiniteDuration] = Eq.fromUniversalEquals
-
-  implicit val eq: Eq[ExportRetryConfig] = semiauto.eq
+  implicit val eq: Eq[ExportRetryConfig] = Eq.by { config =>
+    (config.delay, config.nextDelay(config.delay), config.maxAttempts)
+  }
 }
