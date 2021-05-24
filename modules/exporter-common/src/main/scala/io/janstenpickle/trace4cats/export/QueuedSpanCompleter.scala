@@ -10,6 +10,7 @@ import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.monad._
 import fs2.{Chunk, Stream}
+import io.janstenpickle.trace4cats.`export`.ExportRetryConfig.NextDelay
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanExporter}
 import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceProcess}
 import org.typelevel.log4cats.Logger
@@ -38,7 +39,11 @@ object QueuedSpanCompleter {
               .retry(
                 exporter.exportBatch(batch),
                 delay = config.retryConfig.delay,
-                nextDelay = config.retryConfig.nextDelay,
+                nextDelay = t =>
+                  config.retryConfig.nextDelay match {
+                    case NextDelay.Constant(d) => t + d
+                    case NextDelay.Exponential => t + t
+                  },
                 maxAttempts = config.retryConfig.maxAttempts
               )
               .compile
