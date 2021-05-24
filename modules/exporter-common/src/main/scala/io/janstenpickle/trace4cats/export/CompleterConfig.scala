@@ -1,5 +1,8 @@
 package io.janstenpickle.trace4cats.`export`
 
+import cats.kernel.Eq
+import cats.derived.semiauto
+
 import scala.concurrent.duration._
 
 case class CompleterConfig(
@@ -8,3 +11,7 @@ case class CompleterConfig(
   batchTimeout: FiniteDuration = 10.seconds,
   retryConfig: ExportRetryConfig = ExportRetryConfig()
 )
+
+object CompleterConfig {
+  implicit val eq: Eq[CompleterConfig] = semiauto.eq
+}
