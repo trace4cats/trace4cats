@@ -46,7 +46,7 @@ object Dependencies {
     val scalaCheck = "1.15.4"
     val scalaCheckShapeless = "1.2.5"
     val scalaTest = "3.2.9"
-    val testContainers = "0.39.4"
+    val testContainers = "0.39.5"
   }
 
   lazy val caseInsensitive = "org.typelevel"                   %% "case-insensitive"                % Versions.caseInsensitive
