@@ -121,6 +121,7 @@ lazy val root = (project in file("."))
     `http4s-client`,
     `http4s-common`,
     `http4s-server`,
+    hotswap,
     inject,
     `inject-zio`,
     `jaeger-integration-test`,
@@ -243,6 +244,15 @@ lazy val base =
   (project in file("modules/base"))
     .settings(publishSettings)
     .settings(name := "trace4cats-base", libraryDependencies ++= Dependencies.test.map(_ % Test))
+
+lazy val hotswap =
+  (project in file("modules/hotswap"))
+    .settings(publishSettings)
+    .settings(
+      name := "trace4cats-hotswap",
+      libraryDependencies ++= Seq(Dependencies.catsEffect),
+      libraryDependencies ++= Dependencies.test.map(_ % Test)
+    )
 
 lazy val `base-laws` =
   (project in file("modules/base-laws"))
@@ -443,7 +453,7 @@ lazy val `exporter-common` =
       libraryDependencies ++= Seq(Dependencies.kittens, Dependencies.log4cats),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
-    .dependsOn(model, kernel, `exporter-stream`, test % "test->compile")
+    .dependsOn(model, kernel, hotswap, `exporter-stream`, test % "test->compile")
 
 lazy val meta =
   (project in file("modules/meta"))
@@ -647,7 +657,7 @@ lazy val `dynamic-sampling` = (project in file("modules/dynamic-sampling"))
     libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2),
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
-  .dependsOn(model, kernel, test % "test->compile")
+  .dependsOn(model, kernel, hotswap, test % "test->compile")
 
 lazy val `dynamic-sampling-config` = (project in file("modules/dynamic-sampling-config"))
   .settings(publishSettings)

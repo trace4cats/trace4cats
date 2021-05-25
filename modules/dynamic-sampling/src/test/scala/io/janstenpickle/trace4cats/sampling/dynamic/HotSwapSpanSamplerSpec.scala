@@ -29,9 +29,9 @@ class HotSwapSpanSamplerSpec
 
         for {
           d0 <- decision
-          updated0 <- sampler.updateSampler("never", Resource.pure(SpanSampler.never))
+          updated0 <- sampler.swap("never", Resource.pure(SpanSampler.never))
           d1 <- decision
-          updated1 <- sampler.updateSampler("always", Resource.pure(SpanSampler.always))
+          updated1 <- sampler.swap("always", Resource.pure(SpanSampler.always))
           d2 <- decision
         } yield (d0, d1, d2, updated0, updated1)
       }
@@ -52,9 +52,9 @@ class HotSwapSpanSamplerSpec
 
         for {
           d0 <- decision
-          updated0 <- sampler.updateSampler("id", Resource.pure(SpanSampler.never))
+          updated0 <- sampler.swap("id", Resource.pure(SpanSampler.never))
           d1 <- decision
-          updated1 <- sampler.updateSampler("id", Resource.pure(SpanSampler.always))
+          updated1 <- sampler.swap("id", Resource.pure(SpanSampler.always))
           d2 <- decision
         } yield (d0, d1, d2, updated0, updated1)
       }

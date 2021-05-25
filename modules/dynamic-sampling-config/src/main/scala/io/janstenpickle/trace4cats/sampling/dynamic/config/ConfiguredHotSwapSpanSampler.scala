@@ -11,15 +11,14 @@ trait ConfiguredHotSwapSpanSampler[F[_]] extends SpanSampler[F] {
 }
 
 object ConfiguredHotSwapSpanSampler {
-  def create[F[_]: Temporal](initialConfig: SamplerConfig): Resource[F, ConfiguredHotSwapSpanSampler[F]] =
-    HotSwapSpanSampler
-      .create(initialConfig, SamplerUtil.makeSampler(initialConfig))
+  def apply[F[_]: Temporal](initialConfig: SamplerConfig): Resource[F, ConfiguredHotSwapSpanSampler[F]] =
+    HotSwapSpanSampler(initialConfig, (c: SamplerConfig) => SamplerUtil.makeSampler[F](c))
       .map(underlying =>
         new ConfiguredHotSwapSpanSampler[F] {
           override def updateConfig(config: SamplerConfig): F[Boolean] =
-            underlying.updateSampler(config, SamplerUtil.makeSampler(config))
+            underlying.swap(config)
 
-          override def getConfig: F[SamplerConfig] = underlying.getId
+          override def getConfig: F[SamplerConfig] = underlying.getConfig
 
           override def shouldSample(
             parentContext: Option[SpanContext],
