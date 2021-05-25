@@ -1,11 +1,11 @@
 package io.janstenpickle.trace4cats.example
 
-import cats.effect.{ExitCode, IO, IOApp, Resource}
-import org.typelevel.log4cats.Logger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
+import cats.effect.{ExitCode, IO, IOApp}
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.model.{SpanKind, SpanStatus, TraceProcess}
 import io.janstenpickle.trace4cats.rate.sampling.RateSpanSampler
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import scala.concurrent.duration._
 
@@ -14,9 +14,8 @@ import scala.concurrent.duration._
   * as the simple example call tree.
   */
 object AdvancedExample extends IOApp {
-  override def run(args: List[String]): IO[ExitCode] =
+  override def run(args: List[String]): IO[ExitCode] = Slf4jLogger.create[IO].flatMap { implicit logger: Logger[IO] =>
     (for {
-      implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
       completer <- AllCompleters[IO](TraceProcess("test"))
 
       // Set up rate sampler
@@ -26,4 +25,5 @@ object AdvancedExample extends IOApp {
       root <- Span.root[IO]("root", SpanKind.Client, rateSampler, completer)
       child <- root.child("child", SpanKind.Server)
     } yield child).use(_.setStatus(SpanStatus.Internal("Error"))).as(ExitCode.Success)
+  }
 }

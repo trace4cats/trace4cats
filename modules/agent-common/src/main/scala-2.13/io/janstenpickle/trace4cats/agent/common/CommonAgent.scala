@@ -60,13 +60,13 @@ object CommonAgent {
           .info(s"Starting Trace 4 Cats Agent v${BuildInfo.version} on udp://::$port. Forwarding to $exporterText")
       )(_ => Logger[F].info("Shutting down Trace 4 Cats Agent"))
 
-      (pipe, exp) <-
+      pipeAndExp <-
         if (trace) AgentTrace[F](exporterName, exporterAttributes, port, traceRate, bufferSize, exporter)
         else
           Applicative[Resource[F, *]].pure[(Pipe[F, CompletedSpan, CompletedSpan], SpanExporter[F, Chunk])](
             (identity, exporter)
           )
-
+      (pipe, exp) = pipeAndExp
       queuedExporter <- QueuedSpanExporter(bufferSize, List(exporterName -> exp))
 
       udpServer <- AvroServer.udp[F](pipe.andThen(queuedExporter.pipe), port)

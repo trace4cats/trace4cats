@@ -3,6 +3,7 @@ package io.janstenpickle.trace4cats.rate
 import cats.effect.IO
 import cats.effect.testkit.TestInstances
 import cats.syntax.applicative._
+import cats.syntax.flatMap._
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -75,14 +76,12 @@ class TokenBucketSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPro
     implicit val ticker = Ticker()
 
     val test = TokenBucket.create[IO](tokenCount, 1.seconds).use { bucket =>
-      for {
-        (size, noSize) <- bucket.request1
-          .replicateA(tokenCount * 2)
-          .map(_.partition(identity))
-          .map { case (tokens, noTokens) => (tokens.size, noTokens.size) }
-        _ <- IO.sleep(2.second)
-        req <- bucket.request1
-      } yield (size, noSize, req)
+      bucket.request1
+        .replicateA(tokenCount * 2)
+        .map(_.partition(identity))
+        .map { case (tokens, noTokens) => (tokens.size, noTokens.size) }
+        .flatTap(_ => IO.sleep(2.second))
+        .flatMap { case (size, noSize) => bucket.request1.map(req => (size, noSize, req)) }
     }
 
     val result = test.unsafeToFuture()

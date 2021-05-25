@@ -15,9 +15,8 @@ object OpenTelemetryJaegerSpanCompleter {
     port: Int = 14250,
     config: CompleterConfig = CompleterConfig()
   ): Resource[F, SpanCompleter[F]] =
-    for {
-      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
-      exporter <- OpenTelemetryJaegerSpanExporter[F, Chunk](host, port)
-      completer <- QueuedSpanCompleter[F](process, exporter, config)
-    } yield completer
+    Resource.eval(Slf4jLogger.create[F]).flatMap { implicit logger: Logger[F] =>
+      OpenTelemetryJaegerSpanExporter[F, Chunk](host, port)
+        .flatMap(QueuedSpanCompleter[F](process, _, config))
+    }
 }

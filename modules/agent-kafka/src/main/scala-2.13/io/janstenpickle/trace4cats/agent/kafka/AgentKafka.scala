@@ -46,21 +46,26 @@ object AgentKafka
     bufferSize: Int,
     trace: Boolean,
     traceRate: Option[Double]
-  ): IO[ExitCode] = (for {
-    implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
-
-    kafkaExporter <- AvroKafkaSpanExporter[IO, Chunk](kafkaBootstrapServers, kafkaTopic)
-  } yield CommonAgent.run[IO](
-    port,
-    bufferSize,
-    "Avro Kafka",
-    Map[String, AttributeValue](
-      "bootstrap.servers" -> AttributeValue.StringList(kafkaBootstrapServers),
-      "topic" -> kafkaTopic
-    ),
-    kafkaExporter,
-    s"Kafka topic '$kafkaTopic'",
-    trace,
-    traceRate
-  )).use(identity)
+  ): IO[ExitCode] =
+    Resource
+      .eval(Slf4jLogger.create[IO])
+      .flatMap { implicit logger: Logger[IO] =>
+        AvroKafkaSpanExporter[IO, Chunk](kafkaBootstrapServers, kafkaTopic)
+          .map(kafkaExporter =>
+            CommonAgent.run[IO](
+              port,
+              bufferSize,
+              "Avro Kafka",
+              Map[String, AttributeValue](
+                "bootstrap.servers" -> AttributeValue.StringList(kafkaBootstrapServers),
+                "topic" -> kafkaTopic
+              ),
+              kafkaExporter,
+              s"Kafka topic '$kafkaTopic'",
+              trace,
+              traceRate
+            )
+          )
+      }
+      .use(identity)
 }

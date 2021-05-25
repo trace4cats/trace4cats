@@ -18,9 +18,8 @@ import io.janstenpickle.trace4cats.sampling.tail.{TailSamplingSpanExporter, Tail
 import scala.concurrent.duration._
 
 object TailSampling extends IOApp {
-  override def run(args: List[String]): IO[ExitCode] =
+  override def run(args: List[String]): IO[ExitCode] = Slf4jLogger.create[IO].flatMap { implicit logger: Logger[IO] =>
     (for {
-      implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
       exporter <- AvroSpanExporter.udp[IO, Chunk]()
 
       nameSampleDecisionStore <-
@@ -45,4 +44,5 @@ object TailSampling extends IOApp {
       root <- Span.root[IO]("root", SpanKind.Client, SpanSampler.always, completer)
       child <- root.child("child", SpanKind.Server)
     } yield child).use(_.setStatus(SpanStatus.Internal("Error"))).as(ExitCode.Success)
+  }
 }

@@ -20,7 +20,8 @@ object HotSwapSpanSampler {
     id: A,
     initial: Resource[F, SpanSampler[F]]
   ): Resource[F, HotSwapSpanSampler[F, A]] = for {
-    (hotswap, sampler) <- Hotswap(initial)
+    hotSwapAndSampler <- Hotswap(initial)
+    (hotswap, sampler) = hotSwapAndSampler
     current <- Resource.eval(Ref.of((sampler, id)))
   } yield new HotSwapSpanSampler[F, A] {
     def updateSampler(newId: A, samplerResource: Resource[F, SpanSampler[F]]): F[Boolean] =

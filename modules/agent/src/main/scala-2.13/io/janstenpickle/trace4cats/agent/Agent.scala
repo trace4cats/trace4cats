@@ -37,18 +37,24 @@ object Agent
     trace: Boolean,
     traceRate: Option[Double]
   ): IO[ExitCode] =
-    (for {
-      implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
-      avroExporter <- AvroSpanExporter.tcp[IO, Chunk](host = collectorHost, port = collectorPort)
-    } yield CommonAgent.run[IO](
-      port,
-      bufferSize,
-      "Avro TCP",
-      Map("forward.host" -> collectorHost, "forward.port" -> collectorPort),
-      avroExporter,
-      s"tcp://$collectorHost:$collectorPort",
-      trace,
-      traceRate
-    )).use(identity)
+    Resource
+      .eval(Slf4jLogger.create[IO])
+      .flatMap { implicit logger: Logger[IO] =>
+        AvroSpanExporter
+          .tcp[IO, Chunk](host = collectorHost, port = collectorPort)
+          .map(avroExporter =>
+            CommonAgent.run[IO](
+              port,
+              bufferSize,
+              "Avro TCP",
+              Map("forward.host" -> collectorHost, "forward.port" -> collectorPort),
+              avroExporter,
+              s"tcp://$collectorHost:$collectorPort",
+              trace,
+              traceRate
+            )
+          )
+      }
+      .use(identity)
 
 }

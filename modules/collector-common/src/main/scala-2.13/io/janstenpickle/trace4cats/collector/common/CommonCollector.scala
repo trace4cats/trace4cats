@@ -191,7 +191,7 @@ object CommonCollector {
         Tracing.exporter[F](traceSampler, "Collector Combined", allExporters.map(_._1), exporterTraceAttrs, process, _)
       )
 
-      samplingPipe: Pipe[F, CompletedSpan, CompletedSpan] <- Sampling.pipe[F](config.sampling)
+      samplingPipe <- Sampling.pipe[F](config.sampling)
 
       tracingPipe = Tracing.pipe[F](traceSampler, process, config.listener, config.kafkaListener)
 
