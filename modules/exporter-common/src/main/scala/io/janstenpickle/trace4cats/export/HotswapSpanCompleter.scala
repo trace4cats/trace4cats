@@ -2,7 +2,8 @@ package io.janstenpickle.trace4cats.`export`
 
 import cats.effect.kernel.{Resource, Temporal}
 import cats.kernel.Eq
-import io.janstenpickle.trace4cats.hotswap.HotswapConstructor
+import cats.syntax.applicative._
+import io.janstenpickle.trace4cats.hotswap.ConditionalHotswapRefConstructor
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.model.CompletedSpan
 
@@ -15,11 +16,11 @@ object HotswapSpanCompleter {
   def apply[F[_]: Temporal, A: Eq](
     initialConfig: A
   )(makeCompleter: A => Resource[F, SpanCompleter[F]]): Resource[F, HotswapSpanCompleter[F, A]] =
-    HotswapConstructor[F, A, SpanCompleter[F]](initialConfig)(makeCompleter).map { hotswap =>
+    ConditionalHotswapRefConstructor[F, A, SpanCompleter[F]](initialConfig)(makeCompleter).map { hotswap =>
       new HotswapSpanCompleter[F, A] {
-        override def update(config: A): F[Boolean] = hotswap.swap(config)
-        override def getConfig: F[A] = hotswap.currentParams
-        override def complete(span: CompletedSpan.Builder): F[Unit] = hotswap.resource.use(_.complete(span))
+        override def update(config: A): F[Boolean] = hotswap.maybeSwapWith(config)
+        override def getConfig: F[A] = hotswap.accessI.use(_.pure)
+        override def complete(span: CompletedSpan.Builder): F[Unit] = hotswap.accessR.use(_.complete(span))
       }
     }
 }
