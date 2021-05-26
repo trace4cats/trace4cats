@@ -76,6 +76,6 @@ object SpanStatus {
     override lazy val isOk: Boolean = false
   }
 
-  implicit val eq: Eq[SpanStatus] = Eq.fromUniversalEquals
+  implicit val eq: Eq[SpanStatus] = Eq.by(_.canonicalCode)
   implicit val show: Show[SpanStatus] = Show.show(_.entryName)
 }
