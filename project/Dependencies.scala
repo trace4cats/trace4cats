@@ -11,7 +11,6 @@ object Dependencies {
     val circeYaml = "0.13.1"
     val decline = "2.0.0"
     val embeddedRedis = "0.7.3"
-    val enumeratum = "1.6.1"
     val fs2 = "3.0.4"
     val fs2Kafka = "2.1.0"
     val googleCredentials = "0.26.0"
@@ -59,9 +58,6 @@ object Dependencies {
   lazy val circeYaml = "io.circe"                              %% "circe-yaml"                      % Versions.circeYaml
   lazy val embeddedKafka = "io.github.embeddedkafka"           %% "embedded-kafka"                  % Versions.kafka
   lazy val embeddedRedis = "it.ozimov"                          % "embedded-redis"                  % Versions.embeddedRedis
-  lazy val enumeratum = "com.beachape"                         %% "enumeratum"                      % Versions.enumeratum
-  lazy val enumeratumCats = "com.beachape"                     %% "enumeratum-cats"                 % Versions.enumeratum
-  lazy val enumeratumCirce = "com.beachape"                    %% "enumeratum-circe"                % Versions.enumeratum
   lazy val declineEffect = "com.monovore"                      %% "decline-effect"                  % Versions.decline
   lazy val googleCredentials = "com.google.auth"                % "google-auth-library-credentials" % Versions.googleCredentials
   lazy val googleCloudTrace = "com.google.cloud"                % "google-cloud-trace"              % Versions.googleCloudTrace
@@ -103,7 +99,6 @@ object Dependencies {
   lazy val svm = "com.oracle.substratevm"                       % "svm"                             % Versions.svm % "provided"
   lazy val vulcan = "com.github.fd4s"                          %% "vulcan"                          % Versions.vulcan
   lazy val vulcanGeneric = "com.github.fd4s"                   %% "vulcan-generic"                  % Versions.vulcan
-  lazy val vulcanEnumeratum = "com.github.fd4s"                %% "vulcan-enumeratum"               % Versions.vulcan
   lazy val zioInterop = "dev.zio"                              %% "zio-interop-cats"                % Versions.zioInterop
 
   lazy val catsLaws = "org.typelevel"             %% "cats-laws"              % Versions.cats

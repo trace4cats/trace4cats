@@ -3,6 +3,7 @@ package io.janstenpickle.trace4cats.sampling.dynamic
 import cats.effect.kernel.syntax.spawn._
 import cats.effect.kernel.{Resource, Temporal}
 import cats.kernel.Eq
+import cats.syntax.all._
 import fs2.Stream
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 
@@ -21,10 +22,9 @@ object PollingSpanSampler {
         _ <- Stream.eval(sampler.updateSampler(id, samplerResource))
       } yield ()
 
-    for {
-      (id, samplerResource) <- Resource.eval(configuredSampler)
-      sampler <- HotSwapSpanSampler.create(id, samplerResource)
-      _ <- configPoller(sampler).compile.drain.background
-    } yield sampler
+    Resource
+      .eval(configuredSampler)
+      .flatMap((HotSwapSpanSampler.create[F, A] _).tupled)
+      .flatTap(configPoller(_).compile.drain.background)
   }
 }

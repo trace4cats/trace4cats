@@ -22,9 +22,8 @@ object JaegerSpanCompleter {
     config: CompleterConfig = CompleterConfig(),
     blocker: Option[ExecutionContext] = None
   ): Resource[F, SpanCompleter[F]] =
-    for {
-      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
-      exporter <- JaegerSpanExporter[F, Chunk](Some(process), host, port, blocker)
-      completer <- QueuedSpanCompleter[F](process, exporter, config)
-    } yield completer
+    Resource.eval(Slf4jLogger.create[F]).flatMap { implicit logger: Logger[F] =>
+      JaegerSpanExporter[F, Chunk](Some(process), host, port, blocker)
+        .flatMap(QueuedSpanCompleter[F](process, _, config))
+    }
 }

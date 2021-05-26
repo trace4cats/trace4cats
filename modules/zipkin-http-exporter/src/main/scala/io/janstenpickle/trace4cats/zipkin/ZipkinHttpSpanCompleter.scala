@@ -34,11 +34,11 @@ object ZipkinHttpSpanCompleter {
     port: Int = 9411,
     config: CompleterConfig = CompleterConfig()
   ): Resource[F, SpanCompleter[F]] =
-    for {
-      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
-      exporter <- Resource.eval(ZipkinHttpSpanExporter[F, Chunk](client, host, port))
-      completer <- QueuedSpanCompleter[F](process, exporter, config)
-    } yield completer
+    Resource.eval(Slf4jLogger.create[F]).flatMap { implicit logger: Logger[F] =>
+      Resource
+        .eval(ZipkinHttpSpanExporter[F, Chunk](client, host, port))
+        .flatMap(QueuedSpanCompleter[F](process, _, config))
+    }
 
   def apply[F[_]: Async](
     client: Client[F],
@@ -46,9 +46,9 @@ object ZipkinHttpSpanCompleter {
     uri: String,
     config: CompleterConfig
   ): Resource[F, SpanCompleter[F]] =
-    for {
-      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
-      exporter <- Resource.eval(ZipkinHttpSpanExporter[F, Chunk](client, uri))
-      completer <- QueuedSpanCompleter[F](process, exporter, config)
-    } yield completer
+    Resource.eval(Slf4jLogger.create[F]).flatMap { implicit logger: Logger[F] =>
+      Resource
+        .eval(ZipkinHttpSpanExporter[F, Chunk](client, uri))
+        .flatMap(QueuedSpanCompleter[F](process, _, config))
+    }
 }

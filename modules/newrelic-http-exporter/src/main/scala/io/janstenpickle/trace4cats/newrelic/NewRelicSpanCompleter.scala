@@ -33,9 +33,9 @@ object NewRelicSpanCompleter {
     endpoint: Endpoint,
     config: CompleterConfig = CompleterConfig()
   ): Resource[F, SpanCompleter[F]] =
-    for {
-      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
-      exporter <- Resource.eval(NewRelicSpanExporter[F, Chunk](client, apiKey, endpoint))
-      completer <- QueuedSpanCompleter[F](process, exporter, config)
-    } yield completer
+    Resource.eval(Slf4jLogger.create[F]).flatMap { implicit logger: Logger[F] =>
+      Resource
+        .eval(NewRelicSpanExporter[F, Chunk](client, apiKey, endpoint))
+        .flatMap(QueuedSpanCompleter[F](process, _, config))
+    }
 }

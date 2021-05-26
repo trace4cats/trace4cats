@@ -19,7 +19,7 @@ object DynamicTokenBucket {
     for {
       currentConfig <- Resource.eval(Ref.of[F, (Int, FiniteDuration)]((bucketSize, tokenRate)))
       tokens <- Resource.eval(Ref.of(bucketSize))
-      (hotswap, _) <- Hotswap(TokenBucket.bucketProcess(tokens, bucketSize, tokenRate).background.void)
+      hotswap <- Hotswap(TokenBucket.bucketProcess(tokens, bucketSize, tokenRate).background.void).map(_._1)
     } yield new DynamicTokenBucket[F] {
       private final val underlying = TokenBucket.impl[F](tokens)
 

@@ -15,11 +15,9 @@ object AvroSpanCompleter {
     port: Int = agentPort,
     config: CompleterConfig = CompleterConfig(),
   ): Resource[F, SpanCompleter[F]] =
-    for {
-      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
-      exporter <- AvroSpanExporter.udp[F, Chunk](host, port)
-      completer <- QueuedSpanCompleter[F](process, exporter, config)
-    } yield completer
+    Resource.eval(Slf4jLogger.create[F]).flatMap { implicit logger: Logger[F] =>
+      AvroSpanExporter.udp[F, Chunk](host, port).flatMap(QueuedSpanCompleter[F](process, _, config))
+    }
 
   def tcp[F[_]: Async](
     process: TraceProcess,
@@ -27,10 +25,8 @@ object AvroSpanCompleter {
     port: Int = agentPort,
     config: CompleterConfig = CompleterConfig(),
   ): Resource[F, SpanCompleter[F]] = {
-    for {
-      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
-      exporter <- AvroSpanExporter.tcp[F, Chunk](host, port)
-      completer <- QueuedSpanCompleter[F](process, exporter, config)
-    } yield completer
+    Resource.eval(Slf4jLogger.create[F]).flatMap { implicit logger: Logger[F] =>
+      AvroSpanExporter.tcp[F, Chunk](host, port).flatMap(QueuedSpanCompleter[F](process, _, config))
+    }
   }
 }
