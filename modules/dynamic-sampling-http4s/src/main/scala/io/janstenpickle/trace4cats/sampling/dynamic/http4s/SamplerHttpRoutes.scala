@@ -18,7 +18,7 @@ object SamplerHttpRoutes {
   def create[F[_]: Temporal](
     initialConfig: SamplerConfig = SamplerConfig.Never
   ): Resource[F, (SpanSampler[F], HttpRoutes[F])] =
-    ConfiguredHotSwapSpanSampler.create[F](initialConfig).map { sampler =>
+    ConfiguredHotSwapSpanSampler[F](initialConfig).map { sampler =>
       object dsl extends Http4sDsl[F]
       import dsl._
 

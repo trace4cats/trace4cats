@@ -1,8 +1,9 @@
 package io.janstenpickle.trace4cats.sampling.dynamic
 
 import cats.effect.kernel.Resource
-import cats.effect.{IO, Ref}
 import cats.effect.testkit.TestInstances
+import cats.effect.{IO, Ref}
+import cats.syntax.all._
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{SampleDecision, SpanKind, TraceId}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
@@ -28,7 +29,9 @@ class PollingSpanSamplerSpec
     val test =
       Ref.of[IO, (String, Resource[IO, SpanSampler[IO]])](("always", Resource.pure(SpanSampler.always))).flatMap {
         samplerRef =>
-          PollingSpanSampler.create[IO, String](samplerRef.get, 1.second).use { sampler =>
+          PollingSpanSampler[IO, String](samplerRef.get.map(_._1), 1.second)(_ =>
+            Resource.eval(samplerRef.get.map(_._2)).flatten
+          ).use { sampler =>
             val decision = sampler.shouldSample(None, TraceId.invalid, "test", SpanKind.Internal)
 
             for {

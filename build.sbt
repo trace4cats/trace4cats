@@ -431,8 +431,12 @@ lazy val `exporter-stream` =
 lazy val `exporter-common` =
   (project in file("modules/exporter-common"))
     .settings(publishSettings)
-    .settings(name := "trace4cats-exporter-common", libraryDependencies ++= Seq(Dependencies.log4cats))
-    .dependsOn(model, kernel, `exporter-stream`)
+    .settings(
+      name := "trace4cats-exporter-common",
+      libraryDependencies ++= Seq(Dependencies.kittens, Dependencies.log4cats, Dependencies.hotswapRef),
+      libraryDependencies ++= Dependencies.test.map(_ % Test)
+    )
+    .dependsOn(model, kernel, `exporter-stream`, test % "test->compile")
 
 lazy val meta =
   (project in file("modules/meta"))
@@ -633,7 +637,7 @@ lazy val `dynamic-sampling` = (project in file("modules/dynamic-sampling"))
   .settings(publishSettings)
   .settings(
     name := "trace4cats-dynamic-sampling",
-    libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2),
+    libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.hotswapRef),
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
   .dependsOn(model, kernel, test % "test->compile")

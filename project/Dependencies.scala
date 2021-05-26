@@ -16,6 +16,7 @@ object Dependencies {
     val googleCredentials = "0.26.0"
     val googleCloudTrace = "1.3.4"
     val grpc = "1.38.0"
+    val hotswapRef = "0.1.0"
     val http4s = "1.0.0-M21"
     val http4sJdkClient = "0.5.0-M4"
     val jaeger = "1.6.0"
@@ -50,6 +51,7 @@ object Dependencies {
   lazy val caseInsensitive = "org.typelevel"                   %% "case-insensitive"                % Versions.caseInsensitive
   lazy val cats = "org.typelevel"                              %% "cats-core"                       % Versions.cats
   lazy val catsEffectKernel = "org.typelevel"                  %% "cats-effect-kernel"              % Versions.catsEffect
+  lazy val catsEffectStd = "org.typelevel"                     %% "cats-effect-std"                 % Versions.catsEffect
   lazy val catsEffect = "org.typelevel"                        %% "cats-effect"                     % Versions.catsEffect
   lazy val commonsCodec = "commons-codec"                       % "commons-codec"                   % Versions.commonsCodec
   lazy val collectionCompat = "org.scala-lang.modules"         %% "scala-collection-compat"         % Versions.collectionCompat
@@ -66,6 +68,7 @@ object Dependencies {
   lazy val fs2Kafka = "com.github.fd4s"                        %% "fs2-kafka"                       % Versions.fs2Kafka
   lazy val grpcOkHttp = "io.grpc"                               % "grpc-okhttp"                     % Versions.grpc
   lazy val grpcApi = "io.grpc"                                  % "grpc-api"                        % Versions.grpc
+  lazy val hotswapRef = "io.janstenpickle"                     %% "hotswap-ref"                     % Versions.hotswapRef
   lazy val http4sClient = "org.http4s"                         %% "http4s-client"                   % Versions.http4s
   lazy val http4sCirce = "org.http4s"                          %% "http4s-circe"                    % Versions.http4s
   lazy val http4sCore = "org.http4s"                           %% "http4s-core"                     % Versions.http4s
