@@ -76,6 +76,12 @@ object SpanStatus {
     override lazy val isOk: Boolean = false
   }
 
-  implicit val eq: Eq[SpanStatus] = Eq.by(_.canonicalCode)
-  implicit val show: Show[SpanStatus] = Show.show(_.entryName)
+  implicit val eq: Eq[SpanStatus] = Eq.by {
+    case s @ Internal(msg) => (s.canonicalCode, Some(msg))
+    case s => (s.canonicalCode, None)
+  }
+  implicit val show: Show[SpanStatus] = Show.show {
+    case s @ Internal(msg) => s"${s.entryName}($msg)"
+    case s => s.entryName
+  }
 }
