@@ -291,8 +291,7 @@ lazy val `jaeger-integration-test` =
         Dependencies.circeGeneric,
         Dependencies.http4sCirce,
         Dependencies.http4sBlazeClient,
-        Dependencies.logback,
-        Dependencies.testContainers
+        Dependencies.logback
       )
     )
     .dependsOn(kernel, test)
