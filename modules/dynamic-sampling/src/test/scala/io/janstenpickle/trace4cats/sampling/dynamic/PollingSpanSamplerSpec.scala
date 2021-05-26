@@ -1,15 +1,16 @@
 package io.janstenpickle.trace4cats.sampling.dynamic
 
 import cats.effect.kernel.Resource
-import cats.effect.{IO, Ref}
 import cats.effect.testkit.TestInstances
+import cats.effect.{IO, Ref}
+import cats.syntax.all._
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{SampleDecision, SpanKind, TraceId}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import cats.syntax.all._
+
 import scala.concurrent.duration._
 import scala.util.Success
 
