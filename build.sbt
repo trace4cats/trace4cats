@@ -250,7 +250,7 @@ lazy val hotswap =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-hotswap",
-      libraryDependencies ++= Seq(Dependencies.catsEffect),
+      libraryDependencies ++= Seq(Dependencies.catsEffectStd),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
 

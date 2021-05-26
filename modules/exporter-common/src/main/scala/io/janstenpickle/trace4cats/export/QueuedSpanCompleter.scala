@@ -38,7 +38,7 @@ object QueuedSpanCompleter {
               .retry(
                 exporter.exportBatch(batch),
                 delay = config.retryConfig.delay,
-                nextDelay = t => config.retryConfig.nextDelay.calc(t),
+                nextDelay = config.retryConfig.nextDelay.calc,
                 maxAttempts = config.retryConfig.maxAttempts
               )
               .compile

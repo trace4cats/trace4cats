@@ -13,14 +13,14 @@ trait HotswapSpanExporter[F[_], G[_], A] extends SpanExporter[F, G] {
 
 object HotswapSpanExporter {
   def apply[F[_]: Temporal, G[_], A: Eq](
-    initialId: A,
+    initialConfig: A,
     makeExporter: A => Resource[F, SpanExporter[F, G]]
   ): Resource[F, HotswapSpanExporter[F, G, A]] =
-    HotswapConstructor[F, A, SpanExporter[F, G]](initialId, makeExporter).map { hotswap =>
+    HotswapConstructor[F, A, SpanExporter[F, G]](initialConfig, makeExporter).map { hotswap =>
       new HotswapSpanExporter[F, G, A] {
         override def update(config: A): F[Boolean] = hotswap.swap(config)
-        override def getConfig: F[A] = hotswap.getA
-        override def exportBatch(batch: Batch[G]): F[Unit] = hotswap.getB.use(_.exportBatch(batch))
+        override def getConfig: F[A] = hotswap.currentParams
+        override def exportBatch(batch: Batch[G]): F[Unit] = hotswap.resource.use(_.exportBatch(batch))
       }
     }
 }

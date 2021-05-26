@@ -19,8 +19,8 @@ object HotswapSpanCompleter {
     HotswapConstructor[F, A, SpanCompleter[F]](initialConfig, makeCompleter).map { hotswap =>
       new HotswapSpanCompleter[F, A] {
         override def update(config: A): F[Boolean] = hotswap.swap(config)
-        override def getConfig: F[A] = hotswap.getA
-        override def complete(span: CompletedSpan.Builder): F[Unit] = hotswap.getB.use(_.complete(span))
+        override def getConfig: F[A] = hotswap.currentParams
+        override def complete(span: CompletedSpan.Builder): F[Unit] = hotswap.resource.use(_.complete(span))
       }
     }
 }

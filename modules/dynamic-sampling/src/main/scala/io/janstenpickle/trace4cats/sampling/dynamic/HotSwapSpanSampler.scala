@@ -16,18 +16,18 @@ object HotSwapSpanSampler {
     initial: A
   )(make: A => Resource[F, SpanSampler[F]]): Resource[F, HotSwapSpanSampler[F, A]] =
     HotswapConstructor[F, A, SpanSampler[F]](initial, make).map { hotswap =>
-    new HotSwapSpanSampler[F, A] {
-      override def swap(samplerConfig: A): F[Boolean] = hotswap.swap(samplerConfig)
+      new HotSwapSpanSampler[F, A] {
+        override def swap(samplerConfig: A): F[Boolean] = hotswap.swap(samplerConfig)
 
-      override def getConfig: F[A] = hotswap.getA
+        override def getConfig: F[A] = hotswap.currentParams
 
-      override def shouldSample(
-        parentContext: Option[SpanContext],
-        traceId: TraceId,
-        spanName: String,
-        spanKind: SpanKind
-      ): F[SampleDecision] =
-        hotswap.getB.use(_.shouldSample(parentContext, traceId, spanName, spanKind))
+        override def shouldSample(
+          parentContext: Option[SpanContext],
+          traceId: TraceId,
+          spanName: String,
+          spanKind: SpanKind
+        ): F[SampleDecision] =
+          hotswap.resource.use(_.shouldSample(parentContext, traceId, spanName, spanKind))
+      }
     }
-  }
 }

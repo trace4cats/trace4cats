@@ -8,28 +8,28 @@ import cats.syntax.eq._
 import cats.syntax.functor._
 import cats.syntax.flatMap._
 
-trait HotswapConstructor[F[_], A, B] {
-  def swap(a: A): F[Boolean]
-  def get: Resource[F, (A, B)]
-  def getA: F[A]
-  def getB: Resource[F, B]
+trait HotswapConstructor[F[_], P, R] {
+  def swap(params: P): F[Boolean]
+  def get: Resource[F, (P, R)]
+  def currentParams: F[P]
+  def resource: Resource[F, R]
 }
 
 object HotswapConstructor {
-  def apply[F[_]: Temporal, A: Eq, B](
-    initial: A,
-    make: A => Resource[F, B],
-  ): Resource[F, HotswapConstructor[F, A, B]] = {
-    val makeImpl: A => Resource[F, (A, B)] = a => make(a).map(a -> _)
+  def apply[F[_]: Temporal, P: Eq, R](
+    initialParams: P,
+    make: P => Resource[F, R],
+  ): Resource[F, HotswapConstructor[F, P, R]] = {
+    val makeImpl: P => Resource[F, (P, R)] = a => make(a).map(a -> _)
 
-    HotswapRef[F, (A, B)](makeImpl(initial)).map { hotswap =>
-      new HotswapConstructor[F, A, B] {
-        override def swap(a: A): F[Boolean] =
-          getA.map(_.neqv(a)).flatTap(Applicative[F].whenA(_)(hotswap.swap(makeImpl(a))))
+    HotswapRef[F, (P, R)](makeImpl(initialParams)).map { hotswap =>
+      new HotswapConstructor[F, P, R] {
+        override def swap(params: P): F[Boolean] =
+          currentParams.map(_.neqv(params)).flatTap(Applicative[F].whenA(_)(hotswap.swap(makeImpl(params))))
 
-        override def get: Resource[F, (A, B)] = hotswap.get
-        override def getA: F[A] = get.use(_._1.pure)
-        override def getB: Resource[F, B] = get.map(_._2)
+        override def get: Resource[F, (P, R)] = hotswap.get
+        override def currentParams: F[P] = get.use(_._1.pure)
+        override def resource: Resource[F, R] = get.map(_._2)
       }
     }
   }

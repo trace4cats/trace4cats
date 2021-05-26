@@ -12,7 +12,7 @@ trait ConfiguredHotSwapSpanSampler[F[_]] extends SpanSampler[F] {
 
 object ConfiguredHotSwapSpanSampler {
   def apply[F[_]: Temporal](initialConfig: SamplerConfig): Resource[F, ConfiguredHotSwapSpanSampler[F]] =
-    HotSwapSpanSampler(initialConfig, (c: SamplerConfig) => SamplerUtil.makeSampler[F](c))
+    HotSwapSpanSampler(initialConfig, SamplerUtil.makeSampler[F])
       .map(underlying =>
         new ConfiguredHotSwapSpanSampler[F] {
           override def updateConfig(config: SamplerConfig): F[Boolean] =
