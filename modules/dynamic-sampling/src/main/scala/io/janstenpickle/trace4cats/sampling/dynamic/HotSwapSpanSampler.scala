@@ -13,9 +13,9 @@ trait HotSwapSpanSampler[F[_], A] extends SpanSampler[F] {
 
 object HotSwapSpanSampler {
   def apply[F[_]: Temporal, A: Eq](
-    initial: A,
-    make: A => Resource[F, SpanSampler[F]],
-  ): Resource[F, HotSwapSpanSampler[F, A]] = HotswapConstructor[F, A, SpanSampler[F]](initial, make).map { hotswap =>
+    initial: A
+  )(make: A => Resource[F, SpanSampler[F]]): Resource[F, HotSwapSpanSampler[F, A]] =
+    HotswapConstructor[F, A, SpanSampler[F]](initial, make).map { hotswap =>
     new HotSwapSpanSampler[F, A] {
       override def swap(samplerConfig: A): F[Boolean] = hotswap.swap(samplerConfig)
 
