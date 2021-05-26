@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.`export`
 import cats.effect.kernel.{Resource, Temporal}
 import cats.kernel.Eq
 import cats.syntax.applicative._
-import io.janstenpickle.trace4cats.hotswap.ConditionalHotswapRefConstructor
+import io.janstenpickle.hotswapref.ConditionalHotswapRefConstructor
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch
 

@@ -17,6 +17,7 @@ object Dependencies {
     val googleCredentials = "0.25.5"
     val googleCloudTrace = "1.3.4"
     val grpc = "1.38.0"
+    val hotswapRef = "0.1.0"
     val http4s = "1.0.0-M21"
     val http4sJdkClient = "0.5.0-M4"
     val jaeger = "1.6.0"
@@ -72,6 +73,7 @@ object Dependencies {
   lazy val fs2Kafka = "com.github.fd4s"                        %% "fs2-kafka"                       % Versions.fs2Kafka
   lazy val grpcOkHttp = "io.grpc"                               % "grpc-okhttp"                     % Versions.grpc
   lazy val grpcApi = "io.grpc"                                  % "grpc-api"                        % Versions.grpc
+  lazy val hotswapRef = "io.janstenpickle"                     %% "hotswap-ref"                     % Versions.hotswapRef
   lazy val http4sClient = "org.http4s"                         %% "http4s-client"                   % Versions.http4s
   lazy val http4sCirce = "org.http4s"                          %% "http4s-circe"                    % Versions.http4s
   lazy val http4sCore = "org.http4s"                           %% "http4s-core"                     % Versions.http4s

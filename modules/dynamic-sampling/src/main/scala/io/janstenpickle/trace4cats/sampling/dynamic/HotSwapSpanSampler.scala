@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.sampling.dynamic
 import cats.effect.kernel.{Resource, Temporal}
 import cats.kernel.Eq
 import cats.syntax.applicative._
-import io.janstenpickle.trace4cats.hotswap.ConditionalHotswapRefConstructor
+import io.janstenpickle.hotswapref.ConditionalHotswapRefConstructor
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{SampleDecision, SpanContext, SpanKind, TraceId}
 
