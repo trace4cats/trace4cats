@@ -17,7 +17,7 @@ class HotswapConstructorSpec extends AnyFlatSpec with Matchers with TestInstance
     val test = (for {
       ref <- Resource.eval(Ref.of[IO, List[String]](List.empty[String]))
       resource = (s: String) => Resource.eval(ref.update(s :: _))
-      hotswap <- HotswapConstructor[IO, String, Unit]("first", resource)
+      hotswap <- HotswapConstructor[IO, String, Unit]("first")(resource)
       _ <- Resource.eval(0.to(1000).toList.traverse(x => hotswap.swap(x.toString)))
     } yield ref.get).use(identity)
 

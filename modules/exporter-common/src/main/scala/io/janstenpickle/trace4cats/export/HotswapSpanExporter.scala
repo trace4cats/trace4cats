@@ -13,10 +13,9 @@ trait HotswapSpanExporter[F[_], G[_], A] extends SpanExporter[F, G] {
 
 object HotswapSpanExporter {
   def apply[F[_]: Temporal, G[_], A: Eq](
-    initialConfig: A,
-    makeExporter: A => Resource[F, SpanExporter[F, G]]
-  ): Resource[F, HotswapSpanExporter[F, G, A]] =
-    HotswapConstructor[F, A, SpanExporter[F, G]](initialConfig, makeExporter).map { hotswap =>
+    initialConfig: A
+  )(makeExporter: A => Resource[F, SpanExporter[F, G]]): Resource[F, HotswapSpanExporter[F, G, A]] =
+    HotswapConstructor[F, A, SpanExporter[F, G]](initialConfig)(makeExporter).map { hotswap =>
       new HotswapSpanExporter[F, G, A] {
         override def update(config: A): F[Boolean] = hotswap.swap(config)
         override def getConfig: F[A] = hotswap.currentParams

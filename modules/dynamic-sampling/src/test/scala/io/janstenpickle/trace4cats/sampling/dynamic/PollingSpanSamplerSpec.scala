@@ -28,10 +28,8 @@ class PollingSpanSamplerSpec
     val test =
       Ref.of[IO, (String, Resource[IO, SpanSampler[IO]])](("always", Resource.pure(SpanSampler.always))).flatMap {
         samplerRef =>
-          PollingSpanSampler[IO, String](
-            samplerRef.get.map(_._1),
-            _ => Resource.eval(samplerRef.get.map(_._2)).flatten,
-            1.second
+          PollingSpanSampler[IO, String](samplerRef.get.map(_._1), 1.second)(_ =>
+            Resource.eval(samplerRef.get.map(_._2)).flatten
           ).use { sampler =>
             val decision = sampler.shouldSample(None, TraceId.invalid, "test", SpanKind.Internal)
 

@@ -9,7 +9,7 @@ import scala.concurrent.duration.FiniteDuration
 
 object ConfiguredPollingSpanSampler {
   def apply[F[_]: Temporal](config: F[SamplerConfig], updateInterval: FiniteDuration): Resource[F, SpanSampler[F]] =
-    PollingSpanSampler(config, (c: SamplerConfig) => SamplerUtil.makeSampler[F](c), updateInterval)
+    PollingSpanSampler(config, updateInterval)(SamplerUtil.makeSampler[F])
       .map(underlying =>
         new SpanSampler[F] {
           override def shouldSample(

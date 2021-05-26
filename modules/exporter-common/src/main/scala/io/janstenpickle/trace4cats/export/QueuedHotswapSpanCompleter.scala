@@ -12,6 +12,6 @@ object QueuedHotswapSpanCompleter {
     exporter: SpanExporter[F, Chunk],
     config: CompleterConfig
   ): Resource[F, HotswapSpanCompleter[F, CompleterConfig]] =
-    HotswapSpanCompleter[F, CompleterConfig](config, QueuedSpanCompleter(process, exporter, _))
+    HotswapSpanCompleter[F, CompleterConfig](config)(QueuedSpanCompleter(process, exporter, _))
 
 }

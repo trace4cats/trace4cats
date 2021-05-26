@@ -13,10 +13,9 @@ trait HotswapSpanCompleter[F[_], A] extends SpanCompleter[F] {
 
 object HotswapSpanCompleter {
   def apply[F[_]: Temporal, A: Eq](
-    initialConfig: A,
-    makeCompleter: A => Resource[F, SpanCompleter[F]]
-  ): Resource[F, HotswapSpanCompleter[F, A]] =
-    HotswapConstructor[F, A, SpanCompleter[F]](initialConfig, makeCompleter).map { hotswap =>
+    initialConfig: A
+  )(makeCompleter: A => Resource[F, SpanCompleter[F]]): Resource[F, HotswapSpanCompleter[F, A]] =
+    HotswapConstructor[F, A, SpanCompleter[F]](initialConfig)(makeCompleter).map { hotswap =>
       new HotswapSpanCompleter[F, A] {
         override def update(config: A): F[Boolean] = hotswap.swap(config)
         override def getConfig: F[A] = hotswap.currentParams

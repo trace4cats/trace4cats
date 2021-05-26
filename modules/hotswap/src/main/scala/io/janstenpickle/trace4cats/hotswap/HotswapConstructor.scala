@@ -17,9 +17,8 @@ trait HotswapConstructor[F[_], P, R] {
 
 object HotswapConstructor {
   def apply[F[_]: Temporal, P: Eq, R](
-    initialParams: P,
-    make: P => Resource[F, R],
-  ): Resource[F, HotswapConstructor[F, P, R]] = {
+    initialParams: P
+  )(make: P => Resource[F, R]): Resource[F, HotswapConstructor[F, P, R]] = {
     val makeImpl: P => Resource[F, (P, R)] = a => make(a).map(a -> _)
 
     HotswapRef[F, (P, R)](makeImpl(initialParams)).map { hotswap =>
