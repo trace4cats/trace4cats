@@ -32,7 +32,7 @@ trait HotswapRef[F[_], R] {
     *
     * A semaphore guarantees that concurrent access to [[swap]] will wait while previous resources are finalized.
     */
-  def swap(r: Resource[F, R]): F[Unit]
+  def swap(next: Resource[F, R]): F[Unit]
 
   /** Access `R` safely
     *

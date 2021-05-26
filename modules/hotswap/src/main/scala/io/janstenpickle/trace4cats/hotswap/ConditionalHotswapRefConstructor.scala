@@ -46,7 +46,7 @@ object ConditionalHotswapRefConstructor {
         override protected val F: MonadCancel[F, Throwable] = implicitly
         override protected val eq: Eq[I] = implicitly
         override protected val func: I => Resource[F, R] = make
-        override def swap(r: Resource[F, (I, R)]): F[Unit] = hotswap.swap(r)
+        override def swap(next: Resource[F, (I, R)]): F[Unit] = hotswap.swap(next)
         override val access: Resource[F, (I, R)] = hotswap.access
       }
     }
