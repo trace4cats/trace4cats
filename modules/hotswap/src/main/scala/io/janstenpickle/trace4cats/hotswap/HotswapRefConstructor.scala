@@ -18,7 +18,7 @@ trait HotswapRefConstructor[F[_], I, R] extends HotswapRef[F, (I, R)] {
     */
   def accessI: Resource[F, I] = access.map(_._1)
 
-  /** Access the current input value `R` on its own
+  /** Access the current resource value `R` on its own
     */
   def accessR: Resource[F, R] = access.map(_._2)
 }
