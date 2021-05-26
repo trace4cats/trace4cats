@@ -19,9 +19,8 @@ object StackdriverGrpcSpanCompleter {
     requestTimeout: FiniteDuration = 5.seconds,
     config: CompleterConfig = CompleterConfig()
   ): Resource[F, SpanCompleter[F]] =
-    for {
-      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
-      exporter <- StackdriverGrpcSpanExporter[F, Chunk](projectId, credentials, requestTimeout)
-      completer <- QueuedSpanCompleter[F](process, exporter, config)
-    } yield completer
+    Resource.eval(Slf4jLogger.create[F]).flatMap { implicit logger: Logger[F] =>
+      StackdriverGrpcSpanExporter[F, Chunk](projectId, credentials, requestTimeout)
+        .flatMap(QueuedSpanCompleter[F](process, _, config))
+    }
 }

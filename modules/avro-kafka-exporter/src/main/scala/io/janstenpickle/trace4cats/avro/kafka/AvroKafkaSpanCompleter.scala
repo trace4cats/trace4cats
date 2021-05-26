@@ -19,11 +19,10 @@ object AvroKafkaSpanCompleter {
       (x: ProducerSettings[F, TraceId, CompletedSpan]) => x,
     config: CompleterConfig = CompleterConfig(),
   ): Resource[F, SpanCompleter[F]] =
-    for {
-      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
-      exporter <- AvroKafkaSpanExporter[F, Chunk](bootStrapServers, topic, modifySettings)
-      completer <- QueuedSpanCompleter[F](process, exporter, config)
-    } yield completer
+    Resource.eval(Slf4jLogger.create[F]).flatMap { implicit logger: Logger[F] =>
+      AvroKafkaSpanExporter[F, Chunk](bootStrapServers, topic, modifySettings)
+        .flatMap(QueuedSpanCompleter[F](process, _, config))
+    }
 
   def fromProducer[F[_]: Async](
     process: TraceProcess,
@@ -32,9 +31,8 @@ object AvroKafkaSpanCompleter {
     config: CompleterConfig = CompleterConfig(),
   ): Resource[F, SpanCompleter[F]] = {
     val exporter = AvroKafkaSpanExporter.fromProducer[F, Chunk](producer, topic)
-    for {
-      implicit0(logger: Logger[F]) <- Resource.eval(Slf4jLogger.create[F])
-      completer <- QueuedSpanCompleter[F](process, exporter, config)
-    } yield completer
+    Resource.eval(Slf4jLogger.create[F]).flatMap { implicit logger: Logger[F] =>
+      QueuedSpanCompleter[F](process, exporter, config)
+    }
   }
 }

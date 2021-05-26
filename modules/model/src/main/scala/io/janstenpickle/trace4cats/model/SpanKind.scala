@@ -1,15 +1,15 @@
 package io.janstenpickle.trace4cats.model
 
-import enumeratum.EnumEntry.Uppercase
-import enumeratum._
+import cats.{Order, Show}
 
-sealed trait SpanKind extends EnumEntry
-object SpanKind extends Enum[SpanKind] with CatsEnum[SpanKind] {
-  override def values = findValues
+sealed abstract class SpanKind(val entryName: String)
+object SpanKind {
+  case object Server extends SpanKind("SERVER")
+  case object Client extends SpanKind("CLIENT")
+  case object Producer extends SpanKind("PRODUCER")
+  case object Consumer extends SpanKind("CONSUMER")
+  case object Internal extends SpanKind("INTERNAL")
 
-  case object Server extends SpanKind with Uppercase
-  case object Client extends SpanKind with Uppercase
-  case object Producer extends SpanKind with Uppercase
-  case object Consumer extends SpanKind with Uppercase
-  case object Internal extends SpanKind with Uppercase
+  implicit val order: Order[SpanKind] = Order.by(_.entryName)
+  implicit val show: Show[SpanKind] = Show.show(_.entryName)
 }

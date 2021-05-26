@@ -3,6 +3,7 @@ package io.janstenpickle.trace4cats.sampling.dynamic
 import cats.effect.kernel.syntax.spawn._
 import cats.effect.kernel.{Resource, Temporal}
 import cats.kernel.Eq
+import cats.syntax.all._
 import fs2.Stream
 import io.janstenpickle.trace4cats.kernel.SpanSampler
 

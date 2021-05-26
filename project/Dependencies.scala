@@ -7,14 +7,13 @@ object Dependencies {
     val catsEffect = "3.1.1"
     val collectionCompat = "2.4.4"
     val commonsCodec = "1.15"
-    val circe = "0.13.0"
+    val circe = "0.14.1"
     val circeYaml = "0.13.1"
     val decline = "2.0.0"
     val embeddedRedis = "0.7.3"
-    val enumeratum = "1.6.1"
-    val fs2 = "3.0.3"
-    val fs2Kafka = "2.0.0"
-    val googleCredentials = "0.25.5"
+    val fs2 = "3.0.4"
+    val fs2Kafka = "2.1.0"
+    val googleCredentials = "0.26.0"
     val googleCloudTrace = "1.3.4"
     val grpc = "1.38.0"
     val hotswapRef = "0.1.0"
@@ -23,7 +22,7 @@ object Dependencies {
     val jaeger = "1.6.0"
     val jwt = "3.16.0"
     val kafka = "2.8.0"
-    val kittens = "2.3.0"
+    val kittens = "2.3.2"
     val log4cats = "2.1.1"
     val logback = "1.2.3"
     val micronaut = "2.5.4"
@@ -34,20 +33,19 @@ object Dependencies {
     val scala212 = "2.12.13"
     val scala213 = "2.13.6"
     val scalapb = "0.11.0"
-    val sttpClient3 = "3.3.4"
+    val sttpClient3 = "3.3.5"
     val sttpModel = "1.4.7"
     val sttpTapir = "0.18.0-M11"
     val svm = "19.2.1"
     val vulcan = "1.7.1"
     val zioInterop = "3.1.1.0"
 
-    val catsTestkitScalatest = "2.1.4"
+    val catsTestkitScalatest = "2.1.5"
     val disciplineScalatest = "2.1.5"
     val discipline = "1.1.5"
     val scalaCheck = "1.15.4"
-    val scalaCheckShapeless = "1.2.5"
+    val scalaCheckShapeless = "1.3.0"
     val scalaTest = "3.2.9"
-    val testContainers = "0.39.4"
   }
 
   lazy val caseInsensitive = "org.typelevel"                   %% "case-insensitive"                % Versions.caseInsensitive
@@ -62,9 +60,6 @@ object Dependencies {
   lazy val circeYaml = "io.circe"                              %% "circe-yaml"                      % Versions.circeYaml
   lazy val embeddedKafka = "io.github.embeddedkafka"           %% "embedded-kafka"                  % Versions.kafka
   lazy val embeddedRedis = "it.ozimov"                          % "embedded-redis"                  % Versions.embeddedRedis
-  lazy val enumeratum = "com.beachape"                         %% "enumeratum"                      % Versions.enumeratum
-  lazy val enumeratumCats = "com.beachape"                     %% "enumeratum-cats"                 % Versions.enumeratum
-  lazy val enumeratumCirce = "com.beachape"                    %% "enumeratum-circe"                % Versions.enumeratum
   lazy val declineEffect = "com.monovore"                      %% "decline-effect"                  % Versions.decline
   lazy val googleCredentials = "com.google.auth"                % "google-auth-library-credentials" % Versions.googleCredentials
   lazy val googleCloudTrace = "com.google.cloud"                % "google-cloud-trace"              % Versions.googleCloudTrace
@@ -107,7 +102,6 @@ object Dependencies {
   lazy val svm = "com.oracle.substratevm"                       % "svm"                             % Versions.svm % "provided"
   lazy val vulcan = "com.github.fd4s"                          %% "vulcan"                          % Versions.vulcan
   lazy val vulcanGeneric = "com.github.fd4s"                   %% "vulcan-generic"                  % Versions.vulcan
-  lazy val vulcanEnumeratum = "com.github.fd4s"                %% "vulcan-enumeratum"               % Versions.vulcan
   lazy val zioInterop = "dev.zio"                              %% "zio-interop-cats"                % Versions.zioInterop
 
   lazy val catsLaws = "org.typelevel"             %% "cats-laws"              % Versions.cats
@@ -118,9 +112,8 @@ object Dependencies {
   lazy val disciplineCore = "org.typelevel"       %% "discipline-core"        % Versions.discipline
   lazy val scalacheck = "org.scalacheck"          %% "scalacheck"             % Versions.scalaCheck
   lazy val scalacheckShapeless =
-    "com.github.alexarchambault"           %% "scalacheck-shapeless_1.14"      % Versions.scalaCheckShapeless
-  lazy val scalaTest = "org.scalatest"     %% "scalatest"                      % Versions.scalaTest
-  lazy val testContainers = "com.dimafeng" %% "testcontainers-scala-scalatest" % Versions.testContainers
+    "com.github.alexarchambault"       %% "scalacheck-shapeless_1.15" % Versions.scalaCheckShapeless
+  lazy val scalaTest = "org.scalatest" %% "scalatest"                 % Versions.scalaTest
 
   lazy val test =
     Seq(

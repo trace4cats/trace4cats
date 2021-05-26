@@ -158,8 +158,6 @@ lazy val model =
       libraryDependencies ++= Dependencies.test.map(_ % Test),
       libraryDependencies ++= Seq(
         Dependencies.catsEffectKernel,
-        Dependencies.enumeratum,
-        Dependencies.enumeratumCats,
         Dependencies.commonsCodec,
         Dependencies.kittens,
         Dependencies.caseInsensitive
@@ -266,10 +264,7 @@ lazy val `base-zio` =
 lazy val avro =
   (project in file("modules/avro"))
     .settings(publishSettings)
-    .settings(
-      name := "trace4cats-avro",
-      libraryDependencies ++= Seq(Dependencies.vulcan, Dependencies.vulcanGeneric, Dependencies.vulcanEnumeratum)
-    )
+    .settings(name := "trace4cats-avro", libraryDependencies ++= Seq(Dependencies.vulcan, Dependencies.vulcanGeneric))
     .dependsOn(model)
 
 lazy val `log-exporter` =
@@ -288,8 +283,7 @@ lazy val `jaeger-integration-test` =
         Dependencies.circeGeneric,
         Dependencies.http4sCirce,
         Dependencies.http4sBlazeClient,
-        Dependencies.logback,
-        Dependencies.testContainers
+        Dependencies.logback
       )
     )
     .dependsOn(kernel, test)
@@ -376,7 +370,6 @@ lazy val `stackdriver-http-exporter` =
       libraryDependencies ++= Seq(
         Dependencies.circeGeneric,
         Dependencies.circeParser,
-        Dependencies.enumeratumCirce,
         Dependencies.http4sClient,
         Dependencies.http4sCirce,
         Dependencies.http4sBlazeClient,
