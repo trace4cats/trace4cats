@@ -46,7 +46,6 @@ object Dependencies {
     val scalaCheck = "1.15.4"
     val scalaCheckShapeless = "1.3.0"
     val scalaTest = "3.2.9"
-    val testContainers = "0.39.4"
   }
 
   lazy val caseInsensitive = "org.typelevel"                   %% "case-insensitive"                % Versions.caseInsensitive
@@ -115,9 +114,8 @@ object Dependencies {
   lazy val disciplineCore = "org.typelevel"       %% "discipline-core"        % Versions.discipline
   lazy val scalacheck = "org.scalacheck"          %% "scalacheck"             % Versions.scalaCheck
   lazy val scalacheckShapeless =
-    "com.github.alexarchambault"           %% "scalacheck-shapeless_1.15"      % Versions.scalaCheckShapeless
-  lazy val scalaTest = "org.scalatest"     %% "scalatest"                      % Versions.scalaTest
-  lazy val testContainers = "com.dimafeng" %% "testcontainers-scala-scalatest" % Versions.testContainers
+    "com.github.alexarchambault"       %% "scalacheck-shapeless_1.15" % Versions.scalaCheckShapeless
+  lazy val scalaTest = "org.scalatest" %% "scalatest"                 % Versions.scalaTest
 
   lazy val test =
     Seq(
