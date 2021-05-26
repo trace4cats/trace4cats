@@ -13,10 +13,16 @@ case class ExportRetryConfig(
 )
 
 object ExportRetryConfig {
-  sealed trait NextDelay
+  sealed trait NextDelay {
+    def calc(prev: FiniteDuration): FiniteDuration
+  }
   object NextDelay {
-    case class Constant(delay: FiniteDuration = 100.millis) extends NextDelay
-    case object Exponential extends NextDelay
+    case class Constant(delay: FiniteDuration = 100.millis) extends NextDelay {
+      override def calc(prev: FiniteDuration): FiniteDuration = prev + delay
+    }
+    case object Exponential extends NextDelay {
+      override def calc(prev: FiniteDuration): FiniteDuration = prev + prev
+    }
 
     implicit val eq: Eq[NextDelay] = semiauto.eq
   }
