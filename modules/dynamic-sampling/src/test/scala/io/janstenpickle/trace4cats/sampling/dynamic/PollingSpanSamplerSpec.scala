@@ -9,7 +9,7 @@ import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-
+import cats.syntax.all._
 import scala.concurrent.duration._
 import scala.util.Success
 
@@ -28,7 +28,11 @@ class PollingSpanSamplerSpec
     val test =
       Ref.of[IO, (String, Resource[IO, SpanSampler[IO]])](("always", Resource.pure(SpanSampler.always))).flatMap {
         samplerRef =>
-          PollingSpanSampler.create[IO, String](samplerRef.get, 1.second).use { sampler =>
+          PollingSpanSampler[IO, String](
+            samplerRef.get.map(_._1),
+            _ => Resource.eval(samplerRef.get.map(_._2)).flatten,
+            1.second
+          ).use { sampler =>
             val decision = sampler.shouldSample(None, TraceId.invalid, "test", SpanKind.Internal)
 
             for {
