@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.example
 
 import cats.effect.{ExitCode, IO, IOApp, Resource}
 import io.janstenpickle.trace4cats.sttp.client3.syntax._
-import org.http4s.client.blaze.BlazeClientBuilder
+import org.http4s.blaze.client.BlazeClientBuilder
 import sttp.client3.http4s.Http4sBackend
 
 object SttpExample extends IOApp {

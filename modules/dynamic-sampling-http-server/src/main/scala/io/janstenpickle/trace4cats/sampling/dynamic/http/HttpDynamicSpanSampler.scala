@@ -8,7 +8,7 @@ import io.janstenpickle.trace4cats.sampling.dynamic.config.SamplerConfig
 import io.janstenpickle.trace4cats.sampling.dynamic.http4s.SamplerHttpRoutes
 import org.http4s.implicits._
 import org.http4s.server.Router
-import org.http4s.server.blaze.BlazeServerBuilder
+import org.http4s.blaze.server.BlazeServerBuilder
 
 import scala.concurrent.ExecutionContext
 
