@@ -4,7 +4,7 @@ import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.inject.zio._
 import io.janstenpickle.trace4cats.sttp.client3.syntax._
-import org.http4s.client.blaze.BlazeClientBuilder
+import org.http4s.blaze.client.BlazeClientBuilder
 import sttp.client3.http4s.Http4sBackend
 import zio._
 import zio.interop.catz._
