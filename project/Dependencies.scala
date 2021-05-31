@@ -8,7 +8,7 @@ object Dependencies {
     val collectionCompat = "2.4.4"
     val commonsCodec = "1.15"
     val circe = "0.14.1"
-    val circeYaml = "0.13.1"
+    val circeYaml = "0.14.0"
     val decline = "2.0.0"
     val embeddedRedis = "0.7.3"
     val fs2 = "3.0.4"
