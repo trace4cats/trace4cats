@@ -49,50 +49,10 @@ lazy val publishSettings = commonSettings ++ Seq(
   Test / publishArtifact := false
 )
 
-lazy val graalSettings = Seq(
-  graalVMNativeImageOptions ++= Seq(
-    "--verbose",
-    "--no-server",
-    "--no-fallback",
-    "--enable-http",
-    "--enable-https",
-    "--enable-all-security-services",
-    "--report-unsupported-elements-at-runtime",
-    "--allow-incomplete-classpath",
-    "-Djava.net.preferIPv4Stack=true",
-    "-H:IncludeResources='.*'",
-    "-H:+ReportExceptionStackTraces",
-    "-H:+ReportUnsupportedElementsAtRuntime",
-    "-H:+TraceClassInitialization",
-    "-H:+PrintClassInitialization",
-    "-H:+RemoveSaturatedTypeFlows",
-    "-H:+StackTrace",
-    "-H:+JNI",
-    "-H:-SpawnIsolates",
-    "-H:-UseServiceLoaderFeature",
-    "-H:ConfigurationFileDirectories=../../native-image/",
-    "--install-exit-handlers",
-    "--initialize-at-build-time=scala.runtime.Statics$VM",
-    "--initialize-at-build-time=sun.instrument.InstrumentationImpl",
-    "--initialize-at-build-time=scala.Symbol$",
-    "--initialize-at-build-time=ch.qos.logback",
-    "--initialize-at-build-time=org.slf4j.impl.StaticLoggerBinder",
-    "--initialize-at-build-time=org.slf4j.LoggerFactory",
-    "--initialize-at-build-time=org.apache.kafka,net.jpountz",
-    "--initialize-at-build-time=com.github.luben.zstd.ZstdInputStream",
-    "--initialize-at-build-time=com.github.luben.zstd.ZstdOutputStream",
-    "--initialize-at-run-time=com.sun.management.internal.Flag",
-    "--initialize-at-run-time=com.sun.management.internal.OperatingSystemImpl"
-  )
-)
-
 lazy val root = (project in file("."))
   .settings(noPublishSettings)
   .settings(name := "Trace4Cats")
   .aggregate(
-    agent,
-    `agent-common`,
-    `agent-kafka`,
     avro,
     `avro-exporter`,
     `avro-kafka-exporter`,
@@ -102,9 +62,6 @@ lazy val root = (project in file("."))
     base,
     `base-laws`,
     `base-zio`,
-    collector,
-    `collector-common`,
-    `collector-lite`,
     core,
     `datadog-http-exporter`,
     `dynamic-sampling`,
@@ -606,28 +563,6 @@ lazy val `graal-kafka` = (project in file("modules/graal-kafka"))
     libraryDependencies ++= Seq(Dependencies.svm, Dependencies.kafka, Dependencies.micronautCore)
   )
 
-lazy val `agent-common` = (project in file("modules/agent-common"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-agent-common",
-    libraryDependencies ++= Seq(Dependencies.declineEffect, Dependencies.log4cats, Dependencies.logback)
-  )
-  .dependsOn(model, `avro-server`, `exporter-common`, meta, `rate-sampling`)
-
-lazy val agent = (project in file("modules/agent"))
-  .settings(noPublishSettings)
-  .settings(graalSettings)
-  .settings(name := "trace4cats-agent")
-  .dependsOn(model, `avro-exporter`, `agent-common`)
-  .enablePlugins(GraalVMNativeImagePlugin)
-
-lazy val `agent-kafka` = (project in file("modules/agent-kafka"))
-  .settings(noPublishSettings)
-  .settings(graalSettings)
-  .settings(name := "trace4cats-agent-kafka")
-  .dependsOn(model, `avro-kafka-exporter`, `exporter-common`, `graal-kafka`, `agent-common`)
-  .enablePlugins(GraalVMNativeImagePlugin)
-
 lazy val filtering = (project in file("modules/filtering"))
   .settings(publishSettings)
   .settings(name := "trace4cats-filtering", libraryDependencies ++= Dependencies.test.map(_ % Test))
@@ -695,101 +630,6 @@ lazy val `tail-sampling-redis-store` = (project in file("modules/tail-sampling-r
     libraryDependencies ++= (Dependencies.test :+ Dependencies.embeddedRedis).map(_ % Test)
   )
   .dependsOn(`tail-sampling`, test % "test->compile")
-
-lazy val `collector-common` = (project in file("modules/collector-common"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-collector-common",
-    libraryDependencies ++= Seq(
-      Dependencies.circeGeneric,
-      Dependencies.circeYaml,
-      Dependencies.declineEffect,
-      Dependencies.http4sJdkClient,
-      Dependencies.log4cats
-    )
-  )
-  .dependsOn(
-    model,
-    `exporter-common`,
-    meta,
-    `avro-exporter`,
-    `avro-server`,
-    `datadog-http-exporter`,
-    `jaeger-thrift-exporter`,
-    `log-exporter`,
-    `opentelemetry-otlp-http-exporter`,
-    `stackdriver-http-exporter`,
-    `newrelic-http-exporter`,
-    `avro-kafka-exporter`,
-    `avro-kafka-consumer`,
-    `tail-sampling`,
-    `tail-sampling-cache-store`,
-    `tail-sampling-redis-store`,
-    filtering,
-    `rate-sampling`,
-    `zipkin-http-exporter`
-  )
-
-lazy val collector = (project in file("modules/collector"))
-  .settings(noPublishSettings)
-  .settings(
-    name := "trace4cats-collector",
-    dockerRepository := Some("janstenpickle"),
-    dockerUpdateLatest := true,
-    dockerBaseImage := "adoptopenjdk/openjdk15:alpine-jre",
-    dockerExposedPorts += 7777,
-    dockerExposedUdpPorts += 7777,
-    Docker / daemonUserUid := Some("9000"),
-    Universal / javaOptions ++= Seq(
-      "-Djava.net.preferIPv4Stack=true",
-      "-J-XX:+UnlockExperimentalVMOptions",
-      "-J-XX:MaxRAMPercentage=90"
-    ),
-    libraryDependencies ++= Seq(
-      Dependencies.declineEffect,
-      Dependencies.grpcOkHttp,
-      Dependencies.log4cats,
-      Dependencies.logback
-    )
-  )
-  .dependsOn(
-    model,
-    `collector-common`,
-    `exporter-common`,
-    `avro-exporter`,
-    `avro-server`,
-    `datadog-http-exporter`,
-    `jaeger-thrift-exporter`,
-    `log-exporter`,
-    `opentelemetry-jaeger-exporter`,
-    `opentelemetry-otlp-grpc-exporter`,
-    `opentelemetry-otlp-http-exporter`,
-    `stackdriver-grpc-exporter`,
-    `stackdriver-http-exporter`
-  )
-  .enablePlugins(UniversalPlugin, JavaServerAppPackaging, DockerPlugin, AshScriptPlugin)
-
-lazy val `collector-lite` = (project in file("modules/collector-lite"))
-  .settings(noPublishSettings)
-  .settings(graalSettings)
-  .settings(
-    name := "trace4cats-collector-lite",
-    libraryDependencies ++= Seq(Dependencies.declineEffect, Dependencies.log4cats, Dependencies.logback)
-  )
-  .dependsOn(
-    model,
-    `exporter-common`,
-    `collector-common`,
-    `avro-exporter`,
-    `avro-server`,
-    `datadog-http-exporter`,
-    `jaeger-thrift-exporter`,
-    `log-exporter`,
-    `opentelemetry-otlp-http-exporter`,
-    `stackdriver-http-exporter`,
-    `graal-kafka`
-  )
-  .enablePlugins(GraalVMNativeImagePlugin)
 
 addCommandAlias("fmt", "all root/scalafmtSbt root/scalafmtAll")
 addCommandAlias("fmtCheck", "all root/scalafmtSbtCheck root/scalafmtCheckAll")

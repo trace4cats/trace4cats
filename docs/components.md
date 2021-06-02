@@ -13,6 +13,9 @@
       - [Configuring](#configuring-1)
       - [Running](#running-3)
 
+The source code for these components is located in the
+[`trace4cats-components`](https://github.com/trace4cats/trace4cats-components) repository.
+
 ## Agents
 
 Agents are designed to be co-located with you app, see the [documentation on deployment topologies](topologies.md) for
