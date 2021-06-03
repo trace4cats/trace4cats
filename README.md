@@ -17,6 +17,7 @@ Compatible with [OpenTelemetry] and [Jaeger], based on, and interoperates wht [N
   * [Motivation](#motivation)
   * [Highlights](#highlights)
   * [Quickstart](#quickstart)
+  * [Repositories](#repositories)
   * [Components](#components)
   * [Documentation](#documentation)
   * [SBT Dependencies](#sbt-dependencies)
@@ -127,6 +128,13 @@ object Trace4CatsQuickStart extends IOApp {
       .as(ExitCode.Success)
 }
 ```
+
+## Repositories
+
+Trace4Cats is separated into a few repositories:
+
+- [`trace4cats-components`](https://github.com/trace4cats/components) standalone Trace4Cats [components](#components)
+- [`trace4cats-opentelemetry`](https://github.com/trace4cats/trace4cats-opentelemetry) [OpenTelemetry] exporters
 
 ## Components
 

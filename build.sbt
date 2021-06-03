@@ -89,10 +89,6 @@ lazy val root = (project in file("."))
     model,
     natchez,
     `newrelic-http-exporter`,
-    `opentelemetry-common`,
-    `opentelemetry-jaeger-exporter`,
-    `opentelemetry-otlp-grpc-exporter`,
-    `opentelemetry-otlp-http-exporter`,
     `rate-sampling`,
     `stackdriver-common`,
     `stackdriver-grpc-exporter`,
@@ -147,9 +143,6 @@ lazy val example = (project in file("modules/example"))
     `avro-exporter`,
     `log-exporter`,
     `jaeger-thrift-exporter`,
-    `opentelemetry-jaeger-exporter`,
-    `opentelemetry-otlp-grpc-exporter`,
-    `opentelemetry-otlp-http-exporter`,
     `stackdriver-grpc-exporter`,
     `stackdriver-http-exporter`,
     `sttp-client3`,
@@ -250,50 +243,6 @@ lazy val `jaeger-thrift-exporter` =
     .settings(publishSettings)
     .settings(name := "trace4cats-jaeger-thrift-exporter", libraryDependencies ++= Seq(Dependencies.jaegerThrift))
     .dependsOn(model, kernel, `exporter-common`, `jaeger-integration-test` % "test->compile")
-
-lazy val `opentelemetry-common` =
-  (project in file("modules/opentelemetry-common"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-opentelemetry-common",
-      libraryDependencies ++= Seq(Dependencies.openTelemetrySdk, Dependencies.grpcApi)
-    )
-    .dependsOn(model, kernel, `exporter-common`)
-
-lazy val `opentelemetry-jaeger-exporter` =
-  (project in file("modules/opentelemetry-jaeger-exporter"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-opentelemetry-jaeger-exporter",
-      libraryDependencies ++= Seq(Dependencies.openTelemetryJaegerExporter, Dependencies.grpcOkHttp % Test)
-    )
-    .dependsOn(model, kernel, `exporter-common`, `opentelemetry-common`, `jaeger-integration-test` % "test->compile")
-
-lazy val `opentelemetry-otlp-grpc-exporter` =
-  (project in file("modules/opentelemetry-otlp-grpc-exporter"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-opentelemetry-otlp-grpc-exporter",
-      libraryDependencies ++= Seq(Dependencies.openTelemetryOtlpExporter, Dependencies.grpcOkHttp % Test)
-    )
-    .dependsOn(model, kernel, `exporter-common`, `opentelemetry-common`, `jaeger-integration-test` % "test->compile")
-
-lazy val `opentelemetry-otlp-http-exporter` =
-  (project in file("modules/opentelemetry-otlp-http-exporter"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-opentelemetry-otlp-http-exporter",
-      libraryDependencies ++= Seq(
-        Dependencies.circeGeneric,
-        Dependencies.http4sClient,
-        Dependencies.http4sBlazeClient,
-        (Dependencies.openTelemetryProto % "protobuf").intransitive(),
-        Dependencies.scalapbJson
-      ),
-      Compile / PB.protoSources += target.value / "protobuf_external",
-      Compile / PB.targets := Seq(scalapb.gen(grpc = false, lenses = false) -> (Compile / sourceManaged).value)
-    )
-    .dependsOn(model, kernel, `exporter-common`, `exporter-http`, `jaeger-integration-test` % "test->compile")
 
 lazy val `zipkin-http-exporter` =
   (project in file("modules/zipkin-http-exporter"))

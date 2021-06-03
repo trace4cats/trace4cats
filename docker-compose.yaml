@@ -1,18 +1,5 @@
 version: "3.8"
 services:
-  otelcol:
-    image: otel/opentelemetry-collector:0.25.0
-    ports:
-      - "55680:55680"
-      - "55681:55681"
-      - "55678:55678"
-      - "55679:55679"
-    volumes:
-      - ".github/otel-test-config.yaml:/otel-local-config.yaml"
-    command: ["--config", "otel-local-config.yaml"]
-    links:
-      - jaeger
-
   jaeger:
     image: jaegertracing/all-in-one:1.22.0
     ports:

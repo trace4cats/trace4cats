@@ -24,12 +24,10 @@ object Dependencies {
     val logback = "1.2.3"
     val micronaut = "2.5.5"
     val natchez = "0.1.5"
-    val openTelemetry = "1.2.0"
     val redis4cats = "1.0.0-RC3"
     val scaffeine = "4.0.2"
     val scala212 = "2.12.14"
     val scala213 = "2.13.6"
-    val scalapb = "0.11.0"
     val sttpClient3 = "3.3.6"
     val sttpModel = "1.4.7"
     val sttpTapir = "0.18.0-M11"
@@ -79,14 +77,9 @@ object Dependencies {
   lazy val logback = "ch.qos.logback"                           % "logback-classic"                 % Versions.logback
   lazy val micronautCore = "io.micronaut"                       % "micronaut-core"                  % Versions.micronaut
   lazy val natchez = "org.tpolecat"                            %% "natchez-core"                    % Versions.natchez
-  lazy val openTelemetrySdk = "io.opentelemetry"                % "opentelemetry-sdk"               % Versions.openTelemetry
-  lazy val openTelemetryOtlpExporter = "io.opentelemetry"       % "opentelemetry-exporter-otlp"     % Versions.openTelemetry
-  lazy val openTelemetryJaegerExporter = "io.opentelemetry"     % "opentelemetry-exporter-jaeger"   % Versions.openTelemetry
-  lazy val openTelemetryProto = "io.opentelemetry"              % "opentelemetry-proto"             % Versions.openTelemetry.concat("-alpha")
   lazy val redis4cats = "dev.profunktor"                       %% "redis4cats-effects"              % Versions.redis4cats
   lazy val redis4catsLog4cats = "dev.profunktor"               %% "redis4cats-log4cats"             % Versions.redis4cats
   lazy val scaffeine = "com.github.blemale"                    %% "scaffeine"                       % Versions.scaffeine
-  lazy val scalapbJson = "com.thesamet.scalapb"                %% "scalapb-json4s"                  % Versions.scalapb
   lazy val sttpClient3 = "com.softwaremill.sttp.client3"       %% "cats"                            % Versions.sttpClient3
   lazy val sttpClient3Http4s = "com.softwaremill.sttp.client3" %% "http4s-backend"                  % Versions.sttpClient3
   lazy val sttpModel = "com.softwaremill.sttp.model"           %% "core"                            % Versions.sttpModel
