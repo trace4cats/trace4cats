@@ -133,7 +133,7 @@ object Trace4CatsQuickStart extends IOApp {
 
 Trace4Cats is separated into a few repositories:
 
-- [`trace4cats-components`](https://github.com/trace4cats/components) standalone Trace4Cats [components](#components)
+- [`trace4cats-components`](https://github.com/trace4cats/trace4cats-components) standalone Trace4Cats [components](#components)
 - [`trace4cats-cloudtrace`](https://github.com/trace4cats/trace4cats-cloudtrace) [Google Cloudtrace] exporters
 - [`trace4cats-datadog`](https://github.com/trace4cats/trace4cats-datadog) [Datadog] exporters
 - [`trace4cats-jaeger`](https://github.com/trace4cats/trace4cats-jaeger) [Jaeger] exporters
