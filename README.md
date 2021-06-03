@@ -41,7 +41,7 @@ Trace4Cats supports publishing spans to the following systems:
 - [OpenTelemetry] via Protobufs over GRPC and JSON over HTTP
 - Log using [Log4Cats]
 - Trace4Cats Avro over UDP, TCP and Kafka
-- [Stackdriver Trace] over HTTP and GRPC
+- [Google Cloudtrace] over HTTP and GRPC
 - [Datadog] over HTTP
 - [NewRelic] over HTTP
 - [Zipkin] over HTTP
@@ -134,8 +134,12 @@ object Trace4CatsQuickStart extends IOApp {
 Trace4Cats is separated into a few repositories:
 
 - [`trace4cats-components`](https://github.com/trace4cats/components) standalone Trace4Cats [components](#components)
-- [`trace4cats-opentelemetry`](https://github.com/trace4cats/trace4cats-opentelemetry) [OpenTelemetry] exporters
+- [`trace4cats-cloudtrace`](https://github.com/trace4cats/trace4cats-cloudtrace) [Google Cloudtrace] exporters
+- [`trace4cats-datadog`](https://github.com/trace4cats/trace4cats-datadog) [Datadog] exporters
 - [`trace4cats-jaeger`](https://github.com/trace4cats/trace4cats-jaeger) [Jaeger] exporters
+- [`trace4cats-newrelic`](https://github.com/trace4cats/trace4cats-newrelic) [NewRelic] exporters
+- [`trace4cats-opentelemetry`](https://github.com/trace4cats/trace4cats-opentelemetry) [OpenTelemetry] exporters
+- [`trace4cats-zipkin`](https://github.com/trace4cats/trace4cats-xipkin) [Zipkin] exporters
 - [`trace4cats-zio`](https://github.com/trace4cats/trace4cats-zio) [ZIO] implementations of Trace4Cats typeclasses
 
 ## Components
@@ -197,7 +201,7 @@ The following span completers have been found to be compatible with [`native-ima
 - [Jaeger] Thrift over UDP
 - [OpenTelemetry] JSON over HTTP
 - Log
-- [Stackdriver Trace] over HTTP
+- [Google Cloudtrace] over HTTP
 - [Datadog] over HTTP
 - [NewRelic] over HTTP
 - [Zipkin] over HTTP
@@ -215,7 +219,7 @@ This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-
 [Natchez]: https://github.com/tpolecat/natchez
 [`native-image`]: https://www.graalvm.org/docs/reference-manual/native-image/
 [OpenTelemetry]: http://opentelemetry.io
-[Stackdriver Trace]: https://cloud.google.com/trace/docs/reference
+[Google Cloudtrace]: https://cloud.google.com/trace/docs/reference
 [Datadog]: https://docs.datadoghq.com/api/v1/tracing/
 [NewRelic]: https://docs.newrelic.com/docs/understand-dependencies/distributed-tracing/trace-api/report-new-relic-format-traces-trace-api#new-relic-guidelines
 [`Resource`]: https://typelevel.org/cats-effect/datatypes/resource.html

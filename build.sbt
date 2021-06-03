@@ -62,7 +62,6 @@ lazy val root = (project in file("."))
     base,
     `base-laws`,
     core,
-    `datadog-http-exporter`,
     `dynamic-sampling`,
     `dynamic-sampling-config`,
     `dynamic-sampling-http4s`,
@@ -85,11 +84,7 @@ lazy val root = (project in file("."))
     meta,
     model,
     natchez,
-    `newrelic-http-exporter`,
     `rate-sampling`,
-    `stackdriver-common`,
-    `stackdriver-grpc-exporter`,
-    `stackdriver-http-exporter`,
     `sttp-client3`,
     `sttp-common`,
     `sttp-tapir`,
@@ -97,7 +92,6 @@ lazy val root = (project in file("."))
     `tail-sampling-cache-store`,
     `tail-sampling-redis-store`,
     testkit,
-    `zipkin-http-exporter`,
   )
 
 lazy val model =
@@ -138,8 +132,6 @@ lazy val example = (project in file("modules/example"))
     natchez,
     `avro-exporter`,
     `log-exporter`,
-    `stackdriver-grpc-exporter`,
-    `stackdriver-http-exporter`,
     `sttp-client3`,
     `tail-sampling`,
     `tail-sampling-cache-store`,
@@ -223,78 +215,6 @@ lazy val `jaeger-integration-test` =
       )
     )
     .dependsOn(kernel, testkit)
-
-lazy val `zipkin-http-exporter` =
-  (project in file("modules/zipkin-http-exporter"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-zipkin-http-exporter",
-      libraryDependencies ++= Seq(Dependencies.circeGeneric, Dependencies.http4sClient, Dependencies.http4sBlazeClient)
-    )
-    .dependsOn(model, kernel, `exporter-common`, `exporter-http`, `jaeger-integration-test` % "test->compile")
-
-lazy val `stackdriver-common` =
-  (project in file("modules/stackdriver-common"))
-    .settings(publishSettings)
-    .settings(name := "trace4cats-stackdriver-common")
-
-lazy val `stackdriver-grpc-exporter` =
-  (project in file("modules/stackdriver-grpc-exporter"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-stackdriver-grpc-exporter",
-      libraryDependencies ++= Seq(Dependencies.googleCredentials, Dependencies.googleCloudTrace)
-    )
-    .dependsOn(model, kernel, `exporter-common`, `stackdriver-common`)
-
-lazy val `stackdriver-http-exporter` =
-  (project in file("modules/stackdriver-http-exporter"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-stackdriver-http-exporter",
-      libraryDependencies ++= Dependencies.test.map(_ % Test),
-      libraryDependencies ++= Seq(
-        Dependencies.circeGeneric,
-        Dependencies.circeParser,
-        Dependencies.http4sClient,
-        Dependencies.http4sCirce,
-        Dependencies.http4sBlazeClient,
-        Dependencies.jwt,
-        Dependencies.log4cats
-      )
-    )
-    .dependsOn(model, kernel, `exporter-common`, `exporter-http`, `stackdriver-common`)
-
-lazy val `datadog-http-exporter` =
-  (project in file("modules/datadog-http-exporter"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-datadog-http-exporter",
-      libraryDependencies ++= Dependencies.test.map(_ % Test),
-      libraryDependencies ++= Seq(
-        Dependencies.circeGeneric,
-        Dependencies.circeParser,
-        Dependencies.http4sClient,
-        Dependencies.http4sCirce,
-        Dependencies.http4sBlazeClient
-      )
-    )
-    .dependsOn(model, kernel, `exporter-common`, `exporter-http`, testkit % "test->compile")
-
-lazy val `newrelic-http-exporter` =
-  (project in file("modules/newrelic-http-exporter"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-newrelic-http-exporter",
-      libraryDependencies ++= Seq(
-        Dependencies.circeGeneric,
-        Dependencies.circeParser,
-        Dependencies.http4sClient,
-        Dependencies.http4sCirce,
-        Dependencies.http4sBlazeClient
-      )
-    )
-    .dependsOn(model, kernel, `exporter-common`, `exporter-http`)
 
 lazy val `avro-kafka-exporter` =
   (project in file("modules/avro-kafka-exporter"))
