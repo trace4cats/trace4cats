@@ -146,7 +146,7 @@ lazy val root = (project in file("."))
     `tail-sampling`,
     `tail-sampling-cache-store`,
     `tail-sampling-redis-store`,
-    test,
+    testkit,
     `zipkin-http-exporter`,
   )
 
@@ -204,9 +204,9 @@ lazy val example = (project in file("modules/example"))
     `dynamic-sampling-http-server`,
   )
 
-lazy val test = (project in file("modules/test"))
-  .settings(noPublishSettings)
-  .settings(name := "trace4cats-test", libraryDependencies ++= Dependencies.test ++ Seq(Dependencies.fs2))
+lazy val testkit = (project in file("modules/testkit"))
+  .settings(publishSettings)
+  .settings(name := "trace4cats-testkit", libraryDependencies ++= Dependencies.test ++ Seq(Dependencies.fs2))
   .dependsOn(model)
 
 lazy val `avro-test` = (project in file("modules/avro-test"))
@@ -217,7 +217,7 @@ lazy val `avro-test` = (project in file("modules/avro-test"))
     libraryDependencies ++= Seq(Dependencies.logback % Test)
   )
   .dependsOn(model)
-  .dependsOn(`avro-exporter`, `avro-server`, test % "test->compile")
+  .dependsOn(`avro-exporter`, `avro-server`, testkit % "test->compile")
 
 lazy val kernel =
   (project in file("modules/kernel"))
@@ -228,14 +228,14 @@ lazy val kernel =
       buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion, sbtVersion),
       buildInfoPackage := "io.janstenpickle.trace4cats.kernel"
     )
-    .dependsOn(model, test % "test->compile")
+    .dependsOn(model, testkit % "test->compile")
     .enablePlugins(BuildInfoPlugin)
 
 lazy val core =
   (project in file("modules/core"))
     .settings(publishSettings)
     .settings(name := "trace4cats-core", libraryDependencies ++= Dependencies.test.map(_ % Test))
-    .dependsOn(model, kernel, test % "test->compile", `exporter-common` % "test->compile")
+    .dependsOn(model, kernel, testkit % "test->compile", `exporter-common` % "test->compile")
 
 lazy val base =
   (project in file("modules/base"))
@@ -275,7 +275,7 @@ lazy val `log-exporter` =
 
 lazy val `jaeger-integration-test` =
   (project in file("modules/jaeger-integration-test"))
-    .settings(noPublishSettings)
+    .settings(publishSettings)
     .settings(
       name := "trace4cats-jaeger-integration-test",
       libraryDependencies ++= Dependencies.test,
@@ -286,7 +286,7 @@ lazy val `jaeger-integration-test` =
         Dependencies.logback
       )
     )
-    .dependsOn(kernel, test)
+    .dependsOn(kernel, testkit)
 
 lazy val `jaeger-thrift-exporter` =
   (project in file("modules/jaeger-thrift-exporter"))
@@ -393,7 +393,7 @@ lazy val `datadog-http-exporter` =
         Dependencies.http4sBlazeClient
       )
     )
-    .dependsOn(model, kernel, `exporter-common`, `exporter-http`, test % "test->compile")
+    .dependsOn(model, kernel, `exporter-common`, `exporter-http`, testkit % "test->compile")
 
 lazy val `newrelic-http-exporter` =
   (project in file("modules/newrelic-http-exporter"))
@@ -420,7 +420,7 @@ lazy val `avro-kafka-exporter` =
       Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary,
       Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
     )
-    .dependsOn(model, kernel, `exporter-common`, avro, test % "test->compile")
+    .dependsOn(model, kernel, `exporter-common`, avro, testkit % "test->compile")
 
 lazy val `exporter-stream` =
   (project in file("modules/exporter-stream"))
@@ -436,13 +436,13 @@ lazy val `exporter-common` =
       libraryDependencies ++= Seq(Dependencies.kittens, Dependencies.log4cats, Dependencies.hotswapRef),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
-    .dependsOn(model, kernel, `exporter-stream`, test % "test->compile")
+    .dependsOn(model, kernel, `exporter-stream`, testkit % "test->compile")
 
 lazy val meta =
   (project in file("modules/meta"))
     .settings(publishSettings)
     .settings(name := "trace4cats-meta", libraryDependencies ++= Seq(Dependencies.log4cats))
-    .dependsOn(model, kernel, core, `exporter-stream`, `exporter-common` % "test->compile", test % "test->compile")
+    .dependsOn(model, kernel, core, `exporter-stream`, `exporter-common` % "test->compile", testkit % "test->compile")
 
 lazy val `exporter-http` =
   (project in file("modules/exporter-http"))
@@ -476,7 +476,7 @@ lazy val `avro-kafka-consumer` =
       libraryDependencies ++= Seq(Dependencies.fs2, Dependencies.fs2Kafka, Dependencies.kafka, Dependencies.log4cats),
       libraryDependencies ++= Seq(Dependencies.embeddedKafka, Dependencies.logback).map(_ % Test)
     )
-    .dependsOn(model, avro, test % "test->compile")
+    .dependsOn(model, avro, testkit % "test->compile")
 
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
@@ -495,12 +495,12 @@ lazy val fs2 = (project in file("modules/fs2"))
     libraryDependencies ++= Seq(Dependencies.fs2),
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
-  .dependsOn(model, kernel, core, inject, `exporter-common` % "test->compile", test % "test->compile")
+  .dependsOn(model, kernel, core, inject, `exporter-common` % "test->compile", testkit % "test->compile")
 
 lazy val `kafka-client` = (project in file("modules/kafka-client"))
   .settings(publishSettings)
   .settings(name := "trace4cats-kafka-client", libraryDependencies ++= Seq(Dependencies.fs2Kafka))
-  .dependsOn(model, kernel, core, inject, fs2, test % "test->compile", `exporter-common` % "test->compile")
+  .dependsOn(model, kernel, core, inject, fs2, testkit % "test->compile", `exporter-common` % "test->compile")
 
 lazy val `http4s-common` = (project in file("modules/http4s-common"))
   .settings(publishSettings)
@@ -508,7 +508,7 @@ lazy val `http4s-common` = (project in file("modules/http4s-common"))
     name := "trace4cats-http4s-common",
     libraryDependencies ++= Seq(Dependencies.http4sServer, Dependencies.http4sDsl)
   )
-  .dependsOn(model, inject % "test->compile", test % "test->compile")
+  .dependsOn(model, inject % "test->compile", testkit % "test->compile")
 
 lazy val `http4s-client` = (project in file("modules/http4s-client"))
   .settings(publishSettings)
@@ -556,7 +556,7 @@ lazy val `sttp-client3` = (project in file("modules/sttp-client3"))
     core,
     inject,
     `sttp-common`,
-    test              % "test->compile",
+    testkit           % "test->compile",
     `exporter-common` % "test->compile",
     `http4s-common`   % "test->test"
   )
@@ -568,7 +568,7 @@ lazy val `sttp-common` = (project in file("modules/sttp-common"))
     libraryDependencies ++= Seq(Dependencies.sttpModel),
     libraryDependencies ++= Dependencies.test
   )
-  .dependsOn(model, test % "test->compile")
+  .dependsOn(model, testkit % "test->compile")
 
 lazy val `sttp-tapir` = (project in file("modules/sttp-tapir"))
   .settings(publishSettings)
@@ -589,7 +589,7 @@ lazy val `sttp-tapir` = (project in file("modules/sttp-tapir"))
     core,
     inject,
     `sttp-common`,
-    test              % "test->compile",
+    testkit           % "test->compile",
     `exporter-common` % "test->compile",
     `http4s-common`   % "test->test"
   )
@@ -640,7 +640,7 @@ lazy val `dynamic-sampling` = (project in file("modules/dynamic-sampling"))
     libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.hotswapRef),
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
-  .dependsOn(model, kernel, test % "test->compile")
+  .dependsOn(model, kernel, testkit % "test->compile")
 
 lazy val `dynamic-sampling-config` = (project in file("modules/dynamic-sampling-config"))
   .settings(publishSettings)
@@ -649,7 +649,7 @@ lazy val `dynamic-sampling-config` = (project in file("modules/dynamic-sampling-
     libraryDependencies ++= Seq(Dependencies.kittens),
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
-  .dependsOn(model, kernel, `dynamic-sampling`, `rate-sampling`, test % "test->compile")
+  .dependsOn(model, kernel, `dynamic-sampling`, `rate-sampling`, testkit % "test->compile")
 
 lazy val `dynamic-sampling-http4s` = (project in file("modules/dynamic-sampling-http4s"))
   .settings(publishSettings)
@@ -694,7 +694,7 @@ lazy val `tail-sampling-redis-store` = (project in file("modules/tail-sampling-r
     libraryDependencies ++= Seq(Dependencies.redis4cats, Dependencies.redis4catsLog4cats, Dependencies.scaffeine),
     libraryDependencies ++= (Dependencies.test :+ Dependencies.embeddedRedis).map(_ % Test)
   )
-  .dependsOn(`tail-sampling`, test % "test->compile")
+  .dependsOn(`tail-sampling`, testkit % "test->compile")
 
 lazy val `collector-common` = (project in file("modules/collector-common"))
   .settings(publishSettings)
