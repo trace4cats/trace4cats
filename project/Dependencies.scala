@@ -32,7 +32,6 @@ object Dependencies {
     val sttpTapir = "0.18.0-M11"
     val svm = "19.2.1"
     val vulcan = "1.7.1"
-    val zioInterop = "3.1.1.0"
 
     val catsTestkitScalatest = "2.1.5"
     val disciplineScalatest = "2.1.5"
@@ -87,7 +86,6 @@ object Dependencies {
   lazy val svm = "com.oracle.substratevm"                       % "svm"                             % Versions.svm % "provided"
   lazy val vulcan = "com.github.fd4s"                          %% "vulcan"                          % Versions.vulcan
   lazy val vulcanGeneric = "com.github.fd4s"                   %% "vulcan-generic"                  % Versions.vulcan
-  lazy val zioInterop = "dev.zio"                              %% "zio-interop-cats"                % Versions.zioInterop
 
   lazy val catsLaws = "org.typelevel"             %% "cats-laws"              % Versions.cats
   lazy val catsEffectLaws = "org.typelevel"       %% "cats-effect-laws"       % Versions.catsEffect

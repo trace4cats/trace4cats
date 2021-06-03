@@ -61,7 +61,6 @@ lazy val root = (project in file("."))
     `avro-test`,
     base,
     `base-laws`,
-    `base-zio`,
     core,
     `datadog-http-exporter`,
     `dynamic-sampling`,
@@ -79,7 +78,6 @@ lazy val root = (project in file("."))
     `http4s-common`,
     `http4s-server`,
     inject,
-    `inject-zio`,
     `jaeger-integration-test`,
     `kafka-client`,
     kernel,
@@ -134,7 +132,6 @@ lazy val example = (project in file("modules/example"))
     kernel,
     core,
     inject,
-    `inject-zio`,
     fs2,
     `http4s-client`,
     `http4s-server`,
@@ -199,15 +196,6 @@ lazy val `base-laws` =
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
     .dependsOn(base)
-
-lazy val `base-zio` =
-  (project in file("modules/base-zio"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-base-zio",
-      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.zioInterop)
-    )
-    .dependsOn(base, `base-laws` % "test->compile;test->test")
 
 lazy val avro =
   (project in file("modules/avro"))
@@ -380,11 +368,6 @@ lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
   .settings(name := "trace4cats-inject", libraryDependencies ++= Seq(Dependencies.catsEffect).map(_ % Test))
   .dependsOn(model, kernel, core, base)
-
-lazy val `inject-zio` = (project in file("modules/inject-zio"))
-  .settings(publishSettings)
-  .settings(name := "trace4cats-inject-zio", libraryDependencies ++= Seq(Dependencies.zioInterop))
-  .dependsOn(inject, `base-zio`)
 
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
