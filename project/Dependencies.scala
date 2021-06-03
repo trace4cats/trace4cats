@@ -8,8 +8,6 @@ object Dependencies {
     val collectionCompat = "2.4.4"
     val commonsCodec = "1.15"
     val circe = "0.14.1"
-    val circeYaml = "0.14.0"
-    val decline = "2.0.0"
     val embeddedRedis = "0.7.3"
     val fs2 = "3.0.4"
     val fs2Kafka = "2.1.0"
@@ -18,7 +16,6 @@ object Dependencies {
     val grpc = "1.38.0"
     val hotswapRef = "0.1.0"
     val http4s = "0.23.0-RC1"
-    val http4sJdkClient = "0.5.0-RC1"
     val jaeger = "1.6.0"
     val jwt = "3.16.0"
     val kafka = "2.8.0"
@@ -57,10 +54,8 @@ object Dependencies {
   lazy val collectionCompat = "org.scala-lang.modules"         %% "scala-collection-compat"         % Versions.collectionCompat
   lazy val circeGeneric = "io.circe"                           %% "circe-generic-extras"            % Versions.circe
   lazy val circeParser = "io.circe"                            %% "circe-parser"                    % Versions.circe
-  lazy val circeYaml = "io.circe"                              %% "circe-yaml"                      % Versions.circeYaml
   lazy val embeddedKafka = "io.github.embeddedkafka"           %% "embedded-kafka"                  % Versions.kafka
   lazy val embeddedRedis = "it.ozimov"                          % "embedded-redis"                  % Versions.embeddedRedis
-  lazy val declineEffect = "com.monovore"                      %% "decline-effect"                  % Versions.decline
   lazy val googleCredentials = "com.google.auth"                % "google-auth-library-credentials" % Versions.googleCredentials
   lazy val googleCloudTrace = "com.google.cloud"                % "google-cloud-trace"              % Versions.googleCloudTrace
   lazy val fs2 = "co.fs2"                                      %% "fs2-core"                        % Versions.fs2
@@ -75,7 +70,6 @@ object Dependencies {
   lazy val http4sDsl = "org.http4s"                            %% "http4s-dsl"                      % Versions.http4s
   lazy val http4sBlazeClient = "org.http4s"                    %% "http4s-blaze-client"             % Versions.http4s
   lazy val http4sBlazeServer = "org.http4s"                    %% "http4s-blaze-server"             % Versions.http4s
-  lazy val http4sJdkClient = "org.http4s"                      %% "http4s-jdk-http-client"          % Versions.http4sJdkClient
   lazy val http4sServer = "org.http4s"                         %% "http4s-server"                   % Versions.http4s
   lazy val jaegerThrift = "io.jaegertracing"                    % "jaeger-thrift"                   % Versions.jaeger
   lazy val jwt = "com.auth0"                                    % "java-jwt"                        % Versions.jwt
