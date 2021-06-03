@@ -6,7 +6,6 @@ import cats.instances.list._
 import cats.syntax.foldable._
 import cats.syntax.parallel._
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
-import io.janstenpickle.trace4cats.jaeger.JaegerSpanCompleter
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.log.LogSpanCompleter
 import io.janstenpickle.trace4cats.model.TraceProcess
@@ -23,8 +22,8 @@ object AllCompleters {
   def apply[F[_]: Async: Parallel: Logger](process: TraceProcess): Resource[F, SpanCompleter[F]] =
     List(
       AvroSpanCompleter.udp[F](process),
-      JaegerSpanCompleter[F](process),
       // TODO add these back once new artifacts are published
+//      JaegerSpanCompleter[F](process),
 //      OpenTelemetryJaegerSpanCompleter[F](process),
 //      OpenTelemetryOtlpGrpcSpanCompleter[F](process),
 //      OpenTelemetryOtlpHttpSpanCompleter.blazeClient[F](process),

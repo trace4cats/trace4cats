@@ -81,7 +81,6 @@ lazy val root = (project in file("."))
     inject,
     `inject-zio`,
     `jaeger-integration-test`,
-    `jaeger-thrift-exporter`,
     `kafka-client`,
     kernel,
     `log-exporter`,
@@ -142,7 +141,6 @@ lazy val example = (project in file("modules/example"))
     natchez,
     `avro-exporter`,
     `log-exporter`,
-    `jaeger-thrift-exporter`,
     `stackdriver-grpc-exporter`,
     `stackdriver-http-exporter`,
     `sttp-client3`,
@@ -237,12 +235,6 @@ lazy val `jaeger-integration-test` =
       )
     )
     .dependsOn(kernel, testkit)
-
-lazy val `jaeger-thrift-exporter` =
-  (project in file("modules/jaeger-thrift-exporter"))
-    .settings(publishSettings)
-    .settings(name := "trace4cats-jaeger-thrift-exporter", libraryDependencies ++= Seq(Dependencies.jaegerThrift))
-    .dependsOn(model, kernel, `exporter-common`, `jaeger-integration-test` % "test->compile")
 
 lazy val `zipkin-http-exporter` =
   (project in file("modules/zipkin-http-exporter"))
