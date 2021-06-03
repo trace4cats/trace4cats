@@ -9,7 +9,6 @@ import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
 import io.janstenpickle.trace4cats.kernel.SpanCompleter
 import io.janstenpickle.trace4cats.log.LogSpanCompleter
 import io.janstenpickle.trace4cats.model.TraceProcess
-import io.janstenpickle.trace4cats.stackdriver.{StackdriverGrpcSpanCompleter, StackdriverHttpSpanCompleter}
 import org.typelevel.log4cats.Logger
 
 /** This example shows how many different completers may be combined into a single completer using
@@ -27,8 +26,8 @@ object AllCompleters {
 //      OpenTelemetryJaegerSpanCompleter[F](process),
 //      OpenTelemetryOtlpGrpcSpanCompleter[F](process),
 //      OpenTelemetryOtlpHttpSpanCompleter.blazeClient[F](process),
-      StackdriverGrpcSpanCompleter[F](process, "gcp-project-id-123"),
-      StackdriverHttpSpanCompleter.blazeClient[F](process)
+//      StackdriverGrpcSpanCompleter[F](process, "gcp-project-id-123"),
+//      StackdriverHttpSpanCompleter.blazeClient[F](process)
     ).parSequence.map { completers =>
       (LogSpanCompleter[F](process) :: completers).combineAll
     }
