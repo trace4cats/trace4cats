@@ -135,6 +135,7 @@ Trace4Cats is separated into a few repositories:
 
 - [`trace4cats-components`](https://github.com/trace4cats/components) standalone Trace4Cats [components](#components)
 - [`trace4cats-opentelemetry`](https://github.com/trace4cats/trace4cats-opentelemetry) [OpenTelemetry] exporters
+- [`trace4cats-jaeger`](https://github.com/trace4cats/trace4cats-jaeger) [Jaeger] exporters
 
 ## Components
 

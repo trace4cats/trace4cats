@@ -16,7 +16,6 @@ object Dependencies {
     val grpc = "1.38.0"
     val hotswapRef = "0.1.0"
     val http4s = "0.23.0-RC1"
-    val jaeger = "1.6.0"
     val jwt = "3.16.0"
     val kafka = "2.8.0"
     val kittens = "2.3.2"
@@ -69,7 +68,6 @@ object Dependencies {
   lazy val http4sBlazeClient = "org.http4s"                    %% "http4s-blaze-client"             % Versions.http4s
   lazy val http4sBlazeServer = "org.http4s"                    %% "http4s-blaze-server"             % Versions.http4s
   lazy val http4sServer = "org.http4s"                         %% "http4s-server"                   % Versions.http4s
-  lazy val jaegerThrift = "io.jaegertracing"                    % "jaeger-thrift"                   % Versions.jaeger
   lazy val jwt = "com.auth0"                                    % "java-jwt"                        % Versions.jwt
   lazy val kafka = "org.apache.kafka"                           % "kafka-clients"                   % Versions.kafka
   lazy val kittens = "org.typelevel"                           %% "kittens"                         % Versions.kittens
