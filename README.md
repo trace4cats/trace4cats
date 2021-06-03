@@ -139,7 +139,7 @@ Trace4Cats is separated into a few repositories:
 - [`trace4cats-jaeger`](https://github.com/trace4cats/trace4cats-jaeger) [Jaeger] exporters
 - [`trace4cats-newrelic`](https://github.com/trace4cats/trace4cats-newrelic) [NewRelic] exporters
 - [`trace4cats-opentelemetry`](https://github.com/trace4cats/trace4cats-opentelemetry) [OpenTelemetry] exporters
-- [`trace4cats-zipkin`](https://github.com/trace4cats/trace4cats-xipkin) [Zipkin] exporters
+- [`trace4cats-zipkin`](https://github.com/trace4cats/trace4cats-zipkin) [Zipkin] exporters
 - [`trace4cats-zio`](https://github.com/trace4cats/trace4cats-zio) [ZIO] implementations of Trace4Cats typeclasses
 
 ## Components
