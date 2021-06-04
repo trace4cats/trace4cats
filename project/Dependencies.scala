@@ -26,7 +26,7 @@ object Dependencies {
     val scala213 = "2.13.6"
     val sttpClient3 = "3.3.6"
     val sttpModel = "1.4.7"
-    val sttpTapir = "0.18.0-M11"
+    val sttpTapir = "0.18.0-M15"
     val svm = "19.2.1"
     val vulcan = "1.7.1"
 
