@@ -64,8 +64,6 @@ lazy val root = (project in file("."))
     core,
     `dynamic-sampling`,
     `dynamic-sampling-config`,
-    `dynamic-sampling-http4s`,
-    `dynamic-sampling-http-server`,
     example,
     `exporter-common`,
     `exporter-http`,
@@ -138,7 +136,6 @@ lazy val example = (project in file("modules/example"))
     filtering,
     `rate-sampling`,
     meta,
-    `dynamic-sampling-http-server`,
   )
 
 lazy val testkit = (project in file("modules/testkit"))
@@ -429,27 +426,6 @@ lazy val `dynamic-sampling-config` = (project in file("modules/dynamic-sampling-
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
   .dependsOn(model, kernel, `dynamic-sampling`, `rate-sampling`, testkit % "test->compile")
-
-lazy val `dynamic-sampling-http4s` = (project in file("modules/dynamic-sampling-http4s"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-dynamic-sampling-http4s",
-    libraryDependencies ++= Seq(
-      Dependencies.circeGeneric,
-      Dependencies.http4sCirce,
-      Dependencies.http4sDsl,
-      Dependencies.http4sServer
-    ),
-  )
-  .dependsOn(model, kernel, `dynamic-sampling-config`)
-
-lazy val `dynamic-sampling-http-server` = (project in file("modules/dynamic-sampling-http-server"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-dynamic-sampling-http-server",
-    libraryDependencies ++= Seq(Dependencies.http4sBlazeServer)
-  )
-  .dependsOn(model, kernel, `dynamic-sampling-http4s`)
 
 lazy val `rate-sampling` = (project in file("modules/rate-sampling"))
   .settings(publishSettings)
