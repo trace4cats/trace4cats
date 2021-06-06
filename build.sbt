@@ -102,13 +102,7 @@ lazy val model =
 
 lazy val example = (project in file("modules/example"))
   .settings(noPublishSettings)
-  .settings(
-    name := "trace4cats-example",
-    libraryDependencies ++= Seq(
-      Dependencies.catsEffect,
-      Dependencies.logback,
-    )
-  )
+  .settings(name := "trace4cats-example", libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.logback))
   .dependsOn(
     model,
     kernel,
