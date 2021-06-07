@@ -139,9 +139,11 @@ Trace4Cats is separated into a few repositories:
   configuring Trace4Cats
 - [`trace4cats-cloudtrace`](https://github.com/trace4cats/trace4cats-cloudtrace) [Google Cloudtrace] exporters
 - [`trace4cats-datadog`](https://github.com/trace4cats/trace4cats-datadog) [Datadog] exporters
+- [`trace4cats-http4s`](https://github.com/trace4cats/trace4cats-http4s) [Http4s] client and server integrations
 - [`trace4cats-jaeger`](https://github.com/trace4cats/trace4cats-jaeger) [Jaeger] exporters
 - [`trace4cats-newrelic`](https://github.com/trace4cats/trace4cats-newrelic) [NewRelic] exporters
 - [`trace4cats-opentelemetry`](https://github.com/trace4cats/trace4cats-opentelemetry) [OpenTelemetry] exporters
+- [`trace4cats-sttp`](https://github.com/trace4cats/trace4cats-sttp) [Sttp] client and [Tapir] integrations
 - [`trace4cats-zipkin`](https://github.com/trace4cats/trace4cats-zipkin) [Zipkin] exporters
 - [`trace4cats-zio`](https://github.com/trace4cats/trace4cats-zio) [ZIO] implementations of Trace4Cats typeclasses
 
