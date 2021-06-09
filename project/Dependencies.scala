@@ -10,7 +10,6 @@ object Dependencies {
     val circe = "0.14.1"
     val embeddedRedis = "0.7.3"
     val fs2 = "3.0.4"
-    val fs2Kafka = "2.1.0"
     val grpc = "1.38.0"
     val hotswapRef = "0.1.0"
     val http4s = "0.23.0-RC1"
@@ -25,7 +24,6 @@ object Dependencies {
     val scala212 = "2.12.14"
     val scala213 = "2.13.6"
     val svm = "19.2.1"
-    val vulcan = "1.7.1"
 
     val catsTestkitScalatest = "2.1.5"
     val disciplineScalatest = "2.1.5"
@@ -44,11 +42,9 @@ object Dependencies {
   lazy val collectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % Versions.collectionCompat
   lazy val circeGeneric = "io.circe"                   %% "circe-generic-extras"    % Versions.circe
   lazy val circeParser = "io.circe"                    %% "circe-parser"            % Versions.circe
-  lazy val embeddedKafka = "io.github.embeddedkafka"   %% "embedded-kafka"          % Versions.kafka
   lazy val embeddedRedis = "it.ozimov"                  % "embedded-redis"          % Versions.embeddedRedis
   lazy val fs2 = "co.fs2"                              %% "fs2-core"                % Versions.fs2
   lazy val fs2Io = "co.fs2"                            %% "fs2-io"                  % Versions.fs2
-  lazy val fs2Kafka = "com.github.fd4s"                %% "fs2-kafka"               % Versions.fs2Kafka
   lazy val grpcOkHttp = "io.grpc"                       % "grpc-okhttp"             % Versions.grpc
   lazy val grpcApi = "io.grpc"                          % "grpc-api"                % Versions.grpc
   lazy val hotswapRef = "io.janstenpickle"             %% "hotswap-ref"             % Versions.hotswapRef
@@ -65,8 +61,6 @@ object Dependencies {
   lazy val redis4catsLog4cats = "dev.profunktor"       %% "redis4cats-log4cats"     % Versions.redis4cats
   lazy val scaffeine = "com.github.blemale"            %% "scaffeine"               % Versions.scaffeine
   lazy val svm = "com.oracle.substratevm"               % "svm"                     % Versions.svm % "provided"
-  lazy val vulcan = "com.github.fd4s"                  %% "vulcan"                  % Versions.vulcan
-  lazy val vulcanGeneric = "com.github.fd4s"           %% "vulcan-generic"          % Versions.vulcan
 
   lazy val catsLaws = "org.typelevel"             %% "cats-laws"              % Versions.cats
   lazy val catsEffectLaws = "org.typelevel"       %% "cats-effect-laws"       % Versions.catsEffect

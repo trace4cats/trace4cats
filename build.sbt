@@ -53,12 +53,6 @@ lazy val root = (project in file("."))
   .settings(noPublishSettings)
   .settings(name := "Trace4Cats")
   .aggregate(
-    avro,
-    `avro-exporter`,
-    `avro-kafka-exporter`,
-    `avro-kafka-consumer`,
-    `avro-server`,
-    `avro-test`,
     base,
     `base-laws`,
     core,
@@ -73,7 +67,6 @@ lazy val root = (project in file("."))
     `graal-kafka`,
     inject,
     `jaeger-integration-test`,
-    `kafka-client`,
     kernel,
     `log-exporter`,
     meta,
@@ -110,7 +103,6 @@ lazy val example = (project in file("modules/example"))
     inject,
     fs2,
     natchez,
-    `avro-exporter`,
     `log-exporter`,
     `tail-sampling`,
     `tail-sampling-cache-store`,
@@ -123,16 +115,6 @@ lazy val testkit = (project in file("modules/testkit"))
   .settings(publishSettings)
   .settings(name := "trace4cats-testkit", libraryDependencies ++= Dependencies.test ++ Seq(Dependencies.fs2))
   .dependsOn(model)
-
-lazy val `avro-test` = (project in file("modules/avro-test"))
-  .settings(noPublishSettings)
-  .settings(
-    name := "trace4cats-avro-test",
-    libraryDependencies ++= Dependencies.test.map(_ % Test),
-    libraryDependencies ++= Seq(Dependencies.logback % Test)
-  )
-  .dependsOn(model)
-  .dependsOn(`avro-exporter`, `avro-server`, testkit % "test->compile")
 
 lazy val kernel =
   (project in file("modules/kernel"))
@@ -167,12 +149,6 @@ lazy val `base-laws` =
     )
     .dependsOn(base)
 
-lazy val avro =
-  (project in file("modules/avro"))
-    .settings(publishSettings)
-    .settings(name := "trace4cats-avro", libraryDependencies ++= Seq(Dependencies.vulcan, Dependencies.vulcanGeneric))
-    .dependsOn(model)
-
 lazy val `log-exporter` =
   (project in file("modules/log-exporter"))
     .settings(publishSettings)
@@ -193,18 +169,6 @@ lazy val `jaeger-integration-test` =
       )
     )
     .dependsOn(kernel, testkit)
-
-lazy val `avro-kafka-exporter` =
-  (project in file("modules/avro-kafka-exporter"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-avro-kafka-exporter",
-      libraryDependencies ++= Seq(Dependencies.fs2Kafka, Dependencies.kafka, Dependencies.log4cats),
-      libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.embeddedKafka)).map(_ % Test),
-      Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary,
-      Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
-    )
-    .dependsOn(model, kernel, `exporter-common`, avro, testkit % "test->compile")
 
 lazy val `exporter-stream` =
   (project in file("modules/exporter-stream"))
@@ -237,31 +201,6 @@ lazy val `exporter-http` =
     )
     .dependsOn(model, kernel)
 
-lazy val `avro-exporter` =
-  (project in file("modules/avro-exporter"))
-    .settings(publishSettings)
-    .settings(name := "trace4cats-avro-exporter", libraryDependencies ++= Seq(Dependencies.fs2, Dependencies.fs2Io))
-    .dependsOn(model, kernel, avro, `exporter-common`)
-
-lazy val `avro-server` =
-  (project in file("modules/avro-server"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-avro-server",
-      libraryDependencies ++= Seq(Dependencies.fs2, Dependencies.fs2Io, Dependencies.log4cats)
-    )
-    .dependsOn(model, avro)
-
-lazy val `avro-kafka-consumer` =
-  (project in file("modules/avro-kafka-consumer"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-avro-kafka-consumer",
-      libraryDependencies ++= Seq(Dependencies.fs2, Dependencies.fs2Kafka, Dependencies.kafka, Dependencies.log4cats),
-      libraryDependencies ++= Seq(Dependencies.embeddedKafka, Dependencies.logback).map(_ % Test)
-    )
-    .dependsOn(model, avro, testkit % "test->compile")
-
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
   .settings(name := "trace4cats-inject", libraryDependencies ++= Seq(Dependencies.catsEffect).map(_ % Test))
@@ -275,11 +214,6 @@ lazy val fs2 = (project in file("modules/fs2"))
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
   .dependsOn(model, kernel, core, inject, `exporter-common` % "test->compile", testkit % "test->compile")
-
-lazy val `kafka-client` = (project in file("modules/kafka-client"))
-  .settings(publishSettings)
-  .settings(name := "trace4cats-kafka-client", libraryDependencies ++= Seq(Dependencies.fs2Kafka))
-  .dependsOn(model, kernel, core, inject, fs2, testkit % "test->compile", `exporter-common` % "test->compile")
 
 lazy val natchez = (project in file("modules/natchez"))
   .settings(publishSettings)

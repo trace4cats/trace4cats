@@ -133,6 +133,8 @@ object Trace4CatsQuickStart extends IOApp {
 
 Trace4Cats is separated into a few repositories:
 
+- [`trace4cats-avro`](https://github.com/trace4cats/trace4cats-avro) [Avro] codecs, TCP/UDP server and exporter
+- [`trace4cats-avro-kafka`](https://github.com/trace4cats/trace4cats-avro-kafka) [Avro] [Kafka] exporter and consumer
 - [`trace4cats-components`](https://github.com/trace4cats/trace4cats-components) standalone Trace4Cats
   [components](#components)
 - [`trace4cats-dynamic-extras`](https://github.com/trace4cats/trace4cats-dynamic-extras) extra utilities for dynamically
@@ -141,6 +143,7 @@ Trace4Cats is separated into a few repositories:
 - [`trace4cats-datadog`](https://github.com/trace4cats/trace4cats-datadog) [Datadog] exporters
 - [`trace4cats-http4s`](https://github.com/trace4cats/trace4cats-http4s) [Http4s] client and server integrations
 - [`trace4cats-jaeger`](https://github.com/trace4cats/trace4cats-jaeger) [Jaeger] exporters
+- [`trace4cats-kafka`](https://github.com/trace4cats/trace4cats-kafka) [FS2 Kafka] integrations
 - [`trace4cats-newrelic`](https://github.com/trace4cats/trace4cats-newrelic) [NewRelic] exporters
 - [`trace4cats-opentelemetry`](https://github.com/trace4cats/trace4cats-opentelemetry) [OpenTelemetry] exporters
 - [`trace4cats-sttp`](https://github.com/trace4cats/trace4cats-sttp) [Sttp] client and [Tapir] integrations
