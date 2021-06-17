@@ -32,7 +32,7 @@ object Dependencies {
     val scaffeine = "4.0.2"
     val scala212 = "2.12.14"
     val scala213 = "2.13.6"
-    val scalapb = "0.11.0"
+    val scalapb = "0.11.1"
     val sttpClient2 = "2.2.9"
     val sttpClient3 = "3.3.5"
     val sttpModel = "1.4.7"
