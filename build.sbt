@@ -64,19 +64,15 @@ lazy val root = (project in file("."))
     `exporter-stream`,
     filtering,
     fs2,
-    `graal-kafka`,
     inject,
     `jaeger-integration-test`,
     kernel,
     `log-exporter`,
     meta,
     model,
-    natchez,
     `rate-sampling`,
     `tail-sampling`,
-    `tail-sampling-cache-store`,
-    `tail-sampling-redis-store`,
-    testkit,
+    testkit
   )
 
 lazy val model =
@@ -96,20 +92,7 @@ lazy val model =
 lazy val example = (project in file("modules/example"))
   .settings(noPublishSettings)
   .settings(name := "trace4cats-example", libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.logback))
-  .dependsOn(
-    model,
-    kernel,
-    core,
-    inject,
-    fs2,
-    natchez,
-    `log-exporter`,
-    `tail-sampling`,
-    `tail-sampling-cache-store`,
-    filtering,
-    `rate-sampling`,
-    meta,
-  )
+  .dependsOn(core, filtering, fs2, inject, kernel, `log-exporter`, meta, model, `rate-sampling`, `tail-sampling`)
 
 lazy val testkit = (project in file("modules/testkit"))
   .settings(publishSettings)
@@ -215,18 +198,6 @@ lazy val fs2 = (project in file("modules/fs2"))
   )
   .dependsOn(model, kernel, core, inject, `exporter-common` % "test->compile", testkit % "test->compile")
 
-lazy val natchez = (project in file("modules/natchez"))
-  .settings(publishSettings)
-  .settings(name := "trace4cats-natchez", libraryDependencies ++= Seq(Dependencies.natchez))
-  .dependsOn(model, kernel, core, inject)
-
-lazy val `graal-kafka` = (project in file("modules/graal-kafka"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-graal-kafka",
-    libraryDependencies ++= Seq(Dependencies.svm, Dependencies.kafka, Dependencies.micronautCore)
-  )
-
 lazy val filtering = (project in file("modules/filtering"))
   .settings(publishSettings)
   .settings(name := "trace4cats-filtering", libraryDependencies ++= Dependencies.test.map(_ % Test))
@@ -259,20 +230,6 @@ lazy val `tail-sampling` = (project in file("modules/tail-sampling"))
   .settings(publishSettings)
   .settings(name := "trace4cats-tail-sampling", libraryDependencies ++= Seq(Dependencies.log4cats))
   .dependsOn(model, kernel, `exporter-stream`)
-
-lazy val `tail-sampling-cache-store` = (project in file("modules/tail-sampling-cache-store"))
-  .settings(publishSettings)
-  .settings(name := "trace4cats-tail-sampling-cache-store", libraryDependencies ++= Seq(Dependencies.scaffeine))
-  .dependsOn(`tail-sampling`)
-
-lazy val `tail-sampling-redis-store` = (project in file("modules/tail-sampling-redis-store"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-tail-sampling-redis-store",
-    libraryDependencies ++= Seq(Dependencies.redis4cats, Dependencies.redis4catsLog4cats, Dependencies.scaffeine),
-    libraryDependencies ++= (Dependencies.test :+ Dependencies.embeddedRedis).map(_ % Test)
-  )
-  .dependsOn(`tail-sampling`, testkit % "test->compile")
 
 addCommandAlias("fmt", "all root/scalafmtSbt root/scalafmtAll")
 addCommandAlias("fmtCheck", "all root/scalafmtSbtCheck root/scalafmtCheckAll")
