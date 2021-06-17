@@ -29,7 +29,7 @@ object Dependencies {
     val natchez = "0.0.26"
     val openTelemetry = "1.3.0"
     val redis4cats = "0.13.1"
-    val scaffeine = "4.0.2"
+    val scaffeine = "4.1.0"
     val scala212 = "2.12.14"
     val scala213 = "2.13.6"
     val scalapb = "0.11.1"
