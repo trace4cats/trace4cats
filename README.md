@@ -135,14 +135,17 @@ Trace4Cats is separated into a few repositories:
 
 - [`trace4cats-avro`](https://github.com/trace4cats/trace4cats-avro) [Avro] codecs, TCP/UDP server and exporter
 - [`trace4cats-avro-kafka`](https://github.com/trace4cats/trace4cats-avro-kafka) [Avro] [Kafka] exporter and consumer
+- [`trace4cats-cloudtrace`](https://github.com/trace4cats/trace4cats-cloudtrace) [Google Cloudtrace] exporters
 - [`trace4cats-components`](https://github.com/trace4cats/trace4cats-components) standalone Trace4Cats
   [components](#components)
+- [`trace4cats-datadog`](https://github.com/trace4cats/trace4cats-datadog) [Datadog] exporters
 - [`trace4cats-dynamic-extras`](https://github.com/trace4cats/trace4cats-dynamic-extras) extra utilities for dynamically
   configuring Trace4Cats
-- [`trace4cats-cloudtrace`](https://github.com/trace4cats/trace4cats-cloudtrace) [Google Cloudtrace] exporters
-- [`trace4cats-datadog`](https://github.com/trace4cats/trace4cats-datadog) [Datadog] exporters
+- [`trace4cats-exporter-http`](https://github.com/trace4cats/trace4cats-exporter-http) HTTP span exporter
 - [`trace4cats-http4s`](https://github.com/trace4cats/trace4cats-http4s) [Http4s] client and server integrations
 - [`trace4cats-jaeger`](https://github.com/trace4cats/trace4cats-jaeger) [Jaeger] exporters
+- [`trace4cats-jaeger-integration-test`](https://github.com/trace4cats/trace4cats-jaeger-integration-test) Integration
+  test for exporters to [Jaeger]
 - [`trace4cats-kafka`](https://github.com/trace4cats/trace4cats-kafka) [FS2 Kafka] integrations
 - [`trace4cats-natchez`](https://github.com/trace4cats/trace4cats-natchez) [Natchez] integrations
 - [`trace4cats-newrelic`](https://github.com/trace4cats/trace4cats-newrelic) [NewRelic] exporters

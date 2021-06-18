@@ -60,12 +60,10 @@ lazy val root = (project in file("."))
     `dynamic-sampling-config`,
     example,
     `exporter-common`,
-    `exporter-http`,
     `exporter-stream`,
     filtering,
     fs2,
     inject,
-    `jaeger-integration-test`,
     kernel,
     `log-exporter`,
     meta,
@@ -91,7 +89,7 @@ lazy val model =
 
 lazy val example = (project in file("modules/example"))
   .settings(noPublishSettings)
-  .settings(name := "trace4cats-example", libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.logback))
+  .settings(name := "trace4cats-example", libraryDependencies ++= Seq(Dependencies.catsEffect))
   .dependsOn(core, filtering, fs2, inject, kernel, `log-exporter`, meta, model, `rate-sampling`, `tail-sampling`)
 
 lazy val testkit = (project in file("modules/testkit"))
@@ -138,21 +136,6 @@ lazy val `log-exporter` =
     .settings(name := "trace4cats-log-exporter", libraryDependencies ++= Seq(Dependencies.log4cats))
     .dependsOn(model, kernel)
 
-lazy val `jaeger-integration-test` =
-  (project in file("modules/jaeger-integration-test"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-jaeger-integration-test",
-      libraryDependencies ++= Dependencies.test,
-      libraryDependencies ++= Seq(
-        Dependencies.circeGeneric,
-        Dependencies.http4sCirce,
-        Dependencies.http4sBlazeClient,
-        Dependencies.logback
-      )
-    )
-    .dependsOn(kernel, testkit)
-
 lazy val `exporter-stream` =
   (project in file("modules/exporter-stream"))
     .settings(publishSettings)
@@ -174,15 +157,6 @@ lazy val meta =
     .settings(publishSettings)
     .settings(name := "trace4cats-meta", libraryDependencies ++= Seq(Dependencies.log4cats))
     .dependsOn(model, kernel, core, `exporter-stream`, `exporter-common` % "test->compile", testkit % "test->compile")
-
-lazy val `exporter-http` =
-  (project in file("modules/exporter-http"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-exporter-http",
-      libraryDependencies ++= Seq(Dependencies.fs2, Dependencies.http4sClient)
-    )
-    .dependsOn(model, kernel)
 
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
