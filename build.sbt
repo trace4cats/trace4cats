@@ -58,7 +58,6 @@ lazy val root = (project in file("."))
     core,
     `dynamic-sampling`,
     `dynamic-sampling-config`,
-    example,
     `exporter-common`,
     `exporter-stream`,
     filtering,
@@ -87,10 +86,6 @@ lazy val model =
       )
     )
 
-lazy val example = (project in file("modules/example"))
-  .settings(noPublishSettings)
-  .settings(name := "trace4cats-example", libraryDependencies ++= Seq(Dependencies.catsEffect))
-  .dependsOn(core, filtering, fs2, inject, kernel, `log-exporter`, meta, model, `rate-sampling`, `tail-sampling`)
 
 lazy val testkit = (project in file("modules/testkit"))
   .settings(publishSettings)
