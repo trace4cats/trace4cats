@@ -12,7 +12,7 @@ object Dependencies {
     val fs2 = "3.0.4"
     val fs2Kafka = "2.1.0"
     val grpc = "1.38.0"
-    val hotswapRef = "0.2.0"
+    val hotswapRef = "0.2.1"
     val http4s = "0.23.0-RC1"
     val kafka = "2.8.0"
     val kittens = "2.3.2"
