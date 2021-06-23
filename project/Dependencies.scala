@@ -8,7 +8,7 @@ object Dependencies {
     val collectionCompat = "2.4.4"
     val commonsCodec = "1.15"
     val fs2 = "3.0.4"
-    val hotswapRef = "0.2.0"
+    val hotswapRef = "0.2.1"
     val kittens = "2.3.2"
     val log4cats = "2.1.1"
     val scala212 = "2.12.14"
@@ -20,6 +20,9 @@ object Dependencies {
     val scalaCheck = "1.15.4"
     val scalaCheckShapeless = "1.3.0"
     val scalaTest = "3.2.9"
+
+    val kindProjector = "0.13.0"
+    val betterMonadicFor = "0.3.1"
   }
 
   lazy val caseInsensitive = "org.typelevel"           %% "case-insensitive"        % Versions.caseInsensitive
@@ -58,4 +61,7 @@ object Dependencies {
       scalacheckShapeless,
       scalaTest
     )
+
+  lazy val kindProjector = ("org.typelevel" % "kind-projector"     % Versions.kindProjector).cross(CrossVersion.full)
+  lazy val betterMonadicFor = "com.olegpy" %% "better-monadic-for" % Versions.betterMonadicFor
 }
