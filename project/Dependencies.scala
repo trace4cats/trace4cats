@@ -11,7 +11,7 @@ object Dependencies {
     val circeYaml = "0.14.0"
     val decline = "1.4.0"
     val embeddedRedis = "0.7.3"
-    val enumeratum = "1.6.1"
+    val enumeratum = "1.7.0"
     val fs2 = "2.5.6"
     val fs2Kafka = "1.7.0"
     val googleCredentials = "0.26.0"
