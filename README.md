@@ -55,14 +55,17 @@ Instrumentation for trace propagation and continuation is available for the foll
 - [FS2 Kafka] consumer and producer
 - [FS2]
 
-**Unlike other tracing libraries, trace attributes are lazily evaluated. If a span is not [sampled](docs/sampling.md),
-no computation associated with calculating attribute values will be performed**
+**Unlike other tracing libraries, trace attributes are lazily evaluated. If a span is not
+[sampled](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/sampling.md), no computation associated with
+calculating attribute values will be performed**
 
-For more information on how to use these can be found in the [examples documentation](docs/examples.md)
+For more information on how to use these can be found in the
+[examples documentation](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/examples.md)
 
 ## Quickstart
 
-**For more see the [documentation](#documentation) for more advanced [examples](docs/examples.md)**
+**For more see the [documentation](#documentation) for more advanced
+[examples](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/examples.md)**
 
 Add the following dependencies to your `build.sbt`:
 
@@ -72,7 +75,8 @@ Add the following dependencies to your `build.sbt`:
 "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC1"
 ```
 
-Then run the [collector](docs/components.md#collectors) in span logging mode:
+Then run the [collector](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/components.md#collectors) in
+span logging mode:
 
 ```bash
 echo "log-spans: true" > /tmp/collector.yaml
@@ -140,6 +144,7 @@ Trace4Cats is separated into a few repositories:
 - [`trace4cats-components`](https://github.com/trace4cats/trace4cats-components) standalone Trace4Cats
   [components](#components)
 - [`trace4cats-datadog`](https://github.com/trace4cats/trace4cats-datadog) [Datadog] exporters
+- [`trace4cats-docs`](https://github.com/trace4cats/trace4cats-docs) documentation and examples
 - [`trace4cats-dynamic-extras`](https://github.com/trace4cats/trace4cats-dynamic-extras) extra utilities for dynamically
   configuring Trace4Cats
 - [`trace4cats-exporter-http`](https://github.com/trace4cats/trace4cats-exporter-http) HTTP span exporter
@@ -171,12 +176,14 @@ The source code for these components is located in the
 
 ## Documentation
 
-- [Design](docs/design.md) - Trace4Cats design
-- [Components](docs/components.md) - running and configuring Trace4Cats components
-- [Topologies](docs/topologies.md) - information on potential Trace4Cats deployment topologies
-- [Sampling](docs/sampling.md) - trace sampling
-- [Filtering](docs/filtering.md) - span attribute filtering
-- [Examples](docs/examples.md) - code usage examples
+- [Design](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/design.md) - Trace4Cats design
+- [Components](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/components.md) - running and configuring
+  Trace4Cats components
+- [Topologies](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/topologies.md) - information on potential
+  Trace4Cats deployment topologies
+- [Sampling](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/sampling.md) - trace sampling
+- [Filtering](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/filtering.md) - span attribute filtering
+- [Examples](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/examples.md) - code usage examples
 
 ## SBT Dependencies
 
