@@ -38,5 +38,6 @@ object ToHeaders {
   val b3: ToHeaders = new B3ToHeaders
   val b3Single: ToHeaders = new B3SingleToHeaders
   val envoy: ToHeaders = new EnvoyToHeaders
-  val all: ToHeaders = w3c |+| b3 |+| b3Single |+| envoy
+  val googleCloudTrace: ToHeaders = new GoogleCloudTraceToHeaders
+  val all: ToHeaders = w3c |+| b3 |+| b3Single |+| envoy |+| googleCloudTrace
 }
