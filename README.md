@@ -1,7 +1,8 @@
 # Trace4Cats
 
-[![Build & Release](https://github.com/trace4cats/trace4cats/workflows/Build%20&%20Release/badge.svg)](https://github.com/trace4cats/trace4cats/actions?query=workflow%3A%22Build+%26+Release%22)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.janstenpickle/trace4cats-core_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.janstenpickle/trace4cats-core_2.13)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/trace4cats/trace4cats/Continuous%20Integration)](https://github.com/trace4cats/trace4cats/actions?query=workflow%3A%22Continuous%20Integration%22)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/trace4cats/trace4cats?label=stable)](https://github.com/trace4cats/trace4cats/releases/latest)
+[![Maven Central](https://img.shields.io/maven-central/v/io.janstenpickle/trace4cats-model_2.13?label=early)](https://maven-badges.herokuapp.com/maven-central/io.janstenpickle/trace4cats-model_2.13)
 [![Join the chat at https://gitter.im/trace4cats/community](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/trace4cats/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
 
@@ -133,17 +134,26 @@ object Trace4CatsQuickStart extends IOApp {
 
 Trace4Cats is separated into a few repositories:
 
+- [`trace4cats-avro`](https://github.com/trace4cats/trace4cats-avro) [Avro] codecs, TCP/UDP server and exporter
+- [`trace4cats-avro-kafka`](https://github.com/trace4cats/trace4cats-avro-kafka) [Avro] [Kafka] exporter and consumer
+- [`trace4cats-cloudtrace`](https://github.com/trace4cats/trace4cats-cloudtrace) [Google Cloudtrace] exporters
 - [`trace4cats-components`](https://github.com/trace4cats/trace4cats-components) standalone Trace4Cats
   [components](#components)
+- [`trace4cats-datadog`](https://github.com/trace4cats/trace4cats-datadog) [Datadog] exporters
 - [`trace4cats-dynamic-extras`](https://github.com/trace4cats/trace4cats-dynamic-extras) extra utilities for dynamically
   configuring Trace4Cats
-- [`trace4cats-cloudtrace`](https://github.com/trace4cats/trace4cats-cloudtrace) [Google Cloudtrace] exporters
-- [`trace4cats-datadog`](https://github.com/trace4cats/trace4cats-datadog) [Datadog] exporters
+- [`trace4cats-exporter-http`](https://github.com/trace4cats/trace4cats-exporter-http) HTTP span exporter
 - [`trace4cats-http4s`](https://github.com/trace4cats/trace4cats-http4s) [Http4s] client and server integrations
 - [`trace4cats-jaeger`](https://github.com/trace4cats/trace4cats-jaeger) [Jaeger] exporters
+- [`trace4cats-jaeger-integration-test`](https://github.com/trace4cats/trace4cats-jaeger-integration-test) Integration
+  test for exporters to [Jaeger]
+- [`trace4cats-kafka`](https://github.com/trace4cats/trace4cats-kafka) [FS2 Kafka] integrations
+- [`trace4cats-natchez`](https://github.com/trace4cats/trace4cats-natchez) [Natchez] integrations
 - [`trace4cats-newrelic`](https://github.com/trace4cats/trace4cats-newrelic) [NewRelic] exporters
 - [`trace4cats-opentelemetry`](https://github.com/trace4cats/trace4cats-opentelemetry) [OpenTelemetry] exporters
 - [`trace4cats-sttp`](https://github.com/trace4cats/trace4cats-sttp) [Sttp] client and [Tapir] integrations
+- [`trace4cats-tail-sampling-extras`](https://github.com/trace4cats/trace4cats-tail-sampling-extras) extra utilities for
+  tail sampling
 - [`trace4cats-zipkin`](https://github.com/trace4cats/trace4cats-zipkin) [Zipkin] exporters
 - [`trace4cats-zio`](https://github.com/trace4cats/trace4cats-zio) [ZIO] implementations of Trace4Cats typeclasses
 
