@@ -1,6 +1,8 @@
 package io.janstenpickle.trace4cats
 
-import cats.implicits._
+import cats.syntax.either._
+import cats.syntax.option._
+import cats.syntax.show._
 import io.janstenpickle.trace4cats.model._
 import org.apache.commons.codec.binary.Hex
 import org.typelevel.ci._
@@ -31,8 +33,6 @@ private[trace4cats] object GoogleCloudTraceToHeaders {
       |;
       |o=(0|1)     # trace enabled flag
       |""".stripMargin.r
-
-  import cats.implicits._
 
   def parse(header: String): Either[Throwable, SpanContext] = header match {
     case headerPattern(traceId, spanId, enabled) =>
