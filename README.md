@@ -59,7 +59,7 @@ Instrumentation for trace propagation and continuation is available for the foll
 [sampled](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/sampling.md), no computation associated with
 calculating attribute values will be performed**
 
-For more information on how to use these can be found in the
+More information on how to use these can be found in the
 [examples documentation](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/examples.md)
 
 ## Quickstart
