@@ -1,8 +1,5 @@
 ThisBuild / scalaVersion := Dependencies.Versions.scala213
-ThisBuild / crossScalaVersions := Seq(
-  Dependencies.Versions.scala213,
-  Dependencies.Versions.scala212
-)
+ThisBuild / crossScalaVersions := Seq(Dependencies.Versions.scala213, Dependencies.Versions.scala212)
 ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
 ThisBuild / githubWorkflowJavaVersions := Seq("adopt@1.8", "adopt@1.11")
 
