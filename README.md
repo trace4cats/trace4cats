@@ -64,7 +64,7 @@ For more information on how to use these can be found in the
 
 ## Quickstart
 
-**For more see the [documentation](#documentation) for more advanced
+**For more see the [documentation](#documentation) and more advanced
 [examples](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/examples.md)**
 
 Add the following dependencies to your `build.sbt`:
