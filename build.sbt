@@ -87,7 +87,11 @@ lazy val kernel =
 lazy val core =
   (project in file("modules/core"))
     .settings(publishSettings)
-    .settings(name := "trace4cats-core", libraryDependencies ++= Dependencies.test.map(_ % Test))
+    .settings(
+      name := "trace4cats-core",
+      libraryDependencies ++= Seq(Dependencies.collectionCompat),
+      libraryDependencies ++= Dependencies.test.map(_ % Test)
+    )
     .dependsOn(model, kernel, testkit % "test->compile", `exporter-common` % "test->compile")
 
 lazy val base =
