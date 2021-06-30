@@ -11,7 +11,7 @@ class B3SingleToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChe
 
   val b3Single = new B3SingleToHeaders
 
-  it should "encode and decode span context headers" in forAll { spanContext: SpanContext =>
+  it should "encode and decode span context headers" in forAll { (spanContext: SpanContext) =>
     assert(
       Eq.eqv(
         b3Single.toContext(b3Single.fromContext(spanContext)),

@@ -26,7 +26,7 @@ trait Span[F[_]] {
     Span.mapK(fk)(this)
 }
 
-case class RefSpan[F[_]: Sync] private (
+case class RefSpan[F[_]: Sync] private[trace4cats] (
   context: SpanContext,
   name: String,
   kind: SpanKind,
@@ -73,7 +73,7 @@ case class RefSpan[F[_]: Sync] private (
 
 }
 
-case class EmptySpan[F[_]: Sync] private (context: SpanContext) extends Span[F] {
+case class EmptySpan[F[_]: Sync] private[trace4cats] (context: SpanContext) extends Span[F] {
   override def put(key: String, value: AttributeValue): F[Unit] = Applicative[F].unit
   override def putAll(fields: (String, AttributeValue)*): F[Unit] = Applicative[F].unit
   override def putAll(fields: Map[String, AttributeValue]): F[Unit] = Applicative[F].unit
@@ -88,7 +88,7 @@ case class EmptySpan[F[_]: Sync] private (context: SpanContext) extends Span[F] 
   override def child(name: String, kind: SpanKind, errorHandler: ErrorHandler): Resource[F, Span[F]] = child(name, kind)
 }
 
-case class NoopSpan[F[_]: Applicative] private (context: SpanContext) extends Span[F] {
+case class NoopSpan[F[_]: Applicative] private[trace4cats] (context: SpanContext) extends Span[F] {
   override def put(key: String, value: AttributeValue): F[Unit] = Applicative[F].unit
   override def putAll(fields: (String, AttributeValue)*): F[Unit] = Applicative[F].unit
   override def putAll(fields: Map[String, AttributeValue]): F[Unit] = Applicative[F].unit

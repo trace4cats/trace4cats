@@ -13,7 +13,7 @@ class EnvoyToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks
 
   val envoy = new EnvoyToHeaders
 
-  it should "encode and decode span context headers" in forAll { spanContext: SpanContext =>
+  it should "encode and decode span context headers" in forAll { (spanContext: SpanContext) =>
     assert(
       Eq.eqv(
         envoy.toContext(envoy.fromContext(spanContext)),

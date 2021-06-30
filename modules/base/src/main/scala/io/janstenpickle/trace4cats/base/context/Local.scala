@@ -5,10 +5,14 @@ import io.janstenpickle.trace4cats.base.optics.Lens
 
 trait Local[F[_], R] extends Ask[F, R] { self =>
   def local[A](fa: F[A])(f: R => R): F[A]
-  def localK(f: R => R): F ~> F = λ[F ~> F](local(_)(f))
+  def localK(f: R => R): F ~> F = new ~>[F, F] {
+    override def apply[A](fa: F[A]): F[A] = local(fa)(f)
+  }
 
   def scope[A](fa: F[A])(r: R): F[A] = local(fa)(_ => r)
-  def scopeK(r: R): F ~> F = λ[F ~> F](scope(_)(r))
+  def scopeK(r: R): F ~> F = new ~>[F, F] {
+    override def apply[A](fa: F[A]): F[A] = scope(fa)(r)
+  }
 
   def focus[R1](lens: Lens[R, R1]): Local[F, R1] = new Local[F, R1] {
     def F: Monad[F] = self.F

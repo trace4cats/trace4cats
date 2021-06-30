@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.base.optics
 
-trait Getter[S, A] { self =>
+@FunctionalInterface trait Getter[S, A] { self =>
   def get(s: S): A
 
   def composeGetter[T](other: Getter[T, S]): Getter[T, A] = s => self.get(other.get(s))

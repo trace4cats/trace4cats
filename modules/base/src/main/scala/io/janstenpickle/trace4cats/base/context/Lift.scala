@@ -7,7 +7,9 @@ trait Lift[Low[_], F[_]] extends ContextRoot { self =>
   def F: Monad[F]
 
   def lift[A](la: Low[A]): F[A]
-  def liftK: Low ~> F = λ[Low ~> F](lift(_))
+  def liftK: Low ~> F = new ~>[Low, F] {
+    override def apply[A](fa: Low[A]): F[A] = lift(fa)
+  }
 
   def mapK[G[_]: Monad](fk: F ~> G): Lift[Low, G] = new Lift[Low, G] {
     def Low: Monad[Low] = self.Low
