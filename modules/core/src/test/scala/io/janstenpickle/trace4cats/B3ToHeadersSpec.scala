@@ -20,7 +20,7 @@ class B3ToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wi
 
   val b3 = new B3ToHeaders
 
-  it should "encode and decode span context headers" in forAll { spanContext: SpanContext =>
+  it should "encode and decode span context headers" in forAll { (spanContext: SpanContext) =>
     assert(
       Eq.eqv(
         b3.toContext(b3.fromContext(spanContext)),

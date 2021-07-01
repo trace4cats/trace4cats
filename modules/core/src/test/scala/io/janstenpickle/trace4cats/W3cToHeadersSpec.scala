@@ -19,7 +19,7 @@ class W3cToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks w
 
   val w3c = new W3cToHeaders
 
-  it should "encode and decode span context headers" in forAll { spanContext: SpanContext =>
+  it should "encode and decode span context headers" in forAll { (spanContext: SpanContext) =>
     assert(
       Eq[Option[SpanContext]]
         .eqv(w3c.toContext(w3c.fromContext(spanContext)), Some(spanContext.copy(parent = None, isRemote = true)))
