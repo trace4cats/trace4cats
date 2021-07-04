@@ -2,27 +2,27 @@ pull_request_rules:
   - name: Request reviews and label Stewards' PRs
     conditions:
       - or:
-        - author=scala-steward
-        - author=trace4cats-steward[bot]
+          - author=scala-steward
+          - author=trace4cats-steward[bot]
     actions:
       request_reviews:
-        users: [janstenpickle, catostrophe]
+        users: [ janstenpickle, catostrophe ]
       label:
-        add: [dependency-update]
+        add: [ dependency-update ]
 
   - name: Automatically merge Stewards' PRs
     conditions:
       - or:
-        - author=scala-steward
-        - author=trace4cats-steward[bot]
+          - author=scala-steward
+          - author=trace4cats-steward[bot]
       - or:
-        - and:
-          - "#files=1"
-          - or:
-            - files=project/build.properties
-            - files=project/plugins.sbt
-        - body~=labels:.*semver-patch
-        - "#approved-reviews-by>=1"          
+          - and:
+              - "#files=1"
+              - or:
+                  - files=project/build.properties
+                  - files=project/plugins.sbt
+          - body~=labels:.*semver-patch
+          - "#approved-reviews-by>=1"
       - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.8\)
       - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.11\)
       - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.8\)
