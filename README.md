@@ -234,6 +234,8 @@ This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-
 (mailing list, Gitter, github, etc.) to be welcoming environments for everyone.
 
 
+[Avro]: https://avro.apache.org
+[Kafka]: https://kafka.apache.org
 [FS2]: https://fs2.io/
 [Http4s]: https://http4s.org/
 [Jaeger]: https://www.jaegertracing.io/
