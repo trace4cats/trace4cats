@@ -1,59 +1,56 @@
 pull_request_rules:
-  - name: request reviews and label scala-steward's PRs
+  - name: Request reviews and label Stewards' PRs
     conditions:
-      - author=scala-steward
+      - or:
+          - author=scala-steward
+          - author=trace4cats-steward[bot]
     actions:
       request_reviews:
-        users: [janstenpickle, catostrophe]
+        users: [ janstenpickle, catostrophe ]
       label:
-        add: [dependency-update]
+        add: [ dependency-update ]
 
-  - name: automatically merge scala-steward's PRs affecting project plugins
+  - name: Merge Stewards' PRs
     conditions:
-      - author=scala-steward
-      - status-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.8\)
-      - status-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.11\)
-      - status-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.8\)
-      - status-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.11\)
-      - "#files=1"
-      - files=project/plugins.sbt
+      - or:
+          - author=scala-steward
+          - author=trace4cats-steward[bot]
+      - or:
+          - and:
+              - "#files=1"
+              - or:
+                  - files=project/build.properties
+                  - files=project/plugins.sbt
+          - body~=labels:.*semver-patch
+          - "#approved-reviews-by>=1"
+      - and:
+          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.8\)
+          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.11\)
+          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.8\)
+          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.11\)
     actions:
       merge:
-        method: merge
+        method: rebase
 
-  - name: automatically merge scala-steward's PRs affecting project build properties
+  - name: Merge PRs via Mergify to skip the release step on CI
     conditions:
-      - author=scala-steward
-      - status-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.8\)
-      - status-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.11\)
-      - status-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.8\)
-      - status-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.11\)
-      - "#files=1"
-      - files=project/build.properties
+      - or:
+          - author=janstenpickle
+          - author=catostrophe
+      - and:
+          - label=skip-release
+          - label=ready-to-merge
+      - and:
+          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.8\)
+          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.11\)
+          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.8\)
+          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.11\)
     actions:
       merge:
-        method: merge
+        method: rebase
 
-  - name: automatically merge scala-steward's PRs updating semver-patch versions
+  - name: Delete head branch after merge
     conditions:
-      - author=scala-steward
-      - status-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.8\)
-      - status-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.11\)
-      - status-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.8\)
-      - status-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.11\)
-      - body~=labels:.*semver-patch
+      - merged
     actions:
-      merge:
-        method: merge
-
-  - name: automatically merge other scala-steward's PRs reviewed by 1 maintainer
-    conditions:
-      - author=scala-steward
-      - status-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.8\)
-      - status-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.11\)
-      - status-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.8\)
-      - status-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.11\)
-      - "#approved-reviews-by>=1"
-    actions:
-      merge:
-        method: merge
+      delete_head_branch:
