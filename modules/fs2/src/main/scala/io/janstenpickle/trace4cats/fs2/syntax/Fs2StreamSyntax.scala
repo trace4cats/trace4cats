@@ -183,7 +183,7 @@ trait Fs2StreamSyntax {
         span.mapK(fk) -> a
       })
 
-    def traceHeaders: TracedStream[F, (TraceHeaders, A)] = traceHeaders(ToHeaders.all)
+    def traceHeaders: TracedStream[F, (TraceHeaders, A)] = traceHeaders(ToHeaders.standard)
 
     def traceHeaders(toHeaders: ToHeaders): TracedStream[F, (TraceHeaders, A)] =
       WriterT(stream.run.map { case (span, a) =>
@@ -191,7 +191,7 @@ trait Fs2StreamSyntax {
       })
 
     def mapTraceHeaders[B](f: (TraceHeaders, A) => B): TracedStream[F, B] =
-      mapTraceHeaders[B](ToHeaders.all)(f)
+      mapTraceHeaders[B](ToHeaders.standard)(f)
 
     def mapTraceHeaders[B](toHeaders: ToHeaders)(f: (TraceHeaders, A) => B): TracedStream[F, B] =
       WriterT(stream.run.map { case (span, a) =>
@@ -199,7 +199,7 @@ trait Fs2StreamSyntax {
       })
 
     def evalMapTraceHeaders[B](f: (TraceHeaders, A) => F[B])(implicit F: Functor[F]): TracedStream[F, B] =
-      evalMapTraceHeaders(ToHeaders.all)(f)
+      evalMapTraceHeaders(ToHeaders.standard)(f)
 
     def evalMapTraceHeaders[B](toHeaders: ToHeaders)(f: (TraceHeaders, A) => F[B])(implicit
       F: Functor[F]

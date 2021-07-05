@@ -186,7 +186,7 @@ class Fs2StreamSyntaxSpec
     (spanName: String, serviceName: String, element: String, parent: SpanContext) =>
       val rootName = s"root-$element"
 
-      val parentHeaders = ToHeaders.all.fromContext(parent.copy(traceFlags = TraceFlags(SampleDecision.Include)))
+      val parentHeaders = ToHeaders.standard.fromContext(parent.copy(traceFlags = TraceFlags(SampleDecision.Include)))
 
       val res = (for {
         completer <- RefSpanCompleter[IO](serviceName)
@@ -213,7 +213,7 @@ class Fs2StreamSyntaxSpec
     (spanName: String, serviceName: String, element: String, parent: SpanContext) =>
       val rootName = s"root-$element"
 
-      val parentHeaders = ToHeaders.all.fromContext(parent.copy(traceFlags = TraceFlags(SampleDecision.Drop)))
+      val parentHeaders = ToHeaders.standard.fromContext(parent.copy(traceFlags = TraceFlags(SampleDecision.Drop)))
 
       val res = (for {
         completer <- RefSpanCompleter[IO](serviceName)

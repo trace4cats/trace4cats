@@ -38,5 +38,13 @@ object ToHeaders {
   val b3: ToHeaders = new B3ToHeaders
   val b3Single: ToHeaders = new B3SingleToHeaders
   val envoy: ToHeaders = new EnvoyToHeaders
-  val all: ToHeaders = w3c |+| b3 |+| b3Single |+| envoy
+  val googleCloudTrace: ToHeaders = new GoogleCloudTraceToHeaders
+
+  /** Convert trace context to/from open standard trace headers
+    */
+  val standard: ToHeaders = w3c |+| b3 |+| b3Single
+
+  /** Convert trace context to/from open standard and non-standard trace headers
+    */
+  val all: ToHeaders = standard |+| envoy |+| googleCloudTrace
 }

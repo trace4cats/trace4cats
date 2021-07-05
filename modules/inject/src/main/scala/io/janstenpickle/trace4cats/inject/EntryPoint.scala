@@ -50,10 +50,20 @@ trait EntryPoint[F[_]] {
 object EntryPoint {
   def apply[F[_]](implicit entryPoint: EntryPoint[F]): EntryPoint[F] = entryPoint
 
+  /** Create a trace entrypoint for starting or continuing a trace
+    *
+    * @param sampler [[io.janstenpickle.trace4cats.kernel.SpanSampler]] implementation
+    * @param completer [[io.janstenpickle.trace4cats.kernel.SpanCompleter]] implementation
+    * @param toHeaders [[io.janstenpickle.trace4cats.ToHeaders]] implementation. Converts span context to headers that
+    *                  may be propagated outside of the application. Defaults to `ToHeaders.standard`, which is a
+    *                  collection of headers that conform to open standards. Other header implementations that do not
+    *                  conform to open standards are supported. See [[io.janstenpickle.trace4cats.ToHeaders]] for
+    *                  details or use `ToHeaders.all`
+    */
   def apply[F[_]: Sync](
     sampler: SpanSampler[F],
     completer: SpanCompleter[F],
-    toHeaders: ToHeaders = ToHeaders.all
+    toHeaders: ToHeaders = ToHeaders.standard
   ): EntryPoint[F] =
     new EntryPoint[F] {
       override def root(name: SpanName, kind: SpanKind, errorHandler: ErrorHandler): Resource[F, Span[F]] =
