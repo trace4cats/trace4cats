@@ -24,7 +24,18 @@ trait Trace[F[_]] {
     span(name, SpanKind.Internal, errorHandler)(fa)
   def span[A](name: String, kind: SpanKind)(fa: F[A]): F[A] = span(name, kind, ErrorHandler.empty)(fa)
   def span[A](name: String, kind: SpanKind, errorHandler: ErrorHandler)(fa: F[A]): F[A]
-  def headers: F[TraceHeaders] = headers(ToHeaders.all)
+  def headers: F[TraceHeaders] = headers(ToHeaders.standard)
+
+  /** Convert the span context into headers may be propagated outside of the application
+    *
+    * @param toHeaders [[io.janstenpickle.trace4cats.ToHeaders]] implementation. Converts span context to headers that
+    *                  may be propagated outside of the application. Defaults to `ToHeaders.standard`, which is a
+    *                  collection of headers that conform to open standards. Other header implementations that do not
+    *                  conform to open standards are supported. See [[io.janstenpickle.trace4cats.ToHeaders]] for
+    *                  details or use `ToHeaders.all`
+    *
+    * @return [[io.janstenpickle.trace4cats.model.TraceHeaders]]
+    */
   def headers(toHeaders: ToHeaders): F[TraceHeaders]
   def setStatus(status: SpanStatus): F[Unit]
   def traceId: F[Option[String]]
