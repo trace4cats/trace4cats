@@ -10,7 +10,7 @@ pull_request_rules:
       label:
         add: [ dependency-update ]
 
-  - name: Automatically merge Stewards' PRs
+  - name: Merge Stewards' PRs
     conditions:
       - or:
           - author=scala-steward
@@ -23,10 +23,34 @@ pull_request_rules:
                   - files=project/plugins.sbt
           - body~=labels:.*semver-patch
           - "#approved-reviews-by>=1"
-      - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.8\)
-      - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.11\)
-      - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.8\)
-      - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.11\)
+      - and:
+          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.8\)
+          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.11\)
+          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.8\)
+          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.11\)
     actions:
       merge:
-        method: merge
+        method: rebase
+
+  - name: Merge PRs via Mergify to skip the release step on CI
+    conditions:
+      - or:
+          - author=janstenpickle
+          - author=catostrophe
+      - and:
+          - label=skip-release
+          - label=ready-to-merge
+      - and:
+          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.8\)
+          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.11\)
+          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.8\)
+          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.11\)
+    actions:
+      merge:
+        method: rebase
+
+  - name: Delete head branch after merge
+    conditions:
+      - merged
+    actions:
+      delete_head_branch:
