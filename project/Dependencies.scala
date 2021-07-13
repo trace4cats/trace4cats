@@ -16,6 +16,7 @@ object Dependencies {
     val fs2Kafka = "1.7.0"
     val googleCredentials = "0.26.0"
     val googleCloudTrace = "1.4.2"
+    val graalKafkaClient = "0.1.0"
     val grpc = "1.39.0"
     val http4s = "0.21.24"
     val http4sJdkClient = "0.3.7"
@@ -25,7 +26,6 @@ object Dependencies {
     val kittens = "2.3.2"
     val log4cats = "1.3.1"
     val logback = "1.2.3"
-    val micronaut = "2.5.7"
     val natchez = "0.0.26"
     val openTelemetry = "1.4.0"
     val redis4cats = "0.14.0"
@@ -36,8 +36,7 @@ object Dependencies {
     val sttpClient2 = "2.2.9"
     val sttpClient3 = "3.3.9"
     val sttpModel = "1.4.7"
-    val sttpTapir = "0.17.20" //0.18.0
-    val svm = "19.2.1"
+    val sttpTapir = "0.17.20"
     val vulcan = "1.7.1"
     val zioInterop = "2.5.1.0"
 
@@ -68,6 +67,7 @@ object Dependencies {
   lazy val fs2 = "co.fs2"                                      %% "fs2-core"                        % Versions.fs2
   lazy val fs2Io = "co.fs2"                                    %% "fs2-io"                          % Versions.fs2
   lazy val fs2Kafka = "com.github.fd4s"                        %% "fs2-kafka"                       % Versions.fs2Kafka
+  lazy val graalKafkaClient = "io.janstenpickle"                % "graal-kafka-client"              % Versions.graalKafkaClient
   lazy val grpcOkHttp = "io.grpc"                               % "grpc-okhttp"                     % Versions.grpc
   lazy val grpcApi = "io.grpc"                                  % "grpc-api"                        % Versions.grpc
   lazy val http4sClient = "org.http4s"                         %% "http4s-client"                   % Versions.http4s
@@ -84,7 +84,6 @@ object Dependencies {
   lazy val kittens = "org.typelevel"                           %% "kittens"                         % Versions.kittens
   lazy val log4cats = "org.typelevel"                          %% "log4cats-slf4j"                  % Versions.log4cats
   lazy val logback = "ch.qos.logback"                           % "logback-classic"                 % Versions.logback
-  lazy val micronautCore = "io.micronaut"                       % "micronaut-core"                  % Versions.micronaut
   lazy val natchez = "org.tpolecat"                            %% "natchez-core"                    % Versions.natchez
   lazy val openTelemetrySdk = "io.opentelemetry"                % "opentelemetry-sdk"               % Versions.openTelemetry
   lazy val openTelemetryOtlpExporter = "io.opentelemetry"       % "opentelemetry-exporter-otlp"     % Versions.openTelemetry
@@ -102,7 +101,6 @@ object Dependencies {
   lazy val sttpTapir = "com.softwaremill.sttp.tapir"           %% "tapir-cats"                      % Versions.sttpTapir
   lazy val sttpTapirJsonCirce = "com.softwaremill.sttp.tapir"  %% "tapir-json-circe"                % Versions.sttpTapir
   lazy val sttpTapirHttp4s = "com.softwaremill.sttp.tapir"     %% "tapir-http4s-server"             % Versions.sttpTapir
-  lazy val svm = "com.oracle.substratevm"                       % "svm"                             % Versions.svm % "provided"
   lazy val vulcan = "com.github.fd4s"                          %% "vulcan"                          % Versions.vulcan
   lazy val vulcanGeneric = "com.github.fd4s"                   %% "vulcan-generic"                  % Versions.vulcan
   lazy val vulcanEnumeratum = "com.github.fd4s"                %% "vulcan-enumeratum"               % Versions.vulcan

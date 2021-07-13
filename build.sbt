@@ -112,7 +112,6 @@ lazy val root = (project in file("."))
     `exporter-stream`,
     filtering,
     fs2,
-    `graal-kafka`,
     `http4s-client`,
     `http4s-common`,
     `http4s-server`,
@@ -680,13 +679,6 @@ lazy val natchez = (project in file("modules/natchez"))
   .settings(name := "trace4cats-natchez", libraryDependencies ++= Seq(Dependencies.natchez))
   .dependsOn(model, kernel, core, inject)
 
-lazy val `graal-kafka` = (project in file("modules/graal-kafka"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-graal-kafka",
-    libraryDependencies ++= Seq(Dependencies.svm, Dependencies.kafka, Dependencies.micronautCore)
-  )
-
 lazy val `agent-common` = (project in file("modules/agent-common"))
   .settings(publishSettings)
   .settings(
@@ -710,8 +702,8 @@ lazy val agent = (project in file("modules/agent"))
 lazy val `agent-kafka` = (project in file("modules/agent-kafka"))
   .settings(noPublishSettings)
   .settings(graalSettings)
-  .settings(name := "trace4cats-agent-kafka")
-  .dependsOn(model, `avro-kafka-exporter`, `exporter-common`, `graal-kafka`, `agent-common`)
+  .settings(name := "trace4cats-agent-kafka", libraryDependencies += Dependencies.graalKafkaClient)
+  .dependsOn(model, `avro-kafka-exporter`, `exporter-common`, `agent-common`)
   .enablePlugins(GraalVMNativeImagePlugin)
 
 lazy val filtering = (project in file("modules/filtering"))
@@ -841,7 +833,8 @@ lazy val `collector-lite` = (project in file("modules/collector-lite"))
       Dependencies.declineEffect,
       Dependencies.fs2,
       Dependencies.log4cats,
-      Dependencies.logback
+      Dependencies.logback,
+      Dependencies.graalKafkaClient
     )
   )
   .dependsOn(
@@ -854,8 +847,7 @@ lazy val `collector-lite` = (project in file("modules/collector-lite"))
     `jaeger-thrift-exporter`,
     `log-exporter`,
     `opentelemetry-otlp-http-exporter`,
-    `stackdriver-http-exporter`,
-    `graal-kafka`
+    `stackdriver-http-exporter`
   )
   .enablePlugins(GraalVMNativeImagePlugin)
 
