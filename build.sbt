@@ -170,7 +170,7 @@ lazy val example = (project in file("modules/example"))
       Dependencies.http4sBlazeClient,
       Dependencies.http4sBlazeServer,
       Dependencies.http4sDsl,
-      Dependencies.sttpClient2Http4s
+      Dependencies.sttpClient3Http4s
     )
   )
   .dependsOn(
@@ -191,7 +191,7 @@ lazy val example = (project in file("modules/example"))
     `opentelemetry-otlp-http-exporter`,
     `stackdriver-grpc-exporter`,
     `stackdriver-http-exporter`,
-    `sttp-client`,
+    `sttp-client3`,
     `tail-sampling`,
     `tail-sampling-cache-store`,
     filtering,
@@ -609,18 +609,13 @@ lazy val `sttp-client` = (project in file("modules/sttp-client"))
   .settings(
     name := "trace4cats-sttp-client",
     libraryDependencies ++= Seq(Dependencies.sttpClient2),
-    libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.http4sDsl, Dependencies.sttpClient2Http4s))
+    libraryDependencies ++= (Dependencies.test ++ Seq(
+      Dependencies.http4sDsl.withRevision(Dependencies.Versions.http4sLegacy),
+      Dependencies.sttpClient2Http4s
+    ))
       .map(_ % Test)
   )
-  .dependsOn(
-    model,
-    kernel,
-    core,
-    inject,
-    test              % "test->compile",
-    `exporter-common` % "test->compile",
-    `http4s-common`   % "test->test"
-  )
+  .dependsOn(model, kernel, core, inject, test % "test->compile", `exporter-common` % "test->compile")
 
 lazy val `sttp-client3` = (project in file("modules/sttp-client3"))
   .settings(publishSettings)

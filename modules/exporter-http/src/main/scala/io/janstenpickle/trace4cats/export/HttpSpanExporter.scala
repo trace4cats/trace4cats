@@ -8,7 +8,6 @@ import cats.syntax.functor._
 import fs2.Stream
 import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch
-import org.http4s.Method.PermitsBody
 import org.http4s._
 import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl
@@ -34,7 +33,7 @@ object HttpSpanExporter {
       uri,
       makePayload,
       Applicative[F].pure(_),
-      Applicative[F].pure(List.empty[Header]),
+      Applicative[F].pure(List.empty[Header.ToRaw]),
       Method.POST,
       List(`Content-Type`(MediaType.application.json))
     )
@@ -43,14 +42,14 @@ object HttpSpanExporter {
     client: Client[F],
     uri: String,
     makePayload: Batch[G] => A,
-    staticHeaders: List[Header]
+    staticHeaders: List[Header.ToRaw]
   )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F, G]] =
     apply(
       client,
       uri,
       makePayload,
       Applicative[F].pure(_),
-      Applicative[F].pure(List.empty[Header]),
+      Applicative[F].pure(List.empty[Header.ToRaw]),
       Method.POST,
       staticHeaders
     )
@@ -66,23 +65,20 @@ object HttpSpanExporter {
       uri,
       makePayload,
       updatedUri,
-      Applicative[F].pure(List.empty[Header]),
+      Applicative[F].pure(List.empty[Header.ToRaw]),
       Method.POST,
       List(`Content-Type`(MediaType.application.json))
     )
 
-  def apply[F[_]: Sync: Timer, G[_], A](
-    client: Client[F],
-    uri: String,
-    makePayload: Batch[G] => A,
-    method: Method with PermitsBody
-  )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F, G]] =
+  def apply[F[_]: Sync: Timer, G[_], A](client: Client[F], uri: String, makePayload: Batch[G] => A, method: Method)(
+    implicit encoder: EntityEncoder[F, A]
+  ): F[SpanExporter[F, G]] =
     apply(
       client,
       uri,
       makePayload,
       Applicative[F].pure(_),
-      Applicative[F].pure(List.empty[Header]),
+      Applicative[F].pure(List.empty[Header.ToRaw]),
       method,
       List(`Content-Type`(MediaType.application.json))
     )
@@ -91,7 +87,7 @@ object HttpSpanExporter {
     client: Client[F],
     uri: String,
     makePayload: Batch[G] => A,
-    dynamicHeaders: F[List[Header]]
+    dynamicHeaders: F[List[Header.ToRaw]]
   )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F, G]] =
     apply(
       client,
@@ -108,9 +104,9 @@ object HttpSpanExporter {
     uri: String,
     makePayload: Batch[G] => A,
     updatedUri: Uri => F[Uri],
-    dynamicHeaders: F[List[Header]],
-    method: Method with PermitsBody,
-    staticHeaders: List[Header]
+    dynamicHeaders: F[List[Header.ToRaw]],
+    method: Method,
+    staticHeaders: List[Header.ToRaw]
   )(implicit encoder: EntityEncoder[F, A]): F[SpanExporter[F, G]] =
     Uri.fromString(uri).liftTo[F].map { parsedUri =>
       new SpanExporter[F, G] with Http4sClientDsl[F] {
@@ -118,7 +114,7 @@ object HttpSpanExporter {
           for {
             u <- updatedUri(parsedUri)
             dynHeaders <- dynamicHeaders
-            req <- method(makePayload(batch), u, staticHeaders ++ dynHeaders: _*)
+            req = method(makePayload(batch), u, staticHeaders ++ dynHeaders: _*)
             _ <-
               Stream
                 .retry(

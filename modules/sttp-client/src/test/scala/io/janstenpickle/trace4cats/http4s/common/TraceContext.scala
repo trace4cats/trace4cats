@@ -8,15 +8,15 @@ import cats.syntax.functor._
 import io.janstenpickle.trace4cats.base.optics.{Getter, Lens}
 import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import io.janstenpickle.trace4cats.model.TraceHeaders
-import org.typelevel.ci._
+import org.http4s.syntax.string._
 
 case class TraceContext[F[_]](correlationId: String, span: Span[F])
 
 object TraceContext {
   def make[F[_]: Sync](req: Request_, span: Span[F]): F[TraceContext[F]] =
     req.headers
-      .get(ci"X-Correlation-ID")
-      .fold(Sync[F].delay(UUID.randomUUID().toString))(h => h.head.value.pure)
+      .get("X-Correlation-ID".ci)
+      .fold(Sync[F].delay(UUID.randomUUID().toString))(h => h.value.pure)
       .map(TraceContext(_, span))
 
   def empty[F[_]: BracketThrow]: F[TraceContext[F]] =

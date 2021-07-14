@@ -1,11 +1,9 @@
 package io.janstenpickle.trace4cats.example
 
 import cats.effect.{Blocker, ExitCode, IO, IOApp}
-import io.janstenpickle.trace4cats.sttp.client.syntax._
-import org.http4s.EntityBody
-import org.http4s.client.blaze.BlazeClientBuilder
-import sttp.client.SttpBackend
-import sttp.client.http4s.Http4sBackend
+import io.janstenpickle.trace4cats.sttp.client3.syntax._
+import org.http4s.blaze.client.BlazeClientBuilder
+import sttp.client3.http4s.Http4sBackend
 
 import scala.concurrent.ExecutionContext
 
@@ -15,7 +13,7 @@ object SttpExample extends IOApp {
     (for {
       blocker <- Blocker[IO]
       client <- BlazeClientBuilder[IO](ExecutionContext.global).resource
-      sttpBackend = Http4sBackend.usingClient(client, blocker): SttpBackend[IO, EntityBody[IO], INothingT]
+      sttpBackend = Http4sBackend.usingClient(client, blocker)
       tracedBackend = sttpBackend.liftTrace()
     } yield tracedBackend).use { _ =>
       IO(ExitCode.Success)

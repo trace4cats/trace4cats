@@ -10,10 +10,10 @@ import io.janstenpickle.trace4cats.http4s.server.syntax._
 import io.janstenpickle.trace4cats.model.TraceProcess
 import org.http4s.HttpRoutes
 import org.http4s.client.Client
-import org.http4s.client.blaze.BlazeClientBuilder
+import org.http4s.blaze.client.BlazeClientBuilder
 import org.http4s.dsl.Http4sDsl
 import org.http4s.implicits._
-import org.http4s.server.blaze.BlazeServerBuilder
+import org.http4s.blaze.server.BlazeServerBuilder
 
 import scala.concurrent.ExecutionContext
 

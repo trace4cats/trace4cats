@@ -27,7 +27,7 @@ object Http4sRequestFilter {
     val paths: Set[String] = Set(first) ++ others
 
     { case req =>
-      !paths.contains(Uri.decode(req.uri.path))
+      !paths.contains(Uri.decode(req.uri.path.toString))
     }
   }
 }
