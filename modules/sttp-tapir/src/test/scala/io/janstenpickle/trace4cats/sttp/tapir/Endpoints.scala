@@ -28,7 +28,7 @@ class Endpoints[F[_]: Sync, G[_]: BracketThrow: Trace] {
       .in("devices" / path[Int]("deviceId"))
       .in(header[Option[String]]("X-Auth-Token"))
       .in(headers.map(Headers.apply _)(_.headers.toList))
-      .out(anyJsonBody[Device])
+      .out(customJsonBody[Device])
       .errorOut(ErrorInfo.endpointOutput)
       .serverLogic { case (id, _, _) =>
         //some logic that returns Either[E, O]
@@ -42,7 +42,7 @@ class Endpoints[F[_]: Sync, G[_]: BracketThrow: Trace] {
       .in("vendors" / path[Int]("vendorId"))
       .in(header[Option[String]]("X-Auth-Token"))
       .in(headers.map(Headers.apply _)(_.headers.toList))
-      .out(anyJsonBody[Vendor])
+      .out(customJsonBody[Vendor])
       .errorOut(ErrorInfoException.endpointOutput)
       .serverLogicRecoverErrors { case (id, _, _) =>
         //some logic that raises errors via MonadThrow

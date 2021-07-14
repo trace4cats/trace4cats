@@ -7,7 +7,7 @@ import cats.effect.{Resource, Sync, Timer}
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.{~>, ApplicativeError, Id}
+import cats.{~>, ApplicativeThrow, Id}
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.http4s.common.{Http4sRequestFilter, Http4sStatusMapping}
 import io.janstenpickle.trace4cats.inject.EntryPoint
@@ -60,7 +60,7 @@ abstract class BaseServerTracerSpec[F[_]: Sync: Timer, G[_]: Sync](
 
     evaluateTrace(app, app.orNotFound) { spans =>
       spans.size should be(1)
-      spans.head.name should be("GET ")
+      spans.head.name should be("GET /")
       spans.head.kind should be(SpanKind.Server)
       spans.head.status should be(SpanStatus.Ok)
     }
@@ -68,12 +68,12 @@ abstract class BaseServerTracerSpec[F[_]: Sync: Timer, G[_]: Sync](
 
   it should "correctly set span status when the server throws an exception" in forAll { errorMsg: String =>
     val app = HttpRoutes.of[G] { case GET -> Root =>
-      ApplicativeError[G, Throwable].raiseError(new RuntimeException(errorMsg))
+      ApplicativeThrow[G].raiseError(new RuntimeException(errorMsg))
     }
 
     evaluateTrace(app, app.orNotFound) { spans =>
       spans.size should be(1)
-      spans.head.name should be("GET ")
+      spans.head.name should be("GET /")
       spans.head.kind should be(SpanKind.Server)
       spans.head.status should be(SpanStatus.Internal(errorMsg))
     }
@@ -89,7 +89,7 @@ abstract class BaseServerTracerSpec[F[_]: Sync: Timer, G[_]: Sync](
 
     evaluateTrace(app, app.orNotFound) { spans =>
       spans.size should be(1)
-      spans.head.name should be("GET ")
+      spans.head.name should be("GET /")
       spans.head.kind should be(SpanKind.Server)
       spans.head.status should be(expectedStatus)
     }
@@ -129,7 +129,7 @@ abstract class BaseServerTracerSpec[F[_]: Sync: Timer, G[_]: Sync](
       val paths = NEPaths.toList.toSet.map("/" + _)
 
       val app = HttpRoutes.of[G] {
-        case req if paths.contains(Uri.decode(req.uri.path)) => Ok()
+        case req if paths.contains(Uri.decode(req.uri.path.toString)) => Ok()
         case GET -> Root => Ok()
       }
 
@@ -147,7 +147,7 @@ abstract class BaseServerTracerSpec[F[_]: Sync: Timer, G[_]: Sync](
     routes: HttpRoutes[G],
     app: HttpApp[G],
     filter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
-    paths: NonEmptyList[String] = NonEmptyList.one("/")
+    paths: NonEmptyList[String] = NonEmptyList.one("")
   )(fa: Queue[CompletedSpan] => Assertion): Assertion = {
     val clientDsl = new Http4sClientDsl[F] {}
     import clientDsl._
@@ -160,7 +160,7 @@ abstract class BaseServerTracerSpec[F[_]: Sync: Timer, G[_]: Sync](
         } yield (f(ep), completer))
           .use { case (app, completer) =>
             for {
-              _ <- paths.traverse(path => GET(Uri.unsafeFromString(s"/$path")).flatMap(app.run).attempt)
+              _ <- paths.traverse(path => app.run(GET(Uri.unsafeFromString(s"/$path"))).attempt)
               spans <- completer.get
             } yield fa(spans)
           }

@@ -57,7 +57,7 @@ abstract class BaseClientTracerSpec[F[_]: Sync: Timer, G[_]: Sync: Trace, Ctx](
 
   it should "correctly set request headers and span status when the response body is not read" in test(_.status(_).void)
 
-  def test(runReq: (Client[G], G[Request[G]]) => G[Unit]): Assertion =
+  def test(runReq: (Client[G], Request[G]) => G[Unit]): Assertion =
     forAll { (rootSpan: String, req1Span: String, req2Span: String, response: Response[F]) =>
       val rootSpanName = s"root: $rootSpan"
       val req1SpanName = s"req1: $req1Span"

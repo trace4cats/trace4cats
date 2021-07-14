@@ -8,7 +8,7 @@ import io.janstenpickle.trace4cats.kernel.SpanExporter
 import io.janstenpickle.trace4cats.model.Batch
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.Client
-import org.http4s.client.blaze.BlazeClientBuilder
+import org.http4s.blaze.client.BlazeClientBuilder
 import org.http4s.headers.`Content-Type`
 import org.http4s.{Header, MediaType}
 
@@ -33,12 +33,11 @@ object NewRelicSpanExporter {
       client,
       endpoint.url,
       (batch: Batch[G]) => Convert.toJson(batch),
-      List(
+      List[Header.ToRaw](
         `Content-Type`(MediaType.application.json),
-        Header("Api-Key", apiKey),
-        Header("Data-Format", "newrelic"),
-        Header("Data-Format-Version", "1")
+        "Api-Key" -> apiKey,
+        "Data-Format" -> "newrelic",
+        "Data-Format-Version" -> "1"
       )
     )
-
 }

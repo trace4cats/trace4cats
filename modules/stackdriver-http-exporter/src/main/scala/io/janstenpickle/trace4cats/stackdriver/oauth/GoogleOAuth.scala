@@ -44,7 +44,7 @@ class GoogleOAuth[F[_]: Logger](key: RSAPrivateKey, httpClient: Client[F])(impli
       for {
         token <- tokenF
         form = UrlForm("grant_type" -> "urn:ietf:params:oauth:grant-type:jwt-bearer", "assertion" -> token)
-        req <- POST(form, googleOAuthDomain)
+        req = POST(form, googleOAuthDomain)
       } yield req
 
     httpClient
@@ -52,7 +52,7 @@ class GoogleOAuth[F[_]: Logger](key: RSAPrivateKey, httpClient: Client[F])(impli
         resp.as[String].map(FailedRequest.apply)
       }
       .handleErrorWith { e =>
-        Logger[F].warn(e)("Failed to retrieve JWT Access Token from Google") >> F.pure(None)
+        Logger[F].warn(e)("Failed to retrieve JWT Access Token from Google").as(None)
       }
   }
 

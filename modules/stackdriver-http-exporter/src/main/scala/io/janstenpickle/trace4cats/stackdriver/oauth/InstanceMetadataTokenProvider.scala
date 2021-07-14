@@ -9,10 +9,10 @@ import org.http4s.Method.GET
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl
-import org.http4s.{Header, Uri}
+import org.http4s.Uri
 
 object InstanceMetadataTokenProvider {
-  final private[this] val metadataHeader = Header("Metadata-Flavor", "Google")
+  final private[this] val metadataHeader = "Metadata-Flavor" -> "Google"
 
   def apply[F[_]: Sync: Logger](httpClient: Client[F], serviceAccountName: String = "default"): TokenProvider[F] =
     new TokenProvider[F] with Http4sClientDsl[F] {

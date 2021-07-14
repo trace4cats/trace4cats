@@ -9,7 +9,7 @@ import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanExporter}
 import io.janstenpickle.trace4cats.model._
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.http4s.circe.CirceEntityCodec._
-import org.http4s.client.blaze.BlazeClientBuilder
+import org.http4s.blaze.client.BlazeClientBuilder
 import org.scalacheck.Shrink
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec

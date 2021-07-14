@@ -11,7 +11,7 @@ import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind, SpanStatus}
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.Http4sDsl
 import org.http4s.syntax.kleisli._
-import org.http4s.{Header, Headers, Uri}
+import org.http4s.{Headers, Uri}
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -30,7 +30,7 @@ abstract class BaseServerEndpointTracerSpec[F[_]: Concurrent: ContextShift: Time
     with Matchers
     with Http4sDsl[F] {
 
-  private val authHeader = Headers.of(Header("X-Auth-Token", "aa89bba323bf4c7b929264b0c177e2c5"))
+  private val authHeader = Headers("X-Auth-Token" -> "aa89bba323bf4c7b929264b0c177e2c5")
 
   it should "record a span when the response is OK" in {
     evaluateTrace(NonEmptyList.one("devices/1"), authHeader) { spans =>
@@ -90,16 +90,11 @@ abstract class BaseServerEndpointTracerSpec[F[_]: Concurrent: ContextShift: Time
         completer <- Resource.eval(RefSpanCompleter[F]("test"))
         ep = EntryPoint[F](SpanSampler.always[F], completer)
         serverEndpoints = injectEndpoints(ep)
-        app = Http4sServerInterpreter.toRoutes(serverEndpoints).orNotFound
+        app = Http4sServerInterpreter[F]().toRoutes(serverEndpoints).orNotFound
       } yield (app, completer))
         .use { case (app, completer) =>
           for {
-            _ <- paths.traverse(path =>
-              GET(Uri.unsafeFromString(s"/$path"))
-                .map(_.withHeaders(headers))
-                .flatMap(app.run)
-                .attempt
-            )
+            _ <- paths.traverse(path => app.run(GET(Uri.unsafeFromString(s"/$path")).withHeaders(headers)).attempt)
             spans <- completer.get
           } yield fa(spans)
         }

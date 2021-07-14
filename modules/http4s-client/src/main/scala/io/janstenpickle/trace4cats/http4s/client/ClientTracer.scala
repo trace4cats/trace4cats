@@ -26,22 +26,22 @@ object ClientTracer {
             .child(
               spanNamer(request),
               SpanKind.Client,
-              { case UnexpectedStatus(status) =>
+              { case UnexpectedStatus(status, _, _) =>
                 Http4sStatusMapping.toSpanStatus(status)
               }
             )
             .flatMap { childSpan =>
               val childCtx = spanLens.set(childSpan)(parentCtx)
               val headers = headersGetter.get(childCtx)
-              val req = request.putHeaders(Http4sHeaders.converter.to(headers).toList: _*)
+              val req = request.putHeaders(Http4sHeaders.converter.to(headers).headers)
 
               for {
-                _ <- Resource.eval(
-                  // only extract request attributes if the span is sampled as the address matching can be quite expensive
+                // only extract request attributes if the span is sampled as the address matching can be quite expensive
+                _ <-
                   if (childSpan.context.traceFlags.sampled == SampleDecision.Include)
-                    childSpan.putAll(Http4sClientRequest.toAttributes(request))
-                  else Applicative[F].unit
-                )
+                    Resource.eval(childSpan.putAll(Http4sClientRequest.toAttributes(request)))
+                  else Resource.pure[F, Unit](())
+
                 res <- client
                   .run(req.mapK(P.provideK(childCtx)))
                   .evalTap { resp =>

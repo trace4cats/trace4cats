@@ -9,14 +9,14 @@ import cats.{FlatMap, Monad}
 import io.janstenpickle.trace4cats.base.context.Provide
 import io.janstenpickle.trace4cats.http4s.common.{Http4sHeaders, Http4sStatusMapping, Request_, Response_}
 import io.janstenpickle.trace4cats.inject.{ResourceKleisli, Trace}
-import org.http4s.util.CaseInsensitiveString
 import org.http4s.{HttpApp, HttpRoutes, Request, Response}
+import org.typelevel.ci.CIString
 
 object ServerTracer {
   def injectRoutes[F[_], G[_]: Monad: Trace, Ctx](
     routes: HttpRoutes[G],
     k: ResourceKleisli[F, Request_, Ctx],
-    dropHeadersWhen: CaseInsensitiveString => Boolean,
+    dropHeadersWhen: CIString => Boolean,
   )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F]): HttpRoutes[F] =
     Kleisli[OptionT[F, *], Request[F], Response[F]] { req =>
       val fa =
@@ -42,7 +42,7 @@ object ServerTracer {
   def injectApp[F[_], G[_]: FlatMap: Trace, Ctx](
     app: HttpApp[G],
     k: ResourceKleisli[F, Request_, Ctx],
-    dropHeadersWhen: CaseInsensitiveString => Boolean,
+    dropHeadersWhen: CIString => Boolean,
   )(implicit P: Provide[F, G, Ctx], F: BracketThrow[F]): HttpApp[F] =
     Kleisli[F, Request[F], Response[F]] { req =>
       val fa =

@@ -14,7 +14,7 @@ import io.janstenpickle.trace4cats.inject.{ResourceKleisli, SpanParams}
 import io.janstenpickle.trace4cats.model.SpanKind
 import io.janstenpickle.trace4cats.{ErrorHandler, HandledError, Span}
 import org.http4s.{Headers, HttpVersion, MessageFailure}
-import org.http4s.util.CaseInsensitiveString
+import org.typelevel.ci.CIString
 
 object Http4sResourceKleislis {
   private val messageFailureHandler: ErrorHandler = { case e: MessageFailure =>
@@ -25,7 +25,7 @@ object Http4sResourceKleislis {
     makeContext: (Request_, Span[F]) => F[Ctx],
     spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath,
     requestFilter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
-    dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains,
+    dropHeadersWhen: CIString => Boolean = Headers.SensitiveHeaders.contains,
     errorHandler: ErrorHandler = ErrorHandler.empty,
   )(k: ResourceKleisli[F, SpanParams, Span[F]]): ResourceKleisli[F, Request_, Ctx] =
     fromHeaders[F](spanNamer, requestFilter, dropHeadersWhen, errorHandler)(k).tapWithF { (req, span) =>
@@ -35,7 +35,7 @@ object Http4sResourceKleislis {
   def fromHeaders[F[_]: Applicative](
     spanNamer: Http4sSpanNamer = Http4sSpanNamer.methodWithPath,
     requestFilter: Http4sRequestFilter = Http4sRequestFilter.allowAll,
-    dropHeadersWhen: CaseInsensitiveString => Boolean = Headers.SensitiveHeaders.contains,
+    dropHeadersWhen: CIString => Boolean = Headers.SensitiveHeaders.contains,
     errorHandler: ErrorHandler = ErrorHandler.empty,
   )(k: ResourceKleisli[F, SpanParams, Span[F]]): ResourceKleisli[F, Request_, Span[F]] =
     Kleisli { req =>
