@@ -165,11 +165,11 @@ Trace4Cats is separated into a few repositories:
 ## Components
 
 Trace4Cats is made up as both a set of libraries for integration in applications and standalone processes. For
-information on the libraries and interfaces see the [design documentation](docs/design.md).
+information on the libraries and interfaces see the [design documentation](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/design.md).
 
 The standalone components are the agent and the collector. To see how they work together, see the
-[topologies documentation](docs/topologies.md), for information on configuring and running the agent and collector see
-the [components documentation](docs/components.md).
+[topologies documentation](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/topologies.md), for information on configuring and running the agent and collector see
+the [components documentation](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/components.md).
 
 The source code for these components is located in the
 [`trace4cats-components`](https://github.com/trace4cats/trace4cats-components) repository.
