@@ -1,6 +1,5 @@
 package io.janstenpickle.trace4cats.`export`
 
-import cats.derived.semiauto
 import cats.kernel.Eq
 import io.janstenpickle.trace4cats.`export`.ExportRetryConfig.NextDelay
 
@@ -24,8 +23,15 @@ object ExportRetryConfig {
       override def calc(prev: FiniteDuration): FiniteDuration = prev + prev
     }
 
-    implicit val eq: Eq[NextDelay] = semiauto.eq
+    implicit val eq: Eq[NextDelay] = new Eq[NextDelay] {
+      override def eqv(x: NextDelay, y: NextDelay): Boolean = (x, y) match {
+        case (Exponential, Exponential) => true
+        case (Constant(_), Exponential) => false
+        case (Exponential, Constant(_)) => false
+        case (Constant(fd1), Constant(fd2)) => Eq[FiniteDuration].eqv(fd1, fd2)
+      }
+    }
   }
 
-  implicit val eq: Eq[ExportRetryConfig] = semiauto.eq
+  implicit val eq: Eq[ExportRetryConfig] = Eq.by(erc => (erc.delay, erc.nextDelay, erc.maxAttempts))
 }

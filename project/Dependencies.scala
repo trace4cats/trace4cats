@@ -13,6 +13,7 @@ object Dependencies {
     val log4cats = "2.1.1"
     val scala212 = "2.12.14"
     val scala213 = "2.13.6"
+    val scala301 = "3.0.1"
 
     val catsTestkitScalatest = "2.1.5"
     val disciplineScalatest = "2.1.5"
@@ -20,6 +21,7 @@ object Dependencies {
     val scalaCheck = "1.15.4"
     val scalaCheckShapeless = "1.3.0"
     val scalaTest = "3.2.9"
+    val shapeless3 = "3.0.2"
 
     val kindProjector = "0.13.0"
     val betterMonadicFor = "0.3.1"
@@ -58,7 +60,7 @@ object Dependencies {
       disciplineScalatest,
       disciplineCore,
       scalacheck,
-      scalacheckShapeless,
+      //scalacheckShapeless, // TODO re-add once compatible with Scala 3
       scalaTest
     )
 

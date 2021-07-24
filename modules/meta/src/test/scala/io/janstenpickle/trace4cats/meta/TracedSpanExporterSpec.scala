@@ -101,7 +101,11 @@ class TracedSpanExporterSpec
           _ <- Resource.eval(tracedExporter.exportBatch(batch))
 
           allSpans <- Resource.eval(
-            Stream.fromQueueUnterminated(queue).take(batch.spans.size + expectedMetaSpans).compile.to(Chunk)
+            Stream
+              .fromQueueUnterminated(queue)
+              .take(batch.spans.size + expectedMetaSpans)
+              .compile
+              .to(Chunk): IO[Chunk[CompletedSpan]]
           )
         } yield allSpans)
           .use { spans =>

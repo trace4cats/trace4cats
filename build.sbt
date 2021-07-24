@@ -64,7 +64,7 @@ lazy val model =
       libraryDependencies ++= Seq(
         Dependencies.catsEffectKernel,
         Dependencies.commonsCodec,
-        Dependencies.kittens,
+        //Dependencies.kittens, // TODO re-add once compatible with Scala 3
         Dependencies.caseInsensitive
       )
     )
@@ -72,7 +72,7 @@ lazy val model =
 lazy val testkit = (project in file("modules/testkit"))
   .settings(publishSettings)
   .settings(name := "trace4cats-testkit", libraryDependencies ++= Dependencies.test ++ Seq(Dependencies.fs2))
-  .dependsOn(model)
+  .dependsOn(model % "compile->compile,test")
 
 lazy val kernel =
   (project in file("modules/kernel"))
@@ -132,7 +132,8 @@ lazy val `exporter-common` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-exporter-common",
-      libraryDependencies ++= Seq(Dependencies.kittens, Dependencies.log4cats, Dependencies.hotswapRef),
+      // TODO re-add kittens once compatible with Scala 3
+      libraryDependencies ++= Seq( /*Dependencies.kittens,*/ Dependencies.log4cats, Dependencies.hotswapRef),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
     .dependsOn(model, kernel, `exporter-stream`, testkit % "test->compile")
@@ -175,7 +176,7 @@ lazy val `dynamic-sampling-config` = (project in file("modules/dynamic-sampling-
   .settings(publishSettings)
   .settings(
     name := "trace4cats-dynamic-sampling-config",
-    libraryDependencies ++= Seq(Dependencies.kittens),
+    //libraryDependencies ++= Seq(Dependencies.kittens), // TODO re-add once compatible with Scala 3
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
   .dependsOn(model, kernel, `dynamic-sampling`, `rate-sampling`, testkit % "test->compile")

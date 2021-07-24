@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.model
 
 import cats.{Eq, Show}
+import cats.syntax.option._
 
 sealed abstract class SpanStatus(val entryName: String) {
   def canonicalCode: Int
@@ -77,8 +78,8 @@ object SpanStatus {
   }
 
   implicit val eq: Eq[SpanStatus] = Eq.by {
-    case s @ Internal(msg) => (s.canonicalCode, Some(msg))
-    case s => (s.canonicalCode, None)
+    case s @ Internal(msg) => (s.canonicalCode, msg.some)
+    case s => (s.canonicalCode, none)
   }
   implicit val show: Show[SpanStatus] = Show.show {
     case s @ Internal(msg) => s"${s.entryName}($msg)"

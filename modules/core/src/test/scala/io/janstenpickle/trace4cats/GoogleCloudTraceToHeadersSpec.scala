@@ -20,7 +20,7 @@ class GoogleCloudTraceToHeadersSpec
 
   val cloudTrace = new GoogleCloudTraceToHeaders
 
-  it should "encode and decode span context headers" in forAll { spanContext: SpanContext =>
+  it should "encode and decode span context headers" in forAll { (spanContext: SpanContext) =>
     assert(
       Eq.eqv(
         cloudTrace.toContext(cloudTrace.fromContext(spanContext)),

@@ -51,5 +51,6 @@ object SpanContext {
     show"[ trace-id: ${c.traceId}, span-id: ${c.spanId}$parent$state, sampled: ${c.traceFlags.sampled}, remote: ${c.isRemote} ]"
   }
 
-  implicit val eq: Eq[SpanContext] = cats.derived.semiauto.eq[SpanContext]
+  implicit val eq: Eq[SpanContext] =
+    Eq.by(sc => (sc.traceId, sc.spanId, sc.parent, sc.traceFlags, sc.traceState, sc.isRemote))
 }

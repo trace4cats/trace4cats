@@ -8,5 +8,5 @@ case class MetaTrace(traceId: TraceId, spanId: SpanId)
 object MetaTrace {
   implicit val show: Show[MetaTrace] = Show.show(meta => show"[ ${meta.traceId} ${meta.spanId} ]")
 
-  implicit val eq: Eq[MetaTrace] = cats.derived.semiauto.eq
+  implicit val eq: Eq[MetaTrace] = Eq.by(mt => (mt.traceId, mt.spanId))
 }

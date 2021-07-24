@@ -10,5 +10,5 @@ object TraceProcess {
     show"[ service-name: ${process.serviceName}, attributes: ${process.attributes} ]"
   }
 
-  implicit val eq: Eq[TraceProcess] = cats.derived.semiauto.eq[TraceProcess]
+  implicit val eq: Eq[TraceProcess] = Eq.by(tp => (tp.serviceName, tp.attributes))
 }
