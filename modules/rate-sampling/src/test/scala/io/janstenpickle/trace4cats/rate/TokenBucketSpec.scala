@@ -3,7 +3,6 @@ package io.janstenpickle.trace4cats.rate
 import cats.effect.IO
 import cats.effect.testkit.TestInstances
 import cats.syntax.applicative._
-import cats.syntax.flatMap._
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
