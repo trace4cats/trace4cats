@@ -140,7 +140,11 @@ lazy val `exporter-common` =
 lazy val meta =
   (project in file("modules/meta"))
     .settings(publishSettings)
-    .settings(name := "trace4cats-meta", libraryDependencies ++= Seq(Dependencies.log4cats))
+    .settings(
+      name := "trace4cats-meta",
+      libraryDependencies ++= Seq(Dependencies.log4cats),
+      libraryDependencies ++= Seq(Dependencies.slf4jNop).map(_ % Test)
+    )
     .dependsOn(model, kernel, core, `exporter-stream`, `exporter-common` % "test->compile", testkit % "test->compile")
 
 lazy val inject = (project in file("modules/inject"))

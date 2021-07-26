@@ -11,6 +11,7 @@ object Dependencies {
     val hotswapRef = "0.2.1"
     val kittens = "2.3.2"
     val log4cats = "2.1.1"
+    val slf4j = "1.7.32"
     val scala212 = "2.12.14"
     val scala213 = "2.13.6"
 
@@ -37,6 +38,7 @@ object Dependencies {
   lazy val hotswapRef = "io.janstenpickle"             %% "hotswap-ref"             % Versions.hotswapRef
   lazy val kittens = "org.typelevel"                   %% "kittens"                 % Versions.kittens
   lazy val log4cats = "org.typelevel"                  %% "log4cats-slf4j"          % Versions.log4cats
+  lazy val slf4jNop = "org.slf4j"                       % "slf4j-nop"               % Versions.slf4j
 
   lazy val catsLaws = "org.typelevel"             %% "cats-laws"              % Versions.cats
   lazy val catsEffectLaws = "org.typelevel"       %% "cats-effect-laws"       % Versions.catsEffect

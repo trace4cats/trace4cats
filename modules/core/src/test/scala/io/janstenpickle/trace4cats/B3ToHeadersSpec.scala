@@ -80,7 +80,6 @@ class B3ToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks wi
       isRemote = true
     )
 
-    println(b3.toContext(headers))
     assert(Eq.eqv(b3.toContext(headers), expected))
   }
 }
