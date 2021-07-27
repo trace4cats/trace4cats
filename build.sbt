@@ -50,6 +50,7 @@ lazy val root = (project in file("."))
     `log-exporter`,
     meta,
     model,
+    `model-testkit`,
     `rate-sampling`,
     `tail-sampling`,
     testkit
@@ -60,7 +61,6 @@ lazy val model =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-model",
-      libraryDependencies ++= Dependencies.test.map(_ % Test),
       libraryDependencies ++= Seq(
         Dependencies.catsEffectKernel,
         Dependencies.commonsCodec,
@@ -69,10 +69,15 @@ lazy val model =
       )
     )
 
+lazy val `model-testkit` = (project in file("modules/model-testkit"))
+  .settings(publishSettings)
+  .settings(name := "trace4cats-model-testkit", libraryDependencies ++= Dependencies.test)
+  .dependsOn(model)
+
 lazy val testkit = (project in file("modules/testkit"))
   .settings(publishSettings)
   .settings(name := "trace4cats-testkit", libraryDependencies ++= Dependencies.test ++ Seq(Dependencies.fs2))
-  .dependsOn(model % "compile->compile,test")
+  .dependsOn(`model-testkit`)
 
 lazy val kernel =
   (project in file("modules/kernel"))
