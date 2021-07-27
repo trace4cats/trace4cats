@@ -28,7 +28,10 @@ trait ArbitraryInstances extends ArbitraryAttributeValues {
     stringArb.arbitrary.suchThat(_.nonEmpty).map(k => TraceState.Key(k.toLowerCase).get)
   )
   implicit val traceStateValueArb: Arbitrary[TraceState.Value] = Arbitrary(
-    Gen.stringOf(Gen.alphaNumChar).suchThat(_.length < 256).map(value => TraceState.Value.unsafe(value))
+    Gen
+      .stringOf(Gen.alphaNumChar)
+      .suchThat(s => s.nonEmpty && s.length < 256)
+      .map(value => TraceState.Value.unsafe(value))
   )
   implicit val traceStateArb: Arbitrary[TraceState] = Arbitrary(
     Gen
