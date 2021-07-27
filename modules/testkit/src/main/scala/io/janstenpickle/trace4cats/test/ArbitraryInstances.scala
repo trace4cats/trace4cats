@@ -25,29 +25,20 @@ trait ArbitraryInstances extends ArbitraryAttributeValues {
   implicit val traceIdArb: Arbitrary[TraceId] = Arbitrary(byteArray(16).map(TraceId(_).get))
 
   implicit val traceStateKeyArb: Arbitrary[TraceState.Key] = Arbitrary(
-    Gen.alphaLowerStr.suchThat(_.nonEmpty).map(TraceState.Key(_).get)
+    stringArb.arbitrary.suchThat(_.nonEmpty).map(k => TraceState.Key(k.toLowerCase).get)
   )
-  implicit val traceStateValueArb: Arbitrary[TraceState.Value] = Arbitrary(for {
-    length <- Gen.chooseNum(1, 255)
-    value <- Gen.stringOfN(length, Gen.alphaNumChar)
-  } yield TraceState.Value.unsafe(value))
-  implicit val traceStateArb: Arbitrary[TraceState] = Arbitrary(for {
-    length <- Gen.choose(0, 31)
-    kvs <- Gen.listOfN(
-      length,
-      for {
-        key <- traceStateKeyArb.arbitrary
-        value <- traceStateValueArb.arbitrary
-      } yield key -> value
-    )
-  } yield TraceState(kvs.toMap).get)
+  implicit val traceStateValueArb: Arbitrary[TraceState.Value] = Arbitrary(
+    Gen.stringOf(Gen.alphaNumChar).suchThat(_.length < 256).map(value => TraceState.Value.unsafe(value))
+  )
+  implicit val traceStateArb: Arbitrary[TraceState] = Arbitrary(
+    Gen
+      .mapOf(Gen.zip(traceStateKeyArb.arbitrary, traceStateValueArb.arbitrary))
+      .suchThat(_.size < 32)
+      .map(kvs => TraceState(kvs).get)
+  )
 
   implicit val traceHeadersArb: Arbitrary[TraceHeaders] =
-    Arbitrary(for {
-      size <- Gen.choose(1, 10)
-      tuple = Gen.zip(stringArb.arbitrary, stringArb.arbitrary)
-      values <- Gen.mapOfN(size, tuple)
-    } yield TraceHeaders.of(values))
+    Arbitrary(Gen.mapOf(Gen.zip(stringArb.arbitrary, stringArb.arbitrary)).map(values => TraceHeaders.of(values)))
 
   implicit def evalArb[A: Arbitrary]: Arbitrary[Eval[A]] = Arbitrary(Arbitrary.arbitrary[A].map(Eval.later(_)))
 
@@ -90,31 +81,45 @@ trait ArbitraryInstances extends ArbitraryAttributeValues {
     isRemote <- Arbitrary.arbBool.arbitrary
   } yield Parent(spanId, isRemote))
 
-  implicit val spanContextArb: Arbitrary[SpanContext] = Arbitrary(for {
-    traceId <- traceIdArb.arbitrary
-    spanId <- spanIdArb.arbitrary
-    parent <- Gen.option(parentArb.arbitrary)
-    traceFlags <- Arbitrary.arbBool.arbitrary.map(b => TraceFlags(SampleDecision.fromBoolean(b)))
-    traceState <- traceStateArb.arbitrary
-    isRemote <- Arbitrary.arbBool.arbitrary
-  } yield SpanContext(traceId, spanId, parent, traceFlags, traceState, isRemote))
+  implicit val spanContextArb: Arbitrary[SpanContext] = Arbitrary(
+    Gen.sized(size =>
+      for {
+        traceId <- traceIdArb.arbitrary
+        spanId <- spanIdArb.arbitrary
+        parent <- Gen.option(parentArb.arbitrary)
+        traceFlags <- Arbitrary.arbBool.arbitrary.map(b => TraceFlags(SampleDecision.fromBoolean(b)))
+        traceState <- Gen.resize(size / 2, traceStateArb.arbitrary)
+        isRemote <- Arbitrary.arbBool.arbitrary
+      } yield SpanContext(traceId, spanId, parent, traceFlags, traceState, isRemote)
+    )
+  )
 
-  implicit val completedSpanBuilderArb: Arbitrary[CompletedSpan.Builder] = Arbitrary(for {
-    context <- spanContextArb.arbitrary
-    name <- stringArb.arbitrary
-    kind <- spanKindArb.arbitrary
-    start <- Arbitrary.arbInstant.arbitrary
-    end <- Arbitrary.arbInstant.arbitrary
-    attributes <- Gen.mapOf(stringArb.arbitrary.flatMap(key => attributeValueArb.arbitrary.map(key -> _)))
-    status <- spanStatusArb.arbitrary
-    links <- Gen.option(Gen.nonEmptyListOf(linkArb.arbitrary).map(NonEmptyList.fromListUnsafe))
-    metaTrace <- Gen.option(metaTraceArb.arbitrary)
-  } yield CompletedSpan.Builder(context, name, kind, start, end, attributes, status, links, metaTrace))
+  implicit val completedSpanBuilderArb: Arbitrary[CompletedSpan.Builder] = Arbitrary(
+    Gen.sized(size =>
+      for {
+        context <- Gen.resize(size / 5, spanContextArb.arbitrary)
+        name <- stringArb.arbitrary
+        kind <- spanKindArb.arbitrary
+        start <- Arbitrary.arbInstant.arbitrary
+        end <- Arbitrary.arbInstant.arbitrary
+        attributes <- Gen.resize(size / 3, Gen.mapOf(Gen.zip(stringArb.arbitrary, attributeValueArb.arbitrary)))
+        status <- spanStatusArb.arbitrary
+        links <- Gen.option(
+          Gen.resize(size / 10, Gen.nonEmptyListOf(linkArb.arbitrary).map(NonEmptyList.fromListUnsafe))
+        )
+        metaTrace <- Gen.option(metaTraceArb.arbitrary)
+      } yield CompletedSpan.Builder(context, name, kind, start, end, attributes, status, links, metaTrace)
+    )
+  )
 
-  implicit val traceProcessArb: Arbitrary[TraceProcess] = Arbitrary(for {
-    name <- stringArb.arbitrary
-    attributes <- Gen.mapOf(stringArb.arbitrary.flatMap(key => attributeValueArb.arbitrary.map(key -> _)))
-  } yield TraceProcess(name, attributes))
+  implicit val traceProcessArb: Arbitrary[TraceProcess] = Arbitrary(
+    Gen.sized(size =>
+      for {
+        name <- stringArb.arbitrary
+        attributes <- Gen.resize(size / 4, Gen.mapOf(Gen.zip(stringArb.arbitrary, attributeValueArb.arbitrary)))
+      } yield TraceProcess(name, attributes)
+    )
+  )
 
   implicit val completedSpanArb: Arbitrary[CompletedSpan] =
     Arbitrary(completedSpanBuilderArb.arbitrary.flatMap(b => traceProcessArb.arbitrary.map(b.build)))

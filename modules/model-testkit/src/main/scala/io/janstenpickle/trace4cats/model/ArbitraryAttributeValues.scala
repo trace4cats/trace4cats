@@ -44,7 +44,8 @@ trait ArbitraryAttributeValues {
         longAttributeValueArb.arbitrary,
         stringListAttributeValueArb.arbitrary,
         booleanListAttributeValueArb.arbitrary,
-        doubleListAttributeValueArb.arbitrary
+        doubleListAttributeValueArb.arbitrary,
+        longListAttributeValueArb.arbitrary
       )
     )
 }
