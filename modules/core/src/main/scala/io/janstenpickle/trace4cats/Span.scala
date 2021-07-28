@@ -156,6 +156,8 @@ object Span {
 
   def noop[F[_]: Applicative]: Resource[F, Span[F]] = Resource.pure[F, Span[F]](NoopSpan[F](SpanContext.invalid))
 
+  def noopInstance[F[_]: Applicative]: Span[F] = NoopSpan[F](SpanContext.invalid)
+
   def child[F[_]: Sync](
     name: String,
     parent: SpanContext,

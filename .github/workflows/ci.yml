@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.13.6, 2.12.14]
+        scala: [2.13.6, 2.12.14, 3.0.1]
         java: [adopt@1.8, adopt@1.11]
     runs-on: ${{ matrix.os }}
     steps:
@@ -59,7 +59,7 @@ jobs:
         run: sbt --client '++${{ matrix.scala }}; test'
 
       - name: Compress target directories
-        run: tar cf targets.tar modules/kernel/target modules/fs2/target modules/model/target target modules/rate-sampling/target modules/dynamic-sampling-config/target modules/exporter-stream/target modules/base/target modules/meta/target modules/base-laws/target modules/inject/target modules/filtering/target modules/log-exporter/target modules/tail-sampling/target modules/core/target modules/exporter-common/target modules/dynamic-sampling/target modules/testkit/target project/target
+        run: tar cf targets.tar modules/kernel/target modules/fs2/target modules/model/target target modules/rate-sampling/target modules/dynamic-sampling-config/target modules/model-testkit/target modules/exporter-stream/target modules/base/target modules/meta/target modules/base-laws/target modules/inject/target modules/filtering/target modules/log-exporter/target modules/tail-sampling/target modules/core/target modules/exporter-common/target modules/dynamic-sampling/target modules/testkit/target project/target
 
       - name: Upload target directories
         uses: actions/upload-artifact@v2
@@ -116,6 +116,16 @@ jobs:
           name: target-${{ matrix.os }}-2.12.14-${{ matrix.java }}
 
       - name: Inflate target directories (2.12.14)
+        run: |
+          tar xf targets.tar
+          rm targets.tar
+
+      - name: Download target directories (3.0.1)
+        uses: actions/download-artifact@v2
+        with:
+          name: target-${{ matrix.os }}-3.0.1-${{ matrix.java }}
+
+      - name: Inflate target directories (3.0.1)
         run: |
           tar xf targets.tar
           rm targets.tar

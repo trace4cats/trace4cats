@@ -41,7 +41,9 @@ object CompletedSpan {
   }
 
   implicit val instant: Eq[Instant] = Eq.fromUniversalEquals
-  implicit val eq: Eq[CompletedSpan] = cats.derived.semiauto.eq[CompletedSpan]
+  implicit val eq: Eq[CompletedSpan] = Eq.by(cs =>
+    (cs.context, cs.name, cs.serviceName, cs.kind, cs.start, cs.end, cs.attributes, cs.status, cs.links, cs.metaTrace)
+  )
 
   case class Builder(
     context: SpanContext,

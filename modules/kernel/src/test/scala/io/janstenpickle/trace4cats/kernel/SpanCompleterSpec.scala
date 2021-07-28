@@ -4,6 +4,7 @@ import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import cats.kernel.laws.discipline.MonoidTests
 import cats.{Applicative, Eq, Id}
+import cats.catsInstancesForId
 import io.janstenpickle.trace4cats.model.CompletedSpan
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.funsuite.AnyFunSuite
