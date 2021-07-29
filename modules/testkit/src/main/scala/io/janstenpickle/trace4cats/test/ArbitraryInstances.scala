@@ -103,8 +103,8 @@ trait ArbitraryInstances extends ArbitraryAttributeValues {
         context <- Gen.resize(size / 5, spanContextArb.arbitrary)
         name <- stringArb.arbitrary
         kind <- spanKindArb.arbitrary
-        start <- Arbitrary.arbInstant.arbitrary
-        end <- Arbitrary.arbInstant.arbitrary
+        start <- instantArb.arbitrary
+        end <- instantArb.arbitrary.suchThat(_.isAfter(start))
         attributes <- Gen.resize(size / 3, Gen.mapOf(Gen.zip(stringArb.arbitrary, attributeValueArb.arbitrary)))
         status <- spanStatusArb.arbitrary
         links <- Gen.option(
