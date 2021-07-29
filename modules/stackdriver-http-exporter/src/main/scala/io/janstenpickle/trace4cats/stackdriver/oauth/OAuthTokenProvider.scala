@@ -26,7 +26,8 @@ object OAuthTokenProvider {
     F: Sync[F]
   ): F[OAuthTokenProvider[F]] =
     for {
-      serviceAccount <- F.fromEither(GoogleAccountParser.parse(new File(serviceAccountPath).toPath))
+      path <- F.delay(new File(serviceAccountPath).toPath)
+      serviceAccount <- GoogleAccountParser.parse(path)
     } yield new OAuthTokenProvider(
       serviceAccount.clientEmail,
       List("https://www.googleapis.com/auth/trace.append"),
