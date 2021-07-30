@@ -1,45 +1,30 @@
 lazy val commonSettings = Seq(
-  scalaVersion := Dependencies.Versions.scala213,
-  organization := "io.janstenpickle",
-  organizationName := "janstenpickle",
-  developers := List(
-    Developer(
-      "janstenpickle",
-      "Chris Jansen",
-      "janstenpickle@users.noreply.github.com",
-      url = url("https://github.com/janstepickle")
-    )
-  ),
-  licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
-  homepage := Some(url("https://github.com/janstenpickle/trace4cats")),
-  scmInfo := Some(
-    ScmInfo(url("https://github.com/janstenpickle/trace4cats"), "scm:git:git@github.com:janstenpickle/trace4cats.git")
-  ),
   Compile / compile / javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
-  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
-  addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.13.0").cross(CrossVersion.patch)),
-  libraryDependencies ++= Seq(Dependencies.cats, Dependencies.collectionCompat),
-  scalacOptions := {
-    val opts = scalacOptions.value :+ "-Wconf:src=src_managed/.*:s,any:wv"
-
+  libraryDependencies ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 12)) => opts.filterNot(Set("-Xfatal-warnings"))
+      case Some((2, _)) =>
+        Seq(compilerPlugin(Dependencies.kindProjector), compilerPlugin(Dependencies.betterMonadicFor))
+      case _ => Seq.empty
+    }
+  },
+  scalacOptions := {
+    val opts = scalacOptions.value
+    val wconf = "-Wconf:src=src_managed/.*:s,any:wv"
+    val fatalw = "-Xfatal-warnings"
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 13)) => opts :+ wconf
+      case Some((2, 12)) => opts.filterNot(Set(fatalw)) :+ wconf
       case _ => opts
     }
   },
   Test / fork := true,
-  bintrayRepository := "trace4cats",
-  Global / releaseEarlyWith := SonatypePublisher,
-  credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials"),
-  releaseEarlyEnableSyncToMaven := true,
-  pgpPublicRing := file("./.github/git adlocal.pubring.asc"),
-  pgpSecretRing := file("./.github/local.secring.asc"),
-  crossScalaVersions := Seq(Dependencies.Versions.scala213, Dependencies.Versions.scala212),
   resolvers += Resolver.sonatypeRepo("releases"),
-  evictionErrorLevel := Level.Error
+  autoAPIMappings := true,
+  apiURL := Some(url(s"https://trace4cats.github.io/api/${version.value}")),
 )
 
-lazy val noPublishSettings = commonSettings ++ Seq(publish := {}, publishArtifact := false, publishTo := None)
+lazy val noPublishSettings =
+  commonSettings ++ Seq(publish := {}, publishArtifact := false, publishTo := None, publish / skip := true)
 
 lazy val publishSettings = commonSettings ++ Seq(
   publishMavenStyle := true,
@@ -50,7 +35,9 @@ lazy val publishSettings = commonSettings ++ Seq(
 )
 
 lazy val graalSettings = Seq(
-  graalVMNativeImageOptions ++= Seq(
+  nativeImageVersion := "20.1.0",
+  nativeImageJvm := "graalvm-java11",
+  nativeImageOptions ++= Seq(
     "--verbose",
     "--no-server",
     "--no-fallback",
@@ -85,6 +72,8 @@ lazy val graalSettings = Seq(
     "--initialize-at-run-time=com.sun.management.internal.OperatingSystemImpl"
   )
 )
+
+Global / excludeLintKeys ++= Set(nativeImageVersion, nativeImageJvm)
 
 lazy val root = (project in file("."))
   .settings(noPublishSettings)
@@ -234,7 +223,11 @@ lazy val core =
     .settings(
       name := "trace4cats-core",
       libraryDependencies ++= Dependencies.test.map(_ % Test),
-      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.catsEffectLaws % Test)
+      libraryDependencies ++= Seq(
+        Dependencies.collectionCompat,
+        Dependencies.catsEffect,
+        Dependencies.catsEffectLaws % Test
+      )
     )
     .dependsOn(model, kernel, test % "test->compile", `exporter-common` % "test->compile")
 
@@ -260,7 +253,10 @@ lazy val `base-laws` =
 lazy val `base-zio` =
   (project in file("modules/base-zio"))
     .settings(publishSettings)
-    .settings(name := "trace4cats-base-zio", libraryDependencies ++= Seq(Dependencies.zioInterop))
+    .settings(
+      name := "trace4cats-base-zio",
+      libraryDependencies ++= Seq(Dependencies.zioInterop, Dependencies.collectionCompat)
+    )
     .dependsOn(base, `base-laws` % "test->compile;test->test")
 
 lazy val avro =
@@ -301,7 +297,12 @@ lazy val `jaeger-thrift-exporter` =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-jaeger-thrift-exporter",
-      libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.jaegerThrift)
+      libraryDependencies ++= Seq(
+        Dependencies.catsEffect,
+        Dependencies.collectionCompat,
+        Dependencies.fs2,
+        Dependencies.jaegerThrift
+      )
     )
     .dependsOn(model, kernel, `exporter-common`, `jaeger-integration-test` % "test->compile")
 
@@ -311,6 +312,7 @@ lazy val `opentelemetry-common` =
     .settings(
       name := "trace4cats-opentelemetry-common",
       libraryDependencies ++= Seq(
+        Dependencies.collectionCompat,
         Dependencies.catsEffect,
         Dependencies.fs2,
         Dependencies.openTelemetrySdk,
@@ -392,6 +394,7 @@ lazy val `stackdriver-grpc-exporter` =
     .settings(
       name := "trace4cats-stackdriver-grpc-exporter",
       libraryDependencies ++= Seq(
+        Dependencies.collectionCompat,
         Dependencies.catsEffect,
         Dependencies.fs2,
         Dependencies.googleCredentials,
@@ -548,7 +551,10 @@ lazy val inject = (project in file("modules/inject"))
 
 lazy val `inject-zio` = (project in file("modules/inject-zio"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-inject-zio", libraryDependencies ++= Seq(Dependencies.zioInterop))
+  .settings(
+    name := "trace4cats-inject-zio",
+    libraryDependencies ++= Seq(Dependencies.collectionCompat, Dependencies.zioInterop)
+  )
   .dependsOn(inject, `base-zio`)
 
 lazy val fs2 = (project in file("modules/fs2"))
@@ -693,14 +699,14 @@ lazy val agent = (project in file("modules/agent"))
   .settings(graalSettings)
   .settings(name := "trace4cats-agent")
   .dependsOn(model, `avro-exporter`, `agent-common`)
-  .enablePlugins(GraalVMNativeImagePlugin)
+  .enablePlugins(NativeImagePlugin)
 
 lazy val `agent-kafka` = (project in file("modules/agent-kafka"))
   .settings(noPublishSettings)
   .settings(graalSettings)
   .settings(name := "trace4cats-agent-kafka", libraryDependencies += Dependencies.graalKafkaClient)
   .dependsOn(model, `avro-kafka-exporter`, `exporter-common`, `agent-common`)
-  .enablePlugins(GraalVMNativeImagePlugin)
+  .enablePlugins(NativeImagePlugin)
 
 lazy val filtering = (project in file("modules/filtering"))
   .settings(publishSettings)
@@ -845,7 +851,4 @@ lazy val `collector-lite` = (project in file("modules/collector-lite"))
     `opentelemetry-otlp-http-exporter`,
     `stackdriver-http-exporter`
   )
-  .enablePlugins(GraalVMNativeImagePlugin)
-
-addCommandAlias("fmt", "all root/scalafmtSbt root/scalafmtAll")
-addCommandAlias("fmtCheck", "all root/scalafmtSbtCheck root/scalafmtCheckAll")
+  .enablePlugins(NativeImagePlugin)
