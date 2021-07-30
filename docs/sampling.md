@@ -78,7 +78,7 @@ components. There are two parameters required to configure this sampler;
 In order to use the rate sampler, add the following dependency to your `build.sbt`:
 
 ```
-"io.janstenpickle" %% "trace4cats-rate-sampling" % "0.11.0"
+"io.janstenpickle" %% "trace4cats-rate-sampling" % "0.11.1"
 ```
 
 You can use the sampler with the code block below. For a more complete example see
