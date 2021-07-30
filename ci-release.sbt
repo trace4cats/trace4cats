@@ -96,7 +96,7 @@ ThisBuild / githubWorkflowPublishPostamble ++= {
       Seq(
         WorkflowStep.Run(
           name = Some(s"Push versioned Docker image for '$module'"),
-          cond = Some("env.IS_TAGGED_RELEASE"),
+          cond = Some("env.IS_TAGGED_RELEASE == 'true'"),
           commands = List(
             s"docker tag $imageName:$githubRunNumber $imageName:$releaseVersion",
             s"docker push $imageName:$releaseVersion"
