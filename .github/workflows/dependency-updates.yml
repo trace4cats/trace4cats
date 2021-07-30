@@ -1,0 +1,30 @@
+name: Dependecy Updates
+
+on:
+  schedule:
+    - cron:  '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Check dependency updates
+    if: github.ref == 'refs/heads/series/0.11.x'
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        scala: [2.13.6]
+        java: [adopt@1.11]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout current branch (full)
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java and Scala
+        uses: olafurpg/setup-scala@v12
+        with:
+          java-version: ${{ matrix.java }}
+
+      - name: Build project
+        run: sbt --client '++${{ matrix.scala }}; dependencyUpdates'
