@@ -28,6 +28,8 @@ pull_request_rules:
           - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.11\)
           - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.8\)
           - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.11\)
+          - check-success~=Test \(ubuntu-latest, 3\.\d+\.\d+, adopt@1\.8\)
+          - check-success~=Test \(ubuntu-latest, 3\.\d+\.\d+, adopt@1\.11\)
     actions:
       merge:
         method: rebase
@@ -45,6 +47,8 @@ pull_request_rules:
           - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adopt@1\.11\)
           - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.8\)
           - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adopt@1\.11\)
+          - check-success~=Test \(ubuntu-latest, 3\.\d+\.\d+, adopt@1\.8\)
+          - check-success~=Test \(ubuntu-latest, 3\.\d+\.\d+, adopt@1\.11\)
     actions:
       merge:
         method: rebase
