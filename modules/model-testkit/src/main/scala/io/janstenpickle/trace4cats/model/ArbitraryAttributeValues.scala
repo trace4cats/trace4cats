@@ -30,7 +30,9 @@ trait ArbitraryAttributeValues {
     )
   implicit val doubleListAttributeValueArb: Arbitrary[AttributeValue.DoubleList] =
     Arbitrary(
-      Gen.nonEmptyListOf(Gen.double).map(elems => AttributeValue.DoubleList(NonEmptyList.fromListUnsafe(elems)))
+      Gen
+        .nonEmptyListOf(Gen.double.suchThat(_.abs > 0.01))
+        .map(elems => AttributeValue.DoubleList(NonEmptyList.fromListUnsafe(elems)))
     )
   implicit val longListAttributeValueArb: Arbitrary[AttributeValue.LongList] =
     Arbitrary(Gen.nonEmptyListOf(Gen.long).map(elems => AttributeValue.LongList(NonEmptyList.fromListUnsafe(elems))))
