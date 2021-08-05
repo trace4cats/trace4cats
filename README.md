@@ -1,8 +1,9 @@
 # Trace4Cats
 
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/trace4cats/trace4cats/Continuous%20Integration)](https://github.com/trace4cats/trace4cats/actions?query=workflow%3A%22Continuous%20Integration%22)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/trace4cats/trace4cats?label=stable)](https://github.com/trace4cats/trace4cats/releases/latest)
-[![Maven Central](https://img.shields.io/maven-central/v/io.janstenpickle/trace4cats-model_2.13?label=early)](https://maven-badges.herokuapp.com/maven-central/io.janstenpickle/trace4cats-model_2.13)
+[![GitHub stable release](https://img.shields.io/github/v/release/trace4cats/trace4cats?label=stable&sort=semver)](https://github.com/trace4cats/trace4cats/releases)
+[![GitHub latest release](https://img.shields.io/github/v/release/trace4cats/trace4cats?label=latest&include_prereleases&sort=semver)](https://github.com/trace4cats/trace4cats/releases)
+[![Maven Central early release](https://img.shields.io/maven-central/v/io.janstenpickle/trace4cats-model_2.13?label=early)](https://maven-badges.herokuapp.com/maven-central/io.janstenpickle/trace4cats-model_2.13)
 [![Join the chat at https://gitter.im/trace4cats/community](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/trace4cats/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
 
@@ -70,9 +71,9 @@ More information on how to use these can be found in the
 Add the following dependencies to your `build.sbt`:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-inject" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC2"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0"
 ```
 
 Then run the [collector](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/components.md#collectors) in
@@ -82,18 +83,18 @@ span logging mode:
 echo "log-spans: true" > /tmp/collector.yaml
 docker run -p7777:7777 -p7777:7777/udp -it \
   -v /tmp/collector.yaml:/tmp/collector.yaml \
-  janstenpickle/trace4cats-collector-lite:0.12.0-RC2 \
+  janstenpickle/trace4cats-collector-lite:0.12.0 \
   --config-file=/tmp/collector.yaml
 ```
 
 Finally, run the following code to export some spans to the collector:
 
 ```scala
+import cats.Monad
 import cats.data.Kleisli
 import cats.effect._
+import cats.effect.std.Console
 import cats.implicits._
-import org.typelevel.log4cats.Logger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.janstenpickle.trace4cats.Span
 import io.janstenpickle.trace4cats.`export`.CompleterConfig
 import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
@@ -103,34 +104,28 @@ import io.janstenpickle.trace4cats.model.{SpanKind, SpanStatus, TraceProcess}
 
 import scala.concurrent.duration._
 
-object Trace4CatsQuickStart extends IOApp {
-  def entryPoint[F[_]: Async: Logger](process: TraceProcess): Resource[F, EntryPoint[F]] =
+object Trace4CatsQuickStart extends IOApp.Simple {
+  def entryPoint[F[_]: Async](process: TraceProcess): Resource[F, EntryPoint[F]] =
     AvroSpanCompleter.udp[F](process, config = CompleterConfig(batchTimeout = 50.millis)).map { completer =>
       EntryPoint[F](SpanSampler.always[F], completer)
     }
 
-  def runF[F[_]: Sync: Trace]: F[Unit] =
+  def runF[F[_]: Monad: Console: Trace]: F[Unit] =
     for {
-      _ <- Trace[F].span("span1")(Sync[F].delay(println("trace this operation")))
-      _ <- Trace[F].span("span2", SpanKind.Client)(Sync[F].delay(println("send some request")))
+      _ <- Trace[F].span("span1")(Console[F].println("trace this operation"))
+      _ <- Trace[F].span("span2", SpanKind.Client)(Console[F].println("send some request"))
       _ <- Trace[F].span("span3", SpanKind.Client)(
-        Trace[F].putAll("attribute1" -> "test", "attribute2" -> 200).flatMap { _ =>
+        Trace[F].putAll("attribute1" -> "test", "attribute2" -> 200) >>
           Trace[F].setStatus(SpanStatus.Cancelled)
-        }
       )
     } yield ()
 
-  override def run(args: List[String]): IO[ExitCode] =
-    (for {
-      implicit0(logger: Logger[IO]) <- Resource.eval(Slf4jLogger.create[IO])
-      ep <- entryPoint[IO](TraceProcess("trace4cats"))
-    } yield ep)
-      .use { ep =>
-        ep.root("this is the root span").use { span =>
-          runF[Kleisli[IO, Span[IO], *]].run(span)
-        }
+  def run: IO[Unit] =
+    entryPoint[IO](TraceProcess("trace4cats")).use { ep =>
+      ep.root("this is the root span").use { span =>
+        runF[Kleisli[IO, Span[IO], *]].run(span)
       }
-      .as(ExitCode.Success)
+    }
 }
 ```
 
@@ -190,29 +185,29 @@ The source code for these components is located in the
 To use Trace4Cats within your application add the dependencies listed below as needed:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-inject" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-inject-zio" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-rate-sampling" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-fs2" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-http4s-client" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-http4s-server" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-sttp-client3" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-sttp-tapir" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-natchez" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-avro-kafka-exporter" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-avro-kafka-consumer" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-log-exporter" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.12.0-RC2"
-"io.janstenpickle" %% "trace4cats-zipkin-http-exporter" % "0.12.0-RC2"
+"io.janstenpickle" %% "trace4cats-core" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-inject-zio" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-rate-sampling" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-fs2" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-http4s-client" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-http4s-server" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-sttp-client3" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-sttp-tapir" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-natchez" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-avro-kafka-exporter" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-avro-kafka-consumer" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-log-exporter" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-zipkin-http-exporter" % "0.12.0"
 ```
 
 ## [`native-image`] Compatibility
