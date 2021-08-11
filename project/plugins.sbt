@@ -9,4 +9,4 @@ addSbtPlugin("com.dwijnand"              % "sbt-dynver"           % "4.1.1")
 addSbtPlugin("com.thesamet"              % "sbt-protoc"           % "1.0.4")
 addSbtPlugin("com.timushev.sbt"          % "sbt-updates"          % "0.5.2")
 
-libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.4"
+libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.5"
