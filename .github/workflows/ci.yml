@@ -33,7 +33,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v12
+        uses: olafurpg/setup-scala@v13
         with:
           java-version: ${{ matrix.java }}
 
@@ -50,13 +50,13 @@ jobs:
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
       - name: Check formatting
-        run: sbt --client '++${{ matrix.scala }}; scalafmtCheckAll; scalafmtSbtCheck'
+        run: sbt ++${{ matrix.scala }} scalafmtCheckAll scalafmtSbtCheck
 
       - name: Check that workflows are up to date
-        run: sbt --client '++${{ matrix.scala }}; githubWorkflowCheck'
+        run: sbt ++${{ matrix.scala }} githubWorkflowCheck
 
       - name: Build project
-        run: sbt --client '++${{ matrix.scala }}; test'
+        run: sbt ++${{ matrix.scala }} test
 
       - name: Compress target directories
         run: tar cf targets.tar modules/kernel/target modules/fs2/target modules/model/target target modules/rate-sampling/target modules/dynamic-sampling-config/target modules/model-testkit/target modules/exporter-stream/target modules/base/target modules/meta/target modules/base-laws/target modules/inject/target modules/filtering/target modules/log-exporter/target modules/tail-sampling/target modules/core/target modules/exporter-common/target modules/dynamic-sampling/target modules/testkit/target project/target
@@ -84,7 +84,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v12
+        uses: olafurpg/setup-scala@v13
         with:
           java-version: ${{ matrix.java }}
 
@@ -141,4 +141,4 @@ jobs:
         env:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        run: sbt --client '++${{ matrix.scala }}; ciReleaseSonatype'
+        run: sbt ++${{ matrix.scala }} ciReleaseSonatype
