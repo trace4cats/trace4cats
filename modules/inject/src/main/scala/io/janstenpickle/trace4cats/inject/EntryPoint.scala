@@ -13,8 +13,7 @@ import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders}
 import io.janstenpickle.trace4cats.{ErrorHandler, Span, ToHeaders}
 
-/** An entry point, for creating root spans or continuing traces that were started on another
-  * system.
+/** An entry point, for creating root spans or continuing traces that were started on another system.
   */
 trait EntryPoint[F[_]] {
 
@@ -23,9 +22,9 @@ trait EntryPoint[F[_]] {
   def root(name: SpanName, kind: SpanKind): Resource[F, Span[F]] = root(name, kind, ErrorHandler.empty)
   def root(name: SpanName, kind: SpanKind, errorHandler: ErrorHandler): Resource[F, Span[F]]
 
-  /** Resource that attempts to creates a new child span but falls back to a new root
-    * span as with `root` if the headers do not contain the required values. In other words, we
-    * continue the existing span if we can, otherwise we start a new one.
+  /** Resource that attempts to creates a new child span but falls back to a new root span as with `root` if the headers
+    * do not contain the required values. In other words, we continue the existing span if we can, otherwise we start a
+    * new one.
     */
   def continueOrElseRoot(name: SpanName, headers: TraceHeaders): Resource[F, Span[F]] =
     continueOrElseRoot(name, SpanKind.Server, headers)
@@ -52,13 +51,15 @@ object EntryPoint {
 
   /** Create a trace entrypoint for starting or continuing a trace
     *
-    * @param sampler [[io.janstenpickle.trace4cats.kernel.SpanSampler]] implementation
-    * @param completer [[io.janstenpickle.trace4cats.kernel.SpanCompleter]] implementation
-    * @param toHeaders [[io.janstenpickle.trace4cats.ToHeaders]] implementation. Converts span context to headers that
-    *                  may be propagated outside of the application. Defaults to `ToHeaders.standard`, which is a
-    *                  collection of headers that conform to open standards. Other header implementations that do not
-    *                  conform to open standards are supported. See [[io.janstenpickle.trace4cats.ToHeaders]] for
-    *                  details or use `ToHeaders.all`
+    * @param sampler
+    *   [[io.janstenpickle.trace4cats.kernel.SpanSampler]] implementation
+    * @param completer
+    *   [[io.janstenpickle.trace4cats.kernel.SpanCompleter]] implementation
+    * @param toHeaders
+    *   [[io.janstenpickle.trace4cats.ToHeaders]] implementation. Converts span context to headers that may be
+    *   propagated outside of the application. Defaults to `ToHeaders.standard`, which is a collection of headers that
+    *   conform to open standards. Other header implementations that do not conform to open standards are supported. See
+    *   [[io.janstenpickle.trace4cats.ToHeaders]] for details or use `ToHeaders.all`
     */
   def apply[F[_]: Sync](
     sampler: SpanSampler[F],
