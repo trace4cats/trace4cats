@@ -8,8 +8,7 @@ import io.janstenpickle.trace4cats.model.{CompletedSpan, TraceProcess}
 
 import scala.collection.immutable.Queue
 
-/** RefSpanCompleter collects all spans in a queue within an atomic reference
-  * Best used for testing purposes
+/** RefSpanCompleter collects all spans in a queue within an atomic reference Best used for testing purposes
   */
 class RefSpanCompleter[F[_]](process: TraceProcess, ref: Ref[F, Queue[CompletedSpan]]) extends SpanCompleter[F] {
   override def complete(span: CompletedSpan.Builder): F[Unit] = ref.update(_.enqueue(span.build(process)))

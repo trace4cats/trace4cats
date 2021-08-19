@@ -28,13 +28,14 @@ trait Trace[F[_]] {
 
   /** Convert the span context into headers may be propagated outside of the application
     *
-    * @param toHeaders [[io.janstenpickle.trace4cats.ToHeaders]] implementation. Converts span context to headers that
-    *                  may be propagated outside of the application. Defaults to `ToHeaders.standard`, which is a
-    *                  collection of headers that conform to open standards. Other header implementations that do not
-    *                  conform to open standards are supported. See [[io.janstenpickle.trace4cats.ToHeaders]] for
-    *                  details or use `ToHeaders.all`
+    * @param toHeaders
+    *   [[io.janstenpickle.trace4cats.ToHeaders]] implementation. Converts span context to headers that may be
+    *   propagated outside of the application. Defaults to `ToHeaders.standard`, which is a collection of headers that
+    *   conform to open standards. Other header implementations that do not conform to open standards are supported. See
+    *   [[io.janstenpickle.trace4cats.ToHeaders]] for details or use `ToHeaders.all`
     *
-    * @return [[io.janstenpickle.trace4cats.model.TraceHeaders]]
+    * @return
+    *   [[io.janstenpickle.trace4cats.model.TraceHeaders]]
     */
   def headers(toHeaders: ToHeaders): F[TraceHeaders]
   def setStatus(status: SpanStatus): F[Unit]
@@ -47,9 +48,8 @@ object Trace extends TraceInstancesLowPriority {
 
   object Implicits {
 
-    /** A no-op `Trace` implementation is freely available for any applicative effect. This lets us add
-      * a `Trace` constraint to most existing code without demanding anything new from the concrete
-      * effect type.
+    /** A no-op `Trace` implementation is freely available for any applicative effect. This lets us add a `Trace`
+      * constraint to most existing code without demanding anything new from the concrete effect type.
       */
     implicit def noop[F[_]: Applicative]: Trace[F] =
       new Trace[F] {
@@ -69,15 +69,14 @@ object Trace extends TraceInstancesLowPriority {
 
   }
 
-  /** `Kleisli[F, Span[F], *]` is a `Trace` given `MonadCancelThrow[F]`. The instance can be
-    * widened to an environment that *contains* a `Span[F]` via the `lens` method.
+  /** `Kleisli[F, Span[F], *]` is a `Trace` given `MonadCancelThrow[F]`. The instance can be widened to an environment
+    * that *contains* a `Span[F]` via the `lens` method.
     */
   implicit def kleisliInstance[F[_]: MonadCancelThrow]: KleisliTrace[F] =
     new KleisliTrace[F]
 
-  /** A trace instance for `Kleisli[F, Span[F], *]`, which is the mechanism we use to introduce
-    * context into our computations. We can also "lensMap" out to `Kleisli[F, E, *]` given a lens
-    * from `E` to `Span[F]`.
+  /** A trace instance for `Kleisli[F, Span[F], *]`, which is the mechanism we use to introduce context into our
+    * computations. We can also "lensMap" out to `Kleisli[F, E, *]` given a lens from `E` to `Span[F]`.
     */
   class KleisliTrace[F[_]: MonadCancelThrow] extends Trace[Kleisli[F, Span[F], *]] {
 
