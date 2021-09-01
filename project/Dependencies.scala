@@ -14,7 +14,7 @@ object Dependencies {
     val slf4j = "1.7.32"
     val scala212 = "2.12.14"
     val scala213 = "2.13.6"
-    val scala301 = "3.0.1"
+    val scala301 = "3.0.2"
 
     val catsTestkitScalatest = "2.1.5"
     val disciplineScalatest = "2.1.5"
