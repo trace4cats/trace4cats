@@ -29,14 +29,13 @@ private[context] trait ContextRootInstancesLowPriority {
     def lift[A](fa: F[A]): F[A] = fa
   }
 
-  implicit def kleisliIdProvide[F[_]: Monad, R]: Provide[Kleisli[F, R, *], Kleisli[F, R, *], R] =
-    new Provide[Kleisli[F, R, *], Kleisli[F, R, *], R] {
-      def F: Monad[Kleisli[F, R, *]] = implicitly
-      def Low: Monad[Kleisli[F, R, *]] = implicitly
-
-      def lift[A](fa: Kleisli[F, R, A]): Kleisli[F, R, A] = fa
-      def ask[R1 >: R]: Kleisli[F, R, R1] = Kleisli.ask
-      def local[A](fa: Kleisli[F, R, A])(f: R => R): Kleisli[F, R, A] = fa.local(f)
-      def provide[A](fa: Kleisli[F, R, A])(r: R): Kleisli[F, R, A] = fa.local(_ => r)
+  implicit def idProvide[Low[_], F[_], R](implicit P: Provide[Low, F, R]): Provide[F, F, R] =
+    new Provide[F, F, R] {
+      def ask[R1 >: R]: F[R1] = P.ask
+      def F: cats.Monad[F] = P.F
+      def Low: cats.Monad[F] = P.F
+      def lift[A](la: F[A]): F[A] = la
+      def local[A](fa: F[A])(f: R => R): F[A] = P.local(fa)(f)
+      def provide[A](fa: F[A])(r: R): F[A] = P.lift(P.provide(fa)(r))
     }
 }
