@@ -25,10 +25,10 @@ ThisBuild / githubWorkflowPublish := Seq(
 )
 ThisBuild / githubWorkflowPublishCond := Some("github.actor != 'mergify[bot]'")
 ThisBuild / githubWorkflowPublishPreamble += WorkflowStep.Use(
-  ref = UseRef.Public("crazy-max", "ghaction-import-gpg", "v3"),
+  ref = UseRef.Public("crazy-max", "ghaction-import-gpg", "v4"),
   id = Some("import_gpg"),
   name = Some("Import GPG key"),
-  params = Map("gpg-private-key" -> "${{ secrets.GPG_PRIVATE_KEY }}", "passphrase" -> "${{ secrets.PGP_PASS }}")
+  params = Map("gpg_private_key" -> "${{ secrets.GPG_PRIVATE_KEY }}", "passphrase" -> "${{ secrets.PGP_PASS }}")
 )
 
 ThisBuild / publishTo := sonatypePublishToBundle.value
