@@ -12,7 +12,7 @@ object Dependencies {
     val kittens = "2.3.2"
     val log4cats = "2.1.1"
     val slf4j = "1.7.32"
-    val scala212 = "2.12.14"
+    val scala212 = "2.12.15"
     val scala213 = "2.13.6"
     val scala301 = "3.0.2"
 
