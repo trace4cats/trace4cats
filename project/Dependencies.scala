@@ -20,7 +20,7 @@ object Dependencies {
     val grpc = "1.40.1"
     val http4s = "0.22.4"
     val http4sJdkClient = "0.4.0"
-    val http4sLegacy = "0.21.26"
+    val http4sLegacy = "0.21.28"
     val jaeger = "1.6.0"
     val jwt = "3.18.1"
     val kafka = "2.8.0"
