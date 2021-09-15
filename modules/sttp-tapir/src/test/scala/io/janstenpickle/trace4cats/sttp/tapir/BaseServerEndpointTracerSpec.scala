@@ -10,7 +10,6 @@ import io.janstenpickle.trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.model.{CompletedSpan, SpanKind, SpanStatus}
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.Http4sDsl
-import org.http4s.syntax.kleisli._
 import org.http4s.{Headers, Uri}
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
