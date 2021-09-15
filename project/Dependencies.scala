@@ -17,7 +17,7 @@ object Dependencies {
     val googleCredentials = "1.1.0"
     val googleCloudTrace = "1.4.2"
     val graalKafkaClient = "0.1.0"
-    val grpc = "1.40.0"
+    val grpc = "1.40.1"
     val http4s = "0.22.4"
     val http4sJdkClient = "0.4.0"
     val http4sLegacy = "0.21.26"
