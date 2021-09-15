@@ -13,7 +13,7 @@ object Dependencies {
     val embeddedRedis = "0.7.3"
     val enumeratum = "1.7.0"
     val fs2 = "2.5.9"
-    val fs2Kafka = "1.7.0"
+    val fs2Kafka = "1.8.0"
     val googleCredentials = "1.1.0"
     val googleCloudTrace = "1.4.2"
     val graalKafkaClient = "0.1.0"
