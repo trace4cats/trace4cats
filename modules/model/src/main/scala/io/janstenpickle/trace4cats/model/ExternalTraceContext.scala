@@ -1,8 +1,6 @@
 package io.janstenpickle.trace4cats.model
 
-import scala.math.ScalaNumber
-
-trait ExternalTraceContext {
-  def traceId: SpanContext => ScalaNumber
-  def spanId: SpanContext => ScalaNumber
+trait ExternalTraceContext[A] {
+  def traceId: SpanContext => A
+  def spanId: SpanContext => A
 }
