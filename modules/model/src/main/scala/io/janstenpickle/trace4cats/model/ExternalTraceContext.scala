@@ -1,6 +1,7 @@
 package io.janstenpickle.trace4cats.model
 
-trait ExternalTraceContext[A] {
-  def traceId: SpanContext => A
-  def spanId: SpanContext => A
+trait ExternalTraceContext[TraceType, SpanType, ParentType] {
+  def traceId: SpanContext => TraceType
+  def spanId: SpanContext => SpanType
+  def parentId: SpanContext => ParentType
 }
