@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
   object Versions {
-    val caseInsensitive = "1.1.4"
+    val caseInsensitive = "1.2.0"
     val cats = "2.6.1"
     val catsEffect = "3.2.9"
     val collectionCompat = "2.5.0"
