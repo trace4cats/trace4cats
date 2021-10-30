@@ -61,7 +61,7 @@ object Dependencies {
       disciplineScalatest,
       disciplineCore,
       scalacheck,
-      //scalacheckShapeless, // TODO re-add once compatible with Scala 3
+      // scalacheckShapeless, // TODO re-add once compatible with Scala 3
       scalaTest
     )
 
