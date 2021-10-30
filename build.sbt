@@ -64,7 +64,7 @@ lazy val model =
       libraryDependencies ++= Seq(
         Dependencies.catsEffectKernel,
         Dependencies.commonsCodec,
-        //Dependencies.kittens, // TODO re-add once compatible with Scala 3
+        // Dependencies.kittens, // TODO re-add once compatible with Scala 3
         Dependencies.caseInsensitive
       )
     )
@@ -185,7 +185,7 @@ lazy val `dynamic-sampling-config` = (project in file("modules/dynamic-sampling-
   .settings(publishSettings)
   .settings(
     name := "trace4cats-dynamic-sampling-config",
-    //libraryDependencies ++= Seq(Dependencies.kittens), // TODO re-add once compatible with Scala 3
+    // libraryDependencies ++= Seq(Dependencies.kittens), // TODO re-add once compatible with Scala 3
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
   .dependsOn(model, kernel, `dynamic-sampling`, `rate-sampling`, testkit % "test->compile")
