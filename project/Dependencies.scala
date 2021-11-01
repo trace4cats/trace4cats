@@ -13,7 +13,7 @@ object Dependencies {
     val log4cats = "2.1.1"
     val slf4j = "1.7.32"
     val scala212 = "2.12.15"
-    val scala213 = "2.13.6"
+    val scala213 = "2.13.7"
     val scala301 = "3.0.2"
 
     val catsTestkitScalatest = "2.1.5"
