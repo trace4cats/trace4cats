@@ -2,23 +2,23 @@ import sbt._
 
 object Dependencies {
   object Versions {
-    val caseInsensitive = "1.1.4"
+    val caseInsensitive = "1.2.0"
     val cats = "2.6.1"
     val catsEffect = "3.2.9"
     val collectionCompat = "2.5.0"
     val commonsCodec = "1.15"
-    val fs2 = "3.1.6"
+    val fs2 = "3.2.2"
     val hotswapRef = "0.2.1"
     val kittens = "2.3.2"
     val log4cats = "2.1.1"
     val slf4j = "1.7.32"
     val scala212 = "2.12.15"
     val scala213 = "2.13.7"
-    val scala301 = "3.0.2"
+    val scala3 = "3.1.0"
 
     val catsTestkitScalatest = "2.1.5"
     val disciplineScalatest = "2.1.5"
-    val discipline = "1.1.5"
+    val discipline = "1.3.0"
     val scalaCheck = "1.15.4"
     val scalaCheckShapeless = "1.3.0"
     val scalaTest = "3.2.10"
