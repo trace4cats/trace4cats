@@ -1,4 +1,4 @@
-name-template: 'Trace4Cats $NEXT_MINOR_VERSION'
+name-template: '$NEXT_MINOR_VERSION'
 tag-template: 'v$NEXT_MINOR_VERSION'
 categories:
   - title: '🚀 Features'
