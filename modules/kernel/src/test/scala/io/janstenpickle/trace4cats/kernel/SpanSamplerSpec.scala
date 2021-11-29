@@ -3,7 +3,6 @@ package io.janstenpickle.trace4cats.kernel
 import java.nio.ByteBuffer
 
 import cats.Id
-import cats.catsInstancesForId
 import io.janstenpickle.trace4cats.model.{SampleDecision, SpanContext, SpanKind, TraceId}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
