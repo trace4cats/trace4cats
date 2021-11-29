@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats
 
 import cats.effect.{IO, OutcomeIO}
 import cats.effect.kernel.Deferred
-import cats.effect.testkit.TestInstances
+import cats.effect.testkit.{TestControl, TestInstances}
 import cats.effect.unsafe.implicits.global
 import cats.implicits._
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
@@ -14,7 +14,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.concurrent.duration._
-import scala.util.Success
 
 class SpanSpec
     extends AnyFlatSpec
@@ -248,7 +247,6 @@ class SpanSpec
 
   it should "override the status to cancelled when execution is cancelled" in {
     forAll { (name: String, kind: SpanKind, status: SpanStatus, serviceName: String) =>
-      implicit val ticker = Ticker()
       val io = for {
         completer <- RefSpanCompleter[IO](serviceName)
         _ <- Deferred[IO, OutcomeIO[Unit]]
@@ -267,9 +265,8 @@ class SpanSpec
         span = queue.head
       } yield span.status
 
-      val result = io.unsafeToFuture()(materializeRuntime)
-      ticker.ctx.tick(3.seconds)
-      result.value shouldEqual Some(Success(SpanStatus.Cancelled))
+      val result = TestControl.executeEmbed(io).unsafeRunSync()
+      result shouldEqual SpanStatus.Cancelled
     }
   }
 
