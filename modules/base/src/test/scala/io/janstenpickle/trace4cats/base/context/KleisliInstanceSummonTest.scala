@@ -1,7 +1,6 @@
 package io.janstenpickle.trace4cats.base.context
 
 import cats.data.Kleisli
-import cats.catsInstancesForId
 import io.janstenpickle.trace4cats.base.context.Env.{Sub1, Sub2}
 
 object KleisliInstanceSummonTest {
