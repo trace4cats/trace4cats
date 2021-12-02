@@ -24,12 +24,12 @@ pull_request_rules:
           - body~=labels:.*semver-patch
           - "#approved-reviews-by>=1"
       - and:
-          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adoptium@8\)
-          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adoptium@17\)
-          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adoptium@8\)
-          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adoptium@17\)
-          - check-success~=Test \(ubuntu-latest, 3\.\d+\.\d+, adoptium@8\)
-          - check-success~=Test \(ubuntu-latest, 3\.\d+\.\d+, adoptium@17\)
+          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, temurin@8\)
+          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, temurin@17\)
+          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, temurin@8\)
+          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, temurin@17\)
+          - check-success~=Test \(ubuntu-latest, 3\.\d+\.\d+, temurin@8\)
+          - check-success~=Test \(ubuntu-latest, 3\.\d+\.\d+, temurin@17\)
     actions:
       merge:
         method: rebase
@@ -43,12 +43,12 @@ pull_request_rules:
           - label=skip-release
           - label=ready-to-merge
       - and:
-          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adoptium@8\)
-          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, adoptium@17\)
-          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adoptium@8\)
-          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, adoptium@17\)
-          - check-success~=Test \(ubuntu-latest, 3\.\d+\.\d+, adoptium@8\)
-          - check-success~=Test \(ubuntu-latest, 3\.\d+\.\d+, adoptium@17\)
+          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, temurin@8\)
+          - check-success~=Test \(ubuntu-latest, 2\.12\.\d+, temurin@17\)
+          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, temurin@8\)
+          - check-success~=Test \(ubuntu-latest, 2\.13\.\d+, temurin@17\)
+          - check-success~=Test \(ubuntu-latest, 3\.\d+\.\d+, temurin@8\)
+          - check-success~=Test \(ubuntu-latest, 3\.\d+\.\d+, temurin@17\)
     actions:
       merge:
         method: rebase
