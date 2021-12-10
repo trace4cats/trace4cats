@@ -17,6 +17,7 @@ object SemanticAttributeKeys {
 
   // http attributes
   private final val http = "http."
+  final val httpFlavor: String = http + "flavor"
   final val httpMethod: String = http + "method"
   final val httpUrl: String = http + "url"
   final val httpStatusCode: String = http + "status_code"
