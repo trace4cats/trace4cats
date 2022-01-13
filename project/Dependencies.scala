@@ -11,7 +11,7 @@ object Dependencies {
     val hotswapRef = "0.2.1"
     val kittens = "2.3.2"
     val log4cats = "2.1.1"
-    val slf4j = "1.7.32"
+    val slf4j = "1.7.33"
     val scala212 = "2.12.15"
     val scala213 = "2.13.7"
     val scala3 = "3.1.0"
