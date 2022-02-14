@@ -29,7 +29,6 @@ lazy val root = (project in file("."))
   .settings(noPublishSettings)
   .settings(name := "Trace4Cats")
   .aggregate(
-    base,
     `base-laws`,
     core,
     `dynamic-sampling`,
@@ -105,7 +104,7 @@ lazy val `base-laws` =
       libraryDependencies ++= Seq(Dependencies.catsLaws),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
-    .dependsOn(base)
+    .dependsOn(inject)
 
 lazy val `log-exporter` =
   (project in file("modules/log-exporter"))
