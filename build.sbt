@@ -81,7 +81,7 @@ lazy val kernel =
       buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion, sbtVersion),
       buildInfoPackage := "io.janstenpickle.trace4cats.kernel"
     )
-    .dependsOn(model, testkit)
+    .dependsOn(model, testkit % Test)
     .enablePlugins(BuildInfoPlugin)
 
 lazy val core =
@@ -92,7 +92,7 @@ lazy val core =
       libraryDependencies ++= Seq(Dependencies.collectionCompat),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
-    .dependsOn(kernel, testkit, `exporter-common`)
+    .dependsOn(kernel, testkit % Test, `exporter-common`)
 
 lazy val base =
   (project in file("modules/base"))
@@ -134,7 +134,7 @@ lazy val `exporter-common` =
       libraryDependencies ++= Seq( /*Dependencies.kittens,*/ Dependencies.log4cats, Dependencies.hotswapRef),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
-    .dependsOn(kernel, `exporter-stream`, testkit)
+    .dependsOn(kernel, `exporter-stream`, testkit % Test)
 
 lazy val meta =
   (project in file("modules/meta"))
@@ -144,7 +144,7 @@ lazy val meta =
       libraryDependencies ++= Seq(Dependencies.log4cats),
       libraryDependencies ++= Seq(Dependencies.slf4jNop).map(_ % Test)
     )
-    .dependsOn(kernel, core, `exporter-stream`, `exporter-common`, testkit)
+    .dependsOn(kernel, core, `exporter-stream`, `exporter-common`, testkit % Test)
 
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
@@ -158,7 +158,7 @@ lazy val fs2 = (project in file("modules/fs2"))
     libraryDependencies ++= Seq(Dependencies.fs2),
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
-  .dependsOn(inject, `exporter-common`, testkit)
+  .dependsOn(inject, `exporter-common`, testkit % Test)
 
 lazy val filtering = (project in file("modules/filtering"))
   .settings(publishSettings)
@@ -172,7 +172,7 @@ lazy val `dynamic-sampling` = (project in file("modules/dynamic-sampling"))
     libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.hotswapRef),
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
-  .dependsOn(kernel, testkit)
+  .dependsOn(kernel, testkit % Test)
 
 lazy val `dynamic-sampling-config` = (project in file("modules/dynamic-sampling-config"))
   .settings(publishSettings)
@@ -181,7 +181,7 @@ lazy val `dynamic-sampling-config` = (project in file("modules/dynamic-sampling-
     // libraryDependencies ++= Seq(Dependencies.kittens), // TODO re-add once compatible with Scala 3
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
-  .dependsOn(kernel, `dynamic-sampling`, `rate-sampling`, testkit)
+  .dependsOn(kernel, `dynamic-sampling`, `rate-sampling`, testkit % Test)
 
 lazy val `rate-sampling` = (project in file("modules/rate-sampling"))
   .settings(publishSettings)
