@@ -87,15 +87,6 @@ lazy val core =
     )
     .dependsOn(kernel, testkit % Test, `exporter-common`)
 
-lazy val base =
-  (project in file("modules/base"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-base",
-      libraryDependencies ++= Seq(Dependencies.cats),
-      libraryDependencies ++= Dependencies.test.map(_ % Test)
-    )
-
 lazy val `base-laws` =
   (project in file("modules/base-laws"))
     .settings(publishSettings)
@@ -142,7 +133,7 @@ lazy val meta =
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
   .settings(name := "trace4cats-inject", libraryDependencies ++= Seq(Dependencies.catsEffect).map(_ % Test))
-  .dependsOn(core, base)
+  .dependsOn(core)
 
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
