@@ -1,7 +1,6 @@
 target/
 .idea
 .swp
-local.*
 .bsb/
 .bsp
 .java-version
