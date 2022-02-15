@@ -40,48 +40,42 @@ lazy val root = (project in file("."))
     fs2,
     inject,
     kernel,
+    `kernel-tests`,
     `log-exporter`,
     meta,
-    model,
-    `model-testkit`,
     `rate-sampling`,
     `tail-sampling`,
     testkit
   )
-
-lazy val model =
-  (project in file("modules/model"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-model",
-      libraryDependencies ++= Seq(
-        Dependencies.catsEffectKernel,
-        Dependencies.commonsCodec,
-        // Dependencies.kittens, // TODO re-add once compatible with Scala 3
-        Dependencies.caseInsensitive
-      )
-    )
-
-lazy val `model-testkit` = (project in file("modules/model-testkit"))
-  .settings(publishSettings)
-  .settings(name := "trace4cats-model-testkit", libraryDependencies ++= Dependencies.test)
-  .dependsOn(model)
-
-lazy val testkit = (project in file("modules/testkit"))
-  .settings(publishSettings)
-  .settings(name := "trace4cats-testkit", libraryDependencies ++= Dependencies.test ++ Seq(Dependencies.fs2))
-  .dependsOn(`model-testkit`)
 
 lazy val kernel =
   (project in file("modules/kernel"))
     .settings(publishSettings)
     .settings(
       name := "trace4cats-kernel",
-      libraryDependencies ++= Dependencies.test.map(_ % Test),
+      libraryDependencies ++=
+        Seq(
+          Dependencies.catsEffectKernel,
+          Dependencies.commonsCodec,
+          // Dependencies.kittens, // TODO re-add once compatible with Scala 3
+          Dependencies.caseInsensitive
+        ) ++
+          Dependencies.test.map(_ % Test),
       buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion, sbtVersion),
       buildInfoPackage := "io.janstenpickle.trace4cats.kernel"
     )
-    .dependsOn(model, testkit % Test)
+    .enablePlugins(BuildInfoPlugin)
+
+lazy val testkit = (project in file("modules/testkit"))
+  .settings(publishSettings)
+  .settings(name := "trace4cats-testkit", libraryDependencies ++= Dependencies.test ++ Seq(Dependencies.fs2))
+  .dependsOn(kernel)
+
+lazy val `kernel-tests` =
+  (project in file("modules/kernel-tests"))
+    .settings(noPublishSettings)
+    .settings(name := "trace4cats-kernel-testkit")
+    .dependsOn(testkit)
     .enablePlugins(BuildInfoPlugin)
 
 lazy val core =
