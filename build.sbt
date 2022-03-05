@@ -92,7 +92,7 @@ lazy val core =
       libraryDependencies ++= Seq(Dependencies.collectionCompat),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
-    .dependsOn(kernel, testkit % Test, `exporter-common`)
+    .dependsOn(kernel, testkit % Test, `exporter-common` % Test)
 
 lazy val base =
   (project in file("modules/base"))
@@ -144,7 +144,7 @@ lazy val meta =
       libraryDependencies ++= Seq(Dependencies.log4cats),
       libraryDependencies ++= Seq(Dependencies.slf4jNop).map(_ % Test)
     )
-    .dependsOn(kernel, core, `exporter-stream`, `exporter-common`, testkit % Test)
+    .dependsOn(kernel, core, `exporter-stream`, `exporter-common` % Test, testkit % Test)
 
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
@@ -158,7 +158,7 @@ lazy val fs2 = (project in file("modules/fs2"))
     libraryDependencies ++= Seq(Dependencies.fs2),
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
-  .dependsOn(inject, `exporter-common`, testkit % Test)
+  .dependsOn(inject, `exporter-common` % Test, testkit % Test)
 
 lazy val filtering = (project in file("modules/filtering"))
   .settings(publishSettings)
