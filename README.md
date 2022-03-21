@@ -71,9 +71,9 @@ More information on how to use these can be found in the
 Add the following dependencies to your `build.sbt`:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.13.0"
 ```
 
 Then run the [collector](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/components.md#collectors) in
@@ -83,7 +83,7 @@ span logging mode:
 echo "log-spans: true" > /tmp/collector.yaml
 docker run -p7777:7777 -p7777:7777/udp -it \
   -v /tmp/collector.yaml:/tmp/collector.yaml \
-  janstenpickle/trace4cats-collector-lite:0.12.0 \
+  janstenpickle/trace4cats-collector-lite:0.13.0 \
   --config-file=/tmp/collector.yaml
 ```
 
@@ -185,29 +185,29 @@ The source code for these components is located in the
 To use Trace4Cats within your application add the dependencies listed below as needed:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-inject" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-inject-zio" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-rate-sampling" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-fs2" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-http4s-client" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-http4s-server" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-sttp-client3" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-sttp-tapir" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-natchez" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-avro-kafka-exporter" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-avro-kafka-consumer" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-log-exporter" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.12.0"
-"io.janstenpickle" %% "trace4cats-zipkin-http-exporter" % "0.12.0"
+"io.janstenpickle" %% "trace4cats-core" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-inject" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-inject-zio" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-rate-sampling" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-fs2" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-http4s-client" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-http4s-server" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-sttp-client3" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-sttp-tapir" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-natchez" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-avro-kafka-exporter" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-avro-kafka-consumer" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-log-exporter" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.13.0"
+"io.janstenpickle" %% "trace4cats-zipkin-http-exporter" % "0.13.0"
 ```
 
 ## [`native-image`] Compatibility
