@@ -34,7 +34,7 @@ object MetaTraceUtil {
         Clock[F].realTimeInstant.flatMap { end =>
           val status = exit match {
             case ExitCase.Succeeded => SpanStatus.Ok
-            case ExitCase.Errored(e) => SpanStatus.Internal(e.getMessage)
+            case ExitCase.Errored(e) => SpanStatus.Internal(Option(e.getMessage).getOrElse(e.toString()))
             case ExitCase.Canceled => SpanStatus.Cancelled
           }
 
