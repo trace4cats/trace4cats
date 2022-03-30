@@ -139,7 +139,7 @@ object Span {
             case (span, ExitCase.Succeeded) => span.end
             case (span, ExitCase.Canceled) => span.end(SpanStatus.Cancelled)
             case (span, ExitCase.Errored(th)) =>
-              val end = span.end(SpanStatus.Internal(th.getMessage))
+              val end = span.end(SpanStatus.Internal(Option(th.getMessage).getOrElse(th.toString)))
 
               errorHandler.lift(th) match {
                 case Some(HandledError.Status(spanStatus)) => span.end(spanStatus)
