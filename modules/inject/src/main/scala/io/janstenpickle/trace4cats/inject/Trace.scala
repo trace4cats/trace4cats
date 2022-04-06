@@ -6,8 +6,10 @@
 package io.janstenpickle.trace4cats.inject
 
 import cats.data.{EitherT, Kleisli}
-import cats.effect.kernel.MonadCancelThrow
+import cats.effect.kernel.{MonadCancelThrow, Ref, Resource, Sync}
 import cats.syntax.applicative._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import cats.syntax.option._
 import cats.syntax.show._
 import cats.{Applicative, Functor}
@@ -45,6 +47,25 @@ trait Trace[F[_]] {
 object Trace extends TraceInstancesLowPriority {
 
   def apply[F[_]](implicit ev: Trace[F]): ev.type = ev
+
+  /** A `Local[F, Span[F]]` backed by a generic pure mutable reference, e.g. a `Ref` or an `IOLocal` */
+  class RefSpanLocal[F[_]: MonadCancelThrow, R](ref: R)(get: R => F[Span[F]], set: (R, Span[F]) => F[Unit])
+  extends Local[F, Span[F]] {
+    val F = MonadCancelThrow[F]
+    def ask[R1 >: Span[F]]: F[R1] = get(ref).widen
+    def local[A](fa: F[A])(f: Span[F] => Span[F]): F[A] =
+      get(ref).flatMap(parent => Resource.make(set(ref, f(parent)))(_ => set(ref, parent)).use(_ => fa))
+  }
+
+  /** Construct a `Trace` backed by the given `Ref[F, Span[F]]` */
+  def refTrace[F[_]: MonadCancelThrow](rootSpanRef: Ref[F, Span[F]]): Trace[F] = {
+    implicit val local: Local[F, Span[F]] = new RefSpanLocal(rootSpanRef)(_.get, _.set(_))
+    localSpanInstance[F, F]
+  }
+
+  /** Construct a `Trace` backed by a `Ref[F, Span[F]]`, using the given span as the initial value */
+  def refTrace[F[_]](rootSpan: Span[F])(implicit F0: Sync[F]): F[Trace[F]] =
+    Ref.of[F, Span[F]](rootSpan).map(refTrace[F])
 
   object Implicits {
 
