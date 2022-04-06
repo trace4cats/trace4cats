@@ -20,4 +20,11 @@ trait Lift[Low[_], F[_]] extends ContextRoot { self =>
 
 object Lift {
   def apply[Low[_], F[_]](implicit ev: Lift[Low, F]): Lift[Low, F] = ev
+
+  trait IdLift[F[_]] extends Lift[F, F] {
+    def Low = F
+    def lift[A](fa: F[A]): F[A] = fa
+  }
+
+  implicit def idLift[F[_]](implicit M: Monad[F]): Lift[F, F] = new IdLift[F] { val F = M }
 }
