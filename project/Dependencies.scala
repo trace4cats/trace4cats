@@ -19,7 +19,7 @@ object Dependencies {
     val catsTestkitScalatest = "2.1.5"
     val disciplineScalatest = "2.1.5"
     val discipline = "1.4.0"
-    val scalaCheck = "1.15.4"
+    val scalaCheck = "1.16.0"
     val scalaCheckShapeless = "1.3.0"
     val scalaTest = "3.2.11"
 
