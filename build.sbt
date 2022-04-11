@@ -36,6 +36,7 @@ lazy val root = (project in file("."))
   .aggregate(
     base,
     `base-laws`,
+    `cats-effect`,
     core,
     `dynamic-sampling`,
     `dynamic-sampling-config`,
@@ -155,6 +156,11 @@ lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
   .settings(name := "trace4cats-inject", libraryDependencies ++= Seq(Dependencies.catsEffect).map(_ % Test))
   .dependsOn(core, base)
+
+lazy val `cats-effect` = (project in file("modules/cats-effect"))
+  .settings(publishSettings)
+  .settings(name := "trace4cats-cats-effect", libraryDependencies ++= Seq(Dependencies.catsEffect))
+  .dependsOn(inject)
 
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
