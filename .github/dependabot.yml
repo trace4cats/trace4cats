@@ -11,7 +11,7 @@ updates:
       - "dependency-update"
     ignore:
       # managed by sbt-github-actions
-      - dependency-name: "olafurpg/setup-scala"
+      - dependency-name: "actions/setup-java"
       - dependency-name: "actions/checkout"
       - dependency-name: "actions/cache"
       - dependency-name: "actions/upload-artifact"

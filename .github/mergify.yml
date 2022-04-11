@@ -21,6 +21,7 @@ pull_request_rules:
               - or:
                   - files=project/build.properties
                   - files=project/plugins.sbt
+                  - files=.scalafmt.conf
           - body~=labels:.*semver-patch
           - "#approved-reviews-by>=1"
       - and:
