@@ -2,11 +2,11 @@ package io.janstenpickle.trace4cats
 
 import cats.data.NonEmptyList
 import cats.effect.kernel.Resource.ExitCase
-import cats.effect.kernel.{Clock, MonadCancelThrow, Ref, Resource, Sync}
+import cats.effect.kernel.{Clock, MonadCancelThrow, Ref, Resource}
 import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.{~>, Applicative}
+import cats.{~>, Applicative, Monad}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
 import io.janstenpickle.trace4cats.model._
 
@@ -26,7 +26,7 @@ trait Span[F[_]] {
     Span.mapK(fk)(this)
 }
 
-case class RefSpan[F[_]: Sync] private[trace4cats] (
+case class RefSpan[F[_]: Monad: Clock: Ref.Make: SpanId.Gen] private[trace4cats] (
   context: SpanContext,
   name: String,
   kind: SpanKind,
@@ -73,7 +73,7 @@ case class RefSpan[F[_]: Sync] private[trace4cats] (
 
 }
 
-case class EmptySpan[F[_]: Sync] private[trace4cats] (context: SpanContext) extends Span[F] {
+case class EmptySpan[F[_]: Applicative: SpanId.Gen] private[trace4cats] (context: SpanContext) extends Span[F] {
   override def put(key: String, value: AttributeValue): F[Unit] = Applicative[F].unit
   override def putAll(fields: (String, AttributeValue)*): F[Unit] = Applicative[F].unit
   override def putAll(fields: Map[String, AttributeValue]): F[Unit] = Applicative[F].unit
@@ -100,7 +100,7 @@ case class NoopSpan[F[_]: Applicative] private[trace4cats] (context: SpanContext
 }
 
 object Span {
-  private def makeSpan[F[_]: Sync](
+  private def makeSpan[F[_]: Monad: Clock: Ref.Make: SpanId.Gen](
     name: String,
     parent: Option[SpanContext],
     context: SpanContext,
@@ -158,7 +158,7 @@ object Span {
 
   def noopInstance[F[_]: Applicative]: Span[F] = NoopSpan[F](SpanContext.invalid)
 
-  def child[F[_]: Sync](
+  def child[F[_]: Monad: Clock: Ref.Make: SpanId.Gen](
     name: String,
     parent: SpanContext,
     kind: SpanKind,
@@ -170,7 +170,7 @@ object Span {
       .eval(SpanContext.child[F](parent))
       .flatMap(makeSpan(name, Some(parent), _, kind, sampler, completer, errorHandler))
 
-  def root[F[_]: Sync](
+  def root[F[_]: Monad: Clock: Ref.Make: TraceId.Gen: SpanId.Gen](
     name: String,
     kind: SpanKind,
     sampler: SpanSampler[F],

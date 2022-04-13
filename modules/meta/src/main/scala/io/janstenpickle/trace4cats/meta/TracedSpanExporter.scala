@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.meta
 
 import cats.Applicative
-import cats.effect.kernel.{Async, Deferred}
+import cats.effect.kernel.{Clock, Concurrent, Deferred}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.Chunk
@@ -13,7 +13,7 @@ object TracedSpanExporter {
   private final val spanName = "trace4cats.export.batch"
   private final val spanKind = SpanKind.Producer
 
-  def apply[F[_]: Async](
+  def apply[F[_]: Concurrent: Clock: TraceId.Gen: SpanId.Gen](
     name: String,
     attributes: Map[String, AttributeValue],
     process: TraceProcess,
