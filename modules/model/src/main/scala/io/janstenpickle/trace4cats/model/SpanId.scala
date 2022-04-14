@@ -22,8 +22,8 @@ object SpanId {
   object Gen {
     def apply[F[_]](implicit ev: Gen[F]): Gen[F] = ev
 
-    def from[F[_]](_gen: F[SpanId]): Gen[F] = new Gen[F] {
-      def gen: F[SpanId] = _gen
+    def from[F[_]](f: F[SpanId]): Gen[F] = new Gen[F] {
+      def gen: F[SpanId] = f
     }
 
     implicit def threadLocalRandomSpanId[F[_]: Sync]: Gen[F] = Gen.from(Sync[F].delay {

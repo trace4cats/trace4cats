@@ -22,8 +22,8 @@ object TraceId {
   object Gen {
     def apply[F[_]](implicit ev: Gen[F]): Gen[F] = ev
 
-    def from[F[_]](_gen: F[TraceId]): Gen[F] = new Gen[F] {
-      def gen: F[TraceId] = _gen
+    def from[F[_]](f: F[TraceId]): Gen[F] = new Gen[F] {
+      def gen: F[TraceId] = f
     }
 
     implicit def threadLocalRandomTraceId[F[_]: Sync]: Gen[F] = Gen.from(Sync[F].delay {
