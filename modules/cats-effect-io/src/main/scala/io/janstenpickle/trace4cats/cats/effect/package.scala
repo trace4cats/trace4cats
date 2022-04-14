@@ -12,23 +12,23 @@ package object effect {
 
   /** Construct a `Trace` backed by the given `IOLocal[Span[IO]]` */
   def ioLocalTrace(rootSpan: IOLocal[Span[IO]]): Trace[IO] = {
-    implicit val local: Local[IO, Span[IO]] = new SpanLocalForIOLocal(rootSpan)(Lens.id)
+    implicit val local: Local[IO, Span[IO]] = new LocalForIOLocal(rootSpan)
     Trace.localSpanInstance[IO, IO]
   }
 
   def ioLocalTraceWithContext[Ctx](rootCtx: IOLocal[Ctx])(implicit lens: Lens[Ctx, Span[IO]]): Trace[IO] = {
-    implicit val local: Local[IO, Span[IO]] = new SpanLocalForIOLocal(rootCtx)
+    implicit val local: Local[IO, Span[IO]] = new LocalForIOLocal(rootCtx).focus(lens)
     Trace.localSpanInstance[IO, IO]
   }
 
   def ioLocalProvide(rootSpan: IOLocal[Span[IO]]): Provide[IO, IO, Span[IO]] =
-    new SpanLocalForIOLocal(rootSpan)(Lens.id) with Provide[IO, IO, Span[IO]] with IdUnlift[IO] {
+    new LocalForIOLocal(rootSpan) with Provide[IO, IO, Span[IO]] with IdUnlift[IO] {
       override def provide[A](fa: IO[A])(r: Span[IO]): IO[A] = local(fa)(_ => r)
       override def askUnlift: IO[IO ~> IO] = super.askUnlift
     }
 
   def ioLocalProvideWithContext[Ctx](rootCtx: IOLocal[Ctx]): Provide[IO, IO, Ctx] =
-    new ContextLocalForIOLocal(rootCtx) with Provide[IO, IO, Ctx] with IdUnlift[IO] {
+    new LocalForIOLocal(rootCtx) with Provide[IO, IO, Ctx] with IdUnlift[IO] {
       override def provide[A](fa: IO[A])(r: Ctx): IO[A] = local(fa)(_ => r)
       override def askUnlift: IO[IO ~> IO] = super.askUnlift
     }
