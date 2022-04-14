@@ -6,11 +6,11 @@
 
 package io.janstenpickle.trace4cats.inject
 
-import cats.{~>, Applicative}
+import cats.{~>, Applicative, Monad}
 import cats.data.Kleisli
-import cats.effect.kernel.{MonadCancelThrow, Resource, Sync}
+import cats.effect.kernel.{Clock, MonadCancelThrow, Ref, Resource}
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
-import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders}
+import io.janstenpickle.trace4cats.model.{SpanId, SpanKind, TraceHeaders, TraceId}
 import io.janstenpickle.trace4cats.{ErrorHandler, Span, ToHeaders}
 
 /** An entry point, for creating root spans or continuing traces that were started on another system.
@@ -61,7 +61,7 @@ object EntryPoint {
     *   conform to open standards. Other header implementations that do not conform to open standards are supported. See
     *   [[io.janstenpickle.trace4cats.ToHeaders]] for details or use `ToHeaders.all`
     */
-  def apply[F[_]: Sync](
+  def apply[F[_]: Monad: Clock: Ref.Make: TraceId.Gen: SpanId.Gen](
     sampler: SpanSampler[F],
     completer: SpanCompleter[F],
     toHeaders: ToHeaders = ToHeaders.standard

@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.meta
 
 import cats.Applicative
-import cats.effect.kernel.{Async, Deferred}
+import cats.effect.kernel.{Clock, Concurrent, Deferred}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.{Chunk, Pipe, Stream}
@@ -12,7 +12,7 @@ object PipeTracer {
   private final val spanName = "trace4cats.receive.batch"
   private final val spanKind = SpanKind.Consumer
 
-  def apply[F[_]: Async](
+  def apply[F[_]: Concurrent: Clock: TraceId.Gen: SpanId.Gen](
     attributes: Map[String, AttributeValue],
     process: TraceProcess,
     sampler: SpanSampler[F],
