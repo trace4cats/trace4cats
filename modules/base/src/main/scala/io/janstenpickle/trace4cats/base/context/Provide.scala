@@ -17,8 +17,8 @@ trait Provide[Low[_], F[_], R] extends Local[F, R] with Unlift[Low, F] { self =>
 
   override def imapK[G[_]: Monad](fk: F ~> G, gk: G ~> F): Provide[Low, G, R] =
     new Provide[Low, G, R] {
-      def Low: Monad[Low] = self.Low
-      def F: Monad[G] = implicitly
+      val Low: Monad[Low] = self.Low
+      val F: Monad[G] = implicitly
       def lift[A](la: Low[A]): G[A] = fk(self.lift(la))
       def ask[R1 >: R]: G[R1] = fk(self.ask[R1])
       def local[A](fa: G[A])(f: R => R): G[A] = fk(self.local(gk(fa))(f))
@@ -32,8 +32,8 @@ object Provide {
   private def mapK[F[_], G[_]: Monad, Low[_], R](self: Ask[F, R] with Lift[Low, F])(fk: F ~> G): Ask[G, R]
     with Lift[Low, G] =
     new Ask[G, R] with Lift[Low, G] {
-      def Low: Monad[Low] = self.Low
-      def F: Monad[G] = implicitly
+      val Low: Monad[Low] = self.Low
+      val F: Monad[G] = implicitly
       def lift[A](la: Low[A]): G[A] = fk(self.lift(la))
       def ask[R1 >: R]: G[R1] = fk(self.ask[R1])
       override def mapK[H[_]: Monad](gk: G ~> H): Ask[H, R] with Lift[Low, H] = Provide.mapK(this)(gk)

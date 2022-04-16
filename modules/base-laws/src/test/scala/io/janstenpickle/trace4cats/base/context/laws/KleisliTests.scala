@@ -24,7 +24,10 @@ class KleisliTests extends BaseSuite {
   implicit def cogenKleisliOptionLower[R: Cogen]: Cogen[Kleisli[Option, R, *] ~> Option] =
     Cogen[R].contramap(k => k(Kleisli((r: R) => Some(r))).get)
 
-  checkAll("Kleisli[Option, String, *]", ProvideTests[Option, Kleisli[Option, String, *], String].provide[String, Int])
+  checkAll(
+    "Option <~> Kleisli[Option, String, *]",
+    ProvideTests[Option, Kleisli[Option, String, *], String].provide[String, Int]
+  )
 
   checkAll(
     "Provide[Option, Kleisli[Option, String, *], String]",
