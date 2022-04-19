@@ -159,8 +159,12 @@ lazy val inject = (project in file("modules/inject"))
 
 lazy val `cats-effect-io` = (project in file("modules/cats-effect-io"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-cats-effect-io", libraryDependencies ++= Seq(Dependencies.catsEffect))
-  .dependsOn(inject)
+  .settings(
+    name := "trace4cats-cats-effect-io",
+    libraryDependencies ++= Seq(Dependencies.catsEffectKernel),
+    libraryDependencies ++= Dependencies.test.map(_ % Test)
+  )
+  .dependsOn(inject, `base-laws` % "compile->test,test->test")
 
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
