@@ -60,7 +60,7 @@ lazy val model =
     .settings(
       name := "trace4cats-model",
       libraryDependencies ++= Seq(
-        Dependencies.catsEffectKernel,
+        Dependencies.catsEffectStd,
         Dependencies.commonsCodec,
         // Dependencies.kittens, // TODO re-add once compatible with Scala 3
         Dependencies.caseInsensitive

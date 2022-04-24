@@ -1,11 +1,12 @@
 package io.janstenpickle.trace4cats.model
 
 import cats.effect.kernel.Sync
+import cats.effect.std.Random
+import cats.syntax.functor._
 import cats.syntax.show._
-import cats.{Eq, Show}
+import cats.{Eq, Functor, Show}
 import org.apache.commons.codec.binary.Hex
 
-import java.util.concurrent.ThreadLocalRandom
 import scala.util.Try
 
 case class TraceId private (value: Array[Byte]) extends AnyVal {
@@ -19,18 +20,24 @@ object TraceId {
     def gen: F[TraceId]
   }
 
-  object Gen {
+  object Gen extends GenInstances0 {
     def apply[F[_]](implicit ev: Gen[F]): Gen[F] = ev
 
     def from[F[_]](f: F[TraceId]): Gen[F] = new Gen[F] {
       def gen: F[TraceId] = f
     }
+  }
 
-    implicit def threadLocalRandomTraceId[F[_]: Sync]: Gen[F] = Gen.from(Sync[F].delay {
-      val array = Array.fill[Byte](size)(0)
-      ThreadLocalRandom.current.nextBytes(array)
-      TraceId.unsafe(array)
-    })
+  trait GenInstances0 extends GenInstances1 {
+    implicit def fromRandomTraceIdGen[F[_]: Functor: Random]: Gen[F] =
+      Gen.from(Random[F].nextBytes(size).map(TraceId.unsafe))
+  }
+
+  trait GenInstances1 { this: GenInstances0 =>
+    implicit def threadLocalRandomTraceIdGen[F[_]: Sync]: Gen[F] = {
+      implicit val rnd: Random[F] = Random.javaUtilConcurrentThreadLocalRandom[F]
+      fromRandomTraceIdGen[F]
+    }
   }
 
   def gen[F[_]: Gen]: F[TraceId] = Gen[F].gen
