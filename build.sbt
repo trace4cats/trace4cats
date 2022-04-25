@@ -35,8 +35,8 @@ lazy val root = (project in file("."))
   .settings(name := "Trace4Cats")
   .aggregate(
     base,
+    `base-io`,
     `base-laws`,
-    `cats-effect-io`,
     core,
     `dynamic-sampling`,
     `dynamic-sampling-config`,
@@ -45,6 +45,7 @@ lazy val root = (project in file("."))
     filtering,
     fs2,
     inject,
+    `inject-io`,
     kernel,
     `log-exporter`,
     meta,
@@ -157,14 +158,16 @@ lazy val inject = (project in file("modules/inject"))
   .settings(name := "trace4cats-inject", libraryDependencies ++= Seq(Dependencies.catsEffect).map(_ % Test))
   .dependsOn(core, base)
 
-lazy val `cats-effect-io` = (project in file("modules/cats-effect-io"))
+lazy val `base-io` =
+  (project in file("modules/base-io"))
+    .settings(publishSettings)
+    .settings(name := "trace4cats-base-io", libraryDependencies ++= Seq(Dependencies.catsEffect))
+    .dependsOn(base, `base-laws` % Test, testkit % Test)
+
+lazy val `inject-io` = (project in file("modules/inject-io"))
   .settings(publishSettings)
-  .settings(
-    name := "trace4cats-cats-effect-io",
-    libraryDependencies ++= Seq(Dependencies.catsEffectKernel),
-    libraryDependencies ++= Dependencies.test.map(_ % Test)
-  )
-  .dependsOn(inject, `base-laws` % "compile->test,test->test")
+  .settings(name := "trace4cats-inject-io")
+  .dependsOn(`base-io`, inject)
 
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)

@@ -21,5 +21,5 @@ object Lens {
     def set(a: A): S => S = _set(a)
   }
 
-  def id[A]: Lens[A, A] = apply(identity[A])(const)
+  implicit def id[A]: Lens[A, A] = apply(identity[A])(const)
 }

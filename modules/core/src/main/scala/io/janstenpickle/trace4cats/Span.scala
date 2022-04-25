@@ -99,6 +99,23 @@ case class NoopSpan[F[_]: Applicative] private[trace4cats] (context: SpanContext
   override def child(name: String, kind: SpanKind, errorHandler: ErrorHandler): Resource[F, Span[F]] = child(name, kind)
 }
 
+case class DischargeSpan[F[_]: Monad: Clock: Ref.Make: TraceId.Gen: SpanId.Gen] private[trace4cats] (
+  context: SpanContext,
+  sampler: SpanSampler[F],
+  completer: SpanCompleter[F]
+) extends Span[F] {
+  def put(key: String, value: AttributeValue): F[Unit] = Applicative[F].unit
+  def putAll(fields: (String, AttributeValue)*): F[Unit] = Applicative[F].unit
+  def putAll(fields: Map[String, AttributeValue]): F[Unit] = Applicative[F].unit
+  def setStatus(spanStatus: SpanStatus): F[Unit] = Applicative[F].unit
+  def addLink(link: Link): F[Unit] = Applicative[F].unit
+  def addLinks(links: NonEmptyList[Link]): F[Unit] = Applicative[F].unit
+  def child(name: String, kind: SpanKind): Resource[F, Span[F]] =
+    Resource.eval(SpanContext.root[F]).flatMap(Span.child(name, _, kind, sampler, completer))
+  def child(name: String, kind: SpanKind, errorHandler: ErrorHandler): Resource[F, Span[F]] =
+    Resource.eval(SpanContext.root[F]).flatMap(Span.child(name, _, kind, sampler, completer, errorHandler))
+}
+
 object Span {
   private def makeSpan[F[_]: Monad: Clock: Ref.Make: SpanId.Gen](
     name: String,
@@ -178,6 +195,12 @@ object Span {
     errorHandler: ErrorHandler = ErrorHandler.empty
   ): Resource[F, Span[F]] =
     Resource.eval(SpanContext.root[F]).flatMap(makeSpan(name, None, _, kind, sampler, completer, errorHandler))
+
+  def discharge[F[_]: Monad: Clock: Ref.Make: TraceId.Gen: SpanId.Gen](
+    sampler: SpanSampler[F],
+    completer: SpanCompleter[F]
+  ): F[Span[F]] =
+    SpanContext.root[F].map(DischargeSpan(_, sampler, completer))
 
   private def mapK[F[_]: MonadCancelThrow, G[_]: MonadCancelThrow](fk: F ~> G)(span: Span[F]): Span[G] =
     new Span[G] {

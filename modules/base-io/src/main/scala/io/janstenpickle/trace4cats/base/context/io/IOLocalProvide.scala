@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.cats.effect
+package io.janstenpickle.trace4cats.base.context.io
 
 import cats.arrow.FunctionK
 import cats.{~>, Monad}
@@ -6,7 +6,7 @@ import cats.effect.kernel.Resource
 import cats.effect.{IO, IOLocal}
 import io.janstenpickle.trace4cats.base.context.Provide
 
-private[trace4cats] class ProvideForIOLocal[Ctx](rootCtx: IOLocal[Ctx]) extends Provide[IO, IO, Ctx] {
+private[io] class IOLocalProvide[Ctx](rootCtx: IOLocal[Ctx]) extends Provide[IO, IO, Ctx] {
   val Low: Monad[IO] = implicitly
   val F: Monad[IO] = implicitly
 
