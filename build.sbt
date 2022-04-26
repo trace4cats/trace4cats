@@ -40,14 +40,11 @@ lazy val root = (project in file("."))
     core,
     `dynamic-sampling`,
     `dynamic-sampling-config`,
-    `exporter-common`,
-    `exporter-stream`,
     filtering,
     fs2,
     inject,
     `inject-io`,
     kernel,
-    `log-exporter`,
     meta,
     `rate-sampling`,
     `tail-sampling`,
@@ -84,10 +81,15 @@ lazy val core =
     .settings(publishSettings)
     .settings(
       name := "trace4cats-core",
-      libraryDependencies ++= Seq(Dependencies.collectionCompat),
+      libraryDependencies ++= Seq(
+        Dependencies.collectionCompat,
+        Dependencies.fs2,
+        Dependencies.log4cats,
+        Dependencies.hotswapRef
+      ),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
-    .dependsOn(kernel, testkit % Test, `exporter-common` % Test)
+    .dependsOn(kernel, testkit % Test)
 
 lazy val base =
   (project in file("modules/base"))
@@ -108,29 +110,6 @@ lazy val `base-laws` =
     )
     .dependsOn(base)
 
-lazy val `log-exporter` =
-  (project in file("modules/log-exporter"))
-    .settings(publishSettings)
-    .settings(name := "trace4cats-log-exporter", libraryDependencies ++= Seq(Dependencies.log4cats))
-    .dependsOn(kernel)
-
-lazy val `exporter-stream` =
-  (project in file("modules/exporter-stream"))
-    .settings(publishSettings)
-    .settings(name := "trace4cats-exporter-stream", libraryDependencies ++= Seq(Dependencies.fs2))
-    .dependsOn(kernel)
-
-lazy val `exporter-common` =
-  (project in file("modules/exporter-common"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-exporter-common",
-      // TODO re-add kittens once compatible with Scala 3
-      libraryDependencies ++= Seq( /*Dependencies.kittens,*/ Dependencies.log4cats, Dependencies.hotswapRef),
-      libraryDependencies ++= Dependencies.test.map(_ % Test)
-    )
-    .dependsOn(kernel, `exporter-stream`, testkit % Test)
-
 lazy val meta =
   (project in file("modules/meta"))
     .settings(publishSettings)
@@ -139,7 +118,7 @@ lazy val meta =
       libraryDependencies ++= Seq(Dependencies.log4cats),
       libraryDependencies ++= Seq(Dependencies.slf4jNop).map(_ % Test)
     )
-    .dependsOn(kernel, core, `exporter-stream`, `exporter-common` % Test, testkit % Test)
+    .dependsOn(kernel, core, testkit % Test)
 
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
@@ -164,12 +143,12 @@ lazy val fs2 = (project in file("modules/fs2"))
     libraryDependencies ++= Seq(Dependencies.fs2),
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
-  .dependsOn(inject, `exporter-common` % Test, testkit % Test)
+  .dependsOn(inject, core % Test, testkit % Test)
 
 lazy val filtering = (project in file("modules/filtering"))
   .settings(publishSettings)
   .settings(name := "trace4cats-filtering", libraryDependencies ++= Dependencies.test.map(_ % Test))
-  .dependsOn(kernel, `exporter-stream`)
+  .dependsOn(core)
 
 lazy val `dynamic-sampling` = (project in file("modules/dynamic-sampling"))
   .settings(publishSettings)
@@ -197,4 +176,4 @@ lazy val `rate-sampling` = (project in file("modules/rate-sampling"))
 lazy val `tail-sampling` = (project in file("modules/tail-sampling"))
   .settings(publishSettings)
   .settings(name := "trace4cats-tail-sampling", libraryDependencies ++= Seq(Dependencies.log4cats))
-  .dependsOn(kernel, `exporter-stream`)
+  .dependsOn(core)
