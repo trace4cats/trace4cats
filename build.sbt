@@ -34,9 +34,9 @@ lazy val root = (project in file("."))
   .settings(noPublishSettings)
   .settings(name := "Trace4Cats")
   .aggregate(
-    base,
-    `base-io`,
-    `base-laws`,
+    `fp-utils`,
+    `fp-utils-io`,
+    `fp-utils-laws`,
     core,
     `dynamic-sampling`,
     `dynamic-sampling-config`,
@@ -91,24 +91,24 @@ lazy val core =
     )
     .dependsOn(kernel, testkit % Test)
 
-lazy val base =
-  (project in file("modules/base"))
+lazy val `fp-utils` =
+  (project in file("modules/fp-utils"))
     .settings(publishSettings)
     .settings(
-      name := "trace4cats-base",
+      name := "trace4cats-fp-utils",
       libraryDependencies ++= Seq(Dependencies.cats),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
 
-lazy val `base-laws` =
-  (project in file("modules/base-laws"))
+lazy val `fp-utils-laws` =
+  (project in file("modules/fp-utils-laws"))
     .settings(publishSettings)
     .settings(
-      name := "trace4cats-base-laws",
+      name := "trace4cats-fp-utils-laws",
       libraryDependencies ++= Seq(Dependencies.catsLaws),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
-    .dependsOn(base)
+    .dependsOn(`fp-utils`)
 
 lazy val meta =
   (project in file("modules/meta"))
@@ -123,18 +123,18 @@ lazy val meta =
 lazy val inject = (project in file("modules/inject"))
   .settings(publishSettings)
   .settings(name := "trace4cats-inject", libraryDependencies ++= Seq(Dependencies.catsEffect).map(_ % Test))
-  .dependsOn(core, base)
+  .dependsOn(core, `fp-utils`)
 
-lazy val `base-io` =
-  (project in file("modules/base-io"))
+lazy val `fp-utils-io` =
+  (project in file("modules/fp-utils-io"))
     .settings(publishSettings)
-    .settings(name := "trace4cats-base-io", libraryDependencies ++= Seq(Dependencies.catsEffect))
-    .dependsOn(base, `base-laws` % "compile->compile;test->test", testkit % Test)
+    .settings(name := "trace4cats-fp-utils-io", libraryDependencies ++= Seq(Dependencies.catsEffect))
+    .dependsOn(`fp-utils`, `fp-utils-laws` % "compile->compile;test->test", testkit % Test)
 
 lazy val `inject-io` = (project in file("modules/inject-io"))
   .settings(publishSettings)
   .settings(name := "trace4cats-inject-io")
-  .dependsOn(`base-io`, inject)
+  .dependsOn(`fp-utils-io`, inject)
 
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
