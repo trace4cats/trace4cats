@@ -44,7 +44,6 @@ lazy val root = (project in file("."))
     `inject-io`,
     kernel,
     meta,
-    `rate-sampling`,
     `tail-sampling`,
     testkit
   )
@@ -172,12 +171,7 @@ lazy val `dynamic-sampling-config` = (project in file("modules/dynamic-sampling-
     // libraryDependencies ++= Seq(Dependencies.kittens), // TODO re-add once compatible with Scala 3
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
-  .dependsOn(kernel, `dynamic-sampling`, `rate-sampling`, testkit % Test)
-
-lazy val `rate-sampling` = (project in file("modules/rate-sampling"))
-  .settings(publishSettings)
-  .settings(name := "trace4cats-rate-sampling", libraryDependencies ++= Dependencies.test.map(_ % Test))
-  .dependsOn(kernel, `tail-sampling`)
+  .dependsOn(core, `dynamic-sampling`, testkit % Test)
 
 lazy val `tail-sampling` = (project in file("modules/tail-sampling"))
   .settings(publishSettings)

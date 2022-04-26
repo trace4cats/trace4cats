@@ -1,10 +1,9 @@
 package io.janstenpickle.trace4cats.rate
 
 import cats.Applicative
-import cats.effect.kernel.Ref
 import cats.effect.kernel.syntax.spawn._
+import cats.effect.kernel.{Ref, Resource, Temporal}
 import cats.effect.std.Hotswap
-import cats.effect.kernel.{Resource, Temporal}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 
