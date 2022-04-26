@@ -49,25 +49,8 @@ object Trace extends TraceInstancesLowPriority {
   object WithContext {
     def apply[F[_]](implicit ev: WithContext[F]): ev.type = ev
 
-    implicit def eitherTWithContext[F[_]: Functor, A](implicit trace: WithContext[F]): WithContext[EitherT[F, A, *]] =
-      new WithContext[EitherT[F, A, *]] {
-        override def put(key: String, value: AttributeValue): EitherT[F, A, Unit] = EitherT.liftF(trace.put(key, value))
-
-        override def putAll(fields: (String, AttributeValue)*): EitherT[F, A, Unit] =
-          EitherT.liftF(trace.putAll(fields: _*))
-
-        override def span[B](name: String, kind: SpanKind, errorHandler: ErrorHandler)(
-          fa: EitherT[F, A, B]
-        ): EitherT[F, A, B] = EitherT(trace.span(name, kind, errorHandler)(fa.value))
-
-        override def headers(toHeaders: ToHeaders): EitherT[F, A, TraceHeaders] =
-          EitherT.liftF(trace.headers(toHeaders))
-
-        override def setStatus(status: SpanStatus): EitherT[F, A, Unit] =
-          EitherT.liftF(trace.setStatus(status))
-
-        override def traceId: EitherT[F, A, Option[String]] = EitherT.liftF(trace.traceId)
-
+    implicit def eitherTInstance[F[_]: Functor, A](implicit trace: WithContext[F]): WithContext[EitherT[F, A, *]] =
+      new EitherTTrace[F, A](trace) with WithContext[EitherT[F, A, *]] {
         override def context: EitherT[F, A, SpanContext] = EitherT.liftF(trace.context)
       }
   }
@@ -157,25 +140,27 @@ object Trace extends TraceInstancesLowPriority {
 
   }
 
-  implicit def eitherTTrace[F[_]: Functor, A](implicit trace: Trace[F]): Trace[EitherT[F, A, *]] =
-    new Trace[EitherT[F, A, *]] {
-      override def put(key: String, value: AttributeValue): EitherT[F, A, Unit] = EitherT.liftF(trace.put(key, value))
+  implicit def eitherTInstance[F[_]: Functor, A](implicit trace: Trace[F]): Trace[EitherT[F, A, *]] =
+    new EitherTTrace[F, A](trace)
 
-      override def putAll(fields: (String, AttributeValue)*): EitherT[F, A, Unit] =
-        EitherT.liftF(trace.putAll(fields: _*))
+  class EitherTTrace[F[_]: Functor, A](trace: Trace[F]) extends Trace[EitherT[F, A, *]] {
+    override def put(key: String, value: AttributeValue): EitherT[F, A, Unit] = EitherT.liftF(trace.put(key, value))
 
-      override def span[B](name: String, kind: SpanKind, errorHandler: ErrorHandler)(
-        fa: EitherT[F, A, B]
-      ): EitherT[F, A, B] = EitherT(trace.span(name, kind, errorHandler)(fa.value))
+    override def putAll(fields: (String, AttributeValue)*): EitherT[F, A, Unit] =
+      EitherT.liftF(trace.putAll(fields: _*))
 
-      override def headers(toHeaders: ToHeaders): EitherT[F, A, TraceHeaders] =
-        EitherT.liftF(trace.headers(toHeaders))
+    override def span[B](name: String, kind: SpanKind, errorHandler: ErrorHandler)(
+      fa: EitherT[F, A, B]
+    ): EitherT[F, A, B] = EitherT(trace.span(name, kind, errorHandler)(fa.value))
 
-      override def setStatus(status: SpanStatus): EitherT[F, A, Unit] =
-        EitherT.liftF(trace.setStatus(status))
+    override def headers(toHeaders: ToHeaders): EitherT[F, A, TraceHeaders] =
+      EitherT.liftF(trace.headers(toHeaders))
 
-      override def traceId: EitherT[F, A, Option[String]] = EitherT.liftF(trace.traceId)
-    }
+    override def setStatus(status: SpanStatus): EitherT[F, A, Unit] =
+      EitherT.liftF(trace.setStatus(status))
+
+    override def traceId: EitherT[F, A, Option[String]] = EitherT.liftF(trace.traceId)
+  }
 }
 
 trait TraceInstancesLowPriority {
