@@ -49,35 +49,15 @@ lazy val root = (project in file("."))
     kernel,
     `log-exporter`,
     meta,
-    model,
-    `model-testkit`,
     `rate-sampling`,
     `tail-sampling`,
     testkit
   )
 
-lazy val model =
-  (project in file("modules/model"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-model",
-      libraryDependencies ++= Seq(
-        Dependencies.catsEffectStd,
-        Dependencies.commonsCodec,
-        // Dependencies.kittens, // TODO re-add once compatible with Scala 3
-        Dependencies.caseInsensitive
-      )
-    )
-
-lazy val `model-testkit` = (project in file("modules/model-testkit"))
-  .settings(publishSettings)
-  .settings(name := "trace4cats-model-testkit", libraryDependencies ++= Dependencies.test)
-  .dependsOn(model)
-
 lazy val testkit = (project in file("modules/testkit"))
   .settings(publishSettings)
   .settings(name := "trace4cats-testkit", libraryDependencies ++= Dependencies.test ++ Seq(Dependencies.fs2))
-  .dependsOn(`model-testkit`)
+  .dependsOn(kernel)
 
 lazy val kernel =
   (project in file("modules/kernel"))
@@ -86,9 +66,17 @@ lazy val kernel =
       name := "trace4cats-kernel",
       libraryDependencies ++= Dependencies.test.map(_ % Test),
       buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion, sbtVersion),
-      buildInfoPackage := "io.janstenpickle.trace4cats.kernel"
+      buildInfoPackage := "io.janstenpickle.trace4cats.kernel",
+      Test / unmanagedSourceDirectories ++= Seq(baseDirectory.value / ".." / "testkit" / "src" / "main" / "scala"),
+      libraryDependencies ++= Seq(
+        Dependencies.catsEffectStd,
+        Dependencies.commonsCodec,
+        // Dependencies.kittens, // TODO re-add once compatible with Scala 3
+        Dependencies.caseInsensitive,
+        Dependencies.collectionCompat,
+      ),
+      libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.fs2)).map(_ % Test)
     )
-    .dependsOn(model, testkit % Test)
     .enablePlugins(BuildInfoPlugin)
 
 lazy val core =
