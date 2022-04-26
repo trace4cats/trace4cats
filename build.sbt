@@ -37,12 +37,10 @@ lazy val root = (project in file("."))
     `fp-utils`,
     `fp-utils-io`,
     `fp-utils-laws`,
-    core,
     `dynamic-sampling`,
     `dynamic-sampling-config`,
     filtering,
     fs2,
-    inject,
     `inject-io`,
     kernel,
     meta,
@@ -64,7 +62,10 @@ lazy val kernel =
       libraryDependencies ++= Dependencies.test.map(_ % Test),
       buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion, sbtVersion),
       buildInfoPackage := "io.janstenpickle.trace4cats.kernel",
-      Test / unmanagedSourceDirectories ++= Seq(baseDirectory.value / ".." / "testkit" / "src" / "main" / "scala"),
+      Test / unmanagedSourceDirectories ++= Seq(
+        baseDirectory.value / ".." / "testkit" / "src" / "main" / "scala",
+        baseDirectory.value / ".." / "core" / "src" / "main" / "scala"
+      ),
       libraryDependencies ++= Seq(
         Dependencies.catsEffectStd,
         Dependencies.commonsCodec,
@@ -72,8 +73,13 @@ lazy val kernel =
         Dependencies.caseInsensitive,
         Dependencies.collectionCompat,
       ),
-      libraryDependencies ++= (Dependencies.test ++ Seq(Dependencies.fs2)).map(_ % Test)
+      libraryDependencies ++= (Dependencies.test ++ Seq(
+        Dependencies.fs2,
+        Dependencies.log4cats,
+        Dependencies.hotswapRef
+      )).map(_ % Test)
     )
+    .dependsOn(`fp-utils` % Test)
     .enablePlugins(BuildInfoPlugin)
 
 lazy val core =
@@ -89,7 +95,7 @@ lazy val core =
       ),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
-    .dependsOn(kernel, testkit % Test)
+    .dependsOn(kernel, `fp-utils`, testkit % Test)
 
 lazy val `fp-utils` =
   (project in file("modules/fp-utils"))
@@ -134,7 +140,7 @@ lazy val `fp-utils-io` =
 lazy val `inject-io` = (project in file("modules/inject-io"))
   .settings(publishSettings)
   .settings(name := "trace4cats-inject-io")
-  .dependsOn(`fp-utils-io`, inject)
+  .dependsOn(`fp-utils-io`, core)
 
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
