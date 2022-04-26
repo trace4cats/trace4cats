@@ -162,7 +162,7 @@ lazy val `base-io` =
   (project in file("modules/base-io"))
     .settings(publishSettings)
     .settings(name := "trace4cats-base-io", libraryDependencies ++= Seq(Dependencies.catsEffect))
-    .dependsOn(base, `base-laws` % Test, testkit % Test)
+    .dependsOn(base, `base-laws` % "compile->compile;test->test", testkit % Test)
 
 lazy val `inject-io` = (project in file("modules/inject-io"))
   .settings(publishSettings)
