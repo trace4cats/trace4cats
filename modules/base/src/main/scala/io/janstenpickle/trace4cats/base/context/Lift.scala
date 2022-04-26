@@ -12,8 +12,8 @@ trait Lift[Low[_], F[_]] extends ContextRoot { self =>
   }
 
   def mapK[G[_]: Monad](fk: F ~> G): Lift[Low, G] = new Lift[Low, G] {
-    def Low: Monad[Low] = self.Low
-    def F: Monad[G] = implicitly
+    val Low: Monad[Low] = self.Low
+    val F: Monad[G] = implicitly
     def lift[A](la: Low[A]): G[A] = fk(self.lift(la))
   }
 }
