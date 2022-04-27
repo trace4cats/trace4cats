@@ -40,7 +40,6 @@ lazy val root = (project in file("."))
     `context-utils-laws`,
     `dynamic-sampling`,
     `dynamic-sampling-config`,
-    filtering,
     fs2,
     io,
     kernel,
@@ -142,11 +141,6 @@ lazy val fs2 = (project in file("modules/fs2"))
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
   .dependsOn(core, testkit % Test)
-
-lazy val filtering = (project in file("modules/filtering"))
-  .settings(publishSettings)
-  .settings(name := "trace4cats-filtering", libraryDependencies ++= Dependencies.test.map(_ % Test))
-  .dependsOn(core)
 
 lazy val `dynamic-sampling` = (project in file("modules/dynamic-sampling"))
   .settings(publishSettings)
