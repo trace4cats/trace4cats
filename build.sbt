@@ -38,8 +38,6 @@ lazy val root = (project in file("."))
     `core-tests`,
     `context-utils`,
     `context-utils-laws`,
-    `dynamic-sampling`,
-    `dynamic-sampling-config`,
     fs2,
     io,
     kernel,
@@ -141,24 +139,6 @@ lazy val fs2 = (project in file("modules/fs2"))
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
   .dependsOn(core, testkit % Test)
-
-lazy val `dynamic-sampling` = (project in file("modules/dynamic-sampling"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-dynamic-sampling",
-    libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.hotswapRef),
-    libraryDependencies ++= Dependencies.test.map(_ % Test)
-  )
-  .dependsOn(kernel, testkit % Test)
-
-lazy val `dynamic-sampling-config` = (project in file("modules/dynamic-sampling-config"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-dynamic-sampling-config",
-    // libraryDependencies ++= Seq(Dependencies.kittens), // TODO re-add once compatible with Scala 3
-    libraryDependencies ++= Dependencies.test.map(_ % Test)
-  )
-  .dependsOn(core, `dynamic-sampling`, testkit % Test)
 
 lazy val `tail-sampling` = (project in file("modules/tail-sampling"))
   .settings(publishSettings)
