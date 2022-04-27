@@ -37,13 +37,12 @@ lazy val root = (project in file("."))
     core,
     `core-tests`,
     `fp-utils`,
-    `fp-utils-io`,
     `fp-utils-laws`,
     `dynamic-sampling`,
     `dynamic-sampling-config`,
     filtering,
     fs2,
-    `inject-io`,
+    io,
     kernel,
     `kernel-tests`,
     meta,
@@ -135,16 +134,10 @@ lazy val inject = (project in file("modules/inject"))
   .settings(name := "trace4cats-inject", libraryDependencies ++= Seq(Dependencies.catsEffect).map(_ % Test))
   .dependsOn(core, `fp-utils`)
 
-lazy val `fp-utils-io` =
-  (project in file("modules/fp-utils-io"))
-    .settings(publishSettings)
-    .settings(name := "trace4cats-fp-utils-io", libraryDependencies ++= Seq(Dependencies.catsEffect))
-    .dependsOn(`fp-utils`, `fp-utils-laws` % "compile->compile;test->test", testkit % Test)
-
-lazy val `inject-io` = (project in file("modules/inject-io"))
+lazy val io = (project in file("modules/io"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-inject-io")
-  .dependsOn(`fp-utils-io`, core)
+  .settings(name := "trace4cats-io")
+  .dependsOn(core, `fp-utils`, `fp-utils-laws` % "compile->compile;test->test", testkit % Test)
 
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
