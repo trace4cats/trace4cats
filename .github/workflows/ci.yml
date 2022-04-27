@@ -68,7 +68,7 @@ jobs:
         run: sbt ++${{ matrix.scala }} test
 
       - name: Compress target directories
-        run: tar cf targets.tar modules/core-tests/target modules/kernel/target modules/fs2/target target modules/dynamic-sampling-config/target modules/fp-utils-laws/target modules/meta/target modules/kernel-tests/target modules/inject/target modules/filtering/target modules/io/target modules/fp-utils/target modules/tail-sampling/target modules/core/target modules/dynamic-sampling/target modules/testkit/target project/target
+        run: tar cf targets.tar modules/core-tests/target modules/kernel/target modules/fs2/target target modules/dynamic-sampling-config/target modules/fp-utils-laws/target modules/meta/target modules/kernel-tests/target modules/filtering/target modules/io/target modules/fp-utils/target modules/tail-sampling/target modules/core/target modules/dynamic-sampling/target modules/testkit/target project/target
 
       - name: Upload target directories
         uses: actions/upload-artifact@v2
