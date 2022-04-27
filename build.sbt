@@ -34,6 +34,8 @@ lazy val root = (project in file("."))
   .settings(noPublishSettings)
   .settings(name := "Trace4Cats")
   .aggregate(
+    core,
+    `core-tests`,
     `fp-utils`,
     `fp-utils-io`,
     `fp-utils-laws`,
@@ -43,6 +45,7 @@ lazy val root = (project in file("."))
     fs2,
     `inject-io`,
     kernel,
+    `kernel-tests`,
     meta,
     `tail-sampling`,
     testkit
@@ -61,10 +64,6 @@ lazy val kernel =
       libraryDependencies ++= Dependencies.test.map(_ % Test),
       buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion, sbtVersion),
       buildInfoPackage := "io.janstenpickle.trace4cats.kernel",
-      Test / unmanagedSourceDirectories ++= Seq(
-        baseDirectory.value / ".." / "testkit" / "src" / "main" / "scala",
-        baseDirectory.value / ".." / "core" / "src" / "main" / "scala"
-      ),
       libraryDependencies ++= Seq(
         Dependencies.catsEffectStd,
         Dependencies.commonsCodec,
@@ -72,14 +71,15 @@ lazy val kernel =
         Dependencies.caseInsensitive,
         Dependencies.collectionCompat,
       ),
-      libraryDependencies ++= (Dependencies.test ++ Seq(
-        Dependencies.fs2,
-        Dependencies.log4cats,
-        Dependencies.hotswapRef
-      )).map(_ % Test)
     )
     .dependsOn(`fp-utils` % Test)
     .enablePlugins(BuildInfoPlugin)
+
+lazy val `kernel-tests` =
+  (project in file("modules/kernel-tests"))
+    .settings(noPublishSettings)
+    .settings(name := "trace4cats-kernel-tests")
+    .dependsOn(testkit)
 
 lazy val core =
   (project in file("modules/core"))
@@ -92,9 +92,14 @@ lazy val core =
         Dependencies.log4cats,
         Dependencies.hotswapRef
       ),
-      libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
     .dependsOn(kernel, `fp-utils`, testkit % Test)
+
+lazy val `core-tests` =
+  (project in file("modules/core-tests"))
+    .settings(noPublishSettings)
+    .settings(name := "trace4cats-core-tests")
+    .dependsOn(testkit, core)
 
 lazy val `fp-utils` =
   (project in file("modules/fp-utils"))

@@ -1,9 +1,9 @@
 package io.janstenpickle.trace4cats
 
-import cats.effect.{IO, OutcomeIO}
 import cats.effect.kernel.Deferred
 import cats.effect.testkit.{TestControl, TestInstances}
 import cats.effect.unsafe.implicits.global
+import cats.effect.{IO, OutcomeIO}
 import cats.implicits._
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
