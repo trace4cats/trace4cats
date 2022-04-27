@@ -10,7 +10,7 @@ class SpanIdGenSpec extends AnyFlatSpec with Matchers {
   behavior.of("SpanId.Gen[IO]")
 
   it should "generate distinct SpanId instances when using ThreadLocalRandom" in {
-    val instance = implicitly[SpanId.Gen[IO]]
+    val instance = SpanId.Gen[IO]
     GenAssertions.assertAllDistinct(instance.gen).unsafeRunSync()
   }
 
@@ -18,7 +18,7 @@ class SpanIdGenSpec extends AnyFlatSpec with Matchers {
     Random
       .scalaUtilRandom[IO]
       .flatMap { implicit random =>
-        val instance = implicitly[SpanId.Gen[IO]]
+        val instance = SpanId.Gen[IO]
         GenAssertions.assertAllDistinct(instance.gen)
       }
       .unsafeRunSync()

@@ -10,7 +10,7 @@ class TraceIdGenSpec extends AnyFlatSpec with Matchers {
   behavior.of("TraceId.Gen[IO]")
 
   it should "generate distinct TraceId instances when using ThreadLocalRandom" in {
-    val instance = implicitly[TraceId.Gen[IO]]
+    val instance = TraceId.Gen[IO]
     GenAssertions.assertAllDistinct(instance.gen).unsafeRunSync()
   }
 
@@ -18,7 +18,7 @@ class TraceIdGenSpec extends AnyFlatSpec with Matchers {
     Random
       .scalaUtilRandom[IO]
       .flatMap { implicit random =>
-        val instance = implicitly[TraceId.Gen[IO]]
+        val instance = TraceId.Gen[IO]
         GenAssertions.assertAllDistinct(instance.gen)
       }
       .unsafeRunSync()
