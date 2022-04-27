@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.inject
 import cats.data.Kleisli
 import cats.effect.IO
 import io.janstenpickle.trace4cats.Span
-import io.janstenpickle.trace4cats.base.context.Local
+import trace4cats.context.Local
 
 object KleisliTraceInstanceSummonTest {
   type F[x] = Kleisli[IO, Span[IO], x]

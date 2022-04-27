@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.inject
 
 import io.janstenpickle.trace4cats.Span
-import io.janstenpickle.trace4cats.base.optics.Lens
+import trace4cats.optics.Lens
 
 case class Env[F[_]](dymmy: String, span: Span[F])
 object Env {

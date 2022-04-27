@@ -11,9 +11,9 @@ import cats.syntax.applicative._
 import cats.syntax.option._
 import cats.syntax.show._
 import cats.{Applicative, Functor}
-import io.janstenpickle.trace4cats.base.context.{Lift, Local}
 import io.janstenpickle.trace4cats.model.{AttributeValue, SpanContext, SpanKind, SpanStatus, TraceHeaders}
 import io.janstenpickle.trace4cats.{ErrorHandler, Span, ToHeaders}
+import trace4cats.context.{Lift, Local}
 
 /** A tracing effect, which always has a current span. */
 trait Trace[F[_]] {
