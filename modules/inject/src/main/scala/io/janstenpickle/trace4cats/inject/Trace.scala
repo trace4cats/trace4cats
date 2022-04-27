@@ -12,7 +12,7 @@ import cats.syntax.option._
 import cats.syntax.show._
 import cats.{Applicative, Functor}
 import io.janstenpickle.trace4cats.base.context.{Lift, Local}
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus, TraceHeaders}
+import io.janstenpickle.trace4cats.model.{AttributeValue, SpanContext, SpanKind, SpanStatus, TraceHeaders}
 import io.janstenpickle.trace4cats.{ErrorHandler, Span, ToHeaders}
 
 /** A tracing effect, which always has a current span. */
@@ -43,6 +43,17 @@ trait Trace[F[_]] {
 }
 
 object Trace extends TraceInstancesLowPriority {
+  trait WithContext[F[_]] extends Trace[F] {
+    def context: F[SpanContext]
+  }
+  object WithContext {
+    def apply[F[_]](implicit ev: WithContext[F]): ev.type = ev
+
+    implicit def eitherTInstance[F[_]: Functor, A](implicit trace: WithContext[F]): WithContext[EitherT[F, A, *]] =
+      new EitherTTrace[F, A](trace) with WithContext[EitherT[F, A, *]] {
+        override def context: EitherT[F, A, SpanContext] = EitherT.liftF(trace.context)
+      }
+  }
 
   def apply[F[_]](implicit ev: Trace[F]): ev.type = ev
 
@@ -51,8 +62,8 @@ object Trace extends TraceInstancesLowPriority {
     /** A no-op `Trace` implementation is freely available for any applicative effect. This lets us add a `Trace`
       * constraint to most existing code without demanding anything new from the concrete effect type.
       */
-    implicit def noop[F[_]: Applicative]: Trace[F] =
-      new Trace[F] {
+    implicit def noop[F[_]: Applicative]: WithContext[F] =
+      new WithContext[F] {
         final val void = ().pure[F]
         override val headers: F[TraceHeaders] = TraceHeaders.empty.pure[F]
         override def headers(toHeaders: ToHeaders): F[TraceHeaders] = TraceHeaders.empty.pure[F]
@@ -65,6 +76,7 @@ object Trace extends TraceInstancesLowPriority {
         override def span[A](name: String, kind: SpanKind, errorHandler: ErrorHandler)(fa: F[A]): F[A] = fa
         override def setStatus(status: SpanStatus): F[Unit] = void
         override def traceId: F[Option[String]] = Option.empty[String].pure[F]
+        override def context: F[SpanContext] = SpanContext.invalid.pure[F]
       }
 
   }
@@ -78,7 +90,7 @@ object Trace extends TraceInstancesLowPriority {
   /** A trace instance for `Kleisli[F, Span[F], *]`, which is the mechanism we use to introduce context into our
     * computations. We can also "lensMap" out to `Kleisli[F, E, *]` given a lens from `E` to `Span[F]`.
     */
-  class KleisliTrace[F[_]: MonadCancelThrow] extends Trace[Kleisli[F, Span[F], *]] {
+  class KleisliTrace[F[_]: MonadCancelThrow] extends WithContext[Kleisli[F, Span[F], *]] {
 
     override def headers(toHeaders: ToHeaders): Kleisli[F, Span[F], TraceHeaders] =
       Kleisli { span =>
@@ -100,8 +112,10 @@ object Trace extends TraceInstancesLowPriority {
 
     override def traceId: Kleisli[F, Span[F], Option[String]] = Kleisli(span => span.context.traceId.show.some.pure[F])
 
-    def lens[E](f: E => Span[F], g: (E, Span[F]) => E): Trace[Kleisli[F, E, *]] =
-      new Trace[Kleisli[F, E, *]] {
+    override def context: Kleisli[F, Span[F], SpanContext] = Kleisli(span => span.context.pure[F])
+
+    def lens[E](f: E => Span[F], g: (E, Span[F]) => E): WithContext[Kleisli[F, E, *]] =
+      new WithContext[Kleisli[F, E, *]] {
         override def put(key: String, value: AttributeValue): Kleisli[F, E, Unit] =
           Kleisli(e => f(e).put(key, value))
 
@@ -120,29 +134,33 @@ object Trace extends TraceInstancesLowPriority {
           Kleisli(e => f(e).setStatus(status))
 
         override def traceId: Kleisli[F, E, Option[String]] = Kleisli(e => f(e).context.traceId.show.some.pure[F])
+
+        override def context: Kleisli[F, E, SpanContext] = Kleisli(e => f(e).context.pure[F])
       }
 
   }
 
-  implicit def eitherTTrace[F[_]: Functor, A](implicit trace: Trace[F]): Trace[EitherT[F, A, *]] =
-    new Trace[EitherT[F, A, *]] {
-      override def put(key: String, value: AttributeValue): EitherT[F, A, Unit] = EitherT.liftF(trace.put(key, value))
+  implicit def eitherTInstance[F[_]: Functor, A](implicit trace: Trace[F]): Trace[EitherT[F, A, *]] =
+    new EitherTTrace[F, A](trace)
 
-      override def putAll(fields: (String, AttributeValue)*): EitherT[F, A, Unit] =
-        EitherT.liftF(trace.putAll(fields: _*))
+  class EitherTTrace[F[_]: Functor, A](trace: Trace[F]) extends Trace[EitherT[F, A, *]] {
+    override def put(key: String, value: AttributeValue): EitherT[F, A, Unit] = EitherT.liftF(trace.put(key, value))
 
-      override def span[B](name: String, kind: SpanKind, errorHandler: ErrorHandler)(
-        fa: EitherT[F, A, B]
-      ): EitherT[F, A, B] = EitherT(trace.span(name, kind, errorHandler)(fa.value))
+    override def putAll(fields: (String, AttributeValue)*): EitherT[F, A, Unit] =
+      EitherT.liftF(trace.putAll(fields: _*))
 
-      override def headers(toHeaders: ToHeaders): EitherT[F, A, TraceHeaders] =
-        EitherT.liftF(trace.headers(toHeaders))
+    override def span[B](name: String, kind: SpanKind, errorHandler: ErrorHandler)(
+      fa: EitherT[F, A, B]
+    ): EitherT[F, A, B] = EitherT(trace.span(name, kind, errorHandler)(fa.value))
 
-      override def setStatus(status: SpanStatus): EitherT[F, A, Unit] =
-        EitherT.liftF(trace.setStatus(status))
+    override def headers(toHeaders: ToHeaders): EitherT[F, A, TraceHeaders] =
+      EitherT.liftF(trace.headers(toHeaders))
 
-      override def traceId: EitherT[F, A, Option[String]] = EitherT.liftF(trace.traceId)
-    }
+    override def setStatus(status: SpanStatus): EitherT[F, A, Unit] =
+      EitherT.liftF(trace.setStatus(status))
+
+    override def traceId: EitherT[F, A, Option[String]] = EitherT.liftF(trace.traceId)
+  }
 }
 
 trait TraceInstancesLowPriority {
@@ -151,7 +169,7 @@ trait TraceInstancesLowPriority {
     L: Lift[F, G],
     F: MonadCancelThrow[F],
     G: MonadCancelThrow[G]
-  ): Trace[G] = new Trace[G] {
+  ): Trace.WithContext[G] = new Trace.WithContext[G] {
     def put(key: String, value: AttributeValue): G[Unit] = C.accessF(span => L.lift(span.put(key, value)))
     def putAll(fields: (String, AttributeValue)*): G[Unit] = C.accessF(span => L.lift(span.putAll(fields: _*)))
     def span[A](name: String, kind: SpanKind, errorHandler: ErrorHandler)(fa: G[A]): G[A] =
@@ -160,5 +178,6 @@ trait TraceInstancesLowPriority {
       C.access(span => toHeaders.fromContext(span.context))
     def setStatus(status: SpanStatus): G[Unit] = C.accessF(span => L.lift(span.setStatus(status)))
     def traceId: G[Option[String]] = C.access(_.context.traceId.show.some)
+    def context: G[SpanContext] = C.access(_.context)
   }
 }
