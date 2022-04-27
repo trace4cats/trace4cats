@@ -36,8 +36,8 @@ lazy val root = (project in file("."))
   .aggregate(
     core,
     `core-tests`,
-    `fp-utils`,
-    `fp-utils-laws`,
+    `context-utils`,
+    `context-utils-laws`,
     `dynamic-sampling`,
     `dynamic-sampling-config`,
     filtering,
@@ -71,7 +71,7 @@ lazy val kernel =
         Dependencies.collectionCompat,
       ),
     )
-    .dependsOn(`fp-utils` % Test)
+    .dependsOn(`context-utils` % Test)
     .enablePlugins(BuildInfoPlugin)
 
 lazy val `kernel-tests` =
@@ -92,7 +92,7 @@ lazy val core =
         Dependencies.hotswapRef
       ),
     )
-    .dependsOn(kernel, `fp-utils`, testkit % Test)
+    .dependsOn(kernel, `context-utils`, testkit % Test)
 
 lazy val `core-tests` =
   (project in file("modules/core-tests"))
@@ -100,24 +100,24 @@ lazy val `core-tests` =
     .settings(name := "trace4cats-core-tests")
     .dependsOn(testkit, core)
 
-lazy val `fp-utils` =
-  (project in file("modules/fp-utils"))
+lazy val `context-utils` =
+  (project in file("modules/context-utils"))
     .settings(publishSettings)
     .settings(
-      name := "trace4cats-fp-utils",
+      name := "trace4cats-context-utils",
       libraryDependencies ++= Seq(Dependencies.cats),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
 
-lazy val `fp-utils-laws` =
-  (project in file("modules/fp-utils-laws"))
+lazy val `context-utils-laws` =
+  (project in file("modules/context-utils-laws"))
     .settings(publishSettings)
     .settings(
-      name := "trace4cats-fp-utils-laws",
+      name := "trace4cats-context-utils-laws",
       libraryDependencies ++= Seq(Dependencies.catsLaws),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
-    .dependsOn(`fp-utils`)
+    .dependsOn(`context-utils`)
 
 lazy val meta =
   (project in file("modules/meta"))
@@ -132,7 +132,7 @@ lazy val meta =
 lazy val io = (project in file("modules/io"))
   .settings(publishSettings)
   .settings(name := "trace4cats-io")
-  .dependsOn(core, `fp-utils`, `fp-utils-laws` % "compile->compile;test->test", testkit % Test)
+  .dependsOn(core, `context-utils`, `context-utils-laws` % "compile->compile;test->test", testkit % Test)
 
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
