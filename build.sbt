@@ -34,50 +34,23 @@ lazy val root = (project in file("."))
   .settings(noPublishSettings)
   .settings(name := "Trace4Cats")
   .aggregate(
-    base,
-    `base-io`,
-    `base-laws`,
     core,
-    `dynamic-sampling`,
-    `dynamic-sampling-config`,
-    `exporter-common`,
-    `exporter-stream`,
-    filtering,
+    `core-tests`,
+    `context-utils`,
+    `context-utils-laws`,
     fs2,
-    inject,
-    `inject-io`,
+    io,
     kernel,
-    `log-exporter`,
+    `kernel-tests`,
     meta,
-    model,
-    `model-testkit`,
-    `rate-sampling`,
     `tail-sampling`,
     testkit
   )
 
-lazy val model =
-  (project in file("modules/model"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-model",
-      libraryDependencies ++= Seq(
-        Dependencies.catsEffectStd,
-        Dependencies.commonsCodec,
-        // Dependencies.kittens, // TODO re-add once compatible with Scala 3
-        Dependencies.caseInsensitive
-      )
-    )
-
-lazy val `model-testkit` = (project in file("modules/model-testkit"))
-  .settings(publishSettings)
-  .settings(name := "trace4cats-model-testkit", libraryDependencies ++= Dependencies.test)
-  .dependsOn(model)
-
 lazy val testkit = (project in file("modules/testkit"))
   .settings(publishSettings)
   .settings(name := "trace4cats-testkit", libraryDependencies ++= Dependencies.test ++ Seq(Dependencies.fs2))
-  .dependsOn(`model-testkit`)
+  .dependsOn(kernel)
 
 lazy val kernel =
   (project in file("modules/kernel"))
@@ -86,62 +59,62 @@ lazy val kernel =
       name := "trace4cats-kernel",
       libraryDependencies ++= Dependencies.test.map(_ % Test),
       buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion, sbtVersion),
-      buildInfoPackage := "io.janstenpickle.trace4cats.kernel"
+      buildInfoPackage := "io.janstenpickle.trace4cats.kernel",
+      libraryDependencies ++= Seq(
+        Dependencies.catsEffectStd,
+        Dependencies.commonsCodec,
+        // Dependencies.kittens, // TODO re-add once compatible with Scala 3
+        Dependencies.caseInsensitive,
+        Dependencies.collectionCompat,
+      ),
     )
-    .dependsOn(model, testkit % Test)
+    .dependsOn(`context-utils` % Test)
     .enablePlugins(BuildInfoPlugin)
+
+lazy val `kernel-tests` =
+  (project in file("modules/kernel-tests"))
+    .settings(noPublishSettings)
+    .settings(name := "trace4cats-kernel-tests")
+    .dependsOn(testkit)
 
 lazy val core =
   (project in file("modules/core"))
     .settings(publishSettings)
     .settings(
       name := "trace4cats-core",
-      libraryDependencies ++= Seq(Dependencies.collectionCompat),
-      libraryDependencies ++= Dependencies.test.map(_ % Test)
+      libraryDependencies ++= Seq(
+        Dependencies.collectionCompat,
+        Dependencies.fs2,
+        Dependencies.log4cats,
+        Dependencies.hotswapRef
+      ),
     )
-    .dependsOn(kernel, testkit % Test, `exporter-common` % Test)
+    .dependsOn(kernel, `context-utils`, testkit % Test)
 
-lazy val base =
-  (project in file("modules/base"))
+lazy val `core-tests` =
+  (project in file("modules/core-tests"))
+    .settings(noPublishSettings)
+    .settings(name := "trace4cats-core-tests")
+    .dependsOn(testkit, core)
+
+lazy val `context-utils` =
+  (project in file("modules/context-utils"))
     .settings(publishSettings)
     .settings(
-      name := "trace4cats-base",
+      name := "trace4cats-context-utils",
       libraryDependencies ++= Seq(Dependencies.cats),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
 
-lazy val `base-laws` =
-  (project in file("modules/base-laws"))
+lazy val `context-utils-laws` =
+  (project in file("modules/context-utils-laws"))
     .settings(publishSettings)
     .settings(
-      name := "trace4cats-base-laws",
+      name := "trace4cats-context-utils-laws",
       libraryDependencies ++= Seq(Dependencies.catsLaws),
       libraryDependencies ++= Dependencies.test.map(_ % Test)
     )
-    .dependsOn(base)
-
-lazy val `log-exporter` =
-  (project in file("modules/log-exporter"))
-    .settings(publishSettings)
-    .settings(name := "trace4cats-log-exporter", libraryDependencies ++= Seq(Dependencies.log4cats))
-    .dependsOn(kernel)
-
-lazy val `exporter-stream` =
-  (project in file("modules/exporter-stream"))
-    .settings(publishSettings)
-    .settings(name := "trace4cats-exporter-stream", libraryDependencies ++= Seq(Dependencies.fs2))
-    .dependsOn(kernel)
-
-lazy val `exporter-common` =
-  (project in file("modules/exporter-common"))
-    .settings(publishSettings)
-    .settings(
-      name := "trace4cats-exporter-common",
-      // TODO re-add kittens once compatible with Scala 3
-      libraryDependencies ++= Seq( /*Dependencies.kittens,*/ Dependencies.log4cats, Dependencies.hotswapRef),
-      libraryDependencies ++= Dependencies.test.map(_ % Test)
-    )
-    .dependsOn(kernel, `exporter-stream`, testkit % Test)
+    .dependsOn(`context-utils`)
 
 lazy val meta =
   (project in file("modules/meta"))
@@ -151,23 +124,12 @@ lazy val meta =
       libraryDependencies ++= Seq(Dependencies.log4cats),
       libraryDependencies ++= Seq(Dependencies.slf4jNop).map(_ % Test)
     )
-    .dependsOn(kernel, core, `exporter-stream`, `exporter-common` % Test, testkit % Test)
+    .dependsOn(kernel, core, testkit % Test)
 
-lazy val inject = (project in file("modules/inject"))
+lazy val io = (project in file("modules/io"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-inject", libraryDependencies ++= Seq(Dependencies.catsEffect).map(_ % Test))
-  .dependsOn(core, base)
-
-lazy val `base-io` =
-  (project in file("modules/base-io"))
-    .settings(publishSettings)
-    .settings(name := "trace4cats-base-io", libraryDependencies ++= Seq(Dependencies.catsEffect))
-    .dependsOn(base, `base-laws` % "compile->compile;test->test", testkit % Test)
-
-lazy val `inject-io` = (project in file("modules/inject-io"))
-  .settings(publishSettings)
-  .settings(name := "trace4cats-inject-io")
-  .dependsOn(`base-io`, inject)
+  .settings(name := "trace4cats-io")
+  .dependsOn(core, `context-utils`, `context-utils-laws` % "compile->compile;test->test", testkit % Test)
 
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
@@ -176,37 +138,9 @@ lazy val fs2 = (project in file("modules/fs2"))
     libraryDependencies ++= Seq(Dependencies.fs2),
     libraryDependencies ++= Dependencies.test.map(_ % Test)
   )
-  .dependsOn(inject, `exporter-common` % Test, testkit % Test)
-
-lazy val filtering = (project in file("modules/filtering"))
-  .settings(publishSettings)
-  .settings(name := "trace4cats-filtering", libraryDependencies ++= Dependencies.test.map(_ % Test))
-  .dependsOn(kernel, `exporter-stream`)
-
-lazy val `dynamic-sampling` = (project in file("modules/dynamic-sampling"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-dynamic-sampling",
-    libraryDependencies ++= Seq(Dependencies.catsEffect, Dependencies.fs2, Dependencies.hotswapRef),
-    libraryDependencies ++= Dependencies.test.map(_ % Test)
-  )
-  .dependsOn(kernel, testkit % Test)
-
-lazy val `dynamic-sampling-config` = (project in file("modules/dynamic-sampling-config"))
-  .settings(publishSettings)
-  .settings(
-    name := "trace4cats-dynamic-sampling-config",
-    // libraryDependencies ++= Seq(Dependencies.kittens), // TODO re-add once compatible with Scala 3
-    libraryDependencies ++= Dependencies.test.map(_ % Test)
-  )
-  .dependsOn(kernel, `dynamic-sampling`, `rate-sampling`, testkit % Test)
-
-lazy val `rate-sampling` = (project in file("modules/rate-sampling"))
-  .settings(publishSettings)
-  .settings(name := "trace4cats-rate-sampling", libraryDependencies ++= Dependencies.test.map(_ % Test))
-  .dependsOn(kernel, `tail-sampling`)
+  .dependsOn(core, testkit % Test)
 
 lazy val `tail-sampling` = (project in file("modules/tail-sampling"))
   .settings(publishSettings)
   .settings(name := "trace4cats-tail-sampling", libraryDependencies ++= Seq(Dependencies.log4cats))
-  .dependsOn(kernel, `exporter-stream`)
+  .dependsOn(core)
