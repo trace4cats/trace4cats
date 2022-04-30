@@ -1,10 +1,9 @@
-package io.janstenpickle.trace4cats.sampling.tail
+package trace4cats.samplling.tail
 
 import cats.Functor
-import fs2.{Chunk, Pipe}
-import trace4cats.model.{Batch, CompletedSpan}
 import cats.syntax.functor._
-import fs2.Stream
+import fs2.{Chunk, Pipe, Stream}
+import trace4cats.model.{Batch, CompletedSpan}
 
 object TailSamplingPipe {
   def apply[F[_]: Functor](sampler: TailSpanSampler[F, Chunk]): Pipe[F, CompletedSpan, CompletedSpan] =

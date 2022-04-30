@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.sampling.tail
+package trace4cats.samplling.tail
 
 import cats.Monad
 import cats.syntax.flatMap._
