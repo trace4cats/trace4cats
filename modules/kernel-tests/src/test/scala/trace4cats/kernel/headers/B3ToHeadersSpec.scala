@@ -1,10 +1,10 @@
 package trace4cats.kernel.headers
 
 import cats.Eq
-import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import trace4cats.model._
+import trace4cats.test.ArbitraryInstances
 
 class B3ToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks with ArbitraryInstances {
   behavior.of("B3ToHeaders")

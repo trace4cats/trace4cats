@@ -1,11 +1,12 @@
-package io.janstenpickle.trace4cats.test
+package trace4cats.test
 
-import java.time.Instant
 import cats.Eval
 import cats.data.NonEmptyList
 import fs2.Chunk
-import trace4cats.model._
 import org.scalacheck.{Arbitrary, Gen}
+import trace4cats.model._
+
+import java.time.Instant
 
 trait ArbitraryInstances extends ArbitraryAttributeValues {
   private def byteArray(length: Int) = Gen.listOfN(length, Arbitrary.arbByte.arbitrary).map(_.toArray)

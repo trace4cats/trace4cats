@@ -1,10 +1,10 @@
 package trace4cats.kernel.headers
 
 import cats.kernel.Eq
-import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import trace4cats.model._
+import trace4cats.test.ArbitraryInstances
 
 class W3cToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks with ArbitraryInstances {
   behavior.of("W3cToHeaders")

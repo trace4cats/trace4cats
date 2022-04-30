@@ -5,12 +5,12 @@ import cats.effect.testkit.{TestControl, TestInstances}
 import cats.effect.unsafe.implicits.global
 import cats.effect.{IO, OutcomeIO}
 import cats.implicits._
-import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
-import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import trace4cats.RefSpanCompleter
 import trace4cats.model._
+import trace4cats.test.ArbitraryInstances
 
 import scala.concurrent.duration._
 

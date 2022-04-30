@@ -5,11 +5,9 @@ import cats.data.Kleisli
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import fs2.Stream
-import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
-import trace4cats.Trace
+import trace4cats.{RefSpanCompleter, Trace}
 import trace4cats.kernel.{Span, SpanSampler, ToHeaders}
 import trace4cats.model.{CompletedSpan, SampleDecision, SpanContext, TraceFlags, TraceHeaders}
-import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -18,6 +16,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scala.collection.immutable.Queue
 import cats.syntax.show._
 import trace4cats.EntryPoint
+import trace4cats.test.ArbitraryInstances
 
 class Fs2StreamSyntaxSpec
     extends AnyFlatSpec

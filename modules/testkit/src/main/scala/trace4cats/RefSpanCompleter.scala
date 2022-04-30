@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.`export`
+package trace4cats
 
 import cats.Functor
 import cats.effect.kernel.{Ref, Sync}

@@ -4,10 +4,10 @@ import java.nio.ByteBuffer
 
 import cats.Id
 import trace4cats.model.{SampleDecision, SpanContext, SpanKind, TraceId}
-import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import trace4cats.test.ArbitraryInstances
 
 class SpanSamplerSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks with ArbitraryInstances {
 

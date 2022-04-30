@@ -8,11 +8,11 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import trace4cats.kernel.{BuildInfo, SpanSampler}
 import trace4cats.model._
-import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import trace4cats.test.ArbitraryInstances
 
 class PipeTracerSpec extends AnyFlatSpec with Matchers with ScalaCheckDrivenPropertyChecks with ArbitraryInstances {
 

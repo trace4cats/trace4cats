@@ -2,12 +2,12 @@ package trace4cats.kernel.headers
 
 import cats.Eq
 import cats.implicits._
-import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.OptionValues
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import trace4cats.model._
+import trace4cats.test.ArbitraryInstances
 
 class GoogleCloudTraceToHeadersSpec
     extends AnyFlatSpec
