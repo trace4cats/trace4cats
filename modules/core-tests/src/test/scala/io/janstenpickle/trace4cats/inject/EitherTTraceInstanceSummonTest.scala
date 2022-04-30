@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.inject
 
 import cats.data.{EitherT, Kleisli}
 import cats.effect.IO
-import io.janstenpickle.trace4cats.Span
+import trace4cats.kernel.Span
 
 object EitherTTraceInstanceSummonTest {
   type F[x] = Kleisli[IO, Span[IO], x]

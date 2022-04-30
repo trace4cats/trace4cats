@@ -3,7 +3,7 @@ package io.janstenpickle.trace4cats.filtering
 import cats.Eq
 import cats.data.{NonEmptyMap, NonEmptySet}
 import cats.kernel.Semigroup
-import io.janstenpickle.trace4cats.model.AttributeValue
+import trace4cats.model.AttributeValue
 
 object AttributeFilter {
   def names(attributeNames: NonEmptySet[String]): AttributeFilter = (key, _) => attributeNames.contains(key)

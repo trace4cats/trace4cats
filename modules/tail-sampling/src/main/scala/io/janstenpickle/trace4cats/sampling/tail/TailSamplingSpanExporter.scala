@@ -5,8 +5,8 @@ import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.{Chunk, Pipe, Stream}
 import io.janstenpickle.trace4cats.`export`.StreamSpanExporter
-import io.janstenpickle.trace4cats.kernel.SpanExporter
-import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan}
+import trace4cats.kernel.SpanExporter
+import trace4cats.model.{Batch, CompletedSpan}
 
 object TailSamplingSpanExporter {
   def apply[F[_]: Monad](underlying: StreamSpanExporter[F], sampler: TailSpanSampler[F, Chunk]): StreamSpanExporter[F] =

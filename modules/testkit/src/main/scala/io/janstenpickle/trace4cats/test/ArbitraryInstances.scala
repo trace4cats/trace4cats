@@ -4,7 +4,7 @@ import java.time.Instant
 import cats.Eval
 import cats.data.NonEmptyList
 import fs2.Chunk
-import io.janstenpickle.trace4cats.model._
+import trace4cats.model._
 import org.scalacheck.{Arbitrary, Gen}
 
 trait ArbitraryInstances extends ArbitraryAttributeValues {

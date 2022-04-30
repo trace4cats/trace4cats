@@ -3,8 +3,8 @@ package io.janstenpickle.trace4cats.meta
 import cats.effect.kernel.{Clock, MonadCancelThrow}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
-import io.janstenpickle.trace4cats.model._
+import trace4cats.kernel.{SpanCompleter, SpanSampler}
+import trace4cats.model._
 
 object TracedSpanCompleter {
   private final val spanName = "trace4cats.complete.span"

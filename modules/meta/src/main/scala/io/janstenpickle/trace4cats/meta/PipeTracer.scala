@@ -5,8 +5,8 @@ import cats.effect.kernel.{Clock, Concurrent, Deferred}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.{Chunk, Pipe, Stream}
-import io.janstenpickle.trace4cats.kernel.SpanSampler
-import io.janstenpickle.trace4cats.model._
+import trace4cats.kernel.SpanSampler
+import trace4cats.model._
 
 object PipeTracer {
   private final val spanName = "trace4cats.receive.batch"

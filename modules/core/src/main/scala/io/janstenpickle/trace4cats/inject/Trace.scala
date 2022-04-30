@@ -11,8 +11,8 @@ import cats.syntax.applicative._
 import cats.syntax.option._
 import cats.syntax.show._
 import cats.{Applicative, Functor}
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanContext, SpanKind, SpanStatus, TraceHeaders}
-import io.janstenpickle.trace4cats.{ErrorHandler, Span, ToHeaders}
+import trace4cats.kernel.{ErrorHandler, Span, ToHeaders}
+import trace4cats.model.{AttributeValue, SpanContext, SpanKind, SpanStatus, TraceHeaders}
 import trace4cats.context.{Lift, Local}
 
 /** A tracing effect, which always has a current span. */
@@ -29,13 +29,13 @@ trait Trace[F[_]] {
   /** Convert the span context into headers may be propagated outside of the application
     *
     * @param toHeaders
-    *   [[io.janstenpickle.trace4cats.ToHeaders]] implementation. Converts span context to headers that may be
-    *   propagated outside of the application. Defaults to `ToHeaders.standard`, which is a collection of headers that
-    *   conform to open standards. Other header implementations that do not conform to open standards are supported. See
-    *   [[io.janstenpickle.trace4cats.ToHeaders]] for details or use `ToHeaders.all`
+    *   [[ToHeaders]] implementation. Converts span context to headers that may be propagated outside of the
+    *   application. Defaults to `ToHeaders.standard`, which is a collection of headers that conform to open standards.
+    *   Other header implementations that do not conform to open standards are supported. See [[ToHeaders]] for details
+    *   or use `ToHeaders.all`
     *
     * @return
-    *   [[io.janstenpickle.trace4cats.model.TraceHeaders]]
+    *   [[trace4cats.model.TraceHeaders]]
     */
   def headers(toHeaders: ToHeaders): F[TraceHeaders]
   def setStatus(status: SpanStatus): F[Unit]

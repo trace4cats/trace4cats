@@ -5,11 +5,10 @@ import cats.data.Kleisli
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import fs2.Stream
-import io.janstenpickle.trace4cats.{Span, ToHeaders}
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
-import io.janstenpickle.trace4cats.kernel.SpanSampler
-import io.janstenpickle.trace4cats.model.{CompletedSpan, SampleDecision, SpanContext, TraceFlags, TraceHeaders}
+import trace4cats.kernel.{Span, SpanSampler, ToHeaders}
+import trace4cats.model.{CompletedSpan, SampleDecision, SpanContext, TraceFlags, TraceHeaders}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec

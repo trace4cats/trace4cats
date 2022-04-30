@@ -8,8 +8,8 @@ import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.functorFilter._
 import cats.{Applicative, Foldable, FunctorFilter, Monad, MonoidK}
-import io.janstenpickle.trace4cats.kernel.SpanSampler
-import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, SampleDecision, TraceId}
+import trace4cats.kernel.SpanSampler
+import trace4cats.model.{Batch, CompletedSpan, SampleDecision, TraceId}
 
 trait TailSpanSampler[F[_], G[_]] {
   def sampleBatch(batch: Batch[G]): F[Batch[G]]

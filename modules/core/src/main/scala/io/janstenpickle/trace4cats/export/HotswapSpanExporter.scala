@@ -4,8 +4,8 @@ import cats.effect.kernel.{Resource, Temporal}
 import cats.kernel.Eq
 import cats.syntax.applicative._
 import io.janstenpickle.hotswapref.ConditionalHotswapRefConstructor
-import io.janstenpickle.trace4cats.kernel.SpanExporter
-import io.janstenpickle.trace4cats.model.Batch
+import trace4cats.kernel.SpanExporter
+import trace4cats.model.Batch
 
 trait HotswapSpanExporter[F[_], G[_], A] extends SpanExporter[F, G] {
   def update(config: A): F[Boolean]

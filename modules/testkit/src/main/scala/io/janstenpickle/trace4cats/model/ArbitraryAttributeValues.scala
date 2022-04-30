@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.model
+package trace4cats.model
 
 import cats.data.NonEmptyList
 import org.scalacheck.{Arbitrary, Gen}

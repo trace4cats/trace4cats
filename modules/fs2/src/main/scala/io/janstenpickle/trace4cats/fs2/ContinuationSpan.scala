@@ -2,8 +2,8 @@ package io.janstenpickle.trace4cats.fs2
 
 import cats.data.NonEmptyList
 import cats.effect.kernel.{MonadCancelThrow, Resource}
-import io.janstenpickle.trace4cats.model._
-import io.janstenpickle.trace4cats.{ErrorHandler, Span}
+import trace4cats.model._
+import trace4cats.kernel.{ErrorHandler, Span}
 import trace4cats.context.Provide
 
 trait ContinuationSpan[F[_]] extends Span[F] {

@@ -4,8 +4,8 @@ import cats.effect.kernel.{Resource, Temporal}
 import cats.kernel.Eq
 import cats.syntax.applicative._
 import io.janstenpickle.hotswapref.ConditionalHotswapRefConstructor
-import io.janstenpickle.trace4cats.kernel.SpanSampler
-import io.janstenpickle.trace4cats.model.{SampleDecision, SpanContext, SpanKind, TraceId}
+import trace4cats.kernel.SpanSampler
+import trace4cats.model.{SampleDecision, SpanContext, SpanKind, TraceId}
 
 trait HotSwapSpanSampler[F[_], A] extends SpanSampler[F] {
   def swap(samplerConfig: A): F[Boolean]

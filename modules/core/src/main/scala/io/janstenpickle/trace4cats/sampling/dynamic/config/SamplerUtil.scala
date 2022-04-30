@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.sampling.dynamic.config
 
 import cats.effect.kernel.{Resource, Temporal}
 import cats.syntax.applicative._
-import io.janstenpickle.trace4cats.kernel.SpanSampler
+import trace4cats.kernel.SpanSampler
 import io.janstenpickle.trace4cats.rate.sampling.RateSpanSampler
 import io.janstenpickle.trace4cats.rate.{DynamicTokenBucket, TokenInterval}
 

@@ -7,8 +7,8 @@ import cats.effect.kernel.{Clock, Resource}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.Chunk
-import io.janstenpickle.trace4cats.kernel.BuildInfo
-import io.janstenpickle.trace4cats.model._
+import trace4cats.kernel.BuildInfo
+import trace4cats.model._
 
 object MetaTraceUtil {
   def trace[F[_]: Monad: Clock](

@@ -9,9 +9,8 @@ package io.janstenpickle.trace4cats.inject
 import cats.{~>, Applicative, Monad}
 import cats.data.Kleisli
 import cats.effect.kernel.{Clock, MonadCancelThrow, Ref, Resource}
-import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanSampler}
-import io.janstenpickle.trace4cats.model.{SpanId, SpanKind, TraceHeaders, TraceId}
-import io.janstenpickle.trace4cats.{ErrorHandler, Span, ToHeaders}
+import trace4cats.kernel.{ErrorHandler, Span, SpanCompleter, SpanSampler, ToHeaders}
+import trace4cats.model.{SpanId, SpanKind, TraceHeaders, TraceId}
 
 /** An entry point, for creating root spans or continuing traces that were started on another system.
   */
@@ -52,14 +51,14 @@ object EntryPoint {
   /** Create a trace entrypoint for starting or continuing a trace
     *
     * @param sampler
-    *   [[io.janstenpickle.trace4cats.kernel.SpanSampler]] implementation
+    *   [[trace4cats.kernel.SpanSampler]] implementation
     * @param completer
-    *   [[io.janstenpickle.trace4cats.kernel.SpanCompleter]] implementation
+    *   [[trace4cats.kernel.SpanCompleter]] implementation
     * @param toHeaders
-    *   [[io.janstenpickle.trace4cats.ToHeaders]] implementation. Converts span context to headers that may be
-    *   propagated outside of the application. Defaults to `ToHeaders.standard`, which is a collection of headers that
-    *   conform to open standards. Other header implementations that do not conform to open standards are supported. See
-    *   [[io.janstenpickle.trace4cats.ToHeaders]] for details or use `ToHeaders.all`
+    *   [[ToHeaders]] implementation. Converts span context to headers that may be propagated outside of the
+    *   application. Defaults to `ToHeaders.standard`, which is a collection of headers that conform to open standards.
+    *   Other header implementations that do not conform to open standards are supported. See [[ToHeaders]] for details
+    *   or use `ToHeaders.all`
     */
   def apply[F[_]: Monad: Clock: Ref.Make: TraceId.Gen: SpanId.Gen](
     sampler: SpanSampler[F],

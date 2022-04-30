@@ -3,8 +3,8 @@ package io.janstenpickle.trace4cats.`export`
 import cats.Functor
 import cats.effect.kernel.{Ref, Sync}
 import cats.syntax.functor._
-import io.janstenpickle.trace4cats.kernel.SpanCompleter
-import io.janstenpickle.trace4cats.model.{CompletedSpan, TraceProcess}
+import trace4cats.kernel.SpanCompleter
+import trace4cats.model.{CompletedSpan, TraceProcess}
 
 import scala.collection.immutable.Queue
 

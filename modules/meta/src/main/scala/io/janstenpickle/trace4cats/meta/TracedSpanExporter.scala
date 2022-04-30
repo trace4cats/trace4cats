@@ -6,8 +6,8 @@ import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.Chunk
 import io.janstenpickle.trace4cats.`export`.StreamSpanExporter
-import io.janstenpickle.trace4cats.kernel.{SpanExporter, SpanSampler}
-import io.janstenpickle.trace4cats.model._
+import trace4cats.kernel.{SpanExporter, SpanSampler}
+import trace4cats.model._
 
 object TracedSpanExporter {
   private final val spanName = "trace4cats.export.batch"

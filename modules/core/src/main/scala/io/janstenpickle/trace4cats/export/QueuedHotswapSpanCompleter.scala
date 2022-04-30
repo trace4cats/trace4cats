@@ -2,8 +2,8 @@ package io.janstenpickle.trace4cats.`export`
 
 import cats.effect.kernel.{Resource, Temporal}
 import fs2.Chunk
-import io.janstenpickle.trace4cats.kernel.SpanExporter
-import io.janstenpickle.trace4cats.model.TraceProcess
+import trace4cats.kernel.SpanExporter
+import trace4cats.model.TraceProcess
 import org.typelevel.log4cats.Logger
 
 object QueuedHotswapSpanCompleter {

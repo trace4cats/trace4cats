@@ -3,8 +3,8 @@ package io.janstenpickle.trace4cats.rate.sampling
 import cats.Applicative
 import cats.effect.kernel.{Resource, Temporal}
 import cats.syntax.functor._
-import io.janstenpickle.trace4cats.kernel.SpanSampler
-import io.janstenpickle.trace4cats.model.{SampleDecision, SpanContext, SpanKind, TraceId}
+import trace4cats.kernel.SpanSampler
+import trace4cats.model.{SampleDecision, SpanContext, SpanKind, TraceId}
 import io.janstenpickle.trace4cats.rate.{TokenBucket, TokenInterval}
 
 import scala.concurrent.duration._

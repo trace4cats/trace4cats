@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.sampling.tail
 
-import io.janstenpickle.trace4cats.model.{SampleDecision, TraceId}
+import trace4cats.model.{SampleDecision, TraceId}
 
 trait SampleDecisionStore[F[_]] {
   def getDecision(traceId: TraceId): F[Option[SampleDecision]]

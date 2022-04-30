@@ -2,7 +2,7 @@ package io.janstenpickle.trace4cats.filtering
 
 import cats.Functor
 import cats.syntax.functor._
-import io.janstenpickle.trace4cats.model.Batch
+import trace4cats.model.Batch
 
 object BatchAttributeFilter {
   def apply[G[_]: Functor](filter: AttributeFilter): Batch[G] => Batch[G] = {

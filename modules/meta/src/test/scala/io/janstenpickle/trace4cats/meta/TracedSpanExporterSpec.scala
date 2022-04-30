@@ -7,8 +7,8 @@ import cats.effect.unsafe.implicits.global
 import fs2.{Chunk, Stream}
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanExporter, SpanSampler}
-import io.janstenpickle.trace4cats.model._
+import trace4cats.kernel.{BuildInfo, SpanExporter, SpanSampler}
+import trace4cats.model._
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec

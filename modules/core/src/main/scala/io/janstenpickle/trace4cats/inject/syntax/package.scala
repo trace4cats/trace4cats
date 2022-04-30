@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.inject
 
-import io.janstenpickle.trace4cats.model.SpanKind
+import trace4cats.model.SpanKind
 
 package object syntax {
   final implicit class TraceOps[F[_], A](private val fa: F[A]) extends AnyVal {

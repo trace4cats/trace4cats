@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats
 
-import io.janstenpickle.trace4cats.model.{AttributeValue, CompletedSpan}
+import trace4cats.model.{AttributeValue, CompletedSpan}
 
 package object filtering {
   type AttributeFilter = (String, AttributeValue) => Boolean

@@ -10,8 +10,8 @@ import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.monad._
 import fs2.{Chunk, Stream}
-import io.janstenpickle.trace4cats.kernel.{SpanCompleter, SpanExporter}
-import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan, TraceProcess}
+import trace4cats.kernel.{SpanCompleter, SpanExporter}
+import trace4cats.model.{Batch, CompletedSpan, TraceProcess}
 import org.typelevel.log4cats.Logger
 
 import scala.concurrent.duration._

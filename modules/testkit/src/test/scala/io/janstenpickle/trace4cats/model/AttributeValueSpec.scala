@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.model
+package trace4cats.model
 
 import cats.Eval
 import cats.kernel.laws.discipline.SemigroupTests

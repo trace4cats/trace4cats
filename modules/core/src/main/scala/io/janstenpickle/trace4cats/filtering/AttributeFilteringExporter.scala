@@ -3,8 +3,8 @@ package io.janstenpickle.trace4cats.filtering
 import cats.Functor
 import fs2.{Chunk, Pipe}
 import io.janstenpickle.trace4cats.`export`.StreamSpanExporter
-import io.janstenpickle.trace4cats.kernel.SpanExporter
-import io.janstenpickle.trace4cats.model.{Batch, CompletedSpan}
+import trace4cats.kernel.SpanExporter
+import trace4cats.model.{Batch, CompletedSpan}
 
 object AttributeFilteringExporter {
   def apply[F[_]](filter: AttributeFilter, underlying: StreamSpanExporter[F]): StreamSpanExporter[F] =

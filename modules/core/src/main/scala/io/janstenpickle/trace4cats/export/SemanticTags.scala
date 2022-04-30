@@ -1,6 +1,6 @@
 package io.janstenpickle.trace4cats.`export`
 
-import io.janstenpickle.trace4cats.model.{AttributeValue, SpanKind, SpanStatus, TraceProcess}
+import trace4cats.model.{AttributeValue, SpanKind, SpanStatus, TraceProcess}
 
 object SemanticTags {
   val kindString: SpanKind => String = {

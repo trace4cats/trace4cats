@@ -1,7 +1,7 @@
 package io.janstenpickle.trace4cats.filtering
 
 import fs2.Pipe
-import io.janstenpickle.trace4cats.model.CompletedSpan
+import trace4cats.model.CompletedSpan
 
 object PipeAttributeFilter {
   def apply[F[_]](filter: AttributeFilter): Pipe[F, CompletedSpan, CompletedSpan] = {

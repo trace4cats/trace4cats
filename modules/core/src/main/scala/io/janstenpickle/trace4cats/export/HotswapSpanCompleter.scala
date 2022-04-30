@@ -4,8 +4,8 @@ import cats.effect.kernel.{Resource, Temporal}
 import cats.kernel.Eq
 import cats.syntax.applicative._
 import io.janstenpickle.hotswapref.ConditionalHotswapRefConstructor
-import io.janstenpickle.trace4cats.kernel.SpanCompleter
-import io.janstenpickle.trace4cats.model.CompletedSpan
+import trace4cats.kernel.SpanCompleter
+import trace4cats.model.CompletedSpan
 
 trait HotswapSpanCompleter[F[_], A] extends SpanCompleter[F] {
   def update(config: A): F[Boolean]

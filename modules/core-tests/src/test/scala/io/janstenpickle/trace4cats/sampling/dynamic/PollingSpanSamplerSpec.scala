@@ -5,8 +5,8 @@ import cats.effect.testkit.{TestControl, TestInstances}
 import cats.effect.unsafe.implicits.global
 import cats.effect.{IO, Ref}
 import cats.syntax.all._
-import io.janstenpickle.trace4cats.kernel.SpanSampler
-import io.janstenpickle.trace4cats.model.{SampleDecision, SpanKind, TraceId}
+import trace4cats.kernel.SpanSampler
+import trace4cats.model.{SampleDecision, SpanKind, TraceId}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

@@ -4,8 +4,8 @@ import cats.Eq
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
-import io.janstenpickle.trace4cats.kernel.{BuildInfo, SpanSampler}
-import io.janstenpickle.trace4cats.model.{AttributeValue, CompletedSpan, MetaTrace, SpanKind, TraceProcess}
+import trace4cats.kernel.{BuildInfo, SpanSampler}
+import trace4cats.model.{AttributeValue, CompletedSpan, MetaTrace, SpanKind, TraceProcess}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
