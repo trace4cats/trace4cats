@@ -8,7 +8,8 @@ import cats.syntax.functor._
 import cats.{~>, Applicative, Functor}
 import fs2.Stream
 import io.janstenpickle.trace4cats.fs2.{ContinuationSpan, TracedStream}
-import io.janstenpickle.trace4cats.inject.{EntryPoint, ResourceKleisli, SpanName, SpanParams}
+import trace4cats.{ResourceKleisli, SpanName, SpanParams}
+import trace4cats.EntryPoint
 import trace4cats.kernel.{ErrorHandler, Span, ToHeaders}
 import trace4cats.model.{AttributeValue, SpanKind, TraceHeaders}
 import trace4cats.context.Provide

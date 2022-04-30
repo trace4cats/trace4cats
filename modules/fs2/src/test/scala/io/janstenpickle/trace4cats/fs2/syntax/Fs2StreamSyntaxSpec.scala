@@ -6,7 +6,7 @@ import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import fs2.Stream
 import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
-import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
+import trace4cats.Trace
 import trace4cats.kernel.{Span, SpanSampler, ToHeaders}
 import trace4cats.model.{CompletedSpan, SampleDecision, SpanContext, TraceFlags, TraceHeaders}
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
@@ -17,6 +17,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.immutable.Queue
 import cats.syntax.show._
+import trace4cats.EntryPoint
 
 class Fs2StreamSyntaxSpec
     extends AnyFlatSpec

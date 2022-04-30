@@ -5,8 +5,8 @@ import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.{Applicative, Foldable, Monad, MonoidK}
 import trace4cats.model.{CompletedSpan, SampleDecision, TraceId}
-import io.janstenpickle.trace4cats.rate.TokenBucket
 import io.janstenpickle.trace4cats.sampling.tail.{SampleDecisionStore, TailSpanSampler}
+import trace4cats.rate.TokenBucket
 
 import scala.concurrent.duration.FiniteDuration
 

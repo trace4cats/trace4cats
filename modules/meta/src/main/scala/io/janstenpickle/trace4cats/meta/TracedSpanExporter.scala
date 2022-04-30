@@ -5,7 +5,7 @@ import cats.effect.kernel.{Clock, Concurrent, Deferred}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.Chunk
-import io.janstenpickle.trace4cats.`export`.StreamSpanExporter
+import trace4cats.StreamSpanExporter
 import trace4cats.kernel.{SpanExporter, SpanSampler}
 import trace4cats.model._
 

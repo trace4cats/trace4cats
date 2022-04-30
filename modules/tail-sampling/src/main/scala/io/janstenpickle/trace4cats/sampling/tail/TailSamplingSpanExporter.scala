@@ -4,7 +4,7 @@ import cats.Monad
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.{Chunk, Pipe, Stream}
-import io.janstenpickle.trace4cats.`export`.StreamSpanExporter
+import trace4cats.StreamSpanExporter
 import trace4cats.kernel.SpanExporter
 import trace4cats.model.{Batch, CompletedSpan}
 

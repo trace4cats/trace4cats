@@ -1,6 +1,15 @@
+import cats.data.Kleisli
+import cats.effect.kernel.Resource
+import trace4cats.model.{SpanKind, TraceHeaders}
 import trace4cats.{kernel => t4ckernel}
 
+import scala.annotation.unchecked.uncheckedVariance
+
 package object trace4cats {
+  type SpanName = String
+  type SpanParams = (SpanName, SpanKind, TraceHeaders, ErrorHandler)
+  type ResourceKleisli[F[_], -In, +Out] = Kleisli[Resource[F, +*], In, Out @uncheckedVariance]
+
   type ErrorHandler = t4ckernel.ErrorHandler
   val ErrorHandler = t4ckernel.ErrorHandler
 
