@@ -1,12 +1,12 @@
-package io.janstenpickle.trace4cats.base.context.io.laws
+package io.janstenpickle.trace4cats.base.context.iolocal.laws
 
 import cats.effect.testkit.TestControl
 import cats.effect.unsafe.implicits.global
 import cats.effect.{IO, IOLocal}
 import cats.{~>, Eq}
 import io.janstenpickle.trace4cats.base.context.Provide
-import io.janstenpickle.trace4cats.base.context.io.GenIO
-import io.janstenpickle.trace4cats.base.context.io.instances._
+import io.janstenpickle.trace4cats.base.context.iolocal.GenIO
+import io.janstenpickle.trace4cats.base.context.iolocal.instances._
 import io.janstenpickle.trace4cats.base.context.laws.BaseSuite
 import io.janstenpickle.trace4cats.base.context.laws.discipline.ProvideTests
 import org.scalacheck.{Arbitrary, Cogen, Gen}
