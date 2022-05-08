@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package io.janstenpickle.trace4cats.base.context.io
+package io.janstenpickle.trace4cats.base.context.iolocal
 
 import cats.effect.{Deferred, IO}
 import org.scalacheck._

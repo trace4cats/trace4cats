@@ -39,7 +39,7 @@ lazy val root = (project in file("."))
     `context-utils`,
     `context-utils-laws`,
     fs2,
-    io,
+    iolocal,
     kernel,
     `kernel-tests`,
     meta,
@@ -126,9 +126,9 @@ lazy val meta =
     )
     .dependsOn(kernel, core, testkit % Test)
 
-lazy val io = (project in file("modules/io"))
+lazy val iolocal = (project in file("modules/iolocal"))
   .settings(publishSettings)
-  .settings(name := "trace4cats-io")
+  .settings(name := "trace4cats-iolocal")
   .dependsOn(core, `context-utils`, `context-utils-laws` % "compile->compile;test->test", testkit % Test)
 
 lazy val fs2 = (project in file("modules/fs2"))

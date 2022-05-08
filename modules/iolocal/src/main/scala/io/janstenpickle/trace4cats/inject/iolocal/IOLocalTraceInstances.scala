@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.inject.io
+package io.janstenpickle.trace4cats.inject.iolocal
 
 import cats.effect.{IO, IOLocal}
 import io.janstenpickle.trace4cats.Span
