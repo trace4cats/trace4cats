@@ -5,7 +5,7 @@ import cats.{~>, Monad}
 trait Provide[Low[_], F[_], R] extends Local[F, R] with Unlift[Low, F] { self =>
   def provide[A](fa: F[A])(r: R): Low[A]
 
-  def provideK(r: R): F ~> Low = new (F ~> Low) {
+  def provideK(r: R): F ~> Low = new F ~> Low {
     override def apply[A](fa: F[A]): Low[A] = provide(fa)(r)
   }
 

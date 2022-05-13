@@ -2,14 +2,14 @@ lazy val commonSettings = Seq(
   Compile / compile / javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   libraryDependencies ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, _)) =>
+      case Some(2, _) =>
         Seq(compilerPlugin(Dependencies.kindProjector), compilerPlugin(Dependencies.betterMonadicFor))
       case _ => Seq.empty
     }
   },
   scalacOptions += {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, _)) => "-Wconf:any:wv"
+      case Some(2, _) => "-Wconf:any:wv"
       case _ => "-Wconf:any:v"
     }
   },

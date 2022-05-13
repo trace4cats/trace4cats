@@ -24,7 +24,7 @@ object DynamicTokenBucket {
 
       override def updateConfig(bucketSize: Int, tokenRate: FiniteDuration): F[Unit] =
         currentConfig.get.flatMap { oldConfig =>
-          Applicative[F].whenA(oldConfig != (bucketSize -> tokenRate)) {
+          Applicative[F].whenA(oldConfig != bucketSize -> tokenRate) {
             hotswap.swap(
               TokenBucket
                 .bucketProcess(tokens, bucketSize, tokenRate)
