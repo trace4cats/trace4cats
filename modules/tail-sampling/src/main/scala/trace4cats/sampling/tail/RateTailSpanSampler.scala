@@ -1,4 +1,4 @@
-package trace4cats.samplling.tail
+package trace4cats.sampling.tail
 
 import cats.effect.kernel.{Resource, Temporal}
 import cats.syntax.foldable._

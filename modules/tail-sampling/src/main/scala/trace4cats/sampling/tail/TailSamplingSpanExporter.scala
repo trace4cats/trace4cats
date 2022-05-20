@@ -1,4 +1,4 @@
-package trace4cats.samplling.tail
+package trace4cats.sampling.tail
 
 import cats.Monad
 import cats.syntax.flatMap._
