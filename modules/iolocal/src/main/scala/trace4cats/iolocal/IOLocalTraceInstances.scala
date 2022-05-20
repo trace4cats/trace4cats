@@ -1,4 +1,4 @@
-package trace4cats.io
+package trace4cats.iolocal
 
 import cats.effect.{IO, IOLocal}
 import trace4cats.Trace

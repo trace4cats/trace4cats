@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package trace4cats.context.io
+package trace4cats.context.iolocal
 
 import cats.effect.{Deferred, IO}
 import org.scalacheck._

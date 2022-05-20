@@ -110,9 +110,9 @@ case class DischargeSpan[F[_]: Monad: Clock: Ref.Make: TraceId.Gen: SpanId.Gen] 
   def addLink(link: Link): F[Unit] = Applicative[F].unit
   def addLinks(links: NonEmptyList[Link]): F[Unit] = Applicative[F].unit
   def child(name: String, kind: SpanKind): Resource[F, Span[F]] =
-    Resource.eval(SpanContext.root[F]).flatMap(Span.child(name, _, kind, sampler, completer))
+    Span.root(name, kind, sampler, completer)
   def child(name: String, kind: SpanKind, errorHandler: ErrorHandler): Resource[F, Span[F]] =
-    Resource.eval(SpanContext.root[F]).flatMap(Span.child(name, _, kind, sampler, completer, errorHandler))
+    Span.root(name, kind, sampler, completer, errorHandler)
 }
 
 object Span {

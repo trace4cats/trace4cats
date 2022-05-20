@@ -1,4 +1,4 @@
-package trace4cats.context.io.laws
+package trace4cats.context.iolocal.laws
 
 import cats.effect.testkit.TestControl
 import cats.effect.unsafe.implicits.global
@@ -6,8 +6,8 @@ import cats.effect.{IO, IOLocal}
 import cats.{~>, Eq}
 import org.scalacheck.{Arbitrary, Cogen, Gen}
 import trace4cats.context.Provide
-import trace4cats.context.io.GenIO
-import trace4cats.context.io.instances.ioLocalProvide
+import trace4cats.context.iolocal.GenIO
+import trace4cats.context.iolocal.instances.ioLocalProvide
 import trace4cats.context.laws.BaseSuite
 import trace4cats.context.laws.discipline.ProvideTests
 
