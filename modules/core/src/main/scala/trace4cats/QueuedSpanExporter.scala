@@ -13,7 +13,6 @@ import cats.syntax.monad._
 import cats.syntax.parallel._
 import fs2.{Chunk, Stream}
 import org.typelevel.log4cats.Logger
-import trace4cats.kernel.SpanExporter
 import trace4cats.model.Batch
 
 import scala.concurrent.duration._

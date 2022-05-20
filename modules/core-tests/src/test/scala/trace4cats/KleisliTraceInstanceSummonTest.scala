@@ -3,7 +3,6 @@ package trace4cats
 import cats.data.Kleisli
 import cats.effect.IO
 import trace4cats.context.Local
-import trace4cats.kernel.Span
 
 object KleisliTraceInstanceSummonTest {
   type F[x] = Kleisli[IO, Span[IO], x]

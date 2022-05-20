@@ -11,7 +11,6 @@ import cats.syntax.functor._
 import cats.syntax.monad._
 import fs2.{Chunk, Stream}
 import org.typelevel.log4cats.Logger
-import trace4cats.kernel.{SpanCompleter, SpanExporter}
 import trace4cats.model.{Batch, CompletedSpan, TraceProcess}
 
 import scala.concurrent.duration._

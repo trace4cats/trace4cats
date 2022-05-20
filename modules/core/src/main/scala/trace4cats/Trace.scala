@@ -11,7 +11,6 @@ import cats.syntax.applicative._
 import cats.syntax.option._
 import cats.syntax.show._
 import cats.{Applicative, Functor}
-import trace4cats.kernel.{ErrorHandler, Span, ToHeaders}
 import trace4cats.model.{AttributeValue, SpanContext, SpanKind, SpanStatus, TraceHeaders}
 import trace4cats.context.{Lift, Local}
 

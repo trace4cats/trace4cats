@@ -9,7 +9,6 @@ package trace4cats
 import cats.data.Kleisli
 import cats.effect.kernel.{Clock, MonadCancelThrow, Ref, Resource}
 import cats.{~>, Applicative, Monad}
-import trace4cats.kernel.{ErrorHandler, Span, SpanCompleter, SpanSampler, ToHeaders}
 import trace4cats.model.{SpanId, SpanKind, TraceHeaders, TraceId}
 
 /** An entry point, for creating root spans or continuing traces that were started on another system.

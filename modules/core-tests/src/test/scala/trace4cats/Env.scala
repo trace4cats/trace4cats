@@ -1,6 +1,5 @@
 package trace4cats
 
-import trace4cats.kernel.Span
 import trace4cats.optics.Lens
 
 case class Env[F[_]](dymmy: String, span: Span[F])
