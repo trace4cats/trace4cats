@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.meta
+package trace4cats.meta
 
 import cats.Monad
 import cats.data.NonEmptyList
