@@ -1,8 +1,9 @@
-package io.janstenpickle.trace4cats.model
+package io.janstenpickle.trace4cats
 
 import cats.effect.IO
 import cats.effect.std.Random
 import cats.effect.unsafe.implicits.global
+import io.janstenpickle.trace4cats.model.SpanId
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
