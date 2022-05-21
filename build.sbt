@@ -144,3 +144,15 @@ lazy val `tail-sampling` = (project in file("modules/tail-sampling"))
   .settings(publishSettings)
   .settings(name := "trace4cats-tail-sampling", libraryDependencies ++= Seq(Dependencies.log4cats))
   .dependsOn(core)
+
+ThisBuild / githubWorkflowAddedJobs ++= Seq(
+  WorkflowJob(
+    "scalafix",
+    "Scalafix",
+    githubWorkflowJobSetup.value.toList ::: List(
+      WorkflowStep.Run(List("cd scalafix", "sbt ci"), name = Some("Scalafix tests"))
+    ),
+    scalas = List(Dependencies.Versions.scala213),
+    javas = List(JavaSpec.temurin("8")),
+  )
+)
