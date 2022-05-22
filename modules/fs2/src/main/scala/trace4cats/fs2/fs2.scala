@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats
+package trace4cats
 
 import _root_.fs2.Stream
 import cats.data.WriterT

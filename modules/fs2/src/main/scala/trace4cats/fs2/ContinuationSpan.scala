@@ -1,10 +1,10 @@
-package io.janstenpickle.trace4cats.fs2
+package trace4cats.fs2
 
 import cats.data.NonEmptyList
 import cats.effect.kernel.{MonadCancelThrow, Resource}
-import trace4cats.model._
-import trace4cats.kernel.{ErrorHandler, Span}
 import trace4cats.context.Provide
+import trace4cats.kernel.{ErrorHandler, Span}
+import trace4cats.model._
 
 trait ContinuationSpan[F[_]] extends Span[F] {
   def run[A](k: F[A]): F[A]

@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.fs2.syntax
+package trace4cats.fs2.syntax
 
 import cats.data.WriterT
 import cats.effect.kernel.MonadCancelThrow
@@ -7,12 +7,11 @@ import cats.syntax.apply._
 import cats.syntax.functor._
 import cats.{~>, Applicative, Functor}
 import fs2.Stream
-import io.janstenpickle.trace4cats.fs2.{ContinuationSpan, TracedStream}
-import trace4cats.{ResourceKleisli, SpanName, SpanParams}
-import trace4cats.EntryPoint
+import trace4cats.context.Provide
+import trace4cats.fs2.{ContinuationSpan, TracedStream}
 import trace4cats.kernel.{ErrorHandler, Span, ToHeaders}
 import trace4cats.model.{AttributeValue, SpanKind, TraceHeaders}
-import trace4cats.context.Provide
+import trace4cats.{EntryPoint, ResourceKleisli, SpanName, SpanParams}
 
 trait Fs2StreamSyntax {
   implicit class InjectEntryPoint[F[_]: MonadCancelThrow, A](stream: Stream[F, A]) {

@@ -1,4 +1,4 @@
-package io.janstenpickle.trace4cats.fs2.syntax
+package trace4cats.fs2.syntax
 
 import cats.Applicative
 import cats.data.Kleisli
