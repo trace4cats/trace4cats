@@ -9,7 +9,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import trace4cats.dynamic.PollingSpanSampler
-import trace4cats.model.{SampleDecision, SpanKind, TraceId}
 import trace4cats.test.ArbitraryInstances
 
 import scala.concurrent.duration._

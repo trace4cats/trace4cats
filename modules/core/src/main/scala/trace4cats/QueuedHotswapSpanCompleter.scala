@@ -4,7 +4,6 @@ import cats.effect.kernel.{Resource, Temporal}
 import fs2.Chunk
 import org.typelevel.log4cats.Logger
 import trace4cats.dynamic.HotswapSpanCompleter
-import trace4cats.model.TraceProcess
 
 object QueuedHotswapSpanCompleter {
   def apply[F[_]: Temporal: Logger](

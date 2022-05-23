@@ -3,7 +3,6 @@ package trace4cats
 import cats.Applicative
 import cats.effect.kernel.{Resource, Temporal}
 import cats.syntax.functor._
-import trace4cats.model.{SampleDecision, SpanContext, SpanKind, TraceId}
 import trace4cats.rate.{TokenBucket, TokenInterval}
 
 import scala.concurrent.duration._

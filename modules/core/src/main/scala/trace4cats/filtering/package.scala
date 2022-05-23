@@ -1,7 +1,5 @@
 package trace4cats
 
-import trace4cats.model.{AttributeValue, CompletedSpan}
-
 package object filtering {
   type AttributeFilter = (String, AttributeValue) => Boolean
 

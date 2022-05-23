@@ -1,7 +1,5 @@
 package trace4cats
 
-import trace4cats.model.{AttributeValue, SpanKind, SpanStatus, TraceProcess}
-
 object SemanticTags {
   val kindString: SpanKind => String = {
     case SpanKind.Internal => "internal"
