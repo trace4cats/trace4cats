@@ -4,7 +4,7 @@ import cats.laws.discipline.SerializableTests
 import cats.~>
 import org.scalacheck.Cogen
 import trace4cats.context.Unlift
-import trace4cats.context.laws.discipline.UnliftTests
+import trace4catstests.context.laws.discipline.UnliftTests
 
 class IdTests extends BaseSuite {
   implicit val cogenOption2Option: Cogen[Option ~> Option] =

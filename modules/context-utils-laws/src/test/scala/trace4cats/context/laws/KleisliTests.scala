@@ -12,7 +12,7 @@ import cats.laws.discipline.eq._
 import cats.{~>, Applicative, Eq}
 import org.scalacheck._
 import trace4cats.context.Provide
-import trace4cats.context.laws.discipline.ProvideTests
+import trace4catstests.context.laws.discipline.ProvideTests
 
 class KleisliTests extends BaseSuite {
   implicit def eqKleisli[F[_], A, B](implicit arb: Arbitrary[A], ev: Eq[F[B]]): Eq[Kleisli[F, A, B]] =

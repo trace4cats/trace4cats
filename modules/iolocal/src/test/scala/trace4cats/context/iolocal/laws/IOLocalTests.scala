@@ -9,7 +9,7 @@ import trace4cats.context.Provide
 import trace4cats.context.iolocal.GenIO
 import trace4cats.context.iolocal.instances.ioLocalProvide
 import trace4cats.context.laws.BaseSuite
-import trace4cats.context.laws.discipline.ProvideTests
+import trace4catstests.context.laws.discipline.ProvideTests
 
 import scala.util.Try
 

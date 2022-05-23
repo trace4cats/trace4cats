@@ -1,9 +1,9 @@
-package trace4cats.context.laws.discipline
+package trace4catstests.context.laws.discipline
 
 import cats.Eq
 import cats.kernel.laws.discipline.catsLawsIsEqToProp
-import org.scalacheck.{Arbitrary, Cogen}
 import org.scalacheck.Prop.{forAll => ∀}
+import org.scalacheck.{Arbitrary, Cogen}
 import org.typelevel.discipline.Laws
 import trace4cats.context.Lift
 import trace4cats.context.laws.LiftLaws
