@@ -1,0 +1,5 @@
+package trace4cats
+
+import trace4cats.context.iolocal.IOLocalContextInstances
+
+package object iolocal extends IOLocalTraceInstances with IOLocalContextInstances

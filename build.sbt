@@ -59,7 +59,7 @@ lazy val kernel =
       name := "trace4cats-kernel",
       libraryDependencies ++= Dependencies.test.map(_ % Test),
       buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion, sbtVersion),
-      buildInfoPackage := "io.janstenpickle.trace4cats.kernel",
+      buildInfoPackage := "trace4cats.kernel",
       libraryDependencies ++= Seq(
         Dependencies.catsEffectStd,
         Dependencies.commonsCodec,
