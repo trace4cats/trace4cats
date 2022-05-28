@@ -14,6 +14,9 @@ package object trace4cats {
   type ErrorHandler = t4ckernel.ErrorHandler
   val ErrorHandler = t4ckernel.ErrorHandler
 
+  type HandledError = t4ckernel.HandledError
+  val HandledError = t4ckernel.HandledError
+
   type Span[F[_]] = t4ckernel.Span[F]
   val Span = t4ckernel.Span
 
