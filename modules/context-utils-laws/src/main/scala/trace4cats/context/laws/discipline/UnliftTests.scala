@@ -1,4 +1,4 @@
-package trace4catstests.context.laws.discipline
+package trace4cats.context.laws.discipline
 
 import cats.kernel.laws.discipline.catsLawsIsEqToProp
 import cats.{~>, Eq}
