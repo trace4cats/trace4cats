@@ -11,37 +11,37 @@ import trace4cats.context.Provide
 import trace4cats.fs2.{ContinuationSpan, TracedStream}
 import trace4cats.kernel.{ErrorHandler, Span, ToHeaders}
 import trace4cats.model.{AttributeValue, SpanKind, TraceHeaders}
-import trace4cats.{EntryPoint, ResourceKleisli, SpanName, SpanParams}
+import trace4cats.{EntryPoint, ResourceKleisli, SpanParams}
 
 trait Fs2StreamSyntax {
   implicit class InjectEntryPoint[F[_]: MonadCancelThrow, A](stream: Stream[F, A]) {
     def inject(ep: EntryPoint[F], name: String): TracedStream[F, A] =
       inject(ep, _ => name, SpanKind.Internal)
 
-    def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: SpanName): TracedStream[F, A] =
+    def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: String): TracedStream[F, A] =
       trace(k, _ => name, SpanKind.Internal)
 
     def inject(ep: EntryPoint[F], name: A => String): TracedStream[F, A] =
       inject(ep, name, SpanKind.Internal)
 
-    def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName): TracedStream[F, A] =
+    def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => String): TracedStream[F, A] =
       trace(k, name, SpanKind.Internal)
 
-    def inject(ep: EntryPoint[F], name: SpanName, kind: SpanKind): TracedStream[F, A] =
+    def inject(ep: EntryPoint[F], name: String, kind: SpanKind): TracedStream[F, A] =
       inject(ep, _ => name, kind)
 
-    def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: SpanName, kind: SpanKind): TracedStream[F, A] =
+    def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: String, kind: SpanKind): TracedStream[F, A] =
       trace(k, _ => name, kind)
 
-    def inject(ep: EntryPoint[F], name: A => SpanName, kind: SpanKind): TracedStream[F, A] =
+    def inject(ep: EntryPoint[F], name: A => String, kind: SpanKind): TracedStream[F, A] =
       trace(ep.toKleisli, name, kind)
 
-    def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName, kind: SpanKind): TracedStream[F, A] =
+    def trace(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => String, kind: SpanKind): TracedStream[F, A] =
       trace(k, name, kind, ErrorHandler.empty)
 
     def trace(
       k: ResourceKleisli[F, SpanParams, Span[F]],
-      name: A => SpanName,
+      name: A => String,
       kind: SpanKind,
       errorHandler: ErrorHandler
     ): TracedStream[F, A] =
@@ -50,39 +50,37 @@ trait Fs2StreamSyntax {
     def injectContinue(ep: EntryPoint[F], name: String)(f: A => TraceHeaders): TracedStream[F, A] =
       injectContinue(ep, name, SpanKind.Internal)(f)
 
-    def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: SpanName)(
+    def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: String)(
       f: A => TraceHeaders
     ): TracedStream[F, A] =
       traceContinue(k, name, SpanKind.Internal)(f)
 
-    def injectContinue(ep: EntryPoint[F], name: SpanName, kind: SpanKind)(f: A => TraceHeaders): TracedStream[F, A] =
+    def injectContinue(ep: EntryPoint[F], name: String, kind: SpanKind)(f: A => TraceHeaders): TracedStream[F, A] =
       injectContinue(ep, _ => name, kind)(f)
 
-    def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: SpanName, kind: SpanKind)(
+    def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: String, kind: SpanKind)(
       f: A => TraceHeaders
     ): TracedStream[F, A] =
       traceContinue(k, _ => name, kind)(f)
 
-    def injectContinue(ep: EntryPoint[F], name: A => SpanName)(f: A => TraceHeaders): TracedStream[F, A] =
+    def injectContinue(ep: EntryPoint[F], name: A => String)(f: A => TraceHeaders): TracedStream[F, A] =
       injectContinue(ep, name, SpanKind.Internal)(f)
 
-    def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName)(
+    def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => String)(
       f: A => TraceHeaders
     ): TracedStream[F, A] =
       traceContinue(k, name, SpanKind.Internal)(f)
 
-    def injectContinue(ep: EntryPoint[F], name: A => SpanName, kind: SpanKind)(
-      f: A => TraceHeaders
-    ): TracedStream[F, A] =
+    def injectContinue(ep: EntryPoint[F], name: A => String, kind: SpanKind)(f: A => TraceHeaders): TracedStream[F, A] =
       traceContinue(ep.toKleisli, name, kind)(f)
 
-    def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => SpanName, kind: SpanKind)(
+    def traceContinue(k: ResourceKleisli[F, SpanParams, Span[F]], name: A => String, kind: SpanKind)(
       f: A => TraceHeaders
     ): TracedStream[F, A] = traceContinue(k, name, kind, ErrorHandler.empty)(f)
 
     def traceContinue(
       k: ResourceKleisli[F, SpanParams, Span[F]],
-      name: A => SpanName,
+      name: A => String,
       kind: SpanKind,
       errorHandler: ErrorHandler
     )(f: A => TraceHeaders): TracedStream[F, A] =
