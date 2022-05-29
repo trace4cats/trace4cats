@@ -5,8 +5,9 @@ import trace4cats.{kernel => t4ckernel, model => t4cmodel}
 import scala.annotation.unchecked.uncheckedVariance
 
 package object trace4cats {
+  @deprecated("Use String instead", "0.14.0")
   type SpanName = String
-  type SpanParams = (SpanName, SpanKind, TraceHeaders, ErrorHandler)
+
   type ResourceKleisli[F[_], -In, +Out] = Kleisli[Resource[F, +*], In, Out @uncheckedVariance]
 
   // kernel aliases
@@ -60,6 +61,9 @@ package object trace4cats {
 
   type TraceHeaders = t4cmodel.TraceHeaders
   val TraceHeaders = t4cmodel.TraceHeaders
+
+  type SpanParams = t4cmodel.SpanParams
+  val SpanParams = t4cmodel.SpanParams
 
   type TraceId = t4cmodel.TraceId
   val TraceId = t4cmodel.TraceId
