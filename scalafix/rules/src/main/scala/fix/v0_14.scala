@@ -34,7 +34,34 @@ class v0_14 extends SemanticRule("v0_14") {
     ) ++ replacement(s"$oldBasePackage.test", "trace4cats.test") ++ replacement(
       s"$oldBasePackage.meta",
       "trace4cats.meta"
-    )
+    ) ++ replacement(s"$oldBasePackage.http4s.server", "trace4cats.http4s.server") ++ replacement(
+      s"$oldBasePackage.http4s.server.syntax",
+      "trace4cats.http4s.server.syntax"
+    ) ++ replacement(s"$oldBasePackage.http4s.client", "trace4cats.http4s.client") ++ replacement(
+      s"$oldBasePackage.http4s.client.syntax",
+      "trace4cats.http4s.client.syntax"
+    ) ++ replacement(
+      s"$oldBasePackage.natchez.conversions.toNatchez",
+      "trace4cats.natchez.conversions.toNatchez"
+    ) ++ replacement(
+      s"$oldBasePackage.natchez.conversions.fromNatchez",
+      "trace4cats.natchez.conversions.fromNatchez"
+    ) ++ replacement(s"$oldBasePackage.avro", "trace4cats.avro") ++ replacement(
+      s"$oldBasePackage.avro.kafka",
+      "trace4cats.avro.kafka"
+    ) ++ replacement(s"$oldBasePackage.jaeger", "trace4cats.jaeger") ++ replacement(
+      s"$oldBasePackage.opentelemetry.otlp",
+      "trace4cats.opentelemetry.otlp"
+    ) ++ replacement(s"$oldBasePackage.opentelemetry.jaeger", "trace4cats.opentelemetry.jaeger") ++ replacement(
+      s"$oldBasePackage.stackdriver",
+      "trace4cats.stackdriver"
+    ) ++ replacement(s"$oldBasePackage.stackdriver.oauth", "trace4cats.stackdriver.oauth") ++ replacement(
+      s"$oldBasePackage.stackdriver.project",
+      "trace4cats.stackdriver.project"
+    ) ++ replacement(s"$oldBasePackage.datadog", "trace4cats.datadog") ++ replacement(
+      s"$oldBasePackage.newrelic",
+      "trace4cats.newrelic"
+    ) ++ replacement(s"$oldBasePackage.zipkin", "trace4cats.zipkin")
 
   def replacement(oldPackage: String, newPackage: String): Map[String, (String, Map[String, String])] =
     replacement(Set(oldPackage), newPackage)

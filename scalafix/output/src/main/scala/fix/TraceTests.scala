@@ -23,5 +23,23 @@ import trace4cats.RefSpanCompleter
 import trace4cats.test.ArbitraryInstances
 import trace4cats.model.ArbitraryAttributeValues
 import trace4cats.meta.PipeTracer
+import trace4cats.http4s.server.Http4sResourceKleislis
+import trace4cats.http4s.server.syntax._
+import trace4cats.http4s.client.ClientTracer
+import trace4cats.http4s.client.syntax._
+import trace4cats.natchez.conversions.toNatchez._
+import trace4cats.natchez.conversions.fromNatchez._
+import trace4cats.avro.AvroSpanCompleter
+import trace4cats.avro.kafka.AvroKafkaConsumer
+import trace4cats.avro.kafka.AvroKafkaSpanExporter
+import trace4cats.jaeger.JaegerSpanExporter
+import trace4cats.opentelemetry.otlp.OpenTelemetryOtlpGrpcSpanExporter
+import trace4cats.opentelemetry.jaeger.OpenTelemetryJaegerSpanCompleter
+import trace4cats.stackdriver.StackdriverGrpcSpanCompleter
+import trace4cats.stackdriver.oauth.GoogleOAuth
+import trace4cats.stackdriver.project.ProjectIdProvider
+import trace4cats.datadog.DataDogSpanCompleter
+import trace4cats.newrelic.NewRelicSpanExporter
+import trace4cats.zipkin.ZipkinHttpSpanCompleter
 
 object TraceTests {}

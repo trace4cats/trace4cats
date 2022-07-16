@@ -94,7 +94,35 @@ lazy val output = projectMatrix
       "io.janstenpickle" %% "trace4cats-fs2",
       "io.janstenpickle" %% "trace4cats-meta",
       "io.janstenpickle" %% "trace4cats-testkit",
-    ).map(_ % "0.13.1-SNAPSHOT")
+    ).map(_ % "0.13.1+67-a7d9b849"),
+    libraryDependencies ++= Seq(
+      "io.janstenpickle" %% "trace4cats-http4s-client",
+      "io.janstenpickle" %% "trace4cats-http4s-server"
+    ).map(_ % "0.13.1+14-a89a7987"),
+//    libraryDependencies ++= Seq(
+//      "io.janstenpickle" %% "trace4cats-sttp-client3",
+//      "io.janstenpickle" %% "trace4cats-sttp-tapir",
+//    ).map(_ % "0.13.1+14-a89a7987")
+    libraryDependencies += "io.janstenpickle" %% "trace4cats-natchez"       % "0.13.1+13-af5654a9",
+    libraryDependencies += "io.janstenpickle" %% "trace4cats-avro-exporter" % "0.13.1+17-f490ab04",
+    libraryDependencies ++= Seq(
+      "io.janstenpickle" %% "trace4cats-avro-kafka-exporter",
+      "io.janstenpickle" %% "trace4cats-avro-kafka-consumer"
+    ).map(_ % "0.13.1+16-ff3bad5c"),
+    libraryDependencies ++= Seq("io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter")
+      .map(_ % "0.13.1+15-1089463b"),
+    libraryDependencies ++= Seq(
+      "io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter",
+      "io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter",
+      "io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter"
+    ).map(_ % "0.13.1+26-752cf951"),
+    libraryDependencies ++= Seq(
+      "io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter",
+      "io.janstenpickle" %% "trace4cats-stackdriver-http-exporter",
+    ).map(_ % "0.13.1+23-2f138f66"),
+    libraryDependencies += "io.janstenpickle" %% "trace4cats-datadog-http-exporter"  % "0.13.1+17-fb190468",
+    libraryDependencies += "io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.13.1+18-7e343f59",
+    libraryDependencies += "io.janstenpickle" %% "trace4cats-zipkin-http-exporter"   % "0.13.1+17-1553c1c6",
   )
   .defaultAxes(VirtualAxis.jvm)
   .jvmPlatform(scalaVersions = rulesCrossVersions :+ scala3Version)

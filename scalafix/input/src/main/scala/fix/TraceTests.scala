@@ -27,5 +27,23 @@ import io.janstenpickle.trace4cats.`export`.RefSpanCompleter
 import io.janstenpickle.trace4cats.test.ArbitraryInstances
 import io.janstenpickle.trace4cats.model.ArbitraryAttributeValues
 import io.janstenpickle.trace4cats.meta.PipeTracer
+import io.janstenpickle.trace4cats.http4s.server.Http4sResourceKleislis
+import io.janstenpickle.trace4cats.http4s.server.syntax._
+import io.janstenpickle.trace4cats.http4s.client.ClientTracer
+import io.janstenpickle.trace4cats.http4s.client.syntax._
+import io.janstenpickle.trace4cats.natchez.conversions.toNatchez._
+import io.janstenpickle.trace4cats.natchez.conversions.fromNatchez._
+import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
+import io.janstenpickle.trace4cats.avro.kafka.AvroKafkaConsumer
+import io.janstenpickle.trace4cats.avro.kafka.AvroKafkaSpanExporter
+import io.janstenpickle.trace4cats.jaeger.JaegerSpanExporter
+import io.janstenpickle.trace4cats.opentelemetry.otlp.OpenTelemetryOtlpGrpcSpanExporter
+import io.janstenpickle.trace4cats.opentelemetry.jaeger.OpenTelemetryJaegerSpanCompleter
+import io.janstenpickle.trace4cats.stackdriver.StackdriverGrpcSpanCompleter
+import io.janstenpickle.trace4cats.stackdriver.oauth.GoogleOAuth
+import io.janstenpickle.trace4cats.stackdriver.project.ProjectIdProvider
+import io.janstenpickle.trace4cats.datadog.DataDogSpanCompleter
+import io.janstenpickle.trace4cats.newrelic.NewRelicSpanExporter
+import io.janstenpickle.trace4cats.zipkin.ZipkinHttpSpanCompleter
 
 object TraceTests {}
