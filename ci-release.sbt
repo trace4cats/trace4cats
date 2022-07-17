@@ -18,8 +18,8 @@ ThisBuild / githubWorkflowPublish := Seq(
     List("ciReleaseSonatype"),
     name = Some("Publish artifacts"),
     env = Map(
-      "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASS }}",
-      "PGP_SECRET" -> "${{ secrets.GPG_PRIVATE_KEY }}",
+      "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+      "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
       "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
       "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
     )
