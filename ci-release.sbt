@@ -18,14 +18,18 @@ ThisBuild / githubWorkflowPublish := Seq(
     List("ciReleaseSonatype"),
     name = Some("Publish artifacts"),
     env = Map(
-      "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
-      "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
       "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
       "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
     )
   )
 )
 ThisBuild / githubWorkflowPublishCond := Some("github.actor != 'mergify[bot]'")
+ThisBuild / githubWorkflowPublishPreamble += WorkflowStep.Use(
+  ref = UseRef.Public("crazy-max", "ghaction-import-gpg", "v5"),
+  id = Some("import_gpg"),
+  name = Some("Import GPG key"),
+  params = Map("gpg_private_key" -> "${{ secrets.GPG_PRIVATE_KEY }}", "passphrase" -> "${{ secrets.PGP_PASSPHRASE }}")
+)
 
 ThisBuild / publishTo := sonatypePublishToBundle.value
 ThisBuild / versionScheme := Some("early-semver")
