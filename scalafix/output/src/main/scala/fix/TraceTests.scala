@@ -41,5 +41,7 @@ import trace4cats.stackdriver.project.ProjectIdProvider
 import trace4cats.datadog.DataDogSpanCompleter
 import trace4cats.newrelic.NewRelicSpanExporter
 import trace4cats.zipkin.ZipkinHttpSpanCompleter
+import trace4cats.kafka.TracedConsumer
+import trace4cats.kafka.syntax._
 
 object TraceTests {}

@@ -77,6 +77,7 @@ lazy val input = projectMatrix
       "io.janstenpickle" %% "trace4cats-datadog-http-exporter",
       "io.janstenpickle" %% "trace4cats-newrelic-http-exporter",
       "io.janstenpickle" %% "trace4cats-zipkin-http-exporter",
+      "io.janstenpickle" %% "trace4cats-kafka-client",
     ).map(_ % "0.13.1")
   )
   .defaultAxes(VirtualAxis.jvm)
@@ -123,6 +124,7 @@ lazy val output = projectMatrix
     libraryDependencies += "io.janstenpickle" %% "trace4cats-datadog-http-exporter"  % "0.13.1+17-fb190468",
     libraryDependencies += "io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.13.1+18-7e343f59",
     libraryDependencies += "io.janstenpickle" %% "trace4cats-zipkin-http-exporter"   % "0.13.1+17-1553c1c6",
+    libraryDependencies += "io.janstenpickle" %% "trace4cats-kafka-client"           % "0.13.1+13-566c0cc2",
   )
   .defaultAxes(VirtualAxis.jvm)
   .jvmPlatform(scalaVersions = rulesCrossVersions :+ scala3Version)
