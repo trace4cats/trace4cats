@@ -5,7 +5,7 @@ object Dependencies {
     val caseInsensitive = "1.2.0"
     val cats = "2.8.0"
     val catsEffect = "3.3.14"
-    val collectionCompat = "2.7.0"
+    val collectionCompat = "2.8.0"
     val commonsCodec = "1.15"
     val fs2 = "3.2.10"
     val hotswapRef = "0.2.2"
