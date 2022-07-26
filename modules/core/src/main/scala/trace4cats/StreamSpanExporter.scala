@@ -25,8 +25,6 @@ object StreamSpanExporter {
 
       override def combine(x: StreamSpanExporter[F], y: StreamSpanExporter[F]): StreamSpanExporter[F] =
         new StreamSpanExporter[F] {
-          override def pipe: Pipe[F, CompletedSpan, Unit] = in => in.through(x.pipe).concurrently(in.through(y.pipe))
-
           override def exportBatch(batch: Batch[Chunk]): F[Unit] =
             Parallel.parMap2(x.exportBatch(batch), y.exportBatch(batch))((_, _) => ())
         }
