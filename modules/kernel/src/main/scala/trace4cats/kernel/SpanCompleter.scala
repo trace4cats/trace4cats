@@ -7,6 +7,8 @@ import cats.{Applicative, Apply, Parallel}
 import trace4cats.model.CompletedSpan
 import trace4cats.model.CompletedSpan.Builder
 
+import scala.collection.compat._
+
 trait SpanCompleter[F[_]] {
   def complete(span: CompletedSpan.Builder): F[Unit]
 }

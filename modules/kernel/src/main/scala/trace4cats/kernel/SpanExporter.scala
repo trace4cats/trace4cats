@@ -6,6 +6,8 @@ import trace4cats.model.Batch
 import cats.syntax.parallel._
 import cats.syntax.foldable._
 
+import scala.collection.compat._
+
 trait SpanExporter[F[_], G[_]] {
   def exportBatch(batch: Batch[G]): F[Unit]
 }

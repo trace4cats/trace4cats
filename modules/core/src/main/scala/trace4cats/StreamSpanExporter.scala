@@ -2,10 +2,11 @@ package trace4cats
 
 import cats.effect.kernel.Concurrent
 import cats.syntax.functor._
+import cats.syntax.parallel._
 import cats.{Applicative, Monoid, Parallel}
 import fs2.{Chunk, Pipe}
-import trace4cats.model.Batch
-import cats.syntax.parallel._
+
+import scala.collection.compat._
 
 trait StreamSpanExporter[F[_]] extends SpanExporter[F, Chunk] {
   def pipe: Pipe[F, CompletedSpan, Unit] = _.chunks.evalMap(chunk => exportBatch(Batch(chunk)))
