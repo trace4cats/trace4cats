@@ -7,6 +7,7 @@ import cats.effect.syntax.monadCancel._
 import cats.effect.syntax.spawn._
 import cats.effect.syntax.temporal._
 import cats.syntax.flatMap._
+import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.syntax.monad._
 import cats.syntax.parallel._
@@ -48,7 +49,7 @@ object QueuedSpanExporter {
         }
       }
       .parTraverse(buffer)
-      .map(StreamSpanExporter.combined[F])
+      .map(_.combineAll)
   }
 
 }
