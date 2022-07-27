@@ -1,8 +1,8 @@
 package trace4cats
 
+import cats.effect.kernel.Concurrent
 import cats.syntax.functor._
-import cats.syntax.parallel._
-import cats.{Applicative, Parallel}
+import cats.{Applicative, Monoid, Parallel}
 import fs2.{Chunk, Pipe}
 
 trait StreamSpanExporter[F[_]] extends SpanExporter[F, Chunk] {
@@ -19,8 +19,14 @@ object StreamSpanExporter {
       override def exportBatch(batch: Batch[Chunk]): F[Unit] = Applicative[F].unit
     }
 
-  def combined[F[_]: Parallel](exporters: List[StreamSpanExporter[F]]): StreamSpanExporter[F] =
-    new StreamSpanExporter[F] {
-      override def exportBatch(batch: Batch[Chunk]): F[Unit] = exporters.parTraverse_(_.exportBatch(batch))
+  implicit def monoid[F[_]: Concurrent: Parallel]: Monoid[StreamSpanExporter[F]] =
+    new Monoid[StreamSpanExporter[F]] {
+      override def empty: StreamSpanExporter[F] = StreamSpanExporter.empty[F]
+
+      override def combine(x: StreamSpanExporter[F], y: StreamSpanExporter[F]): StreamSpanExporter[F] =
+        new StreamSpanExporter[F] {
+          override def exportBatch(batch: Batch[Chunk]): F[Unit] =
+            Parallel.parMap2(x.exportBatch(batch), y.exportBatch(batch))((_, _) => ())
+        }
     }
 }
