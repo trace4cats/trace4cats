@@ -3,6 +3,8 @@ package trace4cats.kernel
 import cats.kernel.Monoid
 import cats.{Applicative, ApplicativeError, Apply, Parallel}
 import trace4cats.model.Batch
+import cats.syntax.parallel._
+import cats.syntax.foldable._
 
 trait SpanExporter[F[_], G[_]] {
   def exportBatch(batch: Batch[G]): F[Unit]
@@ -25,6 +27,15 @@ object SpanExporter extends LowPrioritySpanExporterInstances {
         }
 
       override def empty: SpanExporter[F, G] = SpanExporter.empty[F, G]
+
+      override def combineAllOption(as: IterableOnce[SpanExporter[F, G]]): Option[SpanExporter[F, G]] =
+        if (as.iterator.isEmpty) None
+        else Some(combineAll(as))
+
+      override def combineAll(as: IterableOnce[SpanExporter[F, G]]): SpanExporter[F, G] =
+        new SpanExporter[F, G] {
+          override def exportBatch(batch: Batch[G]): F[Unit] = as.iterator.toList.parTraverse_(_.exportBatch(batch))
+        }
     }
 }
 
@@ -38,6 +49,14 @@ trait LowPrioritySpanExporterInstances {
         }
 
       override def empty: SpanExporter[F, G] = SpanExporter.empty[F, G]
+
+      override def combineAllOption(as: IterableOnce[SpanExporter[F, G]]): Option[SpanExporter[F, G]] =
+        if (as.iterator.isEmpty) None
+        else Some(combineAll(as))
+
+      override def combineAll(as: IterableOnce[SpanExporter[F, G]]): SpanExporter[F, G] = new SpanExporter[F, G] {
+        override def exportBatch(batch: Batch[G]): F[Unit] = as.iterator.toList.traverse_(_.exportBatch(batch))
+      }
     }
 
   def empty[F[_]: Applicative, G[_]]: SpanExporter[F, G] =

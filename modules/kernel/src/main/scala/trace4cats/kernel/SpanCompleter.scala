@@ -1,6 +1,8 @@
 package trace4cats.kernel
 
 import cats.kernel.Monoid
+import cats.syntax.foldable._
+import cats.syntax.parallel._
 import cats.{Applicative, Apply, Parallel}
 import trace4cats.model.CompletedSpan
 import trace4cats.model.CompletedSpan.Builder
@@ -19,6 +21,16 @@ object SpanCompleter extends LowPrioritySpanCompleterInstances {
         }
 
       override def empty: SpanCompleter[F] = SpanCompleter.empty[F]
+
+      override def combineAllOption(as: IterableOnce[SpanCompleter[F]]): Option[SpanCompleter[F]] =
+        if (as.iterator.isEmpty) None
+        else Some(combineAll(as))
+
+      override def combineAll(as: IterableOnce[SpanCompleter[F]]): SpanCompleter[F] =
+        new SpanCompleter[F] {
+          override def complete(span: CompletedSpan.Builder): F[Unit] =
+            as.iterator.toList.parTraverse_(_.complete(span))
+        }
     }
 }
 
@@ -32,6 +44,16 @@ trait LowPrioritySpanCompleterInstances {
         }
 
       override def empty: SpanCompleter[F] = SpanCompleter.empty[F]
+
+      override def combineAllOption(as: IterableOnce[SpanCompleter[F]]): Option[SpanCompleter[F]] =
+        if (as.iterator.isEmpty) None
+        else Some(combineAll(as))
+
+      override def combineAll(as: IterableOnce[SpanCompleter[F]]): SpanCompleter[F] =
+        new SpanCompleter[F] {
+          override def complete(span: CompletedSpan.Builder): F[Unit] =
+            as.iterator.toList.traverse_(_.complete(span))
+        }
     }
 
   def empty[F[_]: Applicative]: SpanCompleter[F] =
