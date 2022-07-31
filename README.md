@@ -7,6 +7,8 @@
 [![Join the chat at https://gitter.im/trace4cats/community](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/trace4cats/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
 
+> ## ⚠️ If you are upgrading to `0.14.0` please read the [migration guide].
+
 Yet another distributed tracing system, this time just for Scala. Heavily relies upon
 [Cats] and [Cats Effect].
 
@@ -19,6 +21,7 @@ Compatible with [OpenTelemetry] and [Jaeger], based on, and interoperates with [
   * [Motivation](#motivation)
   * [Highlights](#highlights)
   * [Quickstart](#quickstart)
+  * [Migrating to `0.14.0`](#migrating-to-0140)
   * [Repositories](#repositories)
   * [Components](#components)
   * [Documentation](#documentation)
@@ -71,9 +74,8 @@ More information on how to use these can be found in the
 Add the following dependencies to your `build.sbt`:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-inject" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.13.1"
+"io.janstenpickle" %% "trace4cats-core" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.14.0"
 ```
 
 Then run the [collector](https://github.com/trace4cats/trace4cats-docs/blob/master/docs/components.md#collectors) in
@@ -83,7 +85,7 @@ span logging mode:
 echo "log-spans: true" > /tmp/collector.yaml
 docker run -p7777:7777 -p7777:7777/udp -it \
   -v /tmp/collector.yaml:/tmp/collector.yaml \
-  janstenpickle/trace4cats-collector-lite:0.13.1 \
+  janstenpickle/trace4cats-collector-lite:0.14.0 \
   --config-file=/tmp/collector.yaml
 ```
 
@@ -95,12 +97,8 @@ import cats.data.Kleisli
 import cats.effect._
 import cats.effect.std.Console
 import cats.implicits._
-import io.janstenpickle.trace4cats.Span
-import io.janstenpickle.trace4cats.`export`.CompleterConfig
-import io.janstenpickle.trace4cats.avro.AvroSpanCompleter
-import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
-import io.janstenpickle.trace4cats.kernel.SpanSampler
-import io.janstenpickle.trace4cats.model.{SpanKind, SpanStatus, TraceProcess}
+import trace4cats._
+import trace4cats.avro.AvroSpanCompleter
 
 import scala.concurrent.duration._
 
@@ -128,6 +126,15 @@ object Trace4CatsQuickStart extends IOApp.Simple {
     }
 }
 ```
+
+## Migrating to `0.14.0`
+
+Version `0.14.0` introduced a reworked module and package structure that reduced the number of dependencies and imports
+required to get started quickly. Effectively `import trace4cats._` is all you should need to import throughout most of
+your codebase.
+
+See the [migration guide] for information
+on how to migrate.
 
 ## Repositories
 
@@ -185,29 +192,26 @@ The source code for these components is located in the
 To use Trace4Cats within your application add the dependencies listed below as needed:
 
 ```scala
-"io.janstenpickle" %% "trace4cats-core" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-inject" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-inject-zio" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-rate-sampling" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-fs2" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-http4s-client" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-http4s-server" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-sttp-client3" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-sttp-tapir" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-natchez" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-avro-kafka-exporter" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-avro-kafka-consumer" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-log-exporter" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.13.1"
-"io.janstenpickle" %% "trace4cats-zipkin-http-exporter" % "0.13.1"
+"io.janstenpickle" %% "trace4cats-core" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-rate-sampling" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-fs2" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-http4s-client" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-http4s-server" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-sttp-client3" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-sttp-tapir" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-natchez" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-avro-exporter" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-avro-kafka-exporter" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-avro-kafka-consumer" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-jaeger-thrift-exporter" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-grpc-exporter" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-otlp-http-exporter" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-opentelemetry-jaeger-exporter" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-grpc-exporter" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-stackdriver-http-exporter" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-datadog-http-exporter" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-newrelic-http-exporter" % "0.14.0"
+"io.janstenpickle" %% "trace4cats-zipkin-http-exporter" % "0.14.0"
 ```
 
 ## [`native-image`] Compatibility
@@ -228,6 +232,7 @@ The following span completers have been found to be compatible with [`native-ima
 This project supports the [Scala Code of Conduct](https://typelevel.org/code-of-conduct.html) and aims that its channels
 (mailing list, Gitter, github, etc.) to be welcoming environments for everyone.
 
+[migration guide]: https://github.com/trace4cats/trace4cats-docs/blob/master/docs/migrating.md
 
 [Avro]: https://avro.apache.org
 [Kafka]: https://kafka.apache.org
