@@ -19,8 +19,11 @@ object QueuedSpanCompleter {
   ): Resource[F, SpanCompleter[F]] = {
     val realBufferSize = if (config.bufferSize < config.batchSize * 5) config.batchSize * 5 else config.bufferSize
 
-    def exportBatches(stream: Stream[F, CompletedSpan], signal: Deferred[F, Either[Throwable, Unit]]): F[Unit] =
-      stream
+    def exportBatches(
+      stream: Stream[F, CompletedSpan],
+      signal: Option[Deferred[F, Either[Throwable, Unit]]]
+    ): F[Unit] = {
+      val exportStream = stream
         .groupWithin(config.batchSize, config.batchTimeout)
         .evalMap { spans =>
           Stream
@@ -37,25 +40,17 @@ object QueuedSpanCompleter {
             }
             .uncancelable
         }
-        .interruptWhen(signal)
-        .compile
-        .drain
+
+      signal.fold(exportStream)(exportStream.interruptWhen(_)).compile.drain
+    }
 
     for {
       hasLoggedWarn <- Resource.eval(Ref.of(false))
       shutdownSignal <- Resource.eval(Deferred[F, Either[Throwable, Unit]])
       queue <- Resource.eval(Queue.bounded[F, CompletedSpan](realBufferSize))
-      _ <- exportBatches(Stream.fromQueueUnterminated(queue), shutdownSignal).uncancelable.background.onFinalize(
-        Deferred[F, Either[Throwable, Unit]].flatMap(
-          exportBatches(
-            Stream
-              .repeatEval(queue.tryTake)
-              .unNoneTerminate,
-            _
-          )
-        )
-      )
-      _ <- Resource.make(Applicative[F].unit)(_ => shutdownSignal.complete(Right(())).void)
+      _ <- exportBatches(Stream.fromQueueUnterminated(queue), Some(shutdownSignal)).uncancelable.background
+        .onFinalize(exportBatches(Stream.repeatEval(queue.tryTake).unNoneTerminate, None))
+      _ <- Resource.onFinalize(shutdownSignal.complete(Right(())).void)
     } yield new SpanCompleter[F] {
       override def complete(span: CompletedSpan.Builder): F[Unit] = {
 
