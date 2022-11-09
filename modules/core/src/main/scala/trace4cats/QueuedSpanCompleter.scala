@@ -1,6 +1,7 @@
 package trace4cats
 
 import cats.Applicative
+import cats.effect.kernel.syntax.monadCancel._
 import cats.effect.kernel.syntax.spawn._
 import cats.effect.kernel.{Deferred, Ref, Resource, Temporal}
 import cats.effect.std.Queue
@@ -8,7 +9,6 @@ import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.{Chunk, Stream}
-import cats.effect.kernel.syntax.monadCancel._
 import org.typelevel.log4cats.Logger
 
 object QueuedSpanCompleter {
@@ -19,38 +19,45 @@ object QueuedSpanCompleter {
   ): Resource[F, SpanCompleter[F]] = {
     val realBufferSize = if (config.bufferSize < config.batchSize * 5) config.batchSize * 5 else config.bufferSize
 
-    def exportBatches(
-      stream: Stream[F, CompletedSpan],
-      signal: Option[Deferred[F, Either[Throwable, Unit]]]
-    ): F[Unit] = {
-      val exportStream = stream
-        .groupWithin(config.batchSize, config.batchTimeout)
-        .evalMap { spans =>
-          Stream
-            .retry(
-              exporter.exportBatch(Batch(spans)),
-              delay = config.retryConfig.delay,
-              nextDelay = config.retryConfig.nextDelay.calc,
-              maxAttempts = config.retryConfig.maxAttempts
-            )
-            .compile
-            .drain
-            .onError { case th =>
-              Logger[F].warn(th)("Failed to export spans")
+    def exportBatches(stream: Stream[F, Option[CompletedSpan]]): F[Unit] =
+      Stream
+        .eval(Deferred[F, Unit])
+        .flatMap { stop =>
+          stream
+            .evalTap {
+              case None => stop.complete(()).void
+              case Some(_) => Applicative[F].unit
             }
-            .uncancelable
+            .unNone
+            .groupWithin(config.batchSize, config.batchTimeout)
+            .evalMap { spans =>
+              (Stream
+                .retry(
+                  exporter.exportBatch(Batch(spans)),
+                  delay = config.retryConfig.delay,
+                  nextDelay = config.retryConfig.nextDelay.calc,
+                  maxAttempts = config.retryConfig.maxAttempts
+                )
+                .compile
+                .drain
+                .onError { case th =>
+                  Logger[F].warn(th)("Failed to export spans")
+                } >> stop.tryGet.map {
+                case None => Some(())
+                case Some(_) => None
+              }).uncancelable
+            }
         }
-
-      signal.fold(exportStream)(exportStream.interruptWhen(_)).compile.drain
-    }
+        .unNoneTerminate
+        .compile
+        .drain
 
     for {
       hasLoggedWarn <- Resource.eval(Ref.of(false))
-      shutdownSignal <- Resource.eval(Deferred[F, Either[Throwable, Unit]])
-      queue <- Resource.eval(Queue.bounded[F, CompletedSpan](realBufferSize))
-      _ <- exportBatches(Stream.fromQueueUnterminated(queue), Some(shutdownSignal)).uncancelable.background
-        .onFinalize(exportBatches(Stream.repeatEval(queue.tryTake).unNoneTerminate, None))
-      _ <- Resource.onFinalize(shutdownSignal.complete(Right(())).void)
+      queue <- Resource.eval(Queue.bounded[F, Option[CompletedSpan]](realBufferSize))
+      _ <- exportBatches(Stream.fromQueueUnterminated(queue)).uncancelable.background
+        .onFinalize(exportBatches(Stream.repeatEval(queue.tryTake).map(_.flatten)))
+      _ <- Resource.onFinalize(queue.offer(None))
     } yield new SpanCompleter[F] {
       override def complete(span: CompletedSpan.Builder): F[Unit] = {
 
@@ -62,7 +69,7 @@ object QueuedSpanCompleter {
           )
 
         queue
-          .tryOffer(span.build(process))
+          .tryOffer(Some(span.build(process)))
           .ifM(hasLoggedWarn.set(false), warnLog)
       }
     }
