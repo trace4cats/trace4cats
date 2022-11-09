@@ -46,5 +46,4 @@ object QueuedSpanExporter {
       .parTraverse(buffer)
       .map(_.combineAll)
   }
-
 }
