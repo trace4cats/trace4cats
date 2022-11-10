@@ -2,7 +2,6 @@ package trace4cats
 
 import cats.effect.IO
 import cats.effect.kernel.Ref
-import cats.effect.std.Random
 import cats.effect.testkit.TestInstances
 import cats.effect.unsafe.implicits.global
 import cats.syntax.all._
@@ -34,19 +33,13 @@ class QueuedSpanCompleterSpec extends AnyFlatSpec with Matchers with TestInstanc
   it should "not block on complete" in forAll { (builder: CompletedSpan.Builder) =>
     val test = for {
       ref <- Ref.of[IO, Int](0)
-      random: Random[IO] <- Random.scalaUtilRandom[IO]
       exporter = delayedExporter(ref)
       res <- QueuedSpanCompleter[IO](
         TraceProcess("completer-test"),
         exporter,
         CompleterConfig(bufferSize = 5, batchSize = 1)
       ).use { completer =>
-        val randomRequestTime = for {
-          rand <- random.betweenDouble(0, 1)
-          _ <- IO.sleep((1.second * rand).asInstanceOf[FiniteDuration])
-          res <- completer.complete(builder).timed
-        } yield res._1
-        List.fill(rps)(randomRequestTime).parSequence.map(_.max)
+        List.fill(rps)(completer.complete(builder).timed).parSequence.map(_.map(_._1).max)
       }
     } yield res
 
