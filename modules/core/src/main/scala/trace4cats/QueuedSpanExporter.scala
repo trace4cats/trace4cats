@@ -2,13 +2,13 @@ package trace4cats
 
 import cats.Parallel
 import cats.effect.kernel.{Resource, Temporal}
-import cats.effect.std.Queue
 import cats.effect.syntax.monadCancel._
 import cats.effect.syntax.spawn._
 import cats.effect.syntax.temporal._
 import cats.syntax.foldable._
+import cats.syntax.functor._
 import cats.syntax.parallel._
-import cats.syntax.traverse._
+import fs2.concurrent.Channel
 import fs2.{Chunk, Stream}
 import org.typelevel.log4cats.Logger
 
@@ -21,18 +21,18 @@ object QueuedSpanExporter {
     enqueueTimeout: FiniteDuration = 200.millis
   ): Resource[F, StreamSpanExporter[F]] = {
     def buffer(exporter: SpanExporter[F, Chunk]): Resource[F, StreamSpanExporter[F]] = {
-      def exportBatches(stream: Stream[F, Option[Batch[Chunk]]]): F[Unit] =
-        stream.evalMap(_.traverse(exporter.exportBatch(_).uncancelable)).unNoneTerminate.compile.drain
+      def exportBatches(stream: Stream[F, Batch[Chunk]]): F[Unit] =
+        stream.evalMap(exporter.exportBatch(_).uncancelable).compile.drain
 
       for {
-        queue <- Resource.eval(Queue.bounded[F, Option[Batch[Chunk]]](bufferSize))
-        _ <- exportBatches(Stream.fromQueueUnterminated(queue)).uncancelable.background
-          .onFinalize(exportBatches(Stream.repeatEval(queue.tryTake).map(_.flatten)))
-        _ <- Resource.onFinalize(queue.offer(None))
+        channel <- Resource.eval(Channel.bounded[F, Batch[Chunk]](bufferSize))
+        _ <- exportBatches(channel.stream).uncancelable.background
+        _ <- Resource.onFinalize(channel.close.void)
       } yield new StreamSpanExporter[F] {
         override def exportBatch(batch: Batch[Chunk]): F[Unit] =
-          queue
-            .offer(Some(batch))
+          channel
+            .send(batch)
+            .void
             .timeoutTo(enqueueTimeout, Logger[F].warn(s"Failed to enqueue span batch in $enqueueTimeout"))
       }
     }
