@@ -19,7 +19,7 @@ class QueuedSpanCompleterSpec extends AnyFlatSpec with Matchers with TestInstanc
   behavior.of("QueuedSpanCompleter")
 
   def delayedExporter(ref: Ref[IO, Int]): SpanExporter[IO, Chunk] = new SpanExporter[IO, Chunk] {
-    def exportBatch(batch: Batch[Chunk]): IO[Unit] = IO.sleep(10.millis) >> ref.update(_ + batch.spans.size)
+    def exportBatch(batch: Batch[Chunk]): IO[Unit] = IO.sleep(20.millis) >> ref.update(_ + batch.spans.size)
   }
 
   def refExporter(ref: Ref[IO, Chunk[CompletedSpan]]): SpanExporter[IO, Chunk] = new SpanExporter[IO, Chunk] {
@@ -44,7 +44,7 @@ class QueuedSpanCompleterSpec extends AnyFlatSpec with Matchers with TestInstanc
     } yield res
 
     val result = test.unsafeRunSync()
-    result shouldBe (<(10.millis))
+    result shouldBe (<(20.millis))
   }
 
   it should "export all spans on shutdown" in forAll { (builder: CompletedSpan.Builder) =>
