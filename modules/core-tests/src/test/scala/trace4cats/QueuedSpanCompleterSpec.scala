@@ -56,12 +56,12 @@ class QueuedSpanCompleterSpec extends AnyFlatSpec with Matchers with TestInstanc
         exporter,
         CompleterConfig(bufferSize = 50000, batchSize = 200)
       ).use { completer =>
-        List.fill(10000)(completer.complete(builder)).sequence
+        List.fill(10001)(completer.complete(builder)).sequence
       }
       res <- ref.get
     } yield res
 
     val result = test.unsafeRunSync()
-    result.size shouldBe 10000
+    result.size shouldBe 10001
   }
 }

@@ -26,13 +26,13 @@ class QueuedSpanExporterSpec extends AnyFlatSpec with Matchers with TestInstance
     val test = for {
       ref <- Ref.of[IO, Chunk[CompletedSpan]](Chunk.empty)
       _ <- QueuedSpanExporter[IO](50000, List("test" -> refExporter(ref))).use { exporter =>
-        List.fill(10000)(exporter.exportBatch(Batch(Chunk.singleton(span)))).sequence
+        List.fill(10001)(exporter.exportBatch(Batch(Chunk.singleton(span)))).sequence
       }
       res <- ref.get
     } yield res
 
     val result = test.unsafeRunSync()
-    result.size shouldBe 10000
+    result.size shouldBe 10001
   }
 
 }
