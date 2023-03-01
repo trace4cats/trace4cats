@@ -60,4 +60,24 @@ class GoogleCloudTraceToHeadersSpec
     assert(cloudTrace.toContext(headers).isDefined)
     assert(Eq.eqv(cloudTrace.toContext(headers), expected))
   }
+
+  it should "decode example Cloud Trace headers without the `;o=` part" in {
+    val spanId = 2205310701640571284L
+    val headers = TraceHeaders.of("X-Cloud-Trace-Context" -> s"105445aa7843bc8bf206b12000100000/$spanId")
+
+    val expected = for {
+      traceId <- TraceId.fromHexString("105445aa7843bc8bf206b12000100000")
+      spanId <- SpanId.fromHexString(spanId.toHexString)
+    } yield SpanContext(
+      traceId,
+      spanId,
+      None,
+      TraceFlags(sampled = SampleDecision.Drop),
+      TraceState.empty,
+      isRemote = true
+    )
+
+    assert(cloudTrace.toContext(headers).isDefined)
+    assert(Eq.eqv(cloudTrace.toContext(headers), expected))
+  }
 }

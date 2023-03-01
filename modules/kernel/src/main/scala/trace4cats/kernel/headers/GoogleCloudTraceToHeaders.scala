@@ -28,15 +28,18 @@ private[trace4cats] object GoogleCloudTraceToHeaders {
   // from https://cloud.google.com/trace/docs/setup
   val headerPattern =
     """(?xi)
-      |([0-9a-f]+) # trace ID
+      |([^\/]+) # trace ID
       |\/
-      |(\d+)       # span ID (unsigned decimal)
+      |([^;]+)       # span ID (unsigned decimal)
+      |(?:
       |;
-      |o=(0|1)     # trace enabled flag
+      |o=(.*)     # trace enabled flag
+      |)?
       |""".stripMargin.r
 
   def parse(header: String): Either[Throwable, SpanContext] = header match {
-    case headerPattern(traceId, spanId, enabled) =>
+    case headerPattern(traceId, spanId, enabled0) =>
+      val enabled = Option(enabled0)
       for {
         traceId <- Either.fromOption(TraceId.fromHexString(traceId), new Exception("invalid trace ID"))
         spanId <- Either.fromOption(
@@ -47,7 +50,7 @@ private[trace4cats] object GoogleCloudTraceToHeaders {
         traceId = traceId,
         spanId = spanId,
         parent = none,
-        traceFlags = TraceFlags(if (enabled == "1") SampleDecision.Include else SampleDecision.Drop),
+        traceFlags = TraceFlags(if (enabled == Some("1")) SampleDecision.Include else SampleDecision.Drop),
         traceState = TraceState.empty,
         isRemote = true
       )
