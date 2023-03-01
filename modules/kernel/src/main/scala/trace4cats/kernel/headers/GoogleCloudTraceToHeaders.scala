@@ -28,12 +28,12 @@ private[trace4cats] object GoogleCloudTraceToHeaders {
   // from https://cloud.google.com/trace/docs/setup
   val headerPattern =
     """(?xi)
-      |([^\/]+) # trace ID
+      |([^\/]+)    # trace ID
       |\/
-      |([^;]+)       # span ID (unsigned decimal)
+      |([^;]+)     # span ID (unsigned decimal)
       |(?:
       |;
-      |o=(.*)     # trace enabled flag
+      |o=(.*)      # trace enabled flag
       |)?
       |""".stripMargin.r
 
