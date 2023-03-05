@@ -8,6 +8,8 @@ import org.typelevel.ci._
 import trace4cats.kernel.ToHeaders
 import trace4cats.model._
 
+import scala.Option
+
 private[trace4cats] class GoogleCloudTraceToHeaders extends ToHeaders {
   import GoogleCloudTraceToHeaders._
 
@@ -38,8 +40,7 @@ private[trace4cats] object GoogleCloudTraceToHeaders {
       |""".stripMargin.r
 
   def parse(header: String): Either[Throwable, SpanContext] = header match {
-    case headerPattern(traceId, spanId, enabled0) =>
-      val enabled = Option(enabled0)
+    case headerPattern(traceId, spanId, enabled) =>
       for {
         traceId <- Either.fromOption(TraceId.fromHexString(traceId), new Exception("invalid trace ID"))
         spanId <- Either.fromOption(
@@ -50,7 +51,10 @@ private[trace4cats] object GoogleCloudTraceToHeaders {
         traceId = traceId,
         spanId = spanId,
         parent = none,
-        traceFlags = TraceFlags(if (enabled == Some("0")) SampleDecision.Drop else SampleDecision.Include),
+        traceFlags = TraceFlags(Option(enabled) match { // `enabled` can be `null`
+          case Some("0") => SampleDecision.Drop
+          case _ => SampleDecision.Include
+        }),
         traceState = TraceState.empty,
         isRemote = true
       )
