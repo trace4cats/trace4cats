@@ -72,7 +72,7 @@ class GoogleCloudTraceToHeadersSpec
       traceId,
       spanId,
       None,
-      TraceFlags(sampled = SampleDecision.Drop),
+      TraceFlags(sampled = SampleDecision.Include),
       TraceState.empty,
       isRemote = true
     )
