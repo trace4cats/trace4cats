@@ -8,8 +8,6 @@ import org.typelevel.ci._
 import trace4cats.kernel.ToHeaders
 import trace4cats.model._
 
-import scala.Option
-
 private[trace4cats] class GoogleCloudTraceToHeaders extends ToHeaders {
   import GoogleCloudTraceToHeaders._
 
