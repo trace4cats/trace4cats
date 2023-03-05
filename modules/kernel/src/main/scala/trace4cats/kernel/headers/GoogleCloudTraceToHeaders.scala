@@ -42,7 +42,7 @@ private[trace4cats] object GoogleCloudTraceToHeaders {
       for {
         traceId <- Either.fromOption(TraceId.fromHexString(traceId), new Exception("invalid trace ID"))
         spanId <- Either.fromOption(
-          SpanId.fromHexString("%016x".format(BigInt(spanId))),
+          Either.catchNonFatal(BigInt(spanId)).toOption.flatMap(bi => SpanId.fromHexString("%016x".format(bi))),
           new Exception("invalid span ID")
         )
       } yield SpanContext(
