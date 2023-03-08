@@ -50,8 +50,8 @@ private[trace4cats] object GoogleCloudTraceToHeaders {
         spanId = spanId,
         parent = none,
         traceFlags = TraceFlags(Option(enabled) match { // `enabled` can be `null`
-          case Some("0") => SampleDecision.Drop
-          case _ => SampleDecision.Include
+          case Some("1") | None => SampleDecision.Include
+          case _ => SampleDecision.Drop
         }),
         traceState = TraceState.empty,
         isRemote = true
