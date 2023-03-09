@@ -41,10 +41,10 @@ private[trace4cats] object GoogleCloudTraceToHeaders {
     case headerPattern(traceId, spanId, enabled) =>
       for {
         traceId <- Either.fromOption(TraceId.fromHexString(traceId), new Exception("invalid trace ID"))
-        spanId <- Either.fromOption(
-          Either.catchNonFatal(BigInt(spanId)).toOption.flatMap(bi => SpanId.fromHexString("%016x".format(bi))),
-          new Exception("invalid span ID")
-        )
+        spanId <- Either
+          .catchNonFatal(BigInt(spanId))
+          .leftMap(new Exception("invalid span ID", _))
+          .flatMap(bi => Either.fromOption(SpanId.fromHexString("%016x".format(bi)), new Exception("invalid span ID")))
       } yield SpanContext(
         traceId = traceId,
         spanId = spanId,
