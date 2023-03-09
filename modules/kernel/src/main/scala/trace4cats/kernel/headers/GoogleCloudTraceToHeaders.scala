@@ -28,26 +28,31 @@ private[trace4cats] object GoogleCloudTraceToHeaders {
   // from https://cloud.google.com/trace/docs/setup
   val headerPattern =
     """(?xi)
-      |([0-9a-f]+) # trace ID
+      |([^\/]+)    # trace ID
       |\/
-      |(\d+)       # span ID (unsigned decimal)
+      |([^;]+)     # span ID (unsigned decimal)
+      |(?:
       |;
-      |o=(0|1)     # trace enabled flag
+      |o=(.*)      # trace enabled flag
+      |)?
       |""".stripMargin.r
 
   def parse(header: String): Either[Throwable, SpanContext] = header match {
     case headerPattern(traceId, spanId, enabled) =>
       for {
         traceId <- Either.fromOption(TraceId.fromHexString(traceId), new Exception("invalid trace ID"))
-        spanId <- Either.fromOption(
-          SpanId.fromHexString("%016x".format(BigInt(spanId))),
-          new Exception("invalid span ID")
-        )
+        spanId <- Either
+          .catchNonFatal(BigInt(spanId))
+          .leftMap(new Exception("invalid span ID", _))
+          .flatMap(bi => Either.fromOption(SpanId.fromHexString("%016x".format(bi)), new Exception("invalid span ID")))
       } yield SpanContext(
         traceId = traceId,
         spanId = spanId,
         parent = none,
-        traceFlags = TraceFlags(if (enabled == "1") SampleDecision.Include else SampleDecision.Drop),
+        traceFlags = TraceFlags(Option(enabled) match { // `enabled` can be `null`
+          case Some("1") | None => SampleDecision.Include
+          case _ => SampleDecision.Drop
+        }),
         traceState = TraceState.empty,
         isRemote = true
       )
