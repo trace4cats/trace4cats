@@ -13,7 +13,12 @@ trait ArbitraryInstances extends ArbitraryAttributeValues {
 
   implicit val doubleArb: Arbitrary[Double] = Arbitrary(Gen.chooseNum(-1000.0, 1000.0).map(_ + 0.5))
 
-  implicit val instantArb: Arbitrary[Instant] = Arbitrary(Gen.choose(0L, 1593882556588L).map(Instant.ofEpochMilli))
+  implicit val instantArb: Arbitrary[Instant] = Arbitrary(
+    Gen
+      .choose(0L, 1593882556588L)
+      .map(Instant.ofEpochMilli)
+      .flatMap(instant => Gen.choose[Long](0, 999999).map(instant.plusNanos))
+  )
 
   implicit val stringArb: Arbitrary[String] = Arbitrary(for {
     size <- Gen.choose(1, 5)
