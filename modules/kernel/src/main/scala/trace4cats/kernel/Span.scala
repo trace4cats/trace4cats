@@ -29,7 +29,7 @@ case class RefSpan[F[_]: Monad: Clock: Ref.Make: SpanId.Gen] private[trace4cats]
   context: SpanContext,
   name: String,
   kind: SpanKind,
-  start: Long,
+  start: Long, // nanoseconds
   attributes: Ref[F, Map[String, AttributeValue]],
   status: Ref[F, SpanStatus],
   links: Ref[F, List[Link]],
@@ -61,7 +61,7 @@ case class RefSpan[F[_]: Monad: Clock: Ref.Make: SpanId.Gen] private[trace4cats]
         context,
         name,
         kind,
-        Instant.ofEpochMilli(start),
+        Instant.EPOCH.plusNanos(start),
         now,
         attrs,
         status,
@@ -140,17 +140,7 @@ object Span {
               now <- Clock[F].realTime
               statusRef <- Ref.of[F, SpanStatus](SpanStatus.Ok)
               linksRef <- Ref.of[F, List[Link]](List.empty)
-            } yield RefSpan[F](
-              context,
-              name,
-              kind,
-              now.toMillis,
-              attributesRef,
-              statusRef,
-              linksRef,
-              sampler,
-              completer
-            )
+            } yield RefSpan[F](context, name, kind, now.toNanos, attributesRef, statusRef, linksRef, sampler, completer)
           ) {
             case (span, ExitCase.Succeeded) => span.end
             case (span, ExitCase.Canceled) => span.end(SpanStatus.Cancelled)
