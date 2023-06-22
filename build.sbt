@@ -14,7 +14,7 @@ lazy val commonSettings = Seq(
     }
   },
   Test / fork := true,
-  resolvers += Resolver.sonatypeRepo("releases"),
+  resolvers ++= Resolver.sonatypeOssRepos("releases"),
   autoAPIMappings := true,
   apiURL := Some(url(s"https://trace4cats.github.io/api/${version.value}")),
 )
