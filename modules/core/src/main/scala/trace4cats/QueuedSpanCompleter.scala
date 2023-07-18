@@ -57,14 +57,15 @@ object QueuedSpanCompleter {
         .compile
         .drain
         .background
-      _ <- exportBatches(channel.stream).uncancelable.background
+      exportFiber <- exportBatches(channel.stream).uncancelable.background
         .onFinalize(Logger[F].info("Shut down queued span completer"))
+      _ <- Resource.onFinalize(exportFiber.void) // join fiber to ensure everything was sent
       _ <- Resource.onFinalize(channel.close.void)
     } yield new SpanCompleter[F] {
       override def complete(span: CompletedSpan.Builder): F[Unit] =
         channel
           .trySend(span.build(process))
-          .flatMap(errorQueue.tryOffer(_).start.void)
+          .flatMap(errorQueue.tryOffer)
           .void
     }
   }
