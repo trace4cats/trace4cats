@@ -129,7 +129,7 @@ lazy val meta =
 lazy val iolocal = (project in file("modules/iolocal"))
   .settings(publishSettings)
   .settings(name := "trace4cats-iolocal")
-  .dependsOn(core, `context-utils`, `context-utils-laws` % "compile->compile;test->test", testkit % Test)
+  .dependsOn(core, `context-utils`, `context-utils-laws` % "test->compile,test", testkit % Test)
 
 lazy val fs2 = (project in file("modules/fs2"))
   .settings(publishSettings)
