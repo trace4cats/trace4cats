@@ -3,6 +3,7 @@ package trace4cats.context
 import cats.{~>, Monad}
 import cats.syntax.all._
 import trace4cats.optics.Getter
+import trace4cats.context.internal.TupleAskInstances
 
 trait Ask[F[_], R] extends ContextRoot { self =>
   def F: Monad[F]
@@ -18,7 +19,7 @@ trait Ask[F[_], R] extends ContextRoot { self =>
 
 }
 
-object Ask {
+object Ask extends TupleAskInstances {
 
   def apply[F[_], R](implicit ev: Ask[F, R]): Ask[F, R] = ev
 
