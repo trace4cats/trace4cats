@@ -33,7 +33,7 @@ object QueuedSpanCompleter {
             )
             .compile
             .drain
-            .onError { case th =>
+            .handleErrorWith { th =>
               Logger[F].warn(th)("Failed to export spans")
             }
             .uncancelable
