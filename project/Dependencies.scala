@@ -4,7 +4,7 @@ object Dependencies {
   object Versions {
     val caseInsensitive = "1.4.0"
     val cats = "2.9.0"
-    val catsEffect = "3.5.2"
+    val catsEffect = "3.5.3"
     val collectionCompat = "2.11.0"
     val commonsCodec = "1.15"
     val fs2 = "3.8.0"
