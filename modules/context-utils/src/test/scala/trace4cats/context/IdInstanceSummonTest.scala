@@ -4,6 +4,6 @@ object IdInstanceSummonTest {
   type F[x] = Option[x]
   type Low[x] = Option[x]
 
-  implicitly[Lift[Low, F]]
-  implicitly[Unlift[Low, F]]
+  val lift = implicitly[Lift[Low, F]]
+  val unlift = implicitly[Unlift[Low, F]]
 }

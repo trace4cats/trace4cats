@@ -29,7 +29,7 @@ object TracedSpanExporter {
           case SampleDecision.Include =>
             val (batchSize, links) = MetaTraceUtil.extractMetadata(batch.spans)
 
-            for {
+            (for {
               metaSpanPromise <- Deferred[F, CompletedSpan]
 
               spans <- MetaTraceUtil
@@ -45,9 +45,7 @@ object TracedSpanExporter {
 
               metaSpan <- metaSpanPromise.get
               _ <- exportBatch(Batch(Chunk.concat(List(spans, Chunk.singleton(metaSpan)), spans.size + 1)))
-            } yield ()
-
-            MetaTraceUtil
+            } yield ()) >> MetaTraceUtil
               .trace[F](
                 context,
                 spanName,
