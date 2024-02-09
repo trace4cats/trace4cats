@@ -1,7 +1,6 @@
 package trace4cats.meta
 
-import cats.Applicative
-import cats.effect.kernel.{Clock, Concurrent, Deferred}
+import cats.effect.kernel.{Clock, Concurrent}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fs2.Chunk
@@ -29,23 +28,7 @@ object TracedSpanExporter {
           case SampleDecision.Include =>
             val (batchSize, links) = MetaTraceUtil.extractMetadata(batch.spans)
 
-            (for {
-              metaSpanPromise <- Deferred[F, CompletedSpan]
-
-              spans <- MetaTraceUtil
-                .trace[F](
-                  context,
-                  spanName,
-                  spanKind,
-                  Map[String, AttributeValue]("exporter.name" -> name, "batch.size" -> batchSize) ++ attributes,
-                  links,
-                  builder => metaSpanPromise.complete(builder.build(process)).void
-                )
-                .use(meta => Applicative[F].pure(batch.spans.map(span => span.copy(metaTrace = Some(meta)))))
-
-              metaSpan <- metaSpanPromise.get
-              _ <- exportBatch(Batch(Chunk.concat(List(spans, Chunk.singleton(metaSpan)), spans.size + 1)))
-            } yield ()) >> MetaTraceUtil
+            MetaTraceUtil
               .trace[F](
                 context,
                 spanName,
