@@ -9,15 +9,15 @@ object KleisliInstanceSummonTest {
   type F[x] = Kleisli[IO, R, x]
   type Low[x] = IO[x]
 
-  implicitly[Lift[Low, F]]
-  implicitly[Unlift[Low, F]]
-  implicitly[Ask[F, R]]
-  implicitly[Local[F, R]]
-  implicitly[Provide[Low, F, R]]
+  val lift = implicitly[Lift[Low, F]]
+  val unlift = implicitly[Unlift[Low, F]]
+  val ask = implicitly[Ask[F, R]]
+  val local = implicitly[Local[F, R]]
+  val provide = implicitly[Provide[Low, F, R]]
 
   implicit val zoomed: Ask[F, Sub1] = Ask[F, R].zoom(Env.sub1)
-  implicitly[Ask[F, Sub1]]
+  val zoomedAsk = implicitly[Ask[F, Sub1]]
 
   implicit val focused: Local[F, Sub2] = Local[F, R].focus(Env.sub2)
-  implicitly[Local[F, Sub2]]
+  val focusedAsk = implicitly[Local[F, Sub2]]
 }

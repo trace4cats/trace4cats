@@ -5,6 +5,6 @@ import cats.effect.IO
 
 object EitherTTraceInstanceSummonTest {
   type F[x] = Kleisli[IO, Span[IO], x]
-  implicitly[Trace[EitherT[F, Unit, *]]]
-  implicitly[Trace.WithContext[EitherT[F, Unit, *]]]
+  val t = implicitly[Trace[EitherT[F, Unit, *]]]
+  val tc = implicitly[Trace.WithContext[EitherT[F, Unit, *]]]
 }

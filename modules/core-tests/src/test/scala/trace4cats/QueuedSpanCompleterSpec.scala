@@ -26,6 +26,18 @@ class QueuedSpanCompleterSpec extends AnyFlatSpec with Matchers with TestInstanc
     def exportBatch(batch: Batch[Chunk]): IO[Unit] = ref.update(_ ++ batch.spans)
   }
 
+  def failExporter(counter: Ref[IO, Int], success: Ref[IO, Int]): SpanExporter[IO, Chunk] =
+    new SpanExporter[IO, Chunk] {
+      def exportBatch(batch: Batch[Chunk]): IO[Unit] = {
+        counter.get.flatMap { count =>
+          counter.update(_ + 1) *> {
+            if (count % 2 == 0) IO.raiseError(new RuntimeException("boom"))
+            else success.update(_ + 1)
+          }
+        }
+      }
+    }
+
   implicit def logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   val rps = 1000
@@ -63,5 +75,26 @@ class QueuedSpanCompleterSpec extends AnyFlatSpec with Matchers with TestInstanc
 
     val result = test.unsafeRunSync()
     result.size shouldBe 10001
+  }
+
+  it should "not freeze the span completer if export fails" in forAll { (builder: CompletedSpan.Builder) =>
+    val test = for {
+      counterRef <- Ref.of[IO, Int](0)
+      successRef <- Ref.of[IO, Int](0)
+      exporter = failExporter(counterRef, successRef)
+      _ <- QueuedSpanCompleter[IO](
+        TraceProcess("completer-test"),
+        exporter,
+        CompleterConfig(bufferSize = 50000, batchSize = 1, retryConfig = ExportRetryConfig(maxAttempts = 1))
+      ).use { completer =>
+        List
+          .fill(rps)(completer.complete(builder))
+          .sequence
+      }
+      exported <- successRef.get
+    } yield exported
+
+    val result = test.unsafeRunSync()
+    result shouldBe (rps / 2)
   }
 }
