@@ -14,15 +14,15 @@ object Dependencies {
     val log4cats = "2.6.0"
     val slf4j = "1.7.36"
     val scala212 = "2.12.18"
-    val scala213 = "2.13.8"
-    val scala3 = "3.3.0"
+    val scala213 = "2.13.12"
+    val scala3 = "3.3.1"
 
     val catsTestkitScalatest = "2.1.5"
     val disciplineScalatest = "2.2.0"
     val discipline = "1.5.1"
     val scalaCheck = "1.17.0"
     val scalaCheckShapeless = "1.3.0"
-    val scalaTest = "3.2.16"
+    val scalaTest = "3.2.17"
 
     val kindProjector = "0.13.2"
     val betterMonadicFor = "0.3.1"
