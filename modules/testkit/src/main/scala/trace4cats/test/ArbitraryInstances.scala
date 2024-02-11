@@ -136,7 +136,7 @@ trait ArbitraryInstances extends ArbitraryAttributeValues {
   implicit val batchArb: Arbitrary[Batch[Chunk]] = Arbitrary(for {
     size <- Gen.choose(1, 3)
     spans <- Gen.listOfN(size, Arbitrary.arbitrary[CompletedSpan])
-  } yield Batch(Chunk.seq(spans)))
+  } yield Batch(Chunk.from(spans)))
 }
 
 object ArbitraryInstances extends ArbitraryInstances
