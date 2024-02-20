@@ -22,7 +22,7 @@ object Dependencies {
     val discipline = "1.5.1"
     val scalaCheck = "1.17.0"
     val scalaCheckShapeless = "1.3.0"
-    val scalaTest = "3.2.17"
+    val scalaTest = "3.2.18"
 
     val kindProjector = "0.13.2"
     val betterMonadicFor = "0.3.1"
