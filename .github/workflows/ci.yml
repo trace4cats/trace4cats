@@ -48,6 +48,9 @@ jobs:
           java-version: 17
           cache: sbt
 
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
       - name: Check formatting
         run: sbt '++ ${{ matrix.scala }}' scalafmtCheckAll scalafmtSbtCheck
 
@@ -97,6 +100,9 @@ jobs:
           distribution: temurin
           java-version: 17
           cache: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Download target directories (2.13.12)
         uses: actions/download-artifact@v4
