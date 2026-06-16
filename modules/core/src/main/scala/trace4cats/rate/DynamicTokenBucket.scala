@@ -3,7 +3,7 @@ package trace4cats.rate
 import cats.Applicative
 import cats.effect.kernel.syntax.spawn._
 import cats.effect.kernel.{Ref, Resource, Temporal}
-import cats.effect.std.Hotswap
+import cats.effect.std.NonEmptyHotswap
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 
@@ -18,7 +18,7 @@ object DynamicTokenBucket {
     for {
       currentConfig <- Resource.eval(Ref.of[F, (Int, FiniteDuration)]((bucketSize, tokenRate)))
       tokens <- Resource.eval(Ref.of(bucketSize))
-      hotswap <- Hotswap(TokenBucket.bucketProcess(tokens, bucketSize, tokenRate).background.void).map(_._1)
+      hotswap <- NonEmptyHotswap.apply(TokenBucket.bucketProcess(tokens, bucketSize, tokenRate).background.void)
     } yield new DynamicTokenBucket[F] {
       private final val underlying = TokenBucket.impl[F](tokens)
 
