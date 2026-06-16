@@ -24,7 +24,7 @@ object Dependencies {
     val scalaCheckShapeless = "1.3.0"
     val scalaTest = "3.2.20"
 
-    val kindProjector = "0.13.2"
+    val kindProjector = "0.13.4"
     val betterMonadicFor = "0.3.1"
   }
 
