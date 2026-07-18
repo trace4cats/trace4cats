@@ -17,7 +17,8 @@ lazy val commonSettings = Seq(
   resolvers += Resolver.sonatypeCentralSnapshots,
   autoAPIMappings := true,
   apiURL := Some(url(s"https://trace4cats.github.io/api/${version.value}")),
-  Test / scalacOptions += "-Wconf:msg=unused value of type org.scalatest.Assertion:s"
+  Test / scalacOptions += "-Wconf:msg=unused value of type org.scalatest.Assertion:s",
+  Test / scalacOptions += "-Wconf:msg=unused value of type org.scalatest.compatible.Assertion:s"
 )
 
 lazy val noPublishSettings =

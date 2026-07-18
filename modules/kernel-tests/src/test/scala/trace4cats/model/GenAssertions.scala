@@ -2,7 +2,6 @@ package trace4cats.model
 
 import cats.Eq
 import cats.effect.IO
-import cats.syntax.parallel._
 import org.scalatest.{Assertion, Assertions}
 
 private[trace4cats] object GenAssertions extends Assertions {
