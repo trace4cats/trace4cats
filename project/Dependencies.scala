@@ -2,29 +2,29 @@ import sbt._
 
 object Dependencies {
   object Versions {
-    val caseInsensitive = "1.4.2"
-    val cats = "2.10.0"
-    val catsEffect = "3.5.7"
-    val collectionCompat = "2.11.0"
+    val caseInsensitive = "1.5.0"
+    val cats = "2.13.0"
+    val catsEffect = "3.7.0"
+    val collectionCompat = "2.14.0"
 
-    val commonsCodec = "1.16.0"
-    val fs2 = "3.9.4"
+    val commonsCodec = "1.16.1"
+    val fs2 = "3.13.0"
     val hotswapRef = "0.2.2"
     val kittens = "2.3.2"
-    val log4cats = "2.6.0"
+    val log4cats = "2.8.0"
     val slf4j = "1.7.36"
-    val scala212 = "2.12.18"
-    val scala213 = "2.13.12"
-    val scala3 = "3.3.1"
+    val scala212 = "2.12.21"
+    val scala213 = "2.13.18"
+    val scala3 = "3.3.8"
 
     val catsTestkitScalatest = "2.1.5"
-    val disciplineScalatest = "2.2.0"
-    val discipline = "1.5.1"
-    val scalaCheck = "1.17.1"
+    val disciplineScalatest = "2.3.0"
+    val discipline = "1.7.0"
+    val scalaCheck = "1.19.0"
     val scalaCheckShapeless = "1.3.0"
-    val scalaTest = "3.2.18"
+    val scalaTest = "3.2.20"
 
-    val kindProjector = "0.13.2"
+    val kindProjector = "0.13.4"
     val betterMonadicFor = "0.3.1"
   }
 
