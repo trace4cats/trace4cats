@@ -97,9 +97,9 @@ trait Fs2StreamSyntax {
       }
     }
 
-    private def eval[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(f: A => F[B])(implicit
-      F: MonadCancelThrow[F]
-    ): (Span[F], A) => F[(Span[F], B)] = { case (span, a) =>
+    private def eval[B](name: String, kind: SpanKind, attributes: (String, AttributeValue)*)(
+      f: A => F[B]
+    )(implicit F: MonadCancelThrow[F]): (Span[F], A) => F[(Span[F], B)] = { case (span, a) =>
       span.child(name, kind).use { child =>
         child.putAll(attributes: _*) *> eval(f).apply(span, a)
       }
