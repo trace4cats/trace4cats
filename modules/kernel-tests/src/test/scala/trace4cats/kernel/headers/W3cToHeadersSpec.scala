@@ -62,9 +62,8 @@ class W3cToHeadersSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks w
     assert(Eq[Option[SpanContext]].eqv(w3c.toContext(headers), expected))
   }
 
-  it should "not decode from empty headers" in {
+  it should "not decode from empty headers" in
     assert(Eq[Option[SpanContext]].eqv(w3c.toContext(TraceHeaders.empty), None))
-  }
 
   it should "not decode when only tracestate is available" in {
     assert(
