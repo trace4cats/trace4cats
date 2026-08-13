@@ -4,7 +4,7 @@ addSbtPlugin("org.typelevel" % "sbt-tpolecat" % "0.5.7")
 
 addSbtPlugin("com.github.sbt" % "sbt-github-actions" % "0.31.0")
 
-addSbtPlugin("io.shiftleft" % "sbt-ci-release-early" % "2.1.11")
+addSbtPlugin("io.shiftleft" % "sbt-ci-release-early" % "2.1.15")
 
 addSbtPlugin("com.github.sbt" % "sbt-dynver" % "5.1.1")
 
