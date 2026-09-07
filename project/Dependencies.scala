@@ -8,7 +8,7 @@ object Dependencies {
     val collectionCompat = "2.14.0"
 
     val commonsCodec = "1.16.1"
-    val fs2 = "3.13.0"
+    val fs2 = "3.14.0"
     val hotswapRef = "0.2.2"
     val kittens = "2.3.2"
     val log4cats = "2.8.0"
